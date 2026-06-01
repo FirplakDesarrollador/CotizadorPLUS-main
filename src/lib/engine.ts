@@ -61,11 +61,13 @@ export type CalcInput = {
   etiquetasUnd: number;
   usaCarton?: boolean;
   margen: number;
+  margenHerraje?: number; // margen propio de herrajes (ej. 0.35). Default 0.35.
   recargo: number;     // recargo cliente (ej. 0.10)
   trm: number;
   desperdicio: number;
   overrides?: Record<string, number>; // forzar n_puertas, etc.
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes'; // O* = sin_frentes ; KF-* = solo_frentes
+  herrajesExcluidos?: string[]; // roles de herraje a excluir de esta línea
 };
 
 // Convierte dimensiones de la unidad de entrada a pulgadas (el motor trabaja en pulgadas).
@@ -105,9 +107,19 @@ export type Breakdown = {
   costoSinHerrajes: number;
   costoHerrajes: number;
   costoConHerrajes: number;
+  // Precio del mueble (sin herrajes) — se mantiene por compatibilidad.
   precioCop: number;
   precioCopConRecargo: number;
   precioUsd: number;
+  // Herrajes con margen propio (margenHerraje).
+  precioHerrajesCop: number;
+  precioHerrajesCopConRecargo: number;
+  precioHerrajesUsd: number;
+  // Total con herrajes (mueble con su margen + herrajes con el suyo).
+  precioConHerrajesCop: number;
+  precioConHerrajesCopConRecargo: number;
+  precioConHerrajesUsd: number;
+  margenHerraje: number;
 };
 
 export function calcularMueble(inp: CalcInput): Breakdown {
@@ -184,9 +196,13 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   // Herrajes
   let costoHerrajes = 0; const herrajesDet: Breakdown['herrajes'] = [];
   const ESTRUCTURAL = new Set(['pata', 'tornillo', 'riel', 'barra']);
+  // Herrajes excluidos manualmente por la línea (por rol). Permite Open con/sin bisagras,
+  // KF sin hardware, o casos donde el cliente compra ciertos herrajes aparte (Omar/Infinitum).
+  const excluidos = new Set((inp.herrajesExcluidos || []).map((r) => String(r).toLowerCase()));
   for (const hp of (inp.herrajesPlantilla || [])) {
     // "Sin frentes": la carcasa conserva sus herrajes (queda lista para frentes). Kit de frentes: solo herraje de puerta.
     if (modo === 'solo_frentes' && ESTRUCTURAL.has(hp.rol)) continue;
+    if (excluidos.has(String(hp.rol).toLowerCase())) continue;
     const cant = num(hp.formula_cantidad);
     const precio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
     const costo = cant * precio;
@@ -195,14 +211,31 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   }
 
   const costoConHerrajes = costoSinHerrajes + costoHerrajes;
+  const recF = 1 - inp.recargo;
+  const margenHerraje = inp.margenHerraje ?? 0.35;
+
+  // Mueble: costo sin herrajes con el margen del tipo.
   const precioCop = costoSinHerrajes / (1 - inp.margen);
-  const precioCopConRecargo = precioCop / (1 - inp.recargo);
+  const precioCopConRecargo = precioCop / recF;
   const precioUsd = precioCopConRecargo / inp.trm;
+
+  // Herrajes: costo de herrajes con su propio margen (35% por defecto).
+  const precioHerrajesCop = costoHerrajes > 0 ? costoHerrajes / (1 - margenHerraje) : 0;
+  const precioHerrajesCopConRecargo = precioHerrajesCop / recF;
+  const precioHerrajesUsd = precioHerrajesCopConRecargo / inp.trm;
+
+  // Total con herrajes = mueble (su margen) + herrajes (su margen).
+  const precioConHerrajesCop = precioCop + precioHerrajesCop;
+  const precioConHerrajesCopConRecargo = precioCopConRecargo + precioHerrajesCopConRecargo;
+  const precioConHerrajesUsd = precioConHerrajesCopConRecargo / inp.trm;
 
   return {
     vars, piezas: piezasDet, maderaPorRol, cantoPorCalibre, consumibles, herrajes: herrajesDet,
     costoMadera, costoCanto, costoConsumibles, costoSinHerrajes, costoHerrajes, costoConHerrajes,
     precioCop, precioCopConRecargo, precioUsd,
+    precioHerrajesCop, precioHerrajesCopConRecargo, precioHerrajesUsd,
+    precioConHerrajesCop, precioConHerrajesCopConRecargo, precioConHerrajesUsd,
+    margenHerraje,
   };
 }
 

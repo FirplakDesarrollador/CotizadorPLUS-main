@@ -12,9 +12,11 @@ type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number
 type Tipo = { id: string; pref: string; nombre_es: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
+type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
+type HerrajeTipo = { rol: string; codigo: string | null };
 
-export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tableros, presetDefault, rolesByTipo }:
-  { cotizacionId: string; cocina: Cocina; tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]> }) {
+export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tableros, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo }:
+  { cotizacionId: string; cocina: Cocina; tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]> }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
   const [editName, setEditName] = useState(false);
@@ -83,7 +85,7 @@ export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tabl
       <div className="p-4 border-t border-slate-100">
         {showAdd ? (
           <div className="space-y-2">
-            <AddLineForm cocinaId={cocina.id} tipos={tipos} recargos={recargos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} />
+            <AddLineForm cocinaId={cocina.id} tipos={tipos} recargos={recargos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} perfiles={perfiles} perfilDefaultId={perfilDefaultId} herrajesByTipo={herrajesByTipo} />
             <button onClick={() => setShowAdd(false)} className="text-sm text-slate-400 hover:underline">Cerrar</button>
           </div>
         ) : (

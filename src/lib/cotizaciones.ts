@@ -82,8 +82,10 @@ export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
 
   const res = await cotizar(input);
   const cantidad = input.cantidad || 1;
-  const precioUnitCop = res.precioCopConRecargo;
-  const precioUnitUsd = res.precioUsd;
+  // Si la línea lleva herrajes, el precio de venta es sobre el costo CON herrajes
+  // (mueble con su margen + herrajes con su margen propio). Si no, solo el mueble.
+  const precioUnitCop = input.conHerrajes ? res.precioConHerrajesCopConRecargo : res.precioCopConRecargo;
+  const precioUnitUsd = input.conHerrajes ? res.precioConHerrajesUsd : res.precioUsd;
 
   const { count } = await sb.from('cot_cotizacion_lineas')
     .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
@@ -98,7 +100,12 @@ export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
     tipo_mueble_id: input.tipoId,
     pref: input.prefLabel ?? null,
     largo: input.largo, alto: input.alto, prof: input.prof, unidad_dim: input.unidad,
-    config: { preset: input.preset, conHerrajes: input.conHerrajes, recargoPct: input.recargoPct, overrides: input.overrides ?? null },
+    config: {
+      preset: input.preset, conHerrajes: input.conHerrajes, recargoPct: input.recargoPct,
+      overrides: input.overrides ?? null, modoFrentes: input.modoFrentes ?? 'normal',
+      herrajesExcluidos: input.herrajesExcluidos ?? null,
+      trm: res.trm, margen: res.margen, margenHerraje: res.margenHerraje,
+    },
     cantidad,
     costo_sin_herrajes_cop: res.costoSinHerrajes,
     costo_herrajes_cop: res.costoHerrajes,

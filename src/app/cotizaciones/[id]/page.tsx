@@ -43,7 +43,7 @@ export default async function CotizacionDetallePage({ params }: { params: Promis
 
         <div className="space-y-4" data-tour="cocinas">
           {(cocinas as Cocina[]).map((c) => (
-            <CocinaCard key={c.id} cotizacionId={id} cocina={c} tipos={data.tipos} recargos={data.recargos} tableros={data.tableros} presetDefault={data.presetDefault} rolesByTipo={data.rolesByTipo} />
+            <CocinaCard key={c.id} cotizacionId={id} cocina={c} tipos={data.tipos} recargos={data.recargos} tableros={data.tableros} presetDefault={data.presetDefault} rolesByTipo={data.rolesByTipo} perfiles={data.perfiles} perfilDefaultId={data.perfilDefaultId} herrajesByTipo={data.herrajesByTipo} />
           ))}
           <div data-tour="add-cocina"><AddCocina cotizacionId={id} /></div>
         </div>
