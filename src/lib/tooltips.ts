@@ -1,0 +1,81 @@
+// Contenido de los tooltips de ayuda (hover) de la app.
+// Cada entrada describe la FUNCIÓN del campo y un TIP clave.
+// Se consume desde el componente <Campo> en Simulador, Cotizaciones, Materiales y Diseño.
+import type { Info } from '@/components/Campo';
+
+// ---- Simulador / Cotizaciones (AddLineForm comparten claves) ----
+export const TIPS_COTIZADOR: Record<string, Info> = {
+  'Tipo de mueble': { fn: 'Define el tipo de mueble y su despiece (piezas, fórmulas y herrajes) validado contra el Excel CEMA.', tip: 'Cada prefijo (B, W, SBFD, torres…) calcula distinto; elige el correcto antes que nada.' },
+  Tipo: { fn: 'Define el tipo de mueble y su despiece (piezas, fórmulas y herrajes).', tip: 'Usa el buscador escribiendo el prefijo o el nombre.' },
+  Largo: { fn: 'Ancho frontal del mueble (dimensión L).', tip: 'Se expresa en la unidad seleccionada; al cambiar de unidad se convierte solo.' },
+  Alto: { fn: 'Altura del mueble (dimensión A).', tip: 'Determina entrepaños y, en torres, el nº de puertas apiladas.' },
+  Prof: { fn: 'Profundidad / fondo del mueble (dimensión P).', tip: 'Afecta el área de laterales, base y tapa.' },
+  Unidad: { fn: 'Unidad de las dimensiones (pulgadas, cm o mm).', tip: 'Al cambiarla, Largo/Alto/Prof se convierten automáticamente con precisión.' },
+  Un: { fn: 'Unidad de las dimensiones (in/cm/mm).', tip: 'Al cambiarla, las dimensiones se convierten automáticamente.' },
+  caja: { fn: 'Tablero de la caja: laterales, base y tapa (estructura).', tip: 'Es el mayor consumo de área; impacta fuerte el costo.' },
+  refuerzos: { fn: 'Tablero de refuerzos, entrepaños y gavetas.', tip: 'Suele ser un sustrato económico (p. ej. Polar 15mm).' },
+  frente: { fn: 'Tablero de puertas y frentes (cara visible).', tip: 'Normalmente el más costoso; define el acabado/color.' },
+  fondo: { fn: 'Tablero del fondo (espalda del mueble).', tip: 'Sustrato delgado; en algunos tipos no se cobra.' },
+  'Tablero caja': { fn: 'Tablero de la caja: laterales, base y tapa.', tip: 'Es el mayor consumo de área; impacta fuerte el costo.' },
+  'Tablero refuerzos': { fn: 'Tablero de refuerzos, entrepaños y gavetas.', tip: 'Suele ser un sustrato económico.' },
+  'Tablero frente': { fn: 'Tablero de puertas y frentes (cara visible).', tip: 'Normalmente el más costoso; define el acabado.' },
+  'Tablero fondo': { fn: 'Tablero del fondo (espalda del mueble).', tip: 'Sustrato delgado; en algunos tipos no se cobra.' },
+  'Cliente (recargo)': { fn: 'Aplica el recargo comercial del cliente sobre el precio final.', tip: 'Ej. CEMA +10%. Déjalo en “Sin recargo” para precio base.' },
+  'Nº puertas (override)': { fn: 'Fuerza manualmente el número de puertas.', tip: 'Vacío = se deriva del ancho automáticamente. Cambia bisagras y manijas.' },
+  'Nº cajones (override)': { fn: 'Fuerza manualmente el número de cajones.', tip: 'Vacío = automático. Cambia rieles y manijas (clave en cajoneras DB-2/3/4).' },
+  'Nº puertas': { fn: 'Fuerza el número de puertas (vacío = automático).', tip: 'Cambia bisagras y manijas del mueble.' },
+  'Nº cajones': { fn: 'Fuerza el número de cajones (vacío = automático).', tip: 'Cambia rieles y manijas del mueble.' },
+  Frentes: { fn: 'Variante de armado: completo, sin frentes (open) o solo el kit de frentes.', tip: 'Open = carcasa lista sin puertas; Kit = solo puertas/frentes y su herraje.' },
+  Cantidad: { fn: 'Número de muebles idénticos en esta línea.', tip: 'El subtotal multiplica el precio unitario por la cantidad.' },
+  TRM: { fn: 'Tasa de cambio COP→USD usada para mostrar el precio en dólares.', tip: 'Editable aquí; solo afecta el valor en USD, no el costo en COP.' },
+};
+
+// ---- Materiales (Admin) — clave = field.key de cada catálogo ----
+export const TIPS_MATERIALES: Record<string, Info> = {
+  codigo: { fn: 'Código único del material (clave de referencia).', tip: 'Debe ser único; se usa para enlazar presets y plantillas.' },
+  proveedor: { fn: 'Proveedor o marca del tablero.', tip: 'Solo informativo para identificar el material.' },
+  sustrato: { fn: 'Tipo de sustrato (MDF, aglomerado, etc.).' },
+  espesor_mm: { fn: 'Espesor del tablero en milímetros.', tip: 'Define el calibre; debe coincidir con el rol (caja 15, frente 18…).' },
+  color_nombre: { fn: 'Color o acabado del tablero.' },
+  formato: { fn: 'Formato de la lámina (dimensiones del tablero entero).' },
+  area_m2: { fn: 'Área de la lámina en m².', tip: 'Sirve para derivar el precio por m².' },
+  precio: { fn: 'Precio de lista del material.', tip: 'En cantos es COP por metro lineal.' },
+  descuento: { fn: 'Descuento aplicado sobre el precio de lista (0–1).' },
+  precio_real: { fn: 'Precio neto tras descuento.' },
+  precio_m2: { fn: 'Precio por m² que usa el motor para costear la madera.', tip: 'Este es el valor que realmente entra al cálculo del tablero.' },
+  activo: { fn: 'Si está activo aparece como opción seleccionable.', tip: 'Desactiva en vez de borrar para conservar el histórico.' },
+  referencia: { fn: 'Referencia del canto.' },
+  calibre: { fn: 'Calibre del canto; enlaza con las piezas que lo usan.', tip: 'Debe coincidir exactamente con el calibre indicado en las piezas.' },
+  nombre: { fn: 'Nombre descriptivo del herraje/consumible.', tip: 'Campo obligatorio.' },
+  categoria: { fn: 'Categoría del ítem (herraje o consumible).', tip: '“consumible” + un Selector lo habilita como tarugo/soporte/cartón/etiqueta.' },
+  selector_key: { fn: 'Clave de selector para consumibles (tarugo, soporte, carton, etiqueta).', tip: 'El motor busca el precio del consumible por esta clave.' },
+  unidad: { fn: 'Unidad de venta/medida del ítem.' },
+  cliente_nombre: { fn: 'Nombre del cliente con recargo comercial.', tip: 'Obligatorio.' },
+  recargo_pct: { fn: 'Recargo comercial como fracción (0.10 = 10%).', tip: 'Se aplica después del margen en la cadena de precio.' },
+  incluye_herrajes: { fn: 'Indica si el recargo del cliente cubre herrajes.' },
+  notas: { fn: 'Notas internas sobre el cliente o el recargo.' },
+};
+
+// ---- Diseño (DisenoEditor) — clave = etiqueta del campo ----
+export const TIPS_DISENO: Record<string, Info> = {
+  Nombre: { fn: 'Nombre de la pieza dentro del despiece.', tip: 'Si contiene “frente” se trata como pieza de frente (modo open/kit).' },
+  'Rol tablero': { fn: 'Rol de tablero al que pertenece la pieza (caja/refuerzo/frente/fondo).', tip: '“(solo canto)” = la pieza no consume área, solo aporta canto.' },
+  Cantidad: { fn: 'Fórmula para el número de piezas.', tip: 'Variables: L, A, P y derivadas (n_puertas, n_cajones…). Ej: n_puertas.' },
+  Orden: { fn: 'Orden de aparición de la pieza/herraje en el despiece.', tip: 'Solo afecta la presentación, no el cálculo.' },
+  'Fórmula largo (in)': { fn: 'Fórmula del largo de la pieza en pulgadas.', tip: 'Soporta operadores y condicionales: ej. (L-0.59).' },
+  'Fórmula ancho (in)': { fn: 'Fórmula del ancho de la pieza en pulgadas.', tip: 'Ej: (A-zocalo)/n_puertas para puertas apiladas.' },
+  'Canto calibre': { fn: 'Calibre del canto aplicado a esta pieza.', tip: 'Debe existir en el catálogo de Cantos con ese calibre.' },
+  'Aristas largo / ancho': { fn: 'Cuántas aristas largas y anchas llevan canto.', tip: 'El motor calcula la longitud de canto a partir de estas cantidades.' },
+  'Aristas desperdicio (opc)': { fn: 'Aristas que cuentan para el desperdicio de canto (5cm c/u).', tip: 'Vacío = usa largos+anchos. Úsalo solo para replicar el Excel.' },
+  Tarugos: { fn: 'Tarugos por pieza (consumible).', tip: 'Se multiplica por la cantidad de piezas.' },
+  Soportes: { fn: 'Soportes por pieza (consumible).', tip: 'Se multiplica por la cantidad de piezas.' },
+  Variable: { fn: 'Nombre de la variable derivada (ej. n_puertas, n_entrepanos).', tip: 'Queda disponible en las fórmulas de piezas y herrajes.' },
+  'Condición (en L,A,P)': { fn: 'Condición que activa esta regla.', tip: 'Gana la 1ª verdadera por prioridad. Ej: L>=30. Usa true para el caso por defecto.' },
+  Valor: { fn: 'Valor que toma la variable si la condición es verdadera.', tip: 'Puede ser una fórmula en L, A, P.' },
+  Prioridad: { fn: 'Orden de evaluación de las reglas (menor = primero).', tip: 'Pon las condiciones más específicas con prioridad más baja.' },
+  Rol: { fn: 'Rol del herraje (pata, bisagra, riel, manija…).', tip: 'Roles estructurales (pata/tornillo/riel/barra) no se incluyen en el kit de frentes.' },
+  Herraje: { fn: 'Herraje del catálogo asignado a este rol.', tip: 'Su precio se toma del catálogo de Materiales › Herrajes.' },
+  Largo: { fn: 'Largo (L) usado en la previsualización, en pulgadas.' },
+  Alto: { fn: 'Alto (A) usado en la previsualización, en pulgadas.' },
+  Prof: { fn: 'Profundidad (P) usada en la previsualización, en pulgadas.' },
+};
