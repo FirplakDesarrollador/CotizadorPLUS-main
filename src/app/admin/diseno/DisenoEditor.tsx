@@ -1,6 +1,8 @@
 'use client';
 import { useMemo, useState } from 'react';
 import Combobox from '@/components/Combobox';
+import Campo from '@/components/Campo';
+import { TIPS_DISENO } from '@/lib/tooltips';
 import {
   getDisenoAction, guardarPiezaAction, eliminarPiezaAction,
   guardarReglaAction, eliminarReglaAction, guardarHerrajeAction, eliminarHerrajeAction, previewAction,
@@ -242,5 +244,5 @@ function Preview({ tipoId, presetDefault, tableros }: { tipoId: string; presetDe
 }
 
 function F({ l, children }: { l: string; children: React.ReactNode }) {
-  return <label className="block"><span className="block text-xs text-slate-500 mb-0.5">{l}</span>{children}</label>;
+  return <Campo label={l} info={TIPS_DISENO[l]}>{children}</Campo>;
 }

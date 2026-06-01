@@ -7,30 +7,35 @@ export type Opt = { value: string; label: string };
 export default function Combobox({ value, options, onChange, placeholder = 'Buscar…', allowEmpty = false, emptyLabel = '—' }:
   { value: string; options: Opt[]; onChange: (v: string) => void; placeholder?: string; allowEmpty?: boolean; emptyLabel?: string }) {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  // query === null  → no se está buscando, se muestra la opción seleccionada.
+  // query === string → texto que el usuario escribió (se mantiene mientras está abierto).
+  const [query, setQuery] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const selected = options.find((o) => o.value === value);
 
   useEffect(() => {
-    function onDoc(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) { setOpen(false); setQuery(null); }
+    }
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  const q = query.trim().toLowerCase();
+  const q = (query ?? '').trim().toLowerCase();
   const filtered = q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options;
 
-  function pick(v: string) { onChange(v); setOpen(false); setQuery(''); }
+  function pick(v: string) { onChange(v); setOpen(false); setQuery(null); }
 
   return (
     <div ref={ref} className="relative">
       <input
         className="w-full border border-slate-300 rounded-lg px-2 py-[0.4rem] text-[0.8rem] focus:outline-none focus:ring-2 focus:ring-slate-400"
-        value={open ? query : (selected?.label ?? '')}
+        value={query !== null ? query : (selected?.label ?? '')}
         placeholder={selected ? selected.label : placeholder}
-        onFocus={() => { setOpen(true); setQuery(''); }}
+        onFocus={(e) => { setOpen(true); setQuery(selected?.label ?? ''); e.currentTarget.select(); }}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); setQuery(null); } }}
       />
       {open && (
         <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg text-[0.8rem]">

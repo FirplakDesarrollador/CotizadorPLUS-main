@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { guardarFilaAction, eliminarFilaAction, guardarParametrosAction } from './actions';
 import type { CatalogoTabla } from '@/lib/admin';
+import Campo from '@/components/Campo';
+import { TIPS_MATERIALES } from '@/lib/tooltips';
 
 type Field = { key: string; label: string; type: 'text' | 'number' | 'bool'; required?: boolean };
 type Row = Record<string, unknown> & { id?: string };
@@ -126,8 +128,7 @@ function CatalogManager({ tabla, fields, rows }: { tabla: CatalogoTabla; fields:
           <h3 className="text-sm font-medium text-slate-900 mb-3">{editing.id ? 'Editar' : 'Nuevo'} registro</h3>
           <div className="grid sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {fields.map((f) => (
-              <label key={f.key} className="block">
-                <span className="block text-xs text-slate-500 mb-1">{f.label}{f.required && ' *'}</span>
+              <Campo key={f.key} label={`${f.label}${f.required ? ' *' : ''}`} info={TIPS_MATERIALES[f.key]}>
                 {f.type === 'bool' ? (
                   <input type="checkbox" checked={!!draft[f.key]} onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.checked }))} className="h-4 w-4" />
                 ) : (
@@ -136,7 +137,7 @@ function CatalogManager({ tabla, fields, rows }: { tabla: CatalogoTabla; fields:
                     onChange={(e) => setDraft((d) => ({ ...d, [f.key]: f.type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value }))}
                     className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />
                 )}
-              </label>
+              </Campo>
             ))}
           </div>
           {error && <p className="text-sm text-red-600 mt-2">{error}</p>}

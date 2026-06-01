@@ -3,6 +3,14 @@ import { useMemo, useState } from 'react';
 import { cotizarAction } from './actions';
 import type { CotizarResult } from '@/lib/cotizar';
 import GuideButton from '@/components/GuideButton';
+import Campo from '@/components/Campo';
+import Combobox from '@/components/Combobox';
+import { TIPS_COTIZADOR } from '@/lib/tooltips';
+
+// Conversión exacta entre unidades vía milímetros.
+const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
+const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
+  Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
 
 type Tipo = { id: string; pref: string; nombre_es: string | null; categoria: string | null; margen_key: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number; incluye_herrajes: boolean };
@@ -51,6 +59,16 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
 
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const sortedTableros = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)), [tableros]);
+  const tipoOptions = useMemo(() => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tipos]);
+  const tableroOptions = useMemo(() => sortedTableros.map((t) => ({ value: t.codigo, label: tableroLabel(t) })), [sortedTableros]);
+
+  function changeUnidad(nu: 'in' | 'cm' | 'mm') {
+    if (nu === unidad) return;
+    setLargo((v) => convertir(v, unidad, nu));
+    setAlto((v) => convertir(v, unidad, nu));
+    setProf((v) => convertir(v, unidad, nu));
+    setUnidad(nu);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,9 +98,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
 
         <div data-tour="tipo">
           <Field label="Tipo de mueble">
-            <select value={tipoId} onChange={(e) => setTipoId(e.target.value)} className="inp">
-              {tipos.map((t) => <option key={t.id} value={t.id}>{t.pref} — {t.nombre_es}</option>)}
-            </select>
+            <Combobox value={tipoId} options={tipoOptions} onChange={setTipoId} placeholder="Buscar tipo…" />
           </Field>
         </div>
 
@@ -91,7 +107,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
           <Field label="Alto"><input type="number" step="any" value={alto} onChange={(e) => setAlto(+e.target.value)} className="inp" /></Field>
           <Field label="Prof"><input type="number" step="any" value={prof} onChange={(e) => setProf(+e.target.value)} className="inp" /></Field>
           <Field label="Unidad">
-            <select value={unidad} onChange={(e) => setUnidad(e.target.value as 'in' | 'cm' | 'mm')} className="inp">
+            <select value={unidad} onChange={(e) => changeUnidad(e.target.value as 'in' | 'cm' | 'mm')} className="inp">
               <option value="in">in</option><option value="cm">cm</option><option value="mm">mm</option>
             </select>
           </Field>
@@ -101,10 +117,9 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
           <p className="text-xs font-medium text-slate-500 uppercase">Tableros</p>
           {roles.map((rol) => (
             <Field key={rol} label={ROL_LABEL[rol] ?? rol}>
-              <select value={preset[rol] ?? ''} onChange={(e) => setPreset((p) => ({ ...p, [rol]: e.target.value }))} className="inp">
-                <option value="">— seleccionar —</option>
-                {sortedTableros.map((t) => <option key={t.codigo} value={t.codigo}>{tableroLabel(t)}</option>)}
-              </select>
+              <Combobox value={preset[rol] ?? ''} options={tableroOptions}
+                onChange={(v) => setPreset((p) => ({ ...p, [rol]: v }))}
+                placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
             </Field>
           ))}
         </div>
@@ -151,12 +166,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="block text-xs text-slate-500 mb-1 capitalize">{label}</span>
-      {children}
-    </label>
-  );
+  return <Campo label={label} info={TIPS_COTIZADOR[label]}>{children}</Campo>;
 }
 
 function ResultadoView({ result, moneda, setMoneda, conHerrajes }:

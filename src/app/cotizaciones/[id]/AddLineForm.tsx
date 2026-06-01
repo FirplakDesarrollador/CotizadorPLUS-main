@@ -3,12 +3,19 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { agregarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
+import Campo from '@/components/Campo';
+import { TIPS_COTIZADOR } from '@/lib/tooltips';
 
 type Tipo = { id: string; pref: string; nombre_es: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 
 const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja', refuerzo: 'Tablero refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
+
+// Conversión exacta entre unidades vía milímetros.
+const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
+const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
+  Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
 
 export default function AddLineForm({ cocinaId, tipos, recargos, tableros, presetDefault, rolesByTipo }:
   { cocinaId: string; tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]> }) {
@@ -34,6 +41,14 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
   const tipoOptions = useMemo(() => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tipos]);
   const tableroOptions = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({ value: t.codigo, label: tableroLabel(t) })), [tableros]);
   const tipo = tipos.find((t) => t.id === tipoId);
+
+  function changeUnidad(nu: 'in' | 'cm' | 'mm') {
+    if (nu === unidad) return;
+    setLargo((v) => convertir(v, unidad, nu));
+    setAlto((v) => convertir(v, unidad, nu));
+    setProf((v) => convertir(v, unidad, nu));
+    setUnidad(nu);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,7 +78,7 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
           <L label="Largo"><input type="number" step="any" value={largo} onChange={(e) => setLargo(+e.target.value)} className="inp" /></L>
           <L label="Alto"><input type="number" step="any" value={alto} onChange={(e) => setAlto(+e.target.value)} className="inp" /></L>
           <L label="Prof"><input type="number" step="any" value={prof} onChange={(e) => setProf(+e.target.value)} className="inp" /></L>
-          <L label="Un"><select value={unidad} onChange={(e) => setUnidad(e.target.value as 'in' | 'cm' | 'mm')} className="inp"><option>in</option><option>cm</option><option>mm</option></select></L>
+          <L label="Un"><select value={unidad} onChange={(e) => changeUnidad(e.target.value as 'in' | 'cm' | 'mm')} className="inp"><option>in</option><option>cm</option><option>mm</option></select></L>
         </div>
         <L label="Cliente (recargo)">
           <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
@@ -104,5 +119,5 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
 }
 
 function L({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><span className="block text-xs text-slate-500 mb-1">{label}</span>{children}</label>;
+  return <Campo label={label} info={TIPS_COTIZADOR[label]}>{children}</Campo>;
 }
