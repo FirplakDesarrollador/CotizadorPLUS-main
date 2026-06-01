@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { agregarLineaAction } from '../actions';
+import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
@@ -11,6 +11,11 @@ type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
+export type LineaInicial = {
+  lineaId: string; tipoId: string; largo: number; alto: number; prof: number; unidad: 'in' | 'cm' | 'mm';
+  preset: Record<string, string>; conHerrajes: boolean; recargoPct: number; cantidad: number;
+  modoFrentes: 'normal' | 'sin_frentes' | 'solo_frentes'; overrides: Record<string, number> | null; herrajesExcluidos: string[] | null;
+};
 
 const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja', refuerzo: 'Tablero refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
 
@@ -19,17 +24,19 @@ const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
 const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
   Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
 
-export default function AddLineForm({ cocinaId, tipos, recargos, tableros, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo }:
-  { cocinaId: string; tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]> }) {
+export default function AddLineForm({ cocinaId, tipos, recargos, tableros, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, initial, onDone }:
+  { cocinaId: string; tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]>; trm: number; initial?: LineaInicial; onDone?: () => void }) {
   const router = useRouter();
+  const esEdicion = !!initial;
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
-  const [tipoId, setTipoId] = useState(sbfd?.id ?? tipos[0]?.id ?? '');
-  const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>('in');
-  const [largo, setLargo] = useState(33);
-  const [alto, setAlto] = useState(30);
-  const [prof, setProf] = useState(24);
-  const [perfilId, setPerfilId] = useState(perfilDefaultId);
-  const [preset, setPreset] = useState<Record<string, string>>(presetDefault);
+  const ov = initial?.overrides ?? null;
+  const [tipoId, setTipoId] = useState(initial?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '');
+  const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>(initial?.unidad ?? 'in');
+  const [largo, setLargo] = useState(initial?.largo ?? 33);
+  const [alto, setAlto] = useState(initial?.alto ?? 30);
+  const [prof, setProf] = useState(initial?.prof ?? 24);
+  const [perfilId, setPerfilId] = useState(initial ? '' : perfilDefaultId);
+  const [preset, setPreset] = useState<Record<string, string>>(initial?.preset ?? presetDefault);
 
   function aplicarPerfil(id: string) {
     setPerfilId(id);
@@ -39,14 +46,14 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
   const toggleHerraje = (rol: string) => setHerrajesExcl((xs) => xs.includes(rol) ? xs.filter((x) => x !== rol) : [...xs, rol]);
-  const [recargoId, setRecargoId] = useState('');
-  const [conHerrajes, setConHerrajes] = useState(true);
-  const [herrajesExcl, setHerrajesExcl] = useState<string[]>([]);
-  const [cantidad, setCantidad] = useState(1);
-  const [npuertas, setNpuertas] = useState('');
-  const [ncajones, setNcajones] = useState('');
-  const [nentrepanos, setNentrepanos] = useState('');
-  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>('normal');
+  const [recargoId, setRecargoId] = useState(initial ? (recargos.find((r) => r.recargo_pct === initial.recargoPct)?.id ?? '') : '');
+  const [conHerrajes, setConHerrajes] = useState(initial?.conHerrajes ?? true);
+  const [herrajesExcl, setHerrajesExcl] = useState<string[]>(initial?.herrajesExcluidos ?? []);
+  const [cantidad, setCantidad] = useState(initial?.cantidad ?? 1);
+  const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : '');
+  const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : '');
+  const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : '');
+  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? 'normal');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,21 +77,25 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
-    const res = await agregarLineaAction(cocinaId, {
-      tipoId, largo, alto, prof, unidad, preset, conHerrajes,
+    const payload = {
+      tipoId, largo, alto, prof, unidad, preset, conHerrajes, trm,
       recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
       cantidad, prefLabel: tipo?.pref, modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
       herrajesExcluidos: conHerrajes && herrajesExcl.length ? herrajesExcl : undefined,
-    });
+    };
+    const res = esEdicion
+      ? await editarLineaAction(initial!.lineaId, payload)
+      : await agregarLineaAction(cocinaId, payload);
     setLoading(false);
     if (!res.ok) { setError(res.error ?? 'Error'); return; }
     router.refresh();
+    onDone?.();
   }
 
   return (
     <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 p-5">
-      <h2 className="font-semibold text-slate-900 mb-3">Agregar mueble</h2>
+      <h2 className="font-semibold text-slate-900 mb-3">{esEdicion ? 'Editar mueble' : 'Agregar mueble'}</h2>
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
         <L label="Tipo">
           <Combobox value={tipoId} options={tipoOptions} onChange={setTipoId} placeholder="Buscar tipo…" />
@@ -144,9 +155,12 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
         )}
       </div>
       {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-      <button disabled={loading} className="mt-3 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">
-        {loading ? 'Agregando…' : '+ Agregar a la cotización'}
-      </button>
+      <div className="mt-3 flex gap-2">
+        <button disabled={loading} className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">
+          {loading ? 'Guardando…' : esEdicion ? 'Guardar cambios' : '+ Agregar a la cotización'}
+        </button>
+        {esEdicion && <button type="button" onClick={onDone} className="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100">Cancelar</button>}
+      </div>
       <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.4rem .5rem;font-size:.8rem}`}</style>
     </form>
   );

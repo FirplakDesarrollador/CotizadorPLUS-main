@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
-  crearCotizacion, agregarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
+  crearCotizacion, agregarLinea, editarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
   crearCocina, actualizarCocina, eliminarCocina,
   type AgregarLineaInput,
 } from '@/lib/cotizaciones';
@@ -61,6 +61,16 @@ export async function actualizarCotizacionAction(id: string, patch: { nombre?: s
   }
 }
 
+export async function editarLineaAction(lineaId: string, input: AgregarLineaInput): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const cotizacionId = await editarLinea(lineaId, input);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error' };
+  }
+}
+
 export async function eliminarLineaAction(cotizacionId: string, lineaId: string) {
   await eliminarLinea(cotizacionId, lineaId);
   revalidatePath(`/cotizaciones/${cotizacionId}`);
@@ -70,4 +80,26 @@ export async function eliminarCotizacionAction(id: string) {
   await eliminarCotizacion(id);
   revalidatePath('/cotizaciones');
   redirect('/cotizaciones');
+}
+
+// Versión para la lista: borra y revalida sin redirigir (devuelve estado).
+export async function borrarCotizacionAction(id: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await eliminarCotizacion(id);
+    revalidatePath('/cotizaciones');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error' };
+  }
+}
+
+// Renombrar rápido una cotización desde la lista.
+export async function renombrarCotizacionAction(id: string, nombre: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await actualizarCotizacion(id, { nombre });
+    revalidatePath('/cotizaciones');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error' };
+  }
 }

@@ -21,7 +21,7 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-slate-50">
       <AppHeader email={user?.email} rol={rol} active="admin" />
       <main className="mx-auto max-w-6xl px-4 py-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-4">Materiales y configuración</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-4">Materiales-Parámetros</h1>
         <AdminCatalogos tableros={tableros} cantos={cantos} herrajes={herrajes} recargos={recargos} parametros={parametros} perfiles={perfiles} />
       </main>
     </div>

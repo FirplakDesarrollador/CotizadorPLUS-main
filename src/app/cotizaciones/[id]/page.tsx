@@ -17,7 +17,12 @@ const GUIA_PROYECTO = [
   { selector: '[data-tour="add-cocina"]', title: 'Agregar cocina', description: 'Añade tantas cocinas como necesite el proyecto. El total del proyecto suma todas.' },
 ];
 
-type Linea = { id: string; pref: string | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_total_usd: number; precio_total_cop: number };
+type LineaConfig = { preset?: Record<string, string>; conHerrajes?: boolean; recargoPct?: number; overrides?: Record<string, number> | null; modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes'; herrajesExcluidos?: string[] | null };
+type Linea = {
+  id: string; pref: string | null; descripcion_es: string | null; cantidad: number;
+  precio_unit_usd: number; precio_total_usd: number; precio_total_cop: number;
+  tipo_mueble_id: string; largo: number; alto: number; prof: number; unidad_dim: string; config: LineaConfig | null;
+};
 type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
 
 export default async function CotizacionDetallePage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,7 +48,7 @@ export default async function CotizacionDetallePage({ params }: { params: Promis
 
         <div className="space-y-4" data-tour="cocinas">
           {(cocinas as Cocina[]).map((c) => (
-            <CocinaCard key={c.id} cotizacionId={id} cocina={c} tipos={data.tipos} recargos={data.recargos} tableros={data.tableros} presetDefault={data.presetDefault} rolesByTipo={data.rolesByTipo} perfiles={data.perfiles} perfilDefaultId={data.perfilDefaultId} herrajesByTipo={data.herrajesByTipo} />
+            <CocinaCard key={c.id} cotizacionId={id} cocina={c} tipos={data.tipos} recargos={data.recargos} tableros={data.tableros} presetDefault={data.presetDefault} rolesByTipo={data.rolesByTipo} perfiles={data.perfiles} perfilDefaultId={data.perfilDefaultId} herrajesByTipo={data.herrajesByTipo} trm={Number((cabecera as { trm?: number }).trm ?? data.trmDefault)} />
           ))}
           <div data-tour="add-cocina"><AddCocina cotizacionId={id} /></div>
         </div>

@@ -11,11 +11,11 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
         <div className="flex items-center gap-2">
           <span className="font-semibold text-slate-900 mr-2 flex items-center gap-1.5">
             Cotizador PLUS
-            <span className="text-[10px] font-medium bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">v1.0.0</span>
+            <span className="text-[10px] font-medium bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">v1.0.1</span>
           </span>
           {link('/cotizador', 'Simulador', 'cotizador')}
           {link('/cotizaciones', 'Cotizaciones', 'cotizaciones')}
-          {rol === 'admin' && link('/admin', 'Materiales', 'admin')}
+          {rol === 'admin' && link('/admin', 'Materiales-Parámetros', 'admin')}
           {rol === 'admin' && link('/admin/diseno', 'Diseño', 'diseno')}
           {link('/manual', 'Manual', 'manual')}
         </div>

@@ -1,6 +1,6 @@
 // Contenido de los tooltips de ayuda (hover) de la app.
 // Cada entrada describe la FUNCIÓN del campo y un TIP clave.
-// Se consume desde el componente <Campo> en Simulador, Cotizaciones, Materiales y Diseño.
+// Se consume desde el componente <Campo> en Simulador, Cotizaciones, Materiales-Parámetros y Diseño.
 import type { Info } from '@/components/Campo';
 
 // ---- Simulador / Cotizaciones (AddLineForm comparten claves) ----
@@ -33,9 +33,9 @@ export const TIPS_COTIZADOR: Record<string, Info> = {
   TRM: { fn: 'Tasa de cambio COP→USD usada para mostrar el precio en dólares.', tip: 'Editable aquí; solo afecta el valor en USD, no el costo en COP.' },
 };
 
-// ---- Materiales (Admin) — clave = field.key de cada catálogo ----
+// ---- Materiales-Parámetros (Admin) — clave = field.key de cada catálogo ----
 export const TIPS_MATERIALES: Record<string, Info> = {
-  codigo: { fn: 'Código único del material (clave de referencia).', tip: 'Debe ser único; se usa para enlazar presets y plantillas.' },
+  codigo: { fn: 'Código único del material (clave de referencia).', tip: 'Debe ser único; se usa para enlazar presets and plantillas.' },
   proveedor: { fn: 'Proveedor o marca del tablero.', tip: 'Solo informativo para identificar el material.' },
   sustrato: { fn: 'Tipo de sustrato (MDF, aglomerado, etc.).' },
   espesor_mm: { fn: 'Espesor del tablero en milímetros.', tip: 'Define el calibre; debe coincidir con el rol (caja 15, frente 18…).' },
@@ -77,7 +77,7 @@ export const TIPS_DISENO: Record<string, Info> = {
   Valor: { fn: 'Valor que toma la variable si la condición es verdadera.', tip: 'Puede ser una fórmula en L, A, P.' },
   Prioridad: { fn: 'Orden de evaluación de las reglas (menor = primero).', tip: 'Pon las condiciones más específicas con prioridad más baja.' },
   Rol: { fn: 'Rol del herraje (pata, bisagra, riel, manija…).', tip: 'Roles estructurales (pata/tornillo/riel/barra) no se incluyen en el kit de frentes.' },
-  Herraje: { fn: 'Herraje del catálogo asignado a este rol.', tip: 'Su precio se toma del catálogo de Materiales › Herrajes.' },
+  Herraje: { fn: 'Herraje del catálogo asignado a este rol.', tip: 'Su precio se toma del catálogo de Materiales-Parámetros › Herrajes.' },
   Largo: { fn: 'Largo (L) usado en la previsualización, en pulgadas.' },
   Alto: { fn: 'Alto (A) usado en la previsualización, en pulgadas.' },
   Prof: { fn: 'Profundidad (P) usada en la previsualización, en pulgadas.' },

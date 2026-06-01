@@ -1,13 +1,18 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AddLineForm from './AddLineForm';
+import AddLineForm, { type LineaInicial } from './AddLineForm';
 import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction } from '../actions';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-type Linea = { id: string; pref: string | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_total_usd: number; precio_total_cop: number };
+type LineaConfig = { preset?: Record<string, string>; conHerrajes?: boolean; recargoPct?: number; overrides?: Record<string, number> | null; modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes'; herrajesExcluidos?: string[] | null };
+type Linea = {
+  id: string; pref: string | null; descripcion_es: string | null; cantidad: number;
+  precio_unit_usd: number; precio_total_usd: number; precio_total_cop: number;
+  tipo_mueble_id: string; largo: number; alto: number; prof: number; unidad_dim: string; config: LineaConfig | null;
+};
 type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
 type Tipo = { id: string; pref: string; nombre_es: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
@@ -15,12 +20,23 @@ type Tablero = { codigo: string; proveedor: string | null; sustrato: string | nu
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
 
-export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tableros, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo }:
-  { cotizacionId: string; cocina: Cocina; tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]> }) {
+export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tableros, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm }:
+  { cotizacionId: string; cocina: Cocina; tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]>; trm: number }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState(false);
   const [nombre, setNombre] = useState(cocina.nombre);
+
+  const toInicial = (l: Linea): LineaInicial => ({
+    lineaId: l.id, tipoId: l.tipo_mueble_id, largo: l.largo, alto: l.alto, prof: l.prof,
+    unidad: (l.unidad_dim as 'in' | 'cm' | 'mm') ?? 'in',
+    preset: l.config?.preset ?? {}, conHerrajes: l.config?.conHerrajes ?? true,
+    recargoPct: l.config?.recargoPct ?? 0, cantidad: l.cantidad,
+    modoFrentes: l.config?.modoFrentes ?? 'normal',
+    overrides: l.config?.overrides ?? null, herrajesExcluidos: l.config?.herrajesExcluidos ?? null,
+  });
+  const lineaEnEdicion = cocina.lineas.find((l) => l.id === editId) ?? null;
 
   async function saveName() {
     await actualizarCocinaAction(cotizacionId, cocina.id, nombre);
@@ -76,16 +92,21 @@ export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tabl
               <td className="text-right">{fmtUSD(l.precio_unit_usd)}</td>
               <td className="text-right">{fmtUSD(l.precio_total_usd)}</td>
               <td className="text-right px-4">{fmtCOP(l.precio_total_cop)}</td>
-              <td className="px-2"><button onClick={() => delLinea(l.id)} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button></td>
+              <td className="px-2 whitespace-nowrap text-right">
+                <button onClick={() => { setEditId(l.id); setShowAdd(false); }} className="text-slate-500 hover:text-slate-900 mr-2" title="Editar módulo">Editar</button>
+                <button onClick={() => delLinea(l.id)} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
       <div className="p-4 border-t border-slate-100">
-        {showAdd ? (
+        {lineaEnEdicion ? (
+          <AddLineForm key={lineaEnEdicion.id} cocinaId={cocina.id} tipos={tipos} recargos={recargos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} perfiles={perfiles} perfilDefaultId={perfilDefaultId} herrajesByTipo={herrajesByTipo} trm={trm} initial={toInicial(lineaEnEdicion)} onDone={() => setEditId(null)} />
+        ) : showAdd ? (
           <div className="space-y-2">
-            <AddLineForm cocinaId={cocina.id} tipos={tipos} recargos={recargos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} perfiles={perfiles} perfilDefaultId={perfilDefaultId} herrajesByTipo={herrajesByTipo} />
+            <AddLineForm cocinaId={cocina.id} tipos={tipos} recargos={recargos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} perfiles={perfiles} perfilDefaultId={perfilDefaultId} herrajesByTipo={herrajesByTipo} trm={trm} />
             <button onClick={() => setShowAdd(false)} className="text-sm text-slate-400 hover:underline">Cerrar</button>
           </div>
         ) : (

@@ -74,29 +74,17 @@ export async function eliminarCocina(cocinaId: string, cotizacionId: string) {
 // ---- Módulos (líneas) dentro de una cocina ----
 export type AgregarLineaInput = CotizarInput & { cantidad: number; prefLabel?: string };
 
-export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
-  const sb = await createClient();
-  const { data: cocina, error: ce } = await sb.from('cot_cocinas').select('id,cotizacion_id').eq('id', cocinaId).single();
-  if (ce || !cocina) throw new Error('Cocina no encontrada');
-  const cotizacionId = (cocina as { cotizacion_id: string }).cotizacion_id;
-
-  const res = await cotizar(input);
+// Construye las columnas de una línea a partir del input y el resultado del motor.
+// Lo comparten agregarLinea y editarLinea para garantizar el mismo cálculo.
+function construirFilaLinea(input: AgregarLineaInput, res: Awaited<ReturnType<typeof cotizar>>) {
   const cantidad = input.cantidad || 1;
   // Si la línea lleva herrajes, el precio de venta es sobre el costo CON herrajes
   // (mueble con su margen + herrajes con su margen propio). Si no, solo el mueble.
   const precioUnitCop = input.conHerrajes ? res.precioConHerrajesCopConRecargo : res.precioCopConRecargo;
   const precioUnitUsd = input.conHerrajes ? res.precioConHerrajesUsd : res.precioUsd;
-
-  const { count } = await sb.from('cot_cotizacion_lineas')
-    .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
-
   const desc = `${input.prefLabel ?? ''} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim()
     + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '');
-
-  const { error } = await sb.from('cot_cotizacion_lineas').insert({
-    cotizacion_id: cotizacionId,
-    cocina_id: cocinaId,
-    orden: count ?? 0,
+  return {
     tipo_mueble_id: input.tipoId,
     pref: input.prefLabel ?? null,
     largo: input.largo, alto: input.alto, prof: input.prof, unidad_dim: input.unidad,
@@ -116,7 +104,40 @@ export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
     precio_total_usd: precioUnitUsd * cantidad,
     descripcion_es: desc,
     breakdown: res,
+  };
+}
+
+export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
+  const sb = await createClient();
+  const { data: cocina, error: ce } = await sb.from('cot_cocinas').select('id,cotizacion_id').eq('id', cocinaId).single();
+  if (ce || !cocina) throw new Error('Cocina no encontrada');
+  const cotizacionId = (cocina as { cotizacion_id: string }).cotizacion_id;
+
+  const res = await cotizar(input);
+  const { count } = await sb.from('cot_cotizacion_lineas')
+    .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
+
+  const { error } = await sb.from('cot_cotizacion_lineas').insert({
+    cotizacion_id: cotizacionId,
+    cocina_id: cocinaId,
+    orden: count ?? 0,
+    ...construirFilaLinea(input, res),
   });
+  if (error) throw new Error(error.message);
+  await recomputarTotales(cotizacionId);
+  return cotizacionId;
+}
+
+// Edita una línea existente recalculando con el motor (mismos datos que al agregar).
+export async function editarLinea(lineaId: string, input: AgregarLineaInput) {
+  const sb = await createClient();
+  const { data: linea, error: le } = await sb.from('cot_cotizacion_lineas').select('cotizacion_id').eq('id', lineaId).single();
+  if (le || !linea) throw new Error('Línea no encontrada');
+  const cotizacionId = (linea as { cotizacion_id: string }).cotizacion_id;
+
+  const res = await cotizar(input);
+  const { error } = await sb.from('cot_cotizacion_lineas')
+    .update(construirFilaLinea(input, res)).eq('id', lineaId);
   if (error) throw new Error(error.message);
   await recomputarTotales(cotizacionId);
   return cotizacionId;
