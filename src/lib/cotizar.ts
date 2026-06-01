@@ -15,6 +15,7 @@ export type CotizarInput = {
   recargoPct: number;                    // recargo cliente (0.10 = 10%)
   trm?: number;                          // override TRM (si no, usa parámetro)
   overrides?: Record<string, number>;    // n_puertas, etc.
+  modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
 };
 
 export type CotizarResult = Breakdown & { trm: number; margen: number };
@@ -24,7 +25,7 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
 
   const [{ data: params }, { data: tipo }] = await Promise.all([
     sb.from('cot_parametros').select('key,value'),
-    sb.from('cot_tipos_mueble').select('id,etiquetas_und,margen_key').eq('id', inp.tipoId).single(),
+    sb.from('cot_tipos_mueble').select('id,etiquetas_und,margen_key,usa_carton').eq('id', inp.tipoId).single(),
   ]);
   if (!tipo) throw new Error('Tipo de mueble no encontrado');
   const P = Object.fromEntries((params ?? []).map((r) => [r.key, r.value])) as Record<string, unknown>;
@@ -74,11 +75,13 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     herrajesByCode,
     consumiblesBySelector,
     etiquetasUnd: tipo.etiquetas_und ?? 4,
+    usaCarton: tipo.usa_carton !== false,
     margen,
     recargo: inp.recargoPct ?? 0,
     trm,
     desperdicio,
     overrides: inp.overrides,
+    modoFrentes: inp.modoFrentes ?? 'normal',
   });
 
   return { ...breakdown, trm, margen };

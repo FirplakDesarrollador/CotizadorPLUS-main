@@ -59,11 +59,13 @@ export type CalcInput = {
   herrajesByCode: Record<string, Herraje>;
   consumiblesBySelector: Record<string, number>; // selector_key -> precio
   etiquetasUnd: number;
+  usaCarton?: boolean;
   margen: number;
   recargo: number;     // recargo cliente (ej. 0.10)
   trm: number;
   desperdicio: number;
   overrides?: Record<string, number>; // forzar n_puertas, etc.
+  modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes'; // O* = sin_frentes ; KF-* = solo_frentes
 };
 
 // Convierte dimensiones de la unidad de entrada a pulgadas (el motor trabaja en pulgadas).
@@ -119,7 +121,11 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   let tarugos = 0, soportes = 0;
   const piezasDet: Breakdown['piezas'] = [];
 
+  const modo = inp.modoFrentes ?? 'normal';
   for (const pz of inp.piezas) {
+    const esFrente = pz.rol_tablero === 'frente' || /frente/i.test(pz.nombre);
+    if (modo === 'sin_frentes' && esFrente) continue;       // open: caja sin puertas/frentes
+    if (modo === 'solo_frentes' && !esFrente) continue;     // kit de frentes: solo puertas/frentes
     const cant = num(pz.formula_cantidad);
     const lIn = num(pz.formula_largo) - (pz.resta_largo || 0);
     const aIn = num(pz.formula_ancho) - (pz.resta_ancho || 0);
@@ -164,7 +170,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   // Consumibles
   const pc = (sel: string) => Number(inp.consumiblesBySelector[sel] || 0);
   const dimsArr = [dims.L, dims.A, dims.P].sort((a, b) => b - a);
-  const cartonUnd = Math.round((((dimsArr[0] * 2 * IN2CM) / 200) * ((dimsArr[1] * 2 * IN2CM) / 130)) * 10) / 10;
+  const cartonUnd = (inp.usaCarton === false) ? 0 : Math.round((((dimsArr[0] * 2 * IN2CM) / 200) * ((dimsArr[1] * 2 * IN2CM) / 130)) * 10) / 10;
   const consumibles = {
     tarugos: tarugos * pc('tarugo'),
     soportes: soportes * pc('soporte'),
@@ -177,7 +183,10 @@ export function calcularMueble(inp: CalcInput): Breakdown {
 
   // Herrajes
   let costoHerrajes = 0; const herrajesDet: Breakdown['herrajes'] = [];
+  const ESTRUCTURAL = new Set(['pata', 'tornillo', 'riel', 'barra']);
   for (const hp of (inp.herrajesPlantilla || [])) {
+    // "Sin frentes": la carcasa conserva sus herrajes (queda lista para frentes). Kit de frentes: solo herraje de puerta.
+    if (modo === 'solo_frentes' && ESTRUCTURAL.has(hp.rol)) continue;
     const cant = num(hp.formula_cantidad);
     const precio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
     const costo = cant * precio;

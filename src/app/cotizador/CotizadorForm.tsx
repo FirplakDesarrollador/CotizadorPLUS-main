@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import { cotizarAction } from './actions';
 import type { CotizarResult } from '@/lib/cotizar';
+import GuideButton from '@/components/GuideButton';
 
 type Tipo = { id: string; pref: string; nombre_es: string | null; categoria: string | null; margen_key: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number; incluye_herrajes: boolean };
@@ -11,6 +12,17 @@ const fmtCOP = (n: number) => n.toLocaleString('es-CO', { style: 'currency', cur
 const fmtUSD = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', fondo: 'fondo' };
+
+const GUIA_SIMULADOR = [
+  { title: 'Simulador de muebles', description: 'Calcula el precio de un mueble individual a partir de sus dimensiones y materiales. Sigue estos pasos.' },
+  { selector: '[data-tour="tipo"]', title: '1. Tipo de mueble', description: 'Elige el tipo (base, superior, vanity, torre…). Cada tipo tiene su despiece propio validado.' },
+  { selector: '[data-tour="dims"]', title: '2. Dimensiones', description: 'Ingresa Largo, Alto y Profundidad, y elige la unidad (pulgadas, cm o mm).' },
+  { selector: '[data-tour="tableros"]', title: '3. Tableros', description: 'Elige el material por rol: caja, refuerzos, frente y fondo. Define el costo de la madera.' },
+  { selector: '[data-tour="cliente"]', title: '4. Cliente (recargo)', description: 'Opcional: aplica el recargo del cliente (ej. CEMA +10%).' },
+  { selector: '[data-tour="opciones"]', title: '5. Opciones', description: 'Ajusta nº de puertas/cajones, el modo de frentes (completo / sin frentes / kit) y la TRM.' },
+  { selector: '[data-tour="calcular"]', title: '6. Calcular', description: 'Presiona para calcular el precio con el motor (validado contra el Excel CEMA).' },
+  { selector: '[data-tour="resultado"]', title: '7. Resultado', description: 'Verás el precio (COP/USD conmutable) y el desglose: materiales, piezas, canto y herrajes.' },
+];
 
 export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, presetDefault, rolesByTipo }:
   { tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]> }) {
@@ -27,6 +39,8 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
   const [moneda, setMoneda] = useState<'COP' | 'USD'>('USD');
   const [trm, setTrm] = useState(trmDefault);
   const [npuertas, setNpuertas] = useState<string>('');
+  const [ncajones, setNcajones] = useState<string>('');
+  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>('normal');
 
   const [result, setResult] = useState<CotizarResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,10 +57,11 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
     setLoading(true); setError(null);
     const overrides: Record<string, number> = {};
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
+    if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     const res = await cotizarAction({
       tipoId, largo, alto, prof, unidad, preset, conHerrajes,
       recargoPct: recargoSel?.recargo_pct ?? 0,
-      trm,
+      trm, modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
     });
     setLoading(false);
@@ -58,15 +73,20 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
     <div className="grid lg:grid-cols-[380px_1fr] gap-6">
       {/* ---- Formulario ---- */}
       <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 h-fit">
-        <h2 className="font-semibold text-slate-900">Simular mueble</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-slate-900">Simular mueble</h2>
+          <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
+        </div>
 
-        <Field label="Tipo de mueble">
-          <select value={tipoId} onChange={(e) => setTipoId(e.target.value)} className="inp">
-            {tipos.map((t) => <option key={t.id} value={t.id}>{t.pref} — {t.nombre_es}</option>)}
-          </select>
-        </Field>
+        <div data-tour="tipo">
+          <Field label="Tipo de mueble">
+            <select value={tipoId} onChange={(e) => setTipoId(e.target.value)} className="inp">
+              {tipos.map((t) => <option key={t.id} value={t.id}>{t.pref} — {t.nombre_es}</option>)}
+            </select>
+          </Field>
+        </div>
 
-        <div className="grid grid-cols-4 gap-2 items-end">
+        <div data-tour="dims" className="grid grid-cols-4 gap-2 items-end">
           <Field label="Largo"><input type="number" step="any" value={largo} onChange={(e) => setLargo(+e.target.value)} className="inp" /></Field>
           <Field label="Alto"><input type="number" step="any" value={alto} onChange={(e) => setAlto(+e.target.value)} className="inp" /></Field>
           <Field label="Prof"><input type="number" step="any" value={prof} onChange={(e) => setProf(+e.target.value)} className="inp" /></Field>
@@ -77,7 +97,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
           </Field>
         </div>
 
-        <div className="space-y-2">
+        <div data-tour="tableros" className="space-y-2">
           <p className="text-xs font-medium text-slate-500 uppercase">Tableros</p>
           {roles.map((rol) => (
             <Field key={rol} label={ROL_LABEL[rol] ?? rol}>
@@ -89,15 +109,23 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
           ))}
         </div>
 
-        <Field label="Cliente (recargo)">
-          <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
-            <option value="">Sin recargo</option>
-            {recargos.map((r) => <option key={r.id} value={r.id}>{r.cliente_nombre} (+{(r.recargo_pct * 100).toFixed(0)}%)</option>)}
-          </select>
-        </Field>
+        <div data-tour="cliente">
+          <Field label="Cliente (recargo)">
+            <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
+              <option value="">Sin recargo</option>
+              {recargos.map((r) => <option key={r.id} value={r.id}>{r.cliente_nombre} (+{(r.recargo_pct * 100).toFixed(0)}%)</option>)}
+            </select>
+          </Field>
+        </div>
 
-        <div className="grid grid-cols-2 gap-2 items-end">
+        <div data-tour="opciones" className="grid grid-cols-2 gap-2 items-end">
           <Field label="Nº puertas (override)"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
+          <Field label="Nº cajones (override)"><input type="number" placeholder="auto" value={ncajones} onChange={(e) => setNcajones(e.target.value)} className="inp" /></Field>
+          <Field label="Frentes">
+            <select value={modoFrentes} onChange={(e) => setModoFrentes(e.target.value as 'normal' | 'sin_frentes' | 'solo_frentes')} className="inp">
+              <option value="normal">Completo</option><option value="sin_frentes">Sin frentes (open)</option><option value="solo_frentes">Solo kit de frentes</option>
+            </select>
+          </Field>
           <Field label="TRM"><input type="number" step="any" value={trm} onChange={(e) => setTrm(+e.target.value)} className="inp" /></Field>
         </div>
 
@@ -106,13 +134,13 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
         </label>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button disabled={loading} className="w-full rounded-lg bg-slate-900 text-white py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">
+        <button data-tour="calcular" disabled={loading} className="w-full rounded-lg bg-slate-900 text-white py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">
           {loading ? 'Calculando…' : 'Calcular precio'}
         </button>
       </form>
 
       {/* ---- Resultado ---- */}
-      <div className="space-y-4">
+      <div data-tour="resultado" className="space-y-4">
         {!result && <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400">Ingresa los datos y calcula para ver el precio y el desglose.</div>}
         {result && <ResultadoView result={result} moneda={moneda} setMoneda={setMoneda} conHerrajes={conHerrajes} />}
       </div>

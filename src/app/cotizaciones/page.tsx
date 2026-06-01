@@ -2,7 +2,14 @@ import Link from 'next/link';
 import { getUserAndRole } from '@/lib/auth';
 import { listarCotizaciones } from '@/lib/cotizaciones';
 import AppHeader from '@/components/AppHeader';
+import GuideButton from '@/components/GuideButton';
 import { crearCotizacionAction } from './actions';
+
+const GUIA_LISTA = [
+  { title: 'Cotizaciones', description: 'Aquí creas y consultas tus proyectos (cotizaciones). Cada proyecto tendrá sus cocinas y módulos.' },
+  { selector: '[data-tour="nuevo"]', title: 'Nuevo proyecto', description: 'Dale un nombre (ej. el apto/cliente), elige cliente, moneda y TRM, y crea el proyecto para empezar a agregar muebles.' },
+  { selector: '[data-tour="lista"]', title: 'Tus proyectos', description: 'La lista con totales en COP y USD. Haz clic en un proyecto para abrirlo, agregar muebles y exportar.' },
+];
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -14,8 +21,9 @@ export default async function CotizacionesPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <AppHeader email={user?.email} rol={rol} active="cotizaciones" />
-      <main className="mx-auto max-w-6xl px-4 py-6 grid lg:grid-cols-[320px_1fr] gap-6">
-        <form action={crearCotizacionAction} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 h-fit">
+      <div className="mx-auto max-w-6xl px-4 pt-4 flex justify-end"><GuideButton steps={GUIA_LISTA} label="Guía de uso" /></div>
+      <main className="mx-auto max-w-6xl px-4 pb-6 grid lg:grid-cols-[320px_1fr] gap-6">
+        <form action={crearCotizacionAction} data-tour="nuevo" className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 h-fit">
           <h2 className="font-semibold text-slate-900">Nuevo proyecto / cotización</h2>
           <label className="block"><span className="block text-xs text-slate-500 mb-1">Nombre del proyecto *</span>
             <input name="nombre" required placeholder="Ej. Cocina Torre A — Apto 502" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
@@ -29,7 +37,7 @@ export default async function CotizacionesPage() {
           <button className="w-full rounded-lg bg-slate-900 text-white py-2 text-sm font-medium hover:bg-slate-800">Crear y agregar muebles</button>
         </form>
 
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-fit">
+        <div data-tour="lista" className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-fit">
           <table className="w-full text-sm">
             <thead><tr className="text-left text-slate-400 border-b border-slate-100">
               <th className="px-4 py-2">Cotización</th><th>Cliente</th><th>Estado</th><th className="text-right">Total USD</th><th className="text-right px-4">Total COP</th>

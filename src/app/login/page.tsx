@@ -25,7 +25,10 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <form onSubmit={onSubmit} className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-5">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Cotizador PLUS</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-semibold text-slate-900">Cotizador PLUS</h1>
+            <span className="text-[10px] font-medium bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">v1.0.0</span>
+          </div>
           <p className="text-sm text-slate-500">Inicia sesión para continuar</p>
         </div>
         <div className="space-y-3">

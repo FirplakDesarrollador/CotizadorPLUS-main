@@ -36,12 +36,16 @@ function derive(reglas, dims) {
   return out;
 }
 
-function costoSinHerrajes({ piezas, reglas, dims, preset, tablerosByCode, cantosByCal, consBySel, etiquetas, desperdicio }) {
-  const V = { ...dims, ...derive(reglas, dims) };
+function costoSinHerrajes({ piezas, reglas, dims, preset, tablerosByCode, cantosByCal, consBySel, etiquetas, desperdicio, overrides, usaCarton, herrajesPlant, herrajesByCode }) {
+  const V = { ...dims, ...derive(reglas, dims), ...(overrides || {}) };
   const num = (e) => Number(ev(e, V));
   const areaPorRol = {}, cantoPorCal = {};
   let tarugos = 0, soportes = 0;
+  const modo = arguments[0].modoFrentes || 'normal';
   for (const pz of piezas) {
+    const esFrente = pz.rol_tablero === 'frente' || /frente/i.test(pz.nombre);
+    if (modo === 'sin_frentes' && esFrente) continue;
+    if (modo === 'solo_frentes' && !esFrente) continue;
     const cant = num(pz.formula_cantidad);
     const lIn = num(pz.formula_largo) - (pz.resta_largo || 0);
     const aIn = num(pz.formula_ancho) - (pz.resta_ancho || 0);
@@ -68,51 +72,63 @@ function costoSinHerrajes({ piezas, reglas, dims, preset, tablerosByCode, cantos
     canto += ((e.lenIn * IN2CM + e.edges * 5) / 100) * Number(cz.precio);
   }
   const dimsArr = [dims.L, dims.A, dims.P].sort((a, b) => b - a);
-  const cartonU = Math.round((((dimsArr[0] * 2 * IN2CM) / 200) * ((dimsArr[1] * 2 * IN2CM) / 130)) * 10) / 10;
+  const cartonU = (usaCarton === false) ? 0 : Math.round((((dimsArr[0] * 2 * IN2CM) / 200) * ((dimsArr[1] * 2 * IN2CM) / 130)) * 10) / 10;
   const cons = tarugos * (consBySel.tarugo || 0) + soportes * (consBySel.soporte || 0)
     + cartonU * (consBySel.carton || 0) + etiquetas * (consBySel.etiqueta || 0);
-  return madera + canto + cons;
+  const sin = madera + canto + cons;
+  let herr = 0;
+  const ESTRUCT = new Set(['pata', 'tornillo', 'riel', 'barra']);
+  for (const hp of (herrajesPlant || [])) {
+    if (modo === 'solo_frentes' && ESTRUCT.has(hp.rol)) continue;
+    const precio = Number((herrajesByCode[hp.herraje_codigo] || {}).precio || 0);
+    herr += num(hp.formula_cantidad) * precio;
+  }
+  return { sin, herr, con: sin + herr };
 }
 
-const GROUND = [
-  { sku: 'B12', pref: 'B', L: 12, A: 30, P: 24, I: 93731.71 }, { sku: 'B15', pref: 'B', L: 15, A: 30, P: 24, I: 104503.87 },
-  { sku: 'B18', pref: 'B', L: 18, A: 30, P: 24, I: 115249.2 }, { sku: 'B21', pref: 'B', L: 21, A: 30, P: 24, I: 126401.14 },
-  { sku: 'B24', pref: 'B', L: 24, A: 30, P: 24, I: 138980.47 }, { sku: 'B27', pref: 'B', L: 27, A: 30, P: 24, I: 150558.88 },
-  { sku: 'B30', pref: 'B', L: 30, A: 30, P: 24, I: 162137.29 }, { sku: 'B33', pref: 'B', L: 33, A: 30, P: 24, I: 173715.7 },
-  { sku: 'B36', pref: 'B', L: 36, A: 30, P: 24, I: 185294.11 }, { sku: 'B42', pref: 'B', L: 42, A: 30, P: 24, I: 208450.93 },
-  { sku: 'SBFD30', pref: 'SBFD', L: 30, A: 30, P: 24, I: 136010.04 }, { sku: 'SBFD33', pref: 'SBFD', L: 33, A: 30, P: 24, I: 144915.41 },
-  { sku: 'SBFD36', pref: 'SBFD', L: 36, A: 30, P: 24, I: 153820.77 }, { sku: 'SBFD39', pref: 'SBFD', L: 39, A: 30, P: 24, I: 162726.13 },
-  { sku: 'SBFD24', pref: 'SBFD', L: 24, A: 30, P: 24, I: 118199.32 },
-];
+const GROUND = JSON.parse(fs.readFileSync(path.resolve('scripts/ground.json'), 'utf8'));
+try { GROUND.push(...JSON.parse(fs.readFileSync(path.resolve('scripts/ground_extra.json'), 'utf8'))); } catch {}
+try { GROUND.push(...JSON.parse(fs.readFileSync(path.resolve('scripts/ground_geom.json'), 'utf8'))); } catch {}
+try { GROUND.push(...JSON.parse(fs.readFileSync(path.resolve('scripts/ground_torres.json'), 'utf8'))); } catch {}
+try { GROUND.push(...JSON.parse(fs.readFileSync(path.resolve('scripts/ground_esp.json'), 'utf8'))); } catch {}
+try { GROUND.push(...JSON.parse(fs.readFileSync(path.resolve('scripts/ground_uw.json'), 'utf8'))); } catch {}
 
 (async () => {
   const params = Object.fromEntries((await rest('cot_parametros?select=key,value')).map((r) => [r.key, r.value]));
   const preset = params.preset_default;
   const desperdicio = Number(params.desperdicio_madera);
-  const tipos = await rest('cot_tipos_mueble?select=id,pref,etiquetas_und');
+  const tipos = await rest('cot_tipos_mueble?select=id,pref,etiquetas_und,usa_carton');
   const piezas = await rest('cot_piezas_plantilla?select=*&order=orden');
   const reglas = await rest('cot_reglas_config?activo=eq.true&select=*');
   const tableros = await rest('cot_tableros?select=codigo,precio_m2');
   const cantos = await rest('cot_cantos?select=calibre,precio');
   const herr = await rest('cot_herrajes?categoria=eq.consumible&select=selector_key,precio');
+  const herrPlant = await rest('cot_herrajes_plantilla?select=*');
+  const herrAll = await rest('cot_herrajes?select=codigo,precio');
+  const herrajesByCode = Object.fromEntries(herrAll.map((h) => [h.codigo, h]));
   const tablerosByCode = Object.fromEntries(tableros.map((t) => [t.codigo, t]));
   const cantosByCal = Object.fromEntries(cantos.map((c) => [norm(c.calibre), c]));
   const consBySel = Object.fromEntries(herr.map((h) => [h.selector_key, Number(h.precio)]));
 
-  let pass = 0;
-  console.log(`${'sku'.padEnd(9)}${'calc'.padStart(12)}${'excel'.padStart(12)}${'diff'.padStart(10)}${'%'.padStart(9)}  ok`);
+  let passI = 0, passK = 0, nK = 0;
+  console.log(`${'sku'.padEnd(11)}${'sinH'.padStart(10)}${'I'.padStart(10)}  ${'conH'.padStart(10)}${'K'.padStart(10)}${'difK'.padStart(8)}  ok`);
   for (const m of GROUND) {
     const tipo = tipos.find((t) => t.pref === m.pref);
-    if (!tipo) { console.log(`${m.sku.padEnd(9)}  tipo ${m.pref} no existe`); continue; }
+    if (!tipo) { console.log(`${m.sku.padEnd(11)}  tipo ${m.pref} no existe`); continue; }
     const pz = piezas.filter((p) => p.tipo_mueble_id === tipo.id);
     const rg = reglas.filter((r) => r.tipo_mueble_id === null || r.tipo_mueble_id === tipo.id);
-    let calc;
+    const hp = herrPlant.filter((h) => h.tipo_mueble_id === tipo.id);
+    let r;
     try {
-      calc = costoSinHerrajes({ piezas: pz, reglas: rg, dims: { L: m.L, A: m.A, P: m.P }, preset, tablerosByCode, cantosByCal, consBySel, etiquetas: tipo.etiquetas_und ?? 4, desperdicio });
-    } catch (e) { console.log(`${m.sku.padEnd(9)}  ERROR ${e.message}`); continue; }
-    const diff = calc - m.I, pct = (diff / m.I) * 100, ok = Math.abs(diff) < 50;
-    if (ok) pass++;
-    console.log(`${m.sku.padEnd(9)}${calc.toFixed(0).padStart(12)}${m.I.toFixed(0).padStart(12)}${diff.toFixed(0).padStart(10)}${pct.toFixed(3).padStart(8)}%  ${ok ? '✅' : '❌'}`);
+      r = costoSinHerrajes({ piezas: pz, reglas: rg, dims: { L: m.L, A: m.A, P: m.P }, preset, tablerosByCode, cantosByCal, consBySel, etiquetas: tipo.etiquetas_und ?? 4, desperdicio, overrides: m.ov, usaCarton: tipo.usa_carton !== false, herrajesPlant: hp, herrajesByCode, modoFrentes: m.mf });
+    } catch (e) { console.log(`${m.sku.padEnd(11)}  ERROR ${e.message}`); continue; }
+    const okI = Math.abs(r.sin - m.I) < 50; if (okI) passI++;
+    let kStr = '', okK = '  ';
+    if (typeof m.K === 'number') {
+      nK++; const dK = r.con - m.K; const ok = Math.abs(dK) < 50; if (ok) passK++;
+      kStr = `  ${r.con.toFixed(0).padStart(10)}${m.K.toFixed(0).padStart(10)}${dK.toFixed(0).padStart(8)}  ${ok ? '✅' : '❌'}`;
+    }
+    console.log(`${m.sku.padEnd(11)}${r.sin.toFixed(0).padStart(10)}${m.I.toFixed(0).padStart(10)}${kStr}${typeof m.K !== 'number' ? `  (sinH ${okI ? '✅' : '❌'})` : ''}`);
   }
-  console.log(`\n${pass}/${GROUND.length} dentro de ±50 COP`);
+  console.log(`\nSIN herrajes: ${passI}/${GROUND.length} exactos · CON herrajes: ${passK}/${nK} exactos`);
 })().catch((e) => { console.error(e); process.exit(1); });

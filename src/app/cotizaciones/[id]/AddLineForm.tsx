@@ -25,6 +25,8 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
   const [conHerrajes, setConHerrajes] = useState(true);
   const [cantidad, setCantidad] = useState(1);
   const [npuertas, setNpuertas] = useState('');
+  const [ncajones, setNcajones] = useState('');
+  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>('normal');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,10 +40,11 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
     setLoading(true); setError(null);
     const overrides: Record<string, number> = {};
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
+    if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     const res = await agregarLineaAction(cocinaId, {
       tipoId, largo, alto, prof, unidad, preset, conHerrajes,
       recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
-      cantidad, prefLabel: tipo?.pref,
+      cantidad, prefLabel: tipo?.pref, modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
     });
     setLoading(false);
@@ -71,6 +74,7 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
         <div className="grid grid-cols-2 gap-1">
           <L label="Cantidad"><input type="number" min={1} value={cantidad} onChange={(e) => setCantidad(+e.target.value)} className="inp" /></L>
           <L label="Nº puertas"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></L>
+          <L label="Nº cajones"><input type="number" placeholder="auto" value={ncajones} onChange={(e) => setNcajones(e.target.value)} className="inp" /></L>
         </div>
         {roles.map((rol) => (
           <L key={rol} label={ROL_LABEL[rol] ?? `Tablero ${rol}`}>
@@ -79,6 +83,13 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
               placeholder="Buscar tablero…" allowEmpty />
           </L>
         ))}
+        <L label="Frentes">
+          <select value={modoFrentes} onChange={(e) => setModoFrentes(e.target.value as 'normal' | 'sin_frentes' | 'solo_frentes')} className="inp">
+            <option value="normal">Completo</option>
+            <option value="sin_frentes">Sin frentes (open)</option>
+            <option value="solo_frentes">Solo kit de frentes</option>
+          </select>
+        </L>
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={conHerrajes} onChange={(e) => setConHerrajes(e.target.checked)} /> Con herrajes
         </label>
