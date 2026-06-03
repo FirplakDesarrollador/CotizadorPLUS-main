@@ -16,6 +16,7 @@ export type CotizarInput = {
   trm?: number;                          // override TRM (si no, usa parámetro)
   overrides?: Record<string, number>;    // n_puertas, etc.
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
+  margenOverride?: number;
 };
 
 export type CotizarResult = Breakdown & { trm: number; margen: number };
@@ -54,7 +55,7 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
   );
 
   const margenes = (P.margenes ?? {}) as Record<string, number>;
-  const margen = Number(margenes[tipo.margen_key] ?? margenes.muebles ?? 0.57);
+  const margen = inp.margenOverride ?? Number(margenes[tipo.margen_key] ?? margenes.muebles ?? 0.57);
   const trm = inp.trm ?? Number((P.trm as { valor?: number })?.valor ?? 4200);
   const desperdicio = Number(P.desperdicio_madera ?? 0.15);
 
