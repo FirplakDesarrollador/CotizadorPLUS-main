@@ -49,6 +49,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
   const [npuertas, setNpuertas] = useState<string>('');
   const [ncajones, setNcajones] = useState<string>('');
   const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>('normal');
+  const [margenInput, setMargenInput] = useState<string>('');
 
   const [result, setResult] = useState<CotizarResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,10 +77,12 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
     const overrides: Record<string, number> = {};
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
+    const parsedMargen = margenInput ? Number(margenInput) / 100 : undefined;
     const res = await cotizarAction({
       tipoId, largo, alto, prof, unidad, preset, conHerrajes,
       recargoPct: recargoSel?.recargo_pct ?? 0,
       trm, modoFrentes,
+      margenOverride: parsedMargen,
       overrides: Object.keys(overrides).length ? overrides : undefined,
     });
     setLoading(false);
@@ -98,7 +101,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
 
         <div data-tour="tipo">
           <Field label="Tipo de mueble">
-            <Combobox value={tipoId} options={tipoOptions} onChange={setTipoId} placeholder="Buscar tipo…" />
+            <Combobox value={tipoId} options={tipoOptions} onChange={(v) => { setTipoId(v); setMargenInput(''); }} placeholder="Buscar tipo…" />
           </Field>
         </div>
 
@@ -142,6 +145,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
             </select>
           </Field>
           <Field label="TRM"><input type="number" step="any" value={trm} onChange={(e) => setTrm(+e.target.value)} className="inp" /></Field>
+          <Field label="Margen (%)"><input type="number" placeholder="auto" value={margenInput} onChange={(e) => setMargenInput(e.target.value)} className="inp" /></Field>
         </div>
 
         <label className="flex items-center gap-2 text-sm text-slate-700">
