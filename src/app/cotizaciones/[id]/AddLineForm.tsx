@@ -5,6 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
+import { DB_TIPOLOGIAS } from '@/lib/muebles';
 
 type Tipo = { id: string; pref: string; nombre_es: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
@@ -44,6 +45,12 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
     if (p) setPreset({ ...p.valores });
   }
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
+  const esDB = (tipos.find((t) => t.id === tipoId)?.pref ?? '').startsWith('DB');
+  function aplicarDbTipo(k: string) {
+    setDbTipo(k);
+    const t = DB_TIPOLOGIAS.find((x) => x.key === k);
+    if (t) { setNcajones(String(t.nc)); setNbarras(String(t.nb)); }
+  }
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
   const toggleHerraje = (rol: string) => setHerrajesExcl((xs) => xs.includes(rol) ? xs.filter((x) => x !== rol) : [...xs, rol]);
   const [recargoId, setRecargoId] = useState(initial ? (recargos.find((r) => r.recargo_pct === initial.recargoPct)?.id ?? '') : '');
@@ -53,6 +60,8 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
   const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : '');
   const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : '');
   const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : '');
+  const [nbarras, setNbarras] = useState(ov?.n_barras != null ? String(ov.n_barras) : '');
+  const [dbTipo, setDbTipo] = useState('');
   const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? 'normal');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +86,7 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
+    if (nbarras !== '') overrides.n_barras = Number(nbarras);
     const payload = {
       tipoId, largo, alto, prof, unidad, preset, conHerrajes, trm,
       recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
@@ -118,6 +128,17 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
           <L label="Nº cajones"><input type="number" placeholder="auto" value={ncajones} onChange={(e) => setNcajones(e.target.value)} className="inp" /></L>
           <L label="Nº entrepaños"><input type="number" placeholder="auto" value={nentrepanos} onChange={(e) => setNentrepanos(e.target.value)} className="inp" /></L>
         </div>
+        {esDB && (
+          <div className="grid grid-cols-2 gap-1">
+            <L label="Tipología DB">
+              <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
+                <option value="">— manual —</option>
+                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{t.key}</option>)}
+              </select>
+            </L>
+            <L label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></L>
+          </div>
+        )}
         {perfiles.length > 0 && (
           <L label="Perfil de material">
             <Combobox value={perfilId} options={perfiles.map((p) => ({ value: p.id, label: p.nombre }))} onChange={aplicarPerfil} placeholder="Elegir perfil…" />

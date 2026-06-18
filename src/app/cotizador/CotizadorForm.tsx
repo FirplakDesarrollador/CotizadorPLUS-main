@@ -6,6 +6,7 @@ import GuideButton from '@/components/GuideButton';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
+import { DB_TIPOLOGIAS } from '@/lib/muebles';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -59,6 +60,8 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
   const [npuertas, setNpuertas] = useState<string>('');
   const [ncajones, setNcajones] = useState<string>('');
   const [nentrepanos, setNentrepanos] = useState<string>('');
+  const [nbarras, setNbarras] = useState<string>('');
+  const [dbTipo, setDbTipo] = useState<string>('');
   const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>('normal');
 
   const [result, setResult] = useState<CotizarResult | null>(null);
@@ -69,6 +72,13 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
   const recargoSel = recargos.find((r) => r.id === recargoId);
 
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
+  const tipoPref = tipos.find((t) => t.id === tipoId)?.pref ?? '';
+  const esDB = tipoPref.startsWith('DB');
+  function aplicarDbTipo(k: string) {
+    setDbTipo(k);
+    const t = DB_TIPOLOGIAS.find((x) => x.key === k);
+    if (t) { setNcajones(String(t.nc)); setNbarras(String(t.nb)); }
+  }
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
   const toggleHerraje = (rol: string) => setHerrajesExcl((xs) => xs.includes(rol) ? xs.filter((x) => x !== rol) : [...xs, rol]);
   const sortedTableros = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)), [tableros]);
@@ -90,6 +100,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
+    if (nbarras !== '') overrides.n_barras = Number(nbarras);
     const res = await cotizarAction({
       // El simulador SIEMPRE calcula herrajes para poder mostrar ambos precios
       // (con y sin). El checkbox "Incluir herrajes" solo elige cuál se muestra.
@@ -159,6 +170,15 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
           <Field label="Nº puertas (override)"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
           <Field label="Nº cajones (override)"><input type="number" placeholder="auto" value={ncajones} onChange={(e) => setNcajones(e.target.value)} className="inp" /></Field>
           <Field label="Nº entrepaños (override)"><input type="number" placeholder="auto" value={nentrepanos} onChange={(e) => setNentrepanos(e.target.value)} className="inp" /></Field>
+          {esDB && (
+            <Field label="Tipología DB">
+              <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
+                <option value="">— manual —</option>
+                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{t.key} · {t.desc}</option>)}
+              </select>
+            </Field>
+          )}
+          {esDB && <Field label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></Field>}
           <Field label="Frentes">
             <select value={modoFrentes} onChange={(e) => setModoFrentes(e.target.value as 'normal' | 'sin_frentes' | 'solo_frentes')} className="inp">
               <option value="normal">Completo</option><option value="sin_frentes">Sin frentes (open)</option><option value="solo_frentes">Solo kit de frentes</option>
