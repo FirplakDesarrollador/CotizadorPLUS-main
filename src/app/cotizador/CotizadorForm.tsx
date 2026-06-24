@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { cotizarAction } from './actions';
 import type { CotizarResult } from '@/lib/cotizar';
 import GuideButton from '@/components/GuideButton';
+import TooltipToggle from '@/components/TooltipToggle';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
@@ -11,6 +12,24 @@ import { TIPS_COTIZADOR } from '@/lib/tooltips';
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
 const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
   Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
+
+function parseFraction(val: string | number): number {
+  if (typeof val === 'number') return val;
+  if (!val) return 0;
+  const s = val.trim().replace(',', '.');
+  if (s.includes(' ')) {
+    const parts = s.split(' ').filter(Boolean);
+    if (parts.length === 2 && parts[1].includes('/')) {
+      const [num, den] = parts[1].split('/');
+      return parseFloat(parts[0]) + (parseFloat(num) / parseFloat(den));
+    }
+  }
+  if (s.includes('/')) {
+    const [num, den] = s.split('/');
+    return parseFloat(num) / parseFloat(den);
+  }
+  return parseFloat(s) || 0;
+}
 
 type Tipo = { id: string; pref: string; nombre_es: string | null; categoria: string | null; margen_key: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number; incluye_herrajes: boolean };
@@ -32,15 +51,15 @@ const GUIA_SIMULADOR = [
   { selector: '[data-tour="resultado"]', title: '7. Resultado', description: 'Verás el precio (COP/USD conmutable) y el desglose: materiales, piezas, canto y herrajes.' },
 ];
 
-export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, presetDefault, rolesByTipo }:
-  { tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]> }) {
+export default function CotizadorForm({ tipos, recargos, tableros, cantos, trmDefault, presetDefault, rolesByTipo }:
+  { tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; cantos: string[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]> }) {
 
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
   const [tipoId, setTipoId] = useState(sbfd?.id ?? tipos[0]?.id ?? '');
   const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>('in');
-  const [largo, setLargo] = useState(33);
-  const [alto, setAlto] = useState(30);
-  const [prof, setProf] = useState(24);
+  const [largo, setLargo] = useState<string | number>(33);
+  const [alto, setAlto] = useState<string | number>(30);
+  const [prof, setProf] = useState<string | number>(24);
   const [preset, setPreset] = useState<Record<string, string>>(presetDefault);
   const [recargoId, setRecargoId] = useState('');
   const [conHerrajes, setConHerrajes] = useState(true);
@@ -50,6 +69,17 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
   const [ncajones, setNcajones] = useState<string>('');
   const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>('normal');
   const [margenInput, setMargenInput] = useState<string>('');
+
+  const getCantoMatch = (target: string) => cantos.find(c => c.toLowerCase() === target.toLowerCase()) ?? cantos.find(c => c.replace(',', '.').toLowerCase() === target.replace(',', '.').toLowerCase()) ?? target;
+  
+  const [cantoFrentesSel, setCantoFrentesSel] = useState<string>(() => {
+    const board = tableros.find(t => t.codigo === presetDefault['frente']);
+    return board?.espesor_mm === 18 ? getCantoMatch('22x1') : '';
+  });
+  const [cantoCajaSel, setCantoCajaSel] = useState<string>(() => {
+    const board = tableros.find(t => t.codigo === presetDefault['caja']);
+    return board?.espesor_mm === 15 ? getCantoMatch('19x0,45') : '';
+  });
 
   const [result, setResult] = useState<CotizarResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -65,9 +95,9 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
 
   function changeUnidad(nu: 'in' | 'cm' | 'mm') {
     if (nu === unidad) return;
-    setLargo((v) => convertir(v, unidad, nu));
-    setAlto((v) => convertir(v, unidad, nu));
-    setProf((v) => convertir(v, unidad, nu));
+    setLargo((v) => convertir(parseFraction(v), unidad, nu));
+    setAlto((v) => convertir(parseFraction(v), unidad, nu));
+    setProf((v) => convertir(parseFraction(v), unidad, nu));
     setUnidad(nu);
   }
 
@@ -78,11 +108,20 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     const parsedMargen = margenInput ? Number(margenInput) / 100 : undefined;
+    
+    const finalPreset = { ...preset, refuerzo: preset.caja };
+
+    const largoNum = parseFraction(largo);
+    const altoNum = parseFraction(alto);
+    const profNum = parseFraction(prof);
+
     const res = await cotizarAction({
-      tipoId, largo, alto, prof, unidad, preset, conHerrajes,
+      tipoId, largo: largoNum, alto: altoNum, prof: profNum, unidad, preset: finalPreset, conHerrajes,
       recargoPct: recargoSel?.recargo_pct ?? 0,
       trm, modoFrentes,
       margenOverride: parsedMargen,
+      cantoFrentes: cantoFrentesSel || undefined,
+      cantoCaja: cantoCajaSel || undefined,
       overrides: Object.keys(overrides).length ? overrides : undefined,
     });
     setLoading(false);
@@ -96,19 +135,22 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
       <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 h-fit">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-slate-900">Simular mueble</h2>
-          <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
+          <div className="flex gap-2">
+            <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
+            <TooltipToggle />
+          </div>
         </div>
 
         <div data-tour="tipo">
           <Field label="Tipo de mueble">
-            <Combobox value={tipoId} options={tipoOptions} onChange={(v) => { setTipoId(v); setMargenInput(''); }} placeholder="Buscar tipo…" />
+            <Combobox value={tipoId} options={tipoOptions} onChange={(v) => { setTipoId(v); }} placeholder="Buscar tipo…" />
           </Field>
         </div>
 
         <div data-tour="dims" className="grid grid-cols-4 gap-2 items-end">
-          <Field label="Largo"><input type="number" step="any" value={largo} onChange={(e) => setLargo(+e.target.value)} className="inp" /></Field>
-          <Field label="Alto"><input type="number" step="any" value={alto} onChange={(e) => setAlto(+e.target.value)} className="inp" /></Field>
-          <Field label="Prof"><input type="number" step="any" value={prof} onChange={(e) => setProf(+e.target.value)} className="inp" /></Field>
+          <Field label="Largo"><input type="text" value={largo} onChange={(e) => setLargo(e.target.value)} className="inp" /></Field>
+          <Field label="Alto"><input type="text" value={alto} onChange={(e) => setAlto(e.target.value)} className="inp" /></Field>
+          <Field label="Prof"><input type="text" value={prof} onChange={(e) => setProf(e.target.value)} className="inp" /></Field>
           <Field label="Unidad">
             <select value={unidad} onChange={(e) => changeUnidad(e.target.value as 'in' | 'cm' | 'mm')} className="inp">
               <option value="in">in</option><option value="cm">cm</option><option value="mm">mm</option>
@@ -117,14 +159,36 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
         </div>
 
         <div data-tour="tableros" className="space-y-2">
-          <p className="text-xs font-medium text-slate-500 uppercase">Tableros</p>
-          {roles.map((rol) => (
+          <p className="text-xs font-medium text-slate-500 uppercase">Tableros y Cantos</p>
+          {roles.filter(r => r !== 'refuerzo').map((rol) => (
             <Field key={rol} label={ROL_LABEL[rol] ?? rol}>
               <Combobox value={preset[rol] ?? ''} options={tableroOptions}
-                onChange={(v) => setPreset((p) => ({ ...p, [rol]: v }))}
+                onChange={(v) => {
+                  setPreset((p) => ({ ...p, [rol]: v, ...(rol === 'caja' ? { refuerzo: v } : {}) }));
+                  const board = tableros.find(t => t.codigo === v);
+                  if (rol === 'frente' && board?.espesor_mm === 18) {
+                    setCantoFrentesSel(getCantoMatch('22x1'));
+                  } else if (rol === 'caja' && board?.espesor_mm === 15) {
+                    setCantoCajaSel(getCantoMatch('19x0,45'));
+                  }
+                }}
                 placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
             </Field>
           ))}
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <Field label="Canto frentes">
+              <select value={cantoFrentesSel} onChange={e => setCantoFrentesSel(e.target.value)} className="inp">
+                <option value="">Por defecto</option>
+                {cantos.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="Canto caja">
+              <select value={cantoCajaSel} onChange={e => setCantoCajaSel(e.target.value)} className="inp">
+                <option value="">Por defecto</option>
+                {cantos.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </Field>
+          </div>
         </div>
 
         <div data-tour="cliente">
@@ -144,8 +208,8 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
               <option value="normal">Completo</option><option value="sin_frentes">Sin frentes (open)</option><option value="solo_frentes">Solo kit de frentes</option>
             </select>
           </Field>
-          <Field label="TRM"><input type="number" step="any" value={trm} onChange={(e) => setTrm(+e.target.value)} className="inp" /></Field>
           <Field label="Margen (%)"><input type="number" placeholder="auto" value={margenInput} onChange={(e) => setMargenInput(e.target.value)} className="inp" /></Field>
+          <Field label="TRM"><input type="number" step="any" value={trm} onChange={(e) => setTrm(+e.target.value)} className="inp" /></Field>
         </div>
 
         <label className="flex items-center gap-2 text-sm text-slate-700">

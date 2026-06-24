@@ -66,6 +66,11 @@ export type CalcInput = {
   desperdicio: number;
   overrides?: Record<string, number>; // forzar n_puertas, etc.
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes'; // O* = sin_frentes ; KF-* = solo_frentes
+  tarifaMadera?: number;
+  tarifaHerrajes?: number;
+  descuento?: number;
+  cantoFrentes?: string;
+  cantoCaja?: string;
 };
 
 // Convierte dimensiones de la unidad de entrada a pulgadas (el motor trabaja en pulgadas).
@@ -133,10 +138,17 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     // Solo suma área si la pieza tiene rol de tablero; piezas "canto-only" (sin rol) aportan únicamente canto.
     if (pz.rol_tablero) areaPorRol[pz.rol_tablero] = (areaPorRol[pz.rol_tablero] || 0) + area;
     const c = pz.cantos || {};
-    if (c.calibre) {
+    let cal = c.calibre;
+    if (cal) {
+      if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
+      if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
       const largos = c.largos || 0, anchos = c.anchos || 0;
-      const e = (cantoPorCal[c.calibre] ||= { lenIn: 0, edges: 0 });
+      const e = (cantoPorCal[cal] ||= { lenIn: 0, edges: 0 });
       e.lenIn += cant * (largos * lIn + anchos * aIn);
+    if (/refuerzo/i.test(pz.nombre)) {
+      // rear reinforcement always adds 8 cm thickness
+      e.lenIn += cant * (8 / IN2CM);
+    }
       // aristas para el desperdicio (5cm c/u). Si despEdges está definido, se usa; si no, largos+anchos.
       const de = (c.despEdges !== undefined && c.despEdges !== null) ? c.despEdges : (largos + anchos);
       e.edges += cant * de;
@@ -148,10 +160,11 @@ export function calcularMueble(inp: CalcInput): Breakdown {
 
   // Madera
   let costoMadera = 0; const maderaPorRol: Breakdown['maderaPorRol'] = [];
+  const tMadera = 1 + (inp.tarifaMadera || 0);
   for (const [rol, cm2] of Object.entries(areaPorRol)) {
     const tab = inp.tablerosByCode[inp.preset[rol]];
     if (!tab) throw new Error(`Falta tablero para rol "${rol}": ${inp.preset[rol]}`);
-    const costo = (cm2 * (1 + inp.desperdicio) / 10000) * Number(tab.precio_m2);
+    const costo = (cm2 * (1 + inp.desperdicio) / 10000) * Number(tab.precio_m2) * tMadera;
     costoMadera += costo;
     maderaPorRol.push({ rol, codigo: inp.preset[rol], cm2: +cm2.toFixed(2), costo: +costo.toFixed(2) });
   }
@@ -183,22 +196,24 @@ export function calcularMueble(inp: CalcInput): Breakdown {
 
   // Herrajes
   let costoHerrajes = 0; const herrajesDet: Breakdown['herrajes'] = [];
+  const tHerrajes = 1 + (inp.tarifaHerrajes || 0);
   const ESTRUCTURAL = new Set(['pata', 'tornillo', 'riel', 'barra']);
   for (const hp of (inp.herrajesPlantilla || [])) {
     // "Sin frentes": la carcasa conserva sus herrajes (queda lista para frentes). Kit de frentes: solo herraje de puerta.
     if (modo === 'solo_frentes' && ESTRUCTURAL.has(hp.rol)) continue;
     const cant = num(hp.formula_cantidad);
-    const precio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
+    const basePrecio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
+    const precio = basePrecio * tHerrajes;
     const costo = cant * precio;
     costoHerrajes += costo;
     herrajesDet.push({ rol: hp.rol, codigo: hp.herraje_codigo, cant, precio, costo: +costo.toFixed(2) });
   }
 
   const costoConHerrajes = costoSinHerrajes + costoHerrajes;
-  const precioCop = costoSinHerrajes / (1 - inp.margen);
+  const desc = 1 - (inp.descuento || 0);
+  const precioCop = (costoConHerrajes / (1 - inp.margen)) * desc;
   const precioCopConRecargo = precioCop / (1 - inp.recargo);
   const precioUsd = precioCopConRecargo / inp.trm;
-
   return {
     vars, piezas: piezasDet, maderaPorRol, cantoPorCalibre, consumibles, herrajes: herrajesDet,
     costoMadera, costoCanto, costoConsumibles, costoSinHerrajes, costoHerrajes, costoConHerrajes,

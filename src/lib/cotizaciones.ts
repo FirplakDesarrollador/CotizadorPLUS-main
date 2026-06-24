@@ -140,6 +140,34 @@ export async function eliminarCotizacion(id: string) {
   if (error) throw new Error(error.message);
 }
 
+export async function duplicarLineaACocina(lineaId: string, nuevaCocinaId: string, cotizacionId: string, nuevaCantidad?: number) {
+  const sb = await createClient();
+  const { data: lineaOriginal, error: getErr } = await sb.from('cot_cotizacion_lineas').select('*').eq('id', lineaId).single();
+  if (getErr || !lineaOriginal) throw new Error('No se pudo encontrar el módulo a copiar');
+
+  const { count } = await sb.from('cot_cotizacion_lineas')
+    .select('id', { count: 'exact', head: true }).eq('cocina_id', nuevaCocinaId);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id, created_at, updated_at, ...lineaCopy } = lineaOriginal;
+  
+  const finalCantidad = nuevaCantidad !== undefined ? nuevaCantidad : lineaCopy.cantidad;
+  const precio_unit_cop = Number(lineaCopy.precio_unit_cop || 0);
+  const precio_unit_usd = Number(lineaCopy.precio_unit_usd || 0);
+  
+  const { error: insertErr } = await sb.from('cot_cotizacion_lineas').insert({
+    ...lineaCopy,
+    cocina_id: nuevaCocinaId,
+    orden: count ?? 0,
+    cantidad: finalCantidad,
+    precio_total_cop: precio_unit_cop * finalCantidad,
+    precio_total_usd: precio_unit_usd * finalCantidad,
+  });
+  if (insertErr) throw new Error(insertErr.message);
+
+  await recomputarTotales(cotizacionId);
+}
+
 // Recalcula totales por cocina y del proyecto.
 async function recomputarTotales(cotizacionId: string) {
   const sb = await createClient();

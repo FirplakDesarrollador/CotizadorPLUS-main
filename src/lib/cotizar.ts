@@ -17,6 +17,11 @@ export type CotizarInput = {
   overrides?: Record<string, number>;    // n_puertas, etc.
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
   margenOverride?: number;
+  tarifaMadera?: number;
+  tarifaHerrajes?: number;
+  descuento?: number;
+  cantoFrentes?: string;
+  cantoCaja?: string;
 };
 
 export type CotizarResult = Breakdown & { trm: number; margen: number };
@@ -83,6 +88,11 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     desperdicio,
     overrides: inp.overrides,
     modoFrentes: inp.modoFrentes ?? 'normal',
+    tarifaMadera: inp.tarifaMadera,
+    tarifaHerrajes: inp.tarifaHerrajes,
+    descuento: inp.descuento,
+    cantoFrentes: inp.cantoFrentes,
+    cantoCaja: inp.cantoCaja,
   });
 
   return { ...breakdown, trm, margen };
@@ -91,12 +101,13 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
 // Datos para poblar la UI del cotizador.
 export async function getCotizadorData() {
   const sb = await createClient();
-  const [{ data: tipos }, { data: recargos }, { data: tableros }, { data: params }, { data: piezasRoles }] = await Promise.all([
+  const [{ data: tipos }, { data: recargos }, { data: tableros }, { data: params }, { data: piezasRoles }, { data: cantos }] = await Promise.all([
     sb.from('cot_tipos_mueble').select('id,pref,nombre_es,categoria,margen_key').eq('activo', true).order('pref'),
     sb.from('cot_recargos_cliente').select('id,cliente_nombre,recargo_pct,incluye_herrajes').eq('activo', true).order('cliente_nombre'),
     sb.from('cot_tableros').select('codigo,proveedor,sustrato,espesor_mm,color_nombre,precio_m2').eq('activo', true).order('codigo'),
     sb.from('cot_parametros').select('key,value'),
     sb.from('cot_piezas_plantilla').select('tipo_mueble_id,rol_tablero').not('rol_tablero', 'is', null),
+    sb.from('cot_cantos').select('calibre').order('calibre'),
   ]);
   const P = Object.fromEntries((params ?? []).map((r) => [r.key, r.value]));
 
@@ -113,6 +124,7 @@ export async function getCotizadorData() {
     tipos: tipos ?? [],
     recargos: recargos ?? [],
     tableros: tableros ?? [],
+    cantos: (cantos ?? []).map(c => c.calibre as string),
     trmDefault: Number((P.trm as { valor?: number })?.valor ?? 4200),
     presetDefault: (P.preset_default ?? {}) as Record<string, string>,
     rolesByTipo,
