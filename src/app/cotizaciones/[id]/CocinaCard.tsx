@@ -1,18 +1,40 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AddLineForm, { type LineaInicial } from './AddLineForm';
-import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction } from '../actions';
+import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineForm';
+import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction } from '../actions';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-type LineaConfig = { preset?: Record<string, string>; conHerrajes?: boolean; recargoPct?: number; overrides?: Record<string, number> | null; modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes'; herrajesExcluidos?: string[] | null };
-type Linea = {
-  id: string; pref: string | null; descripcion_es: string | null; cantidad: number;
-  precio_unit_usd: number; precio_total_usd: number; precio_total_cop: number;
-  tipo_mueble_id: string; largo: number; alto: number; prof: number; unidad_dim: string; config: LineaConfig | null;
+type LineaConfig = {
+  preset?: Record<string, string>;
+  conHerrajes?: boolean;
+  recargoPct?: number;
+  overrides?: Record<string, number> | null;
+  modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
+  herrajesExcluidos?: string[] | null;
+  margenOverride?: number;
+  cantoFrentes?: string;
+  cantoCaja?: string;
 };
+
+type Linea = {
+  id: string;
+  pref: string | null;
+  descripcion_es: string | null;
+  cantidad: number;
+  precio_unit_usd: number;
+  precio_total_usd: number;
+  precio_total_cop: number;
+  tipo_mueble_id: string;
+  largo: number;
+  alto: number;
+  prof: number;
+  unidad_dim: string;
+  config: LineaConfig | null;
+};
+
 type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
 type Tipo = { id: string; pref: string; nombre_es: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
@@ -20,34 +42,78 @@ type Tablero = { codigo: string; proveedor: string | null; sustrato: string | nu
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
 
-export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tableros, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm }:
-  { cotizacionId: string; cocina: Cocina; tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]>; trm: number }) {
+export default function CocinaCard({
+  cotizacionId, cocina, allCocinas, tipos, recargos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, projectDefaults
+}: {
+  cotizacionId: string;
+  cocina: Cocina;
+  allCocinas: Cocina[];
+  tipos: Tipo[];
+  recargos: Recargo[];
+  tableros: Tablero[];
+  cantos: string[];
+  presetDefault: Record<string, string>;
+  rolesByTipo: Record<string, string[]>;
+  perfiles: Perfil[];
+  perfilDefaultId: string;
+  herrajesByTipo: Record<string, HerrajeTipo[]>;
+  trm: number;
+  projectDefaults?: ProjectDefaults;
+}) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState(false);
   const [nombre, setNombre] = useState(cocina.nombre);
 
+  // Estados de duplicación contextual (Andrés)
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, lineaId: string } | null>(null);
+  const [promptModal, setPromptModal] = useState<{ lineaId: string, cocinaDestinoId: string, cocinaNombre: string } | null>(null);
+  const [promptCant, setPromptCant] = useState('1');
+
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
+
   const toInicial = (l: Linea): LineaInicial => ({
-    lineaId: l.id, tipoId: l.tipo_mueble_id, largo: l.largo, alto: l.alto, prof: l.prof,
+    lineaId: l.id,
+    tipoId: l.tipo_mueble_id,
+    largo: l.largo,
+    alto: l.alto,
+    prof: l.prof,
     unidad: (l.unidad_dim as 'in' | 'cm' | 'mm') ?? 'in',
-    preset: l.config?.preset ?? {}, conHerrajes: l.config?.conHerrajes ?? true,
-    recargoPct: l.config?.recargoPct ?? 0, cantidad: l.cantidad,
+    preset: l.config?.preset ?? {},
+    conHerrajes: l.config?.conHerrajes ?? true,
+    recargoPct: l.config?.recargoPct ?? 0,
+    cantidad: l.cantidad,
     modoFrentes: l.config?.modoFrentes ?? 'normal',
-    overrides: l.config?.overrides ?? null, herrajesExcluidos: l.config?.herrajesExcluidos ?? null,
+    overrides: l.config?.overrides ?? null,
+    herrajesExcluidos: l.config?.herrajesExcluidos ?? null,
+    // Nuevas configuraciones de Andrés
+    margenOverride: l.config?.margenOverride ?? undefined,
+    cantoFrentes: l.config?.cantoFrentes ?? undefined,
+    cantoCaja: l.config?.cantoCaja ?? undefined,
   });
+
   const lineaEnEdicion = cocina.lineas.find((l) => l.id === editId) ?? null;
 
   async function saveName() {
     await actualizarCocinaAction(cotizacionId, cocina.id, nombre);
-    setEditName(false); router.refresh();
+    setEditName(false);
+    router.refresh();
   }
+
   async function delCocina() {
     if (!confirm(`¿Eliminar la cocina "${cocina.nombre}" y sus módulos?`)) return;
-    await eliminarCocinaAction(cotizacionId, cocina.id); router.refresh();
+    await eliminarCocinaAction(cotizacionId, cocina.id);
+    router.refresh();
   }
+
   async function delLinea(id: string) {
-    await eliminarLineaAction(cotizacionId, id); router.refresh();
+    await eliminarLineaAction(cotizacionId, id);
+    router.refresh();
   }
 
   return (
@@ -78,15 +144,29 @@ export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tabl
       </div>
 
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-100">
-          <th className="px-4 py-2">Módulo</th><th>Descripción</th><th className="text-right">Cant</th>
-          <th className="text-right">Unit USD</th><th className="text-right">Total USD</th><th className="text-right px-4">Total COP</th><th></th>
-        </tr></thead>
+        <thead>
+          <tr className="text-left text-slate-400 border-b border-slate-100">
+            <th className="px-4 py-2">Módulo</th>
+            <th>Descripción</th>
+            <th className="text-right">Cant</th>
+            <th className="text-right">Unit USD</th>
+            <th className="text-right">Total USD</th>
+            <th className="text-right px-4">Total COP</th>
+            <th></th>
+          </tr>
+        </thead>
         <tbody>
           {cocina.lineas.length === 0 && <tr><td colSpan={7} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
           {cocina.lineas.map((l) => (
-            <tr key={l.id} className="border-b border-slate-50">
-              <td className="px-4 py-2 font-medium text-slate-900">{l.pref}</td>
+            <tr
+              key={l.id}
+              className="border-b border-slate-50 hover:bg-slate-50/50"
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setContextMenu({ x: e.clientX, y: e.clientY, lineaId: l.id });
+              }}
+            >
+              <td className="px-4 py-2 font-medium text-slate-900 cursor-context-menu">{l.pref}</td>
               <td className="text-slate-600">{l.descripcion_es}</td>
               <td className="text-right">{l.cantidad}</td>
               <td className="text-right">{fmtUSD(l.precio_unit_usd)}</td>
@@ -103,16 +183,116 @@ export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tabl
 
       <div className="p-4 border-t border-slate-100">
         {lineaEnEdicion ? (
-          <AddLineForm key={lineaEnEdicion.id} cocinaId={cocina.id} tipos={tipos} recargos={recargos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} perfiles={perfiles} perfilDefaultId={perfilDefaultId} herrajesByTipo={herrajesByTipo} trm={trm} initial={toInicial(lineaEnEdicion)} onDone={() => setEditId(null)} />
+          <AddLineForm
+            key={lineaEnEdicion.id}
+            cocinaId={cocina.id}
+            tipos={tipos}
+            recargos={recargos}
+            tableros={tableros}
+            cantos={cantos}
+            presetDefault={presetDefault}
+            rolesByTipo={rolesByTipo}
+            perfiles={perfiles}
+            perfilDefaultId={perfilDefaultId}
+            herrajesByTipo={herrajesByTipo}
+            trm={trm}
+            projectDefaults={projectDefaults}
+            initial={toInicial(lineaEnEdicion)}
+            onDone={() => setEditId(null)}
+          />
         ) : showAdd ? (
           <div className="space-y-2">
-            <AddLineForm cocinaId={cocina.id} tipos={tipos} recargos={recargos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} perfiles={perfiles} perfilDefaultId={perfilDefaultId} herrajesByTipo={herrajesByTipo} trm={trm} />
+            <AddLineForm
+              cocinaId={cocina.id}
+              tipos={tipos}
+              recargos={recargos}
+              tableros={tableros}
+              cantos={cantos}
+              presetDefault={presetDefault}
+              rolesByTipo={rolesByTipo}
+              perfiles={perfiles}
+              perfilDefaultId={perfilDefaultId}
+              herrajesByTipo={herrajesByTipo}
+              trm={trm}
+              projectDefaults={projectDefaults}
+            />
             <button onClick={() => setShowAdd(false)} className="text-sm text-slate-400 hover:underline">Cerrar</button>
           </div>
         ) : (
           <button onClick={() => setShowAdd(true)} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
         )}
       </div>
+
+      {/* Menú contextual de click derecho (duplicación de Andrés) */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 bg-white border border-slate-200 shadow-xl rounded-lg py-1 text-sm w-48"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onMouseLeave={() => setContextMenu(null)}
+        >
+          <div className="px-3 py-1 text-xs font-semibold text-slate-500 uppercase">Copiar a:</div>
+          {allCocinas.filter(c => c.id !== cocina.id).length === 0 && <div className="px-3 py-2 text-slate-400">No hay otras cocinas</div>}
+          {allCocinas.filter(c => c.id !== cocina.id).map(c => (
+            <button
+              key={c.id}
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-slate-700"
+              onClick={(e) => {
+                e.stopPropagation();
+                setContextMenu(null);
+                setPromptCant('1');
+                setPromptModal({ lineaId: contextMenu.lineaId, cocinaDestinoId: c.id, cocinaNombre: c.nombre });
+              }}
+            >
+              {c.nombre}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Modal de confirmación de cantidad para duplicación */}
+      {promptModal && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 space-y-4 border border-slate-100">
+            <h3 className="font-semibold text-slate-900 text-sm">
+              ¿Qué cantidad de este mueble deseas enviar a {promptModal.cocinaNombre}?
+            </h3>
+            <input
+              type="number"
+              min="1"
+              value={promptCant}
+              onChange={e => setPromptCant(e.target.value)}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+              autoFocus
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter') {
+                  const cant = parseInt(promptCant, 10);
+                  if (!isNaN(cant) && cant > 0) {
+                    setPromptModal(null);
+                    await duplicarLineaAction(promptModal.lineaId, promptModal.cocinaDestinoId, cotizacionId, cant);
+                    router.refresh();
+                  }
+                }
+              }}
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setPromptModal(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors">Cancelar</button>
+              <button
+                onClick={async () => {
+                  const cant = parseInt(promptCant, 10);
+                  if (!isNaN(cant) && cant > 0) {
+                    setPromptModal(null);
+                    await duplicarLineaAction(promptModal.lineaId, promptModal.cocinaDestinoId, cotizacionId, cant);
+                    router.refresh();
+                  }
+                }}
+                className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-colors"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

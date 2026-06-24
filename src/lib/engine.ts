@@ -68,6 +68,11 @@ export type CalcInput = {
   overrides?: Record<string, number>; // forzar n_puertas, etc.
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes'; // O* = sin_frentes ; KF-* = solo_frentes
   herrajesExcluidos?: string[]; // roles de herraje a excluir de esta línea
+  tarifaMadera?: number;
+  tarifaHerrajes?: number;
+  descuento?: number;
+  cantoFrentes?: string;
+  cantoCaja?: string;
 };
 
 // Convierte dimensiones de la unidad de entrada a pulgadas (el motor trabaja en pulgadas).
@@ -146,9 +151,16 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     if (pz.rol_tablero) areaPorRol[pz.rol_tablero] = (areaPorRol[pz.rol_tablero] || 0) + area;
     const c = pz.cantos || {};
     if (c.calibre) {
+      let cal = c.calibre;
+      if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
+      if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
       const largos = c.largos || 0, anchos = c.anchos || 0;
-      const e = (cantoPorCal[c.calibre] ||= { lenIn: 0, edges: 0 });
+      const e = (cantoPorCal[cal] ||= { lenIn: 0, edges: 0 });
       e.lenIn += cant * (largos * lIn + anchos * aIn);
+      if (/refuerzo/i.test(pz.nombre)) {
+        // el refuerzo posterior siempre suma 8 cm de espesor
+        e.lenIn += cant * (8 / IN2CM);
+      }
       // aristas para el desperdicio (5cm c/u). Si despEdges está definido, se usa; si no, largos+anchos.
       const de = (c.despEdges !== undefined && c.despEdges !== null) ? c.despEdges : (largos + anchos);
       e.edges += cant * de;
@@ -160,10 +172,11 @@ export function calcularMueble(inp: CalcInput): Breakdown {
 
   // Madera
   let costoMadera = 0; const maderaPorRol: Breakdown['maderaPorRol'] = [];
+  const tMadera = 1 + (inp.tarifaMadera || 0);
   for (const [rol, cm2] of Object.entries(areaPorRol)) {
     const tab = inp.tablerosByCode[inp.preset[rol]];
     if (!tab) throw new Error(`Falta tablero para rol "${rol}": ${inp.preset[rol]}`);
-    const costo = (cm2 * (1 + inp.desperdicio) / 10000) * Number(tab.precio_m2);
+    const costo = (cm2 * (1 + inp.desperdicio) / 10000) * Number(tab.precio_m2) * tMadera;
     costoMadera += costo;
     maderaPorRol.push({ rol, codigo: inp.preset[rol], cm2: +cm2.toFixed(2), costo: +costo.toFixed(2) });
   }
@@ -196,6 +209,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   // Herrajes
   let costoHerrajes = 0; const herrajesDet: Breakdown['herrajes'] = [];
   const ESTRUCTURAL = new Set(['pata', 'tornillo', 'riel', 'barra']);
+  const tHerrajes = 1 + (inp.tarifaHerrajes || 0);
   // Herrajes excluidos manualmente por la línea (por rol). Permite Open con/sin bisagras,
   // KF sin hardware, o casos donde el cliente compra ciertos herrajes aparte (Omar/Infinitum).
   const excluidos = new Set((inp.herrajesExcluidos || []).map((r) => String(r).toLowerCase()));
@@ -204,7 +218,8 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     if (modo === 'solo_frentes' && ESTRUCTURAL.has(hp.rol)) continue;
     if (excluidos.has(String(hp.rol).toLowerCase())) continue;
     const cant = num(hp.formula_cantidad);
-    const precio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
+    const basePrecio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
+    const precio = basePrecio * tHerrajes;
     const costo = cant * precio;
     costoHerrajes += costo;
     herrajesDet.push({ rol: hp.rol, codigo: hp.herraje_codigo, cant, precio, costo: +costo.toFixed(2) });
@@ -212,21 +227,40 @@ export function calcularMueble(inp: CalcInput): Breakdown {
 
   const costoConHerrajes = costoSinHerrajes + costoHerrajes;
   const recF = 1 - inp.recargo;
-  const margenHerraje = inp.margenHerraje ?? 0.35;
+  const desc = 1 - (inp.descuento || 0);
 
-  // Mueble: costo sin herrajes con el margen del tipo.
-  const precioCop = costoSinHerrajes / (1 - inp.margen);
-  const precioCopConRecargo = precioCop / recF;
-  const precioUsd = precioCopConRecargo / inp.trm;
+  // Decidimos usar margen unificado si margenHerraje no se define, es null, o es 0.
+  const usarUnificado = (inp.margenHerraje === undefined || inp.margenHerraje === null || inp.margenHerraje === 0);
 
-  // Herrajes: costo de herrajes con su propio margen (35% por defecto).
-  const precioHerrajesCop = costoHerrajes > 0 ? costoHerrajes / (1 - margenHerraje) : 0;
+  // 1. Cálculos de lógica original de márgenes independientes
+  const localMargenHerraje = inp.margenHerraje ?? 0.35;
+  const localPrecioMuebleCop = costoSinHerrajes / (1 - inp.margen);
+  const localPrecioHerrajesCop = costoHerrajes > 0 ? costoHerrajes / (1 - localMargenHerraje) : 0;
+  const localPrecioConHerrajesCop = localPrecioMuebleCop + localPrecioHerrajesCop;
+
+  // 2. Cálculos de lógica unificada de Andrés
+  const unificadoPrecioCop = (costoConHerrajes / (1 - inp.margen)) * desc;
+
+  let precioCop: number;
+  let precioCopConRecargo: number;
+  let precioUsd: number;
+
+  if (usarUnificado) {
+    precioCop = unificadoPrecioCop;
+    precioCopConRecargo = precioCop / recF;
+    precioUsd = precioCopConRecargo / inp.trm;
+  } else {
+    precioCop = localPrecioMuebleCop;
+    precioCopConRecargo = precioCop / recF;
+    precioUsd = precioCopConRecargo / inp.trm;
+  }
+
+  const precioHerrajesCop = localPrecioHerrajesCop;
   const precioHerrajesCopConRecargo = precioHerrajesCop / recF;
   const precioHerrajesUsd = precioHerrajesCopConRecargo / inp.trm;
 
-  // Total con herrajes = mueble (su margen) + herrajes (su margen).
-  const precioConHerrajesCop = precioCop + precioHerrajesCop;
-  const precioConHerrajesCopConRecargo = precioCopConRecargo + precioHerrajesCopConRecargo;
+  const precioConHerrajesCop = localPrecioConHerrajesCop;
+  const precioConHerrajesCopConRecargo = localPrecioConHerrajesCop / recF;
   const precioConHerrajesUsd = precioConHerrajesCopConRecargo / inp.trm;
 
   return {
@@ -235,7 +269,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     precioCop, precioCopConRecargo, precioUsd,
     precioHerrajesCop, precioHerrajesCopConRecargo, precioHerrajesUsd,
     precioConHerrajesCop, precioConHerrajesCopConRecargo, precioConHerrajesUsd,
-    margenHerraje,
+    margenHerraje: localMargenHerraje,
   };
 }
 
