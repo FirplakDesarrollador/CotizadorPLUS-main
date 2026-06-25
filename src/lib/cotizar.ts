@@ -17,10 +17,11 @@ export type CotizarInput = {
   overrides?: Record<string, number>;    // n_puertas, etc.
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
   herrajesExcluidos?: string[];          // roles de herraje a excluir
-  margenOverride?: number;
-  tarifaMadera?: number;
-  tarifaHerrajes?: number;
-  descuento?: number;
+  margenOverride?: number;   // margen del mueble (override del proyecto, categoría 'muebles')
+  tarifaMadera?: number;     // desperdicio/merma de madera (override del proyecto, ej. 0.10)
+  tarifaHerrajes?: number;   // margen de herraje (override del proyecto, ej. 0.30)
+  descuento?: number;        // descuento final del proyecto
+  etiquetas?: number;        // nº de etiquetas por mueble (override del proyecto, ej. 3)
   cantoFrentes?: string;
   cantoCaja?: string;
 };
@@ -51,7 +52,7 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
 
   // Tableros del preset
   const codes = [...new Set(Object.values(preset).filter(Boolean))];
-  const { data: tableros } = await sb.from('cot_tableros').select('codigo,precio_m2').in('codigo', codes);
+  const { data: tableros } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm').in('codigo', codes);
 
   const tablerosByCode = Object.fromEntries((tableros ?? []).map((t) => [t.codigo, t]));
   const cantosByCalibre = Object.fromEntries((cantos ?? []).map((c) => [normCalibre(c.calibre), c]));
@@ -61,11 +62,17 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
   );
 
   const margenes = (P.margenes ?? {}) as Record<string, number>;
-  const margen = inp.margenOverride ?? Number(margenes[tipo.margen_key] ?? margenes.muebles ?? 0.57);
-  // Si hay un margenOverride, desactivamos margenHerraje para aplicar la lógica unificada de Andrés.
-  const margenHerraje = inp.margenOverride !== undefined ? undefined : Number(P.margen_herraje ?? 0.35);
+  // Margen del mueble: el override del proyecto aplica solo a la categoría 'muebles';
+  // fillers/paneles/zócalos conservan su margen propio (más bajo).
+  const margenBase = Number(margenes[tipo.margen_key] ?? margenes.muebles ?? 0.57);
+  const margen = (inp.margenOverride != null && tipo.margen_key === 'muebles') ? inp.margenOverride : margenBase;
+  // Tarifa hardware del proyecto = margen de herraje (margin-on-price). Default global 0.35.
+  const margenHerraje = inp.tarifaHerrajes ?? Number(P.margen_herraje ?? 0.35);
   const trm = inp.trm ?? Number((P.trm as { valor?: number })?.valor ?? 4200);
-  const desperdicio = Number(P.desperdicio_madera ?? 0.15);
+  // Tarifa madera del proyecto = desperdicio total (único factor de merma). Default global 0.15.
+  const desperdicio = inp.tarifaMadera ?? Number(P.desperdicio_madera ?? 0.15);
+  // Etiquetas: override del proyecto (ej. 3) o el del tipo (default 4).
+  const etiquetasUnd = inp.etiquetas ?? tipo.etiquetas_und ?? 4;
 
   const dims: Dims = {
     L: toInches(inp.largo, inp.unidad),
@@ -83,7 +90,7 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     cantosByCalibre,
     herrajesByCode,
     consumiblesBySelector,
-    etiquetasUnd: tipo.etiquetas_und ?? 4,
+    etiquetasUnd,
     usaCarton: tipo.usa_carton !== false,
     margen,
     margenHerraje,
@@ -93,8 +100,6 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     overrides: inp.overrides,
     modoFrentes: inp.modoFrentes ?? 'normal',
     herrajesExcluidos: inp.herrajesExcluidos,
-    tarifaMadera: inp.tarifaMadera,
-    tarifaHerrajes: inp.tarifaHerrajes,
     descuento: inp.descuento,
     cantoFrentes: inp.cantoFrentes,
     cantoCaja: inp.cantoCaja,

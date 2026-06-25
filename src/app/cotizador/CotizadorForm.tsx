@@ -1,6 +1,7 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { cotizarAction } from './actions';
+import { useSimuladorStore } from '@/store/simuladorStore';
 import type { CotizarResult } from '@/lib/cotizar';
 import GuideButton from '@/components/GuideButton';
 import Campo from '@/components/Campo';
@@ -39,34 +40,78 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
   { tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]> }) {
 
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
-  const [tipoId, setTipoId] = useState(sbfd?.id ?? tipos[0]?.id ?? '');
-  const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>('in');
-  const [largo, setLargo] = useState(33);
-  const [alto, setAlto] = useState(30);
-  const [prof, setProf] = useState(24);
-  const [perfilId, setPerfilId] = useState(perfilDefaultId);
-  const [preset, setPreset] = useState<Record<string, string>>(presetDefault);
+  
+  const store = useSimuladorStore();
+  const setStore = store.setSimuladorState;
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
+  const tipoId = store.tipoId || (sbfd?.id ?? tipos[0]?.id ?? '');
+  const setTipoId = (v: string) => setStore({ tipoId: v });
+  
+  const unidad = store.unidad;
+  const setUnidad = (v: 'in' | 'cm' | 'mm') => setStore({ unidad: v });
+  
+  const largo = store.largo;
+  const setLargo = (v: number | ((prev: number) => number)) => setStore({ largo: typeof v === 'function' ? v(largo) : v });
+  
+  const alto = store.alto;
+  const setAlto = (v: number | ((prev: number) => number)) => setStore({ alto: typeof v === 'function' ? v(alto) : v });
+  
+  const prof = store.prof;
+  const setProf = (v: number | ((prev: number) => number)) => setStore({ prof: typeof v === 'function' ? v(prof) : v });
+  
+  const perfilId = store.perfilId || perfilDefaultId;
+  const preset = Object.keys(store.preset).length > 0 ? store.preset : presetDefault;
+  const setPreset = (v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => setStore({ preset: typeof v === 'function' ? v(preset) : v });
 
   function aplicarPerfil(id: string) {
-    setPerfilId(id);
+    setStore({ perfilId: id });
     const p = perfiles.find((x) => x.id === id);
-    if (p) setPreset({ ...p.valores });
+    if (p) setStore({ preset: { ...p.valores } });
   }
-  const [recargoId, setRecargoId] = useState('');
-  const [conHerrajes, setConHerrajes] = useState(true);
-  const [herrajesExcl, setHerrajesExcl] = useState<string[]>([]);
-  const [moneda, setMoneda] = useState<'COP' | 'USD'>('USD');
-  const [trm, setTrm] = useState(trmDefault);
-  const [npuertas, setNpuertas] = useState<string>('');
-  const [ncajones, setNcajones] = useState<string>('');
-  const [nentrepanos, setNentrepanos] = useState<string>('');
-  const [nbarras, setNbarras] = useState<string>('');
-  const [dbTipo, setDbTipo] = useState<string>('');
-  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>('normal');
 
-  const [result, setResult] = useState<CotizarResult | null>(null);
+  const recargoId = store.recargoId;
+  const setRecargoId = (v: string) => setStore({ recargoId: v });
+  
+  const conHerrajes = store.conHerrajes;
+  const setConHerrajes = (v: boolean) => setStore({ conHerrajes: v });
+  
+  const herrajesExcl = store.herrajesExcl;
+  const setHerrajesExcl = (v: string[] | ((prev: string[]) => string[])) => setStore({ herrajesExcl: typeof v === 'function' ? v(herrajesExcl) : v });
+  
+  const moneda = store.moneda;
+  const setMoneda = (v: 'COP' | 'USD') => setStore({ moneda: v });
+  
+  const trm = store.trm ?? trmDefault;
+  const setTrm = (v: number) => setStore({ trm: v });
+  
+  const npuertas = store.npuertas;
+  const setNpuertas = (v: string) => setStore({ npuertas: v });
+  
+  const ncajones = store.ncajones;
+  const setNcajones = (v: string) => setStore({ ncajones: v });
+  
+  const nentrepanos = store.nentrepanos;
+  const setNentrepanos = (v: string) => setStore({ nentrepanos: v });
+  
+  const nbarras = store.nbarras;
+  const setNbarras = (v: string) => setStore({ nbarras: v });
+  
+  const dbTipo = store.dbTipo;
+  const setDbTipo = (v: string) => setStore({ dbTipo: v });
+  
+  const modoFrentes = store.modoFrentes;
+  const setModoFrentes = (v: 'normal' | 'sin_frentes' | 'solo_frentes') => setStore({ modoFrentes: v });
+
+  const result = store.result;
+  const setResult = (v: CotizarResult | null) => setStore({ result: v });
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  if (!isMounted) return null;
 
   const tableroLabel = (t: Tablero) => `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}`;
   const recargoSel = recargos.find((r) => r.id === recargoId);
@@ -80,7 +125,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
     if (t) { setNcajones(String(t.nc)); setNbarras(String(t.nb)); }
   }
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
-  const toggleHerraje = (rol: string) => setHerrajesExcl((xs) => xs.includes(rol) ? xs.filter((x) => x !== rol) : [...xs, rol]);
+  const toggleHerraje = (rol: string) => setStore({ herrajesExcl: herrajesExcl.includes(rol) ? herrajesExcl.filter((x) => x !== rol) : [...herrajesExcl, rol] });
   const sortedTableros = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)), [tableros]);
   const tipoOptions = useMemo(() => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tipos]);
   const tableroOptions = useMemo(() => sortedTableros.map((t) => ({ value: t.codigo, label: tableroLabel(t) })), [sortedTableros]);

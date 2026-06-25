@@ -57,13 +57,15 @@ export default function ProjectConfigPanel({ tableros, recargos, cantos, perfile
     let nextCantoFrentes = defaults.cantoFrentes;
     let nextCantoCaja = defaults.cantoCaja;
 
-    if (rol === 'frente' && board?.espesor_mm === 18) {
-      const match = cantos.find((c) => c.toLowerCase() === '22x1') ?? cantos.find((c) => c.replace(',', '.').toLowerCase() === '22x1') ?? '22x1';
-      nextCantoFrentes = match;
+    const getMatch = (target: string) => cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ?? cantos.find((c) => c.replace(',', '.').toLowerCase() === target.replace(',', '.').toLowerCase()) ?? target;
+
+    if (rol === 'frente') {
+      if (board?.espesor_mm === 18) nextCantoFrentes = getMatch('22x1');
+      if (board?.espesor_mm === 15) nextCantoFrentes = getMatch('19x0,45');
     }
-    if (rol === 'caja' && board?.espesor_mm === 15) {
-      const match = cantos.find((c) => c.toLowerCase() === '19x0,45') ?? cantos.find((c) => c.replace(',', '.').toLowerCase() === '19x0.45') ?? '19x0,45';
-      nextCantoCaja = match;
+    if (rol === 'caja') {
+      if (board?.espesor_mm === 18) nextCantoCaja = getMatch('22x1');
+      if (board?.espesor_mm === 15) nextCantoCaja = getMatch('19x0,45');
     }
     onChange({ ...defaults, preset: nextPreset, cantoFrentes: nextCantoFrentes, cantoCaja: nextCantoCaja });
   }

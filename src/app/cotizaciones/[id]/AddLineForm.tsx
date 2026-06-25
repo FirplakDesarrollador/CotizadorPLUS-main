@@ -92,14 +92,18 @@ export default function AddLineForm({
     if (initial?.cantoFrentes !== undefined) return initial.cantoFrentes;
     if (projectDefaults?.cantoFrentes !== undefined) return projectDefaults.cantoFrentes;
     const b = tableros.find((t) => t.codigo === (presetDefault['frente']));
-    return b?.espesor_mm === 18 ? getCantoMatch(cantos, '22x1') : '';
+    if (b?.espesor_mm === 18) return getCantoMatch(cantos, '22x1');
+    if (b?.espesor_mm === 15) return getCantoMatch(cantos, '19x0,45');
+    return '';
   });
 
   const [cantoCajaSel, setCantoCajaSel] = useState(() => {
     if (initial?.cantoCaja !== undefined) return initial.cantoCaja;
     if (projectDefaults?.cantoCaja !== undefined) return projectDefaults.cantoCaja;
     const b = tableros.find((t) => t.codigo === (presetDefault['caja']));
-    return b?.espesor_mm === 15 ? getCantoMatch(cantos, '19x0,45') : '';
+    if (b?.espesor_mm === 18) return getCantoMatch(cantos, '22x1');
+    if (b?.espesor_mm === 15) return getCantoMatch(cantos, '19x0,45');
+    return '';
   });
 
   const [recargoId, setRecargoId] = useState(() => {
@@ -304,10 +308,12 @@ export default function AddLineForm({
               onChange={(v) => {
                 setPreset((p) => ({ ...p, [rol]: v, ...(rol === 'caja' ? { refuerzo: v } : {}) }));
                 const board = tableros.find((t) => t.codigo === v);
-                if (rol === 'frente' && board?.espesor_mm === 18) {
-                  setCantoFrentesSel(getCantoMatch(cantos, '22x1'));
-                } else if (rol === 'caja' && board?.espesor_mm === 15) {
-                  setCantoCajaSel(getCantoMatch(cantos, '19x0,45'));
+                if (rol === 'frente') {
+                  if (board?.espesor_mm === 18) setCantoFrentesSel(getCantoMatch(cantos, '22x1'));
+                  if (board?.espesor_mm === 15) setCantoFrentesSel(getCantoMatch(cantos, '19x0,45'));
+                } else if (rol === 'caja') {
+                  if (board?.espesor_mm === 18) setCantoCajaSel(getCantoMatch(cantos, '22x1'));
+                  if (board?.espesor_mm === 15) setCantoCajaSel(getCantoMatch(cantos, '19x0,45'));
                 }
               }}
               placeholder="Buscar tablero…"

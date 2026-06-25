@@ -35,7 +35,7 @@ export type Pieza = {
   tarugos?: number; soportes?: number;
 };
 export type HerrajePlantilla = { rol: string; herraje_codigo: string | null; selector_key: string | null; formula_cantidad: string };
-export type Tablero = { codigo: string; precio_m2: number };
+export type Tablero = { codigo: string; precio_m2: number; espesor_mm?: number | null };
 export type Canto = { calibre: string; precio: number };
 export type Herraje = { codigo: string; precio: number };
 export type Parametros = {
@@ -68,11 +68,9 @@ export type CalcInput = {
   overrides?: Record<string, number>; // forzar n_puertas, etc.
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes'; // O* = sin_frentes ; KF-* = solo_frentes
   herrajesExcluidos?: string[]; // roles de herraje a excluir de esta línea
-  tarifaMadera?: number;
-  tarifaHerrajes?: number;
-  descuento?: number;
-  cantoFrentes?: string;
-  cantoCaja?: string;
+  descuento?: number;           // descuento final (ej. 0.10). Se aplica al precio.
+  cantoFrentes?: string;        // override de calibre de canto para piezas de frente (por proyecto)
+  cantoCaja?: string;           // override de calibre de canto para piezas de caja (por proyecto)
 };
 
 // Convierte dimensiones de la unidad de entrada a pulgadas (el motor trabaja en pulgadas).
@@ -152,6 +150,13 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     const c = pz.cantos || {};
     if (c.calibre) {
       let cal = c.calibre;
+      const tabCode = inp.preset[pz.rol_tablero];
+      const tab = inp.tablerosByCode[tabCode || ''];
+      if (tab?.espesor_mm === 18) {
+        cal = '22x1';
+      } else if (tab?.espesor_mm === 15) {
+        cal = inp.cantosByCalibre[norm('19x0,45')] ? '19x0,45' : '19x0.45';
+      }
       if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
       if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
       const largos = c.largos || 0, anchos = c.anchos || 0;
@@ -170,13 +175,13 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     piezasDet.push({ pieza: pz.nombre, rol: pz.rol_tablero, cant, largoIn: +lIn.toFixed(3), anchoIn: +aIn.toFixed(3), areaCm2: +area.toFixed(2) });
   }
 
-  // Madera
+  // Madera. El desperdicio (tarifa madera) es el ÚNICO factor de merma; se fija por proyecto
+  // (ej. 10%) o global (15%). No se aplica un markup adicional encima (evita doble conteo).
   let costoMadera = 0; const maderaPorRol: Breakdown['maderaPorRol'] = [];
-  const tMadera = 1 + (inp.tarifaMadera || 0);
   for (const [rol, cm2] of Object.entries(areaPorRol)) {
     const tab = inp.tablerosByCode[inp.preset[rol]];
     if (!tab) throw new Error(`Falta tablero para rol "${rol}": ${inp.preset[rol]}`);
-    const costo = (cm2 * (1 + inp.desperdicio) / 10000) * Number(tab.precio_m2) * tMadera;
+    const costo = (cm2 * (1 + inp.desperdicio) / 10000) * Number(tab.precio_m2);
     costoMadera += costo;
     maderaPorRol.push({ rol, codigo: inp.preset[rol], cm2: +cm2.toFixed(2), costo: +costo.toFixed(2) });
   }
@@ -209,7 +214,6 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   // Herrajes
   let costoHerrajes = 0; const herrajesDet: Breakdown['herrajes'] = [];
   const ESTRUCTURAL = new Set(['pata', 'tornillo', 'riel', 'barra']);
-  const tHerrajes = 1 + (inp.tarifaHerrajes || 0);
   // Herrajes excluidos manualmente por la línea (por rol). Permite Open con/sin bisagras,
   // KF sin hardware, o casos donde el cliente compra ciertos herrajes aparte (Omar/Infinitum).
   const excluidos = new Set((inp.herrajesExcluidos || []).map((r) => String(r).toLowerCase()));
@@ -218,49 +222,30 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     if (modo === 'solo_frentes' && ESTRUCTURAL.has(hp.rol)) continue;
     if (excluidos.has(String(hp.rol).toLowerCase())) continue;
     const cant = num(hp.formula_cantidad);
-    const basePrecio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
-    const precio = basePrecio * tHerrajes;
+    const precio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
     const costo = cant * precio;
     costoHerrajes += costo;
     herrajesDet.push({ rol: hp.rol, codigo: hp.herraje_codigo, cant, precio, costo: +costo.toFixed(2) });
   }
 
   const costoConHerrajes = costoSinHerrajes + costoHerrajes;
-  const recF = 1 - inp.recargo;
-  const desc = 1 - (inp.descuento || 0);
+  const recF = 1 - inp.recargo;          // recargo/adicional: SOLO al mueble (igual que el Excel)
+  const descF = 1 - (inp.descuento || 0);
+  const margenHerraje = inp.margenHerraje ?? 0.35;
 
-  // Decidimos usar margen unificado si margenHerraje no se define, es null, o es 0.
-  const usarUnificado = (inp.margenHerraje === undefined || inp.margenHerraje === null || inp.margenHerraje === 0);
+  // Mueble: su margen, luego recargo (adicional) y descuento.
+  const precioCop = costoSinHerrajes / (1 - inp.margen);
+  const precioCopConRecargo = (precioCop / recF) * descF;
+  const precioUsd = precioCopConRecargo / inp.trm;
 
-  // 1. Cálculos de lógica original de márgenes independientes
-  const localMargenHerraje = inp.margenHerraje ?? 0.35;
-  const localPrecioMuebleCop = costoSinHerrajes / (1 - inp.margen);
-  const localPrecioHerrajesCop = costoHerrajes > 0 ? costoHerrajes / (1 - localMargenHerraje) : 0;
-  const localPrecioConHerrajesCop = localPrecioMuebleCop + localPrecioHerrajesCop;
-
-  // 2. Cálculos de lógica unificada de Andrés
-  const unificadoPrecioCop = (costoConHerrajes / (1 - inp.margen)) * desc;
-
-  let precioCop: number;
-  let precioCopConRecargo: number;
-  let precioUsd: number;
-
-  if (usarUnificado) {
-    precioCop = unificadoPrecioCop;
-    precioCopConRecargo = precioCop / recF;
-    precioUsd = precioCopConRecargo / inp.trm;
-  } else {
-    precioCop = localPrecioMuebleCop;
-    precioCopConRecargo = precioCop / recF;
-    precioUsd = precioCopConRecargo / inp.trm;
-  }
-
-  const precioHerrajesCop = localPrecioHerrajesCop;
-  const precioHerrajesCopConRecargo = precioHerrajesCop / recF;
+  // Herrajes: su propio margen. El recargo/adicional NO se aplica al herraje (como el Excel); el descuento sí.
+  const precioHerrajesCop = costoHerrajes > 0 ? costoHerrajes / (1 - margenHerraje) : 0;
+  const precioHerrajesCopConRecargo = precioHerrajesCop * descF;
   const precioHerrajesUsd = precioHerrajesCopConRecargo / inp.trm;
 
-  const precioConHerrajesCop = localPrecioConHerrajesCop;
-  const precioConHerrajesCopConRecargo = localPrecioConHerrajesCop / recF;
+  // Total con herrajes = mueble (margen + recargo) + herrajes (margen propio), con descuento.
+  const precioConHerrajesCop = precioCop + precioHerrajesCop;
+  const precioConHerrajesCopConRecargo = precioCopConRecargo + precioHerrajesCopConRecargo;
   const precioConHerrajesUsd = precioConHerrajesCopConRecargo / inp.trm;
 
   return {
@@ -269,7 +254,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     precioCop, precioCopConRecargo, precioUsd,
     precioHerrajesCop, precioHerrajesCopConRecargo, precioHerrajesUsd,
     precioConHerrajesCop, precioConHerrajesCopConRecargo, precioConHerrajesUsd,
-    margenHerraje: localMargenHerraje,
+    margenHerraje,
   };
 }
 
