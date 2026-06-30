@@ -152,11 +152,12 @@ export function calcularMueble(inp: CalcInput): Breakdown {
       let cal = c.calibre;
       const tabCode = inp.preset[pz.rol_tablero];
       const tab = inp.tablerosByCode[tabCode || ''];
-      if (tab?.espesor_mm === 18) {
-        cal = '22x1';
-      } else if (tab?.espesor_mm === 15) {
-        cal = inp.cantosByCalibre[norm('19x0,45')] ? '19x0,45' : '19x0.45';
-      }
+      // Calibre del canto por espesor del tablero Y rol: el FRENTE (canto visible) usa 1mm;
+      // la caja e interiores (refuerzo/fondo) usan 0.45mm. (Antes mapeaba TODO 18mm a 22x1,
+      // sobre-cobrando el canto de la caja.)
+      const esp = Number(tab?.espesor_mm);
+      if (esp === 18) cal = (pz.rol_tablero === 'frente') ? '22x1' : '22x0,45';
+      else if (esp === 15) cal = (pz.rol_tablero === 'frente') ? '19x1' : '19x0,45';
       if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
       if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
       const largos = c.largos || 0, anchos = c.anchos || 0;
