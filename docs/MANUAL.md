@@ -32,9 +32,9 @@ Los totales se consolidan automáticamente por cocina y por proyecto, en **COP y
 
 ---
 
-## 3. Cómo se calcula el precio (el motor)
+## 3. Cómo se calcula el precio (el motor y sus fórmulas)
 
-Cada mueble se "explota" en **piezas**. Cada pieza tiene una **fórmula de dimensión** (en función del Largo `L`, Alto `A`, Profundidad `P`) y un **rol de material**:
+Cada mueble se "explota" en **piezas**. Cada pieza tiene una **fórmula de dimensión** (en función del Largo `L`, Alto `A`, Profundidad `P` del mueble) y un **rol de material**:
 
 | Rol | Material típico | Piezas |
 |---|---|---|
@@ -43,22 +43,64 @@ Cada mueble se "explota" en **piezas**. Cada pieza tiene una **fórmula de dimen
 | **frente** | Color 18 mm | puertas y frentes de cajón |
 | **fondo** | tablero de fondo | backing |
 
-El costo se arma en capas:
+El cálculo del costo final se realiza sumando diferentes componentes o "capas", aplicando operaciones matemáticas específicas paso a paso.
 
-1. **Tablero (madera)** = Σ por rol de `área (m²) × (1 + desperdicio) × precio/m²` del tablero elegido.
-2. **Canto** = longitud de enchape (por calibre 19 mm / 22 mm) × precio del canto, + desperdicio por arista.
-3. **Consumibles** = tarugos, soportes, cartón de protección, etiquetas.
-4. **Herrajes** (opcional) = patas, bisagras, manijas, rieles de cajón, etc.
+### Paso 1: Costo de Tableros (Madera)
+Para cada pieza, se calculan sus dimensiones (que el sistema maneja en pulgadas `in` y convierte a `cm`) y se obtiene su área en metros cuadrados (`m²`). Se suman las áreas de las piezas agrupándolas por su **rol**.
 
-Luego el **precio**:
+*   **Fórmula del Área (por pieza):** 
+    `Área_Pieza (m²) = Cantidad × [Largo (in) × Ancho (in) × 2.54 × 2.54] / 10000`
+*   **Fórmula del Costo de Madera (por rol):**
+    `Costo_Rol = Área_Total_Rol (m²) × (1 + % Desperdicio_Madera) × Precio_del_Tablero_por_m²`
+    *(Nota: El `% Desperdicio_Madera` compensa los cortes de la sierra, típicamente es un valor como el 15%).*
 
+### Paso 2: Costo de Enchape (Canto)
+Para las piezas que llevan bordes enchapados, se calcula la longitud total del canto necesario, sumando un desperdicio fijo por cada esquina (arista) que se enchapa.
+
+*   **Fórmula de Longitud de Canto:**
+    `Longitud_Canto (cm) = Cantidad_Piezas × [ (Caras_Largas_Enchapadas × Largo_in) + (Caras_Anchas_Enchapadas × Ancho_in) ] × 2.54 + (Total_Aristas × 5 cm_de_desperdicio)`
+*   **Fórmula del Costo de Canto (por calibre):**
+    `Costo_Canto = (Longitud_Canto (cm) / 100) × Precio_Canto_por_Metro`
+
+### Paso 3: Costo de Consumibles
+Se suman los insumos que utiliza el mueble (tarugos, soportes, cartón de embalaje y etiquetas).
+
+*   **Fórmula del Costo de Consumibles:**
+    `Costo_Consumibles = (Cant_Tarugos × Precio_Tarugo) + (Cant_Soportes × Precio_Soporte) + (Cant_Cartón × Precio_Cartón) + (Cant_Etiquetas × Precio_Etiqueta)`
+
+### Paso 4: Costo de Herrajes (Opcional)
+Se calcula el costo de bisagras, patas, manijas, rieles, etc., dependiendo del diseño.
+
+*   **Fórmula del Costo de Herrajes:**
+    `Costo_Herrajes = Sumatoria de (Cantidad_Herraje × Precio_Unitario_Herraje)`
+
+### Paso 5: Cálculo del Precio de Venta (COP y USD)
+Con los costos ya definidos, se procede a calcular el precio de venta dividiendo por un factor de margen (esto se hace para garantizar que el porcentaje de margen se obtenga *sobre el precio de venta*, no sobre el costo).
+
+**1. Suma de Costos (Base):**
 ```
-Precio COP = Costo / (1 − margen)          (margen por categoría: muebles 57%, fillers 52%, paneles/zócalos 44%)
-Precio COP = Precio / (1 − recargo)        (recargo por cliente, ej. CEMA +10%)
-Precio USD = Precio COP / TRM
+Costo_Sin_Herrajes = Costo_Madera + Costo_Canto + Costo_Consumibles
+Costo_Total_Mueble = Costo_Sin_Herrajes + Costo_Herrajes
 ```
 
-> El motor reproduce el Excel **al peso** en los tipos validados. La auditoría se ejecuta con `scripts/compare-excel.mjs`.
+**2. Aplicación de Márgenes y Descuentos (Precio de Venta Base en COP):**
+```
+Precio_COP = ( Costo_Total_Mueble / (1 - Margen) ) × (1 - Descuento)
+```
+*(Ejemplos de Margen: muebles 57% -> se divide entre 0.43; fillers 52%; paneles/zócalos 44%)*
+
+**3. Aplicación de Recargos de Cliente:**
+Dependiendo del cliente (ej. CEMA), se aplica un recargo adicional sobre el precio anterior.
+```
+Precio_COP_Final = Precio_COP / (1 - Recargo_Cliente)
+```
+
+**4. Conversión a Dólares (USD):**
+```
+Precio_USD = Precio_COP_Final / TRM
+```
+
+> 💡 **En resumen:** Todo inicia multiplicando el tamaño de las piezas para sacar su área o perímetro. Esas cantidades de material se multiplican por su precio unitario, se le añade un factor de desperdicio y finalmente los totales (el costo puro) se dividen entre `(1 - margen)` para fijar un precio de venta comercial. El motor reproduce el Excel **al peso** en los tipos validados y su auditoría se ejecuta con `scripts/compare-excel.mjs`.
 
 ---
 
