@@ -4,6 +4,7 @@ import { listarCotizaciones } from '@/lib/cotizaciones';
 import { getCotizadorData } from '@/lib/cotizar';
 import AppHeader from '@/components/AppHeader';
 import GuideButton from '@/components/GuideButton';
+import TooltipToggle from '@/components/TooltipToggle';
 import CotizacionRowActions from './CotizacionRowActions';
 import NuevoCotizacionForm from './NuevoCotizacionForm';
 
@@ -24,7 +25,10 @@ export default async function CotizacionesPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <AppHeader email={user?.email} rol={rol} active="cotizaciones" />
-      <div className="mx-auto max-w-6xl px-4 pt-4 flex justify-end"><GuideButton steps={GUIA_LISTA} label="Guía de uso" /></div>
+      <div className="mx-auto max-w-6xl px-4 pt-4 flex justify-end gap-2">
+        <GuideButton steps={GUIA_LISTA} label="Guía de uso" />
+        <TooltipToggle />
+      </div>
       <main className="mx-auto max-w-6xl px-4 pb-6 grid lg:grid-cols-[320px_1fr] gap-6">
         <NuevoCotizacionForm
           tableros={data.tableros}

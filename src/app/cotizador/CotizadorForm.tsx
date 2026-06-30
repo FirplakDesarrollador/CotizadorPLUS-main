@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { cotizarAction } from './actions';
 import type { CotizarResult } from '@/lib/cotizar';
 import GuideButton from '@/components/GuideButton';
+import TooltipToggle from '@/components/TooltipToggle';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
@@ -121,7 +122,10 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
       <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 h-fit">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-slate-900">Simular mueble</h2>
-          <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
+          <div className="flex gap-2">
+            <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
+            <TooltipToggle />
+          </div>
         </div>
 
         <div data-tour="tipo">
