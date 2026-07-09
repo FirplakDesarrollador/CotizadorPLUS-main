@@ -14,7 +14,7 @@ type Diseno = {
   piezas: Row[]; reglas: Row[]; herrajes: Row[];
   tableros: string[]; cantos: string[]; herrajeCat: { codigo: string; nombre: string; categoria: string | null }[];
 };
-const ROLES = ['caja', 'refuerzo', 'frente', 'fondo'];
+const ROLES = ['caja', 'refuerzo', 'frente', 'fondo', 'fondo_shaker', 'zocalo', 'panel', 'filler', 'lateral_cajon', 'cajon_madera', 'canto'];
 const fmt = (n: number) => Number(n).toLocaleString('es-CO', { maximumFractionDigits: 0 });
 
 export default function DisenoEditor({ tipos, presetDefault }: { tipos: Tipo[]; presetDefault: Record<string, string> }) {
@@ -76,7 +76,7 @@ function PiezasEditor({ tipoId, piezas, cantos, onChange }: { tipoId: string; pi
     const e = edit!;
     const cantos = e._cal ? { calibre: e._cal, largos: Number(e._l) || 0, anchos: Number(e._a) || 0, ...(e._de !== '' && e._de != null ? { despEdges: Number(e._de) } : {}) } : {};
     const row = {
-      tipo_mueble_id: tipoId, nombre: e.nombre, rol_tablero: e.rol_tablero === 'canto' ? null : e.rol_tablero,
+      tipo_mueble_id: tipoId, nombre: e.nombre, rol_tablero: (!e.rol_tablero || e.rol_tablero === 'canto') ? null : String(e.rol_tablero).trim().toLowerCase().replace(/\s+/g, '_'),
       formula_cantidad: e.formula_cantidad, formula_largo: e.formula_largo, formula_ancho: e.formula_ancho,
       cantos, tarugos: Number(e.tarugos) || 0, soportes: Number(e.soportes) || 0, orden: Number(e.orden) || 0,
     };
@@ -109,7 +109,7 @@ function PiezasEditor({ tipoId, piezas, cantos, onChange }: { tipoId: string; pi
       {edit && (
         <div className="mt-3 p-3 bg-slate-50 rounded-xl grid sm:grid-cols-3 lg:grid-cols-4 gap-2">
           <F l="Nombre"><input className={inp} value={edit.nombre} onChange={(e) => setEdit({ ...edit, nombre: e.target.value })} /></F>
-          <F l="Rol tablero"><select className={inp} value={edit.rol_tablero ?? 'canto'} onChange={(e) => setEdit({ ...edit, rol_tablero: e.target.value })}>{ROLES.map((r) => <option key={r}>{r}</option>)}<option value="canto">(solo canto)</option></select></F>
+          <F l="Rol tablero"><input className={inp} list="roles-diseno" value={edit.rol_tablero ?? 'canto'} placeholder="caja, frente, zocalo…" onChange={(e) => setEdit({ ...edit, rol_tablero: e.target.value })} /><datalist id="roles-diseno">{ROLES.map((r) => <option key={r} value={r}>{r === 'canto' ? '(solo canto)' : r}</option>)}</datalist></F>
           <F l="Cantidad"><input className={inp} value={edit.formula_cantidad} onChange={(e) => setEdit({ ...edit, formula_cantidad: e.target.value })} /></F>
           <F l="Orden"><input type="number" className={inp} value={edit.orden} onChange={(e) => setEdit({ ...edit, orden: e.target.value })} /></F>
           <F l="Fórmula largo (in)"><input className={inp} value={edit.formula_largo ?? ''} onChange={(e) => setEdit({ ...edit, formula_largo: e.target.value })} /></F>

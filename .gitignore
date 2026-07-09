@@ -43,3 +43,8 @@ next-env.d.ts
 # Excel fuente
 *.xlsx
 /_hold
+
+# Videos / grabaciones (no subir a git)
+/videos/
+*.mp4
+/Cotizaciones de muestra/

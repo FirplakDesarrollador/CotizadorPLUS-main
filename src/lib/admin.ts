@@ -68,3 +68,45 @@ export async function eliminarFila(tabla: CatalogoTabla, id: string) {
   const { error } = await sb.from(tabla).delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
+
+// ---- Perfiles de preset (sets de rol -> tablero) ----
+export type PresetPerfil = {
+  id: string; nombre: string; descripcion: string | null;
+  valores: Record<string, string>; es_default: boolean; activo: boolean; orden: number;
+};
+
+export async function listarPerfiles(): Promise<PresetPerfil[]> {
+  const sb = await createClient();
+  const { data, error } = await sb.from('cot_preset_perfiles')
+    .select('id,nombre,descripcion,valores,es_default,activo,orden').order('orden').order('nombre');
+  if (error) throw new Error(error.message);
+  return (data ?? []) as PresetPerfil[];
+}
+
+export async function upsertPerfil(id: string | null, row: {
+  nombre: string; descripcion?: string | null; valores: Record<string, string>;
+  es_default?: boolean; activo?: boolean; orden?: number;
+}) {
+  const sb = await createClient();
+  // Limpia roles vacíos en el mapa de valores.
+  const valores = Object.fromEntries(Object.entries(row.valores || {}).filter(([k, v]) => k && v));
+  const clean = {
+    nombre: row.nombre, descripcion: row.descripcion || null, valores,
+    es_default: !!row.es_default, activo: row.activo !== false, orden: row.orden ?? 0,
+  };
+  // Solo un perfil puede ser default.
+  if (clean.es_default) await sb.from('cot_preset_perfiles').update({ es_default: false }).neq('id', id ?? '00000000-0000-0000-0000-000000000000');
+  if (id) {
+    const { error } = await sb.from('cot_preset_perfiles').update(clean).eq('id', id);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await sb.from('cot_preset_perfiles').insert(clean);
+    if (error) throw new Error(error.message);
+  }
+}
+
+export async function eliminarPerfil(id: string) {
+  const sb = await createClient();
+  const { error } = await sb.from('cot_preset_perfiles').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}

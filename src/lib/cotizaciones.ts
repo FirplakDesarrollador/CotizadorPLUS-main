@@ -74,31 +74,33 @@ export async function eliminarCocina(cocinaId: string, cotizacionId: string) {
 // ---- Módulos (líneas) dentro de una cocina ----
 export type AgregarLineaInput = CotizarInput & { cantidad: number; prefLabel?: string };
 
-export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
-  const sb = await createClient();
-  const { data: cocina, error: ce } = await sb.from('cot_cocinas').select('id,cotizacion_id').eq('id', cocinaId).single();
-  if (ce || !cocina) throw new Error('Cocina no encontrada');
-  const cotizacionId = (cocina as { cotizacion_id: string }).cotizacion_id;
-
-  const res = await cotizar(input);
+// Construye las columnas de una línea a partir del input y el resultado del motor.
+// Lo comparten agregarLinea y editarLinea para garantizar el mismo cálculo.
+function construirFilaLinea(input: AgregarLineaInput, res: Awaited<ReturnType<typeof cotizar>>) {
   const cantidad = input.cantidad || 1;
-  const precioUnitCop = res.precioCopConRecargo;
-  const precioUnitUsd = res.precioUsd;
-
-  const { count } = await sb.from('cot_cotizacion_lineas')
-    .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
-
+  // Si hay margenOverride, usamos la lógica unificada de Andrés (precioCop ya consolidado).
+  // Si no, la lógica local de márgenes independientes.
+  const usarUnificado = input.margenOverride !== undefined;
+  const precioUnitCop = (input.conHerrajes && !usarUnificado) ? res.precioConHerrajesCopConRecargo : res.precioCopConRecargo;
+  const precioUnitUsd = (input.conHerrajes && !usarUnificado) ? res.precioConHerrajesUsd : res.precioUsd;
   const desc = `${input.prefLabel ?? ''} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim()
     + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '');
-
-  const { error } = await sb.from('cot_cotizacion_lineas').insert({
-    cotizacion_id: cotizacionId,
-    cocina_id: cocinaId,
-    orden: count ?? 0,
+  return {
     tipo_mueble_id: input.tipoId,
     pref: input.prefLabel ?? null,
     largo: input.largo, alto: input.alto, prof: input.prof, unidad_dim: input.unidad,
-    config: { preset: input.preset, conHerrajes: input.conHerrajes, recargoPct: input.recargoPct, overrides: input.overrides ?? null },
+    config: {
+      preset: input.preset, conHerrajes: input.conHerrajes, recargoPct: input.recargoPct,
+      overrides: input.overrides ?? null, modoFrentes: input.modoFrentes ?? 'normal',
+      herrajesExcluidos: input.herrajesExcluidos ?? null,
+      trm: res.trm, margen: res.margen, margenHerraje: res.margenHerraje,
+      margenOverride: input.margenOverride ?? null,
+      tarifaMadera: input.tarifaMadera ?? null,
+      tarifaHerrajes: input.tarifaHerrajes ?? null,
+      descuento: input.descuento ?? null,
+      cantoFrentes: input.cantoFrentes ?? null,
+      cantoCaja: input.cantoCaja ?? null,
+    },
     cantidad,
     costo_sin_herrajes_cop: res.costoSinHerrajes,
     costo_herrajes_cop: res.costoHerrajes,
@@ -109,7 +111,40 @@ export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
     precio_total_usd: precioUnitUsd * cantidad,
     descripcion_es: desc,
     breakdown: res,
+  };
+}
+
+export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
+  const sb = await createClient();
+  const { data: cocina, error: ce } = await sb.from('cot_cocinas').select('id,cotizacion_id').eq('id', cocinaId).single();
+  if (ce || !cocina) throw new Error('Cocina no encontrada');
+  const cotizacionId = (cocina as { cotizacion_id: string }).cotizacion_id;
+
+  const res = await cotizar(input);
+  const { count } = await sb.from('cot_cotizacion_lineas')
+    .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
+
+  const { error } = await sb.from('cot_cotizacion_lineas').insert({
+    cotizacion_id: cotizacionId,
+    cocina_id: cocinaId,
+    orden: count ?? 0,
+    ...construirFilaLinea(input, res),
   });
+  if (error) throw new Error(error.message);
+  await recomputarTotales(cotizacionId);
+  return cotizacionId;
+}
+
+// Edita una línea existente recalculando con el motor (mismos datos que al agregar).
+export async function editarLinea(lineaId: string, input: AgregarLineaInput) {
+  const sb = await createClient();
+  const { data: linea, error: le } = await sb.from('cot_cotizacion_lineas').select('cotizacion_id').eq('id', lineaId).single();
+  if (le || !linea) throw new Error('Línea no encontrada');
+  const cotizacionId = (linea as { cotizacion_id: string }).cotizacion_id;
+
+  const res = await cotizar(input);
+  const { error } = await sb.from('cot_cotizacion_lineas')
+    .update(construirFilaLinea(input, res)).eq('id', lineaId);
   if (error) throw new Error(error.message);
   await recomputarTotales(cotizacionId);
   return cotizacionId;
@@ -138,6 +173,34 @@ export async function eliminarCotizacion(id: string) {
   const sb = await createClient();
   const { error } = await sb.from('cot_cotizaciones').delete().eq('id', id);
   if (error) throw new Error(error.message);
+}
+
+export async function duplicarLineaACocina(lineaId: string, nuevaCocinaId: string, cotizacionId: string, nuevaCantidad?: number) {
+  const sb = await createClient();
+  const { data: lineaOriginal, error: getErr } = await sb.from('cot_cotizacion_lineas').select('*').eq('id', lineaId).single();
+  if (getErr || !lineaOriginal) throw new Error('No se pudo encontrar el módulo a copiar');
+
+  const { count } = await sb.from('cot_cotizacion_lineas')
+    .select('id', { count: 'exact', head: true }).eq('cocina_id', nuevaCocinaId);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id, created_at, updated_at, ...lineaCopy } = lineaOriginal;
+  
+  const finalCantidad = nuevaCantidad !== undefined ? nuevaCantidad : lineaCopy.cantidad;
+  const precio_unit_cop = Number(lineaCopy.precio_unit_cop || 0);
+  const precio_unit_usd = Number(lineaCopy.precio_unit_usd || 0);
+  
+  const { error: insertErr } = await sb.from('cot_cotizacion_lineas').insert({
+    ...lineaCopy,
+    cocina_id: nuevaCocinaId,
+    orden: count ?? 0,
+    cantidad: finalCantidad,
+    precio_total_cop: precio_unit_cop * finalCantidad,
+    precio_total_usd: precio_unit_usd * finalCantidad,
+  });
+  if (insertErr) throw new Error(insertErr.message);
+
+  await recomputarTotales(cotizacionId);
 }
 
 // Recalcula totales por cocina y del proyecto.

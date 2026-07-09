@@ -1,6 +1,6 @@
 // Contenido de los tooltips de ayuda (hover) de la app.
 // Cada entrada describe la FUNCIÓN del campo y un TIP clave.
-// Se consume desde el componente <Campo> en Simulador, Cotizaciones, Materiales y Diseño.
+// Se consume desde el componente <Campo> en Simulador, Cotizaciones, Materiales-Parámetros y Diseño.
 import type { Info } from '@/components/Campo';
 
 // ---- Simulador / Cotizaciones (AddLineForm comparten claves) ----
@@ -20,19 +20,25 @@ export const TIPS_COTIZADOR: Record<string, Info> = {
   'Tablero refuerzos': { fn: 'Tablero de refuerzos, entrepaños y gavetas.', tip: 'Suele ser un sustrato económico.' },
   'Tablero frente': { fn: 'Tablero de puertas y frentes (cara visible).', tip: 'Normalmente el más costoso; define el acabado.' },
   'Tablero fondo': { fn: 'Tablero del fondo (espalda del mueble).', tip: 'Sustrato delgado; en algunos tipos no se cobra.' },
+  'Perfil de material': { fn: 'Set de tableros por rol según zona/línea (CEMA, Colombia 15mm, Salguero, Shaker…).', tip: 'Al elegirlo llena los tableros; puedes ajustar cada rol después.' },
   'Cliente (recargo)': { fn: 'Aplica el recargo comercial del cliente sobre el precio final.', tip: 'Ej. CEMA +10%. Déjalo en “Sin recargo” para precio base.' },
   'Nº puertas (override)': { fn: 'Fuerza manualmente el número de puertas.', tip: 'Vacío = se deriva del ancho automáticamente. Cambia bisagras y manijas.' },
   'Nº cajones (override)': { fn: 'Fuerza manualmente el número de cajones.', tip: 'Vacío = automático. Cambia rieles y manijas (clave en cajoneras DB-2/3/4).' },
   'Nº puertas': { fn: 'Fuerza el número de puertas (vacío = automático).', tip: 'Cambia bisagras y manijas del mueble.' },
   'Nº cajones': { fn: 'Fuerza el número de cajones (vacío = automático).', tip: 'Cambia rieles y manijas del mueble.' },
+  'Nº entrepaños (override)': { fn: 'Fuerza el número de entrepaños.', tip: 'Vacío = automático. Útil: nevera (0), o cuando piden 1 ó 2 distinto al estándar.' },
+  'Nº entrepaños': { fn: 'Fuerza el número de entrepaños (vacío = automático).', tip: 'Ej. mueble superior para nevera = 0; a veces piden 2.' },
+  'Tipología DB': { fn: 'Tipología de cajonera (DB-1S, DB-2, DB-3…). Define nº de cajones y pares de barra estabilizadora.', tip: 'Las barras van en los cajones grandes; es fijo por tipología, no depende de la medida.' },
+  'Nº barras (pares)': { fn: 'Pares de barra estabilizadora del cajón.', tip: 'Se autocompleta con la tipología DB; puedes ajustarlo manualmente.' },
+  'Nº barras (override)': { fn: 'Pares de barra estabilizadora del cajón.', tip: 'Se autocompleta con la tipología DB; puedes ajustarlo manualmente.' },
   Frentes: { fn: 'Variante de armado: completo, sin frentes (open) o solo el kit de frentes.', tip: 'Open = carcasa lista sin puertas; Kit = solo puertas/frentes y su herraje.' },
   Cantidad: { fn: 'Número de muebles idénticos en esta línea.', tip: 'El subtotal multiplica el precio unitario por la cantidad.' },
   TRM: { fn: 'Tasa de cambio COP→USD usada para mostrar el precio en dólares.', tip: 'Editable aquí; solo afecta el valor en USD, no el costo en COP.' },
 };
 
-// ---- Materiales (Admin) — clave = field.key de cada catálogo ----
+// ---- Materiales-Parámetros (Admin) — clave = field.key de cada catálogo ----
 export const TIPS_MATERIALES: Record<string, Info> = {
-  codigo: { fn: 'Código único del material (clave de referencia).', tip: 'Debe ser único; se usa para enlazar presets y plantillas.' },
+  codigo: { fn: 'Código único del material (clave de referencia).', tip: 'Debe ser único; se usa para enlazar presets and plantillas.' },
   proveedor: { fn: 'Proveedor o marca del tablero.', tip: 'Solo informativo para identificar el material.' },
   sustrato: { fn: 'Tipo de sustrato (MDF, aglomerado, etc.).' },
   espesor_mm: { fn: 'Espesor del tablero en milímetros.', tip: 'Define el calibre; debe coincidir con el rol (caja 15, frente 18…).' },
@@ -74,7 +80,7 @@ export const TIPS_DISENO: Record<string, Info> = {
   Valor: { fn: 'Valor que toma la variable si la condición es verdadera.', tip: 'Puede ser una fórmula en L, A, P.' },
   Prioridad: { fn: 'Orden de evaluación de las reglas (menor = primero).', tip: 'Pon las condiciones más específicas con prioridad más baja.' },
   Rol: { fn: 'Rol del herraje (pata, bisagra, riel, manija…).', tip: 'Roles estructurales (pata/tornillo/riel/barra) no se incluyen en el kit de frentes.' },
-  Herraje: { fn: 'Herraje del catálogo asignado a este rol.', tip: 'Su precio se toma del catálogo de Materiales › Herrajes.' },
+  Herraje: { fn: 'Herraje del catálogo asignado a este rol.', tip: 'Su precio se toma del catálogo de Materiales-Parámetros › Herrajes.' },
   Largo: { fn: 'Largo (L) usado en la previsualización, en pulgadas.' },
   Alto: { fn: 'Alto (A) usado en la previsualización, en pulgadas.' },
   Prof: { fn: 'Profundidad (P) usada en la previsualización, en pulgadas.' },

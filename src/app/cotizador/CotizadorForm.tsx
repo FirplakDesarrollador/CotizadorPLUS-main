@@ -1,11 +1,14 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { cotizarAction } from './actions';
+import { useSimuladorStore } from '@/store/simuladorStore';
 import type { CotizarResult } from '@/lib/cotizar';
 import GuideButton from '@/components/GuideButton';
+import TooltipToggle from '@/components/TooltipToggle';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
+import { DB_TIPOLOGIAS } from '@/lib/muebles';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -15,6 +18,8 @@ const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
 type Tipo = { id: string; pref: string; nombre_es: string | null; categoria: string | null; margen_key: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number; incluye_herrajes: boolean };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null; precio_m2: number | null };
+type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
+type HerrajeTipo = { rol: string; codigo: string | null };
 
 const fmtCOP = (n: number) => n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -32,36 +37,101 @@ const GUIA_SIMULADOR = [
   { selector: '[data-tour="resultado"]', title: '7. Resultado', description: 'Verás el precio (COP/USD conmutable) y el desglose: materiales, piezas, canto y herrajes.' },
 ];
 
-export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, presetDefault, rolesByTipo }:
-  { tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]> }) {
+export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo }:
+  { tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]> }) {
 
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
-  const [tipoId, setTipoId] = useState(sbfd?.id ?? tipos[0]?.id ?? '');
-  const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>('in');
-  const [largo, setLargo] = useState(33);
-  const [alto, setAlto] = useState(30);
-  const [prof, setProf] = useState(24);
-  const [preset, setPreset] = useState<Record<string, string>>(presetDefault);
-  const [recargoId, setRecargoId] = useState('');
-  const [conHerrajes, setConHerrajes] = useState(true);
-  const [moneda, setMoneda] = useState<'COP' | 'USD'>('USD');
-  const [trm, setTrm] = useState(trmDefault);
-  const [npuertas, setNpuertas] = useState<string>('');
-  const [ncajones, setNcajones] = useState<string>('');
-  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>('normal');
-  const [margenInput, setMargenInput] = useState<string>('');
+  
+  const store = useSimuladorStore();
+  const setStore = store.setSimuladorState;
 
-  const [result, setResult] = useState<CotizarResult | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
+  const tipoId = store.tipoId || (sbfd?.id ?? tipos[0]?.id ?? '');
+  const setTipoId = (v: string) => setStore({ tipoId: v });
+  
+  const unidad = store.unidad;
+  const setUnidad = (v: 'in' | 'cm' | 'mm') => setStore({ unidad: v });
+  
+  const largo = store.largo;
+  const setLargo = (v: number | ((prev: number) => number)) => setStore({ largo: typeof v === 'function' ? v(largo) : v });
+  
+  const alto = store.alto;
+  const setAlto = (v: number | ((prev: number) => number)) => setStore({ alto: typeof v === 'function' ? v(alto) : v });
+  
+  const prof = store.prof;
+  const setProf = (v: number | ((prev: number) => number)) => setStore({ prof: typeof v === 'function' ? v(prof) : v });
+  
+  const perfilId = store.perfilId || perfilDefaultId;
+  const preset = Object.keys(store.preset).length > 0 ? store.preset : presetDefault;
+  const setPreset = (v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => setStore({ preset: typeof v === 'function' ? v(preset) : v });
+
+  function aplicarPerfil(id: string) {
+    setStore({ perfilId: id });
+    const p = perfiles.find((x) => x.id === id);
+    if (p) setStore({ preset: { ...p.valores } });
+  }
+
+  const recargoId = store.recargoId;
+  const setRecargoId = (v: string) => setStore({ recargoId: v });
+  
+  const conHerrajes = store.conHerrajes;
+  const setConHerrajes = (v: boolean) => setStore({ conHerrajes: v });
+  
+  const herrajesExcl = store.herrajesExcl;
+  const setHerrajesExcl = (v: string[] | ((prev: string[]) => string[])) => setStore({ herrajesExcl: typeof v === 'function' ? v(herrajesExcl) : v });
+  
+  const moneda = store.moneda;
+  const setMoneda = (v: 'COP' | 'USD') => setStore({ moneda: v });
+  
+  const trm = store.trm ?? trmDefault;
+  const setTrm = (v: number) => setStore({ trm: v });
+  
+  const npuertas = store.npuertas;
+  const setNpuertas = (v: string) => setStore({ npuertas: v });
+  
+  const ncajones = store.ncajones;
+  const setNcajones = (v: string) => setStore({ ncajones: v });
+  
+  const nentrepanos = store.nentrepanos;
+  const setNentrepanos = (v: string) => setStore({ nentrepanos: v });
+  
+  const nbarras = store.nbarras;
+  const setNbarras = (v: string) => setStore({ nbarras: v });
+  
+  const dbTipo = store.dbTipo;
+  const setDbTipo = (v: string) => setStore({ dbTipo: v });
+  
+  const modoFrentes = store.modoFrentes;
+  const setModoFrentes = (v: 'normal' | 'sin_frentes' | 'solo_frentes') => setStore({ modoFrentes: v });
+
+  const result = store.result;
+  const setResult = (v: CotizarResult | null) => setStore({ result: v });
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const tableroLabel = (t: Tablero) => `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}`;
-  const recargoSel = recargos.find((r) => r.id === recargoId);
 
-  const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const sortedTableros = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)), [tableros]);
   const tipoOptions = useMemo(() => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tipos]);
   const tableroOptions = useMemo(() => sortedTableros.map((t) => ({ value: t.codigo, label: tableroLabel(t) })), [sortedTableros]);
+
+  if (!isMounted) return null;
+
+  const recargoSel = recargos.find((r) => r.id === recargoId);
+
+  const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
+  const tipoPref = tipos.find((t) => t.id === tipoId)?.pref ?? '';
+  const esDB = tipoPref.startsWith('DB');
+  function aplicarDbTipo(k: string) {
+    setDbTipo(k);
+    const t = DB_TIPOLOGIAS.find((x) => x.key === k);
+    if (t) { setNcajones(String(t.nc)); setNbarras(String(t.nb)); }
+  }
+  const herrajesTipo = herrajesByTipo[tipoId] ?? [];
+  const toggleHerraje = (rol: string) => setStore({ herrajesExcl: herrajesExcl.includes(rol) ? herrajesExcl.filter((x) => x !== rol) : [...herrajesExcl, rol] });
 
   function changeUnidad(nu: 'in' | 'cm' | 'mm') {
     if (nu === unidad) return;
@@ -77,13 +147,16 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
     const overrides: Record<string, number> = {};
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
-    const parsedMargen = margenInput ? Number(margenInput) / 100 : undefined;
+    if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
+    if (nbarras !== '') overrides.n_barras = Number(nbarras);
     const res = await cotizarAction({
-      tipoId, largo, alto, prof, unidad, preset, conHerrajes,
+      // El simulador SIEMPRE calcula herrajes para poder mostrar ambos precios
+      // (con y sin). El checkbox "Incluir herrajes" solo elige cuál se muestra.
+      tipoId, largo, alto, prof, unidad, preset, conHerrajes: true,
       recargoPct: recargoSel?.recargo_pct ?? 0,
       trm, modoFrentes,
-      margenOverride: parsedMargen,
       overrides: Object.keys(overrides).length ? overrides : undefined,
+      herrajesExcluidos: herrajesExcl.length ? herrajesExcl : undefined,
     });
     setLoading(false);
     if (!res.ok) { setError(res.error); setResult(null); return; }
@@ -96,12 +169,15 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
       <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 h-fit">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-slate-900">Simular mueble</h2>
-          <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
+          <div className="flex gap-2">
+            <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
+            <TooltipToggle />
+          </div>
         </div>
 
         <div data-tour="tipo">
           <Field label="Tipo de mueble">
-            <Combobox value={tipoId} options={tipoOptions} onChange={(v) => { setTipoId(v); setMargenInput(''); }} placeholder="Buscar tipo…" />
+            <Combobox value={tipoId} options={tipoOptions} onChange={setTipoId} placeholder="Buscar tipo…" />
           </Field>
         </div>
 
@@ -118,6 +194,11 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
 
         <div data-tour="tableros" className="space-y-2">
           <p className="text-xs font-medium text-slate-500 uppercase">Tableros</p>
+          {perfiles.length > 0 && (
+            <Field label="Perfil de material">
+              <Combobox value={perfilId} options={perfiles.map((p) => ({ value: p.id, label: p.nombre }))} onChange={aplicarPerfil} placeholder="Elegir perfil…" />
+            </Field>
+          )}
           {roles.map((rol) => (
             <Field key={rol} label={ROL_LABEL[rol] ?? rol}>
               <Combobox value={preset[rol] ?? ''} options={tableroOptions}
@@ -139,18 +220,40 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
         <div data-tour="opciones" className="grid grid-cols-2 gap-2 items-end">
           <Field label="Nº puertas (override)"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
           <Field label="Nº cajones (override)"><input type="number" placeholder="auto" value={ncajones} onChange={(e) => setNcajones(e.target.value)} className="inp" /></Field>
+          <Field label="Nº entrepaños (override)"><input type="number" placeholder="auto" value={nentrepanos} onChange={(e) => setNentrepanos(e.target.value)} className="inp" /></Field>
+          {esDB && (
+            <Field label="Tipología DB">
+              <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
+                <option value="">— manual —</option>
+                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{t.key} · {t.desc}</option>)}
+              </select>
+            </Field>
+          )}
+          {esDB && <Field label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></Field>}
           <Field label="Frentes">
             <select value={modoFrentes} onChange={(e) => setModoFrentes(e.target.value as 'normal' | 'sin_frentes' | 'solo_frentes')} className="inp">
               <option value="normal">Completo</option><option value="sin_frentes">Sin frentes (open)</option><option value="solo_frentes">Solo kit de frentes</option>
             </select>
           </Field>
           <Field label="TRM"><input type="number" step="any" value={trm} onChange={(e) => setTrm(+e.target.value)} className="inp" /></Field>
-          <Field label="Margen (%)"><input type="number" placeholder="auto" value={margenInput} onChange={(e) => setMargenInput(e.target.value)} className="inp" /></Field>
         </div>
 
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={conHerrajes} onChange={(e) => setConHerrajes(e.target.checked)} /> Incluir herrajes
         </label>
+        {conHerrajes && herrajesTipo.length > 0 && (
+          <div className="rounded-lg border border-slate-200 p-2.5">
+            <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes incluidos (destilda para excluir)</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+              {herrajesTipo.map((h) => (
+                <label key={h.rol} className="flex items-center gap-1.5 text-sm text-slate-700 capitalize">
+                  <input type="checkbox" checked={!herrajesExcl.includes(h.rol)} onChange={() => toggleHerraje(h.rol)} />
+                  {h.rol}{h.codigo ? <span className="text-slate-400 normal-case">· {h.codigo}</span> : null}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button data-tour="calcular" disabled={loading} className="w-full rounded-lg bg-slate-900 text-white py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">
@@ -175,8 +278,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function ResultadoView({ result, moneda, setMoneda, conHerrajes }:
   { result: CotizarResult; moneda: 'COP' | 'USD'; setMoneda: (m: 'COP' | 'USD') => void; conHerrajes: boolean }) {
-  const costoTotal = conHerrajes ? result.costoConHerrajes : result.costoSinHerrajes;
-  const precioCop = result.precioCopConRecargo;
+  const precioSin = result.precioCopConRecargo;
+  const precioHerr = result.precioHerrajesCopConRecargo;
+  const precioCon = result.precioConHerrajesCopConRecargo;
+  const precioPrincipal = conHerrajes ? precioCon : precioSin;
   const money = (cop: number) => (moneda === 'COP' ? fmtCOP(cop) : fmtUSD(cop / result.trm));
   return (
     <>
@@ -189,15 +294,21 @@ function ResultadoView({ result, moneda, setMoneda, conHerrajes }:
             ))}
           </div>
         </div>
-        <div className="text-4xl font-bold text-slate-900">{money(precioCop)}</div>
+        <div className="text-4xl font-bold text-slate-900">{money(precioPrincipal)}</div>
         <p className="text-sm text-slate-500 mt-1">
-          Margen {(result.margen * 100).toFixed(0)}% · TRM {result.trm.toLocaleString('es-CO')}
-          {moneda === 'COP' ? '' : ` · ${fmtCOP(precioCop)}`}
+          {conHerrajes ? 'Con herrajes' : 'Sin herrajes'} · Margen mueble {(result.margen * 100).toFixed(0)}% · Margen herraje {(result.margenHerraje * 100).toFixed(0)}% · TRM {result.trm.toLocaleString('es-CO')}
+          {moneda === 'COP' ? '' : ` · ${fmtCOP(precioPrincipal)}`}
         </p>
+        {/* El simulador muestra SIEMPRE ambas opciones (con y sin herrajes). */}
         <div className="grid grid-cols-3 gap-3 mt-4 text-sm">
+          <Stat label="Precio sin herrajes" value={money(precioSin)} highlight={!conHerrajes} />
+          <Stat label="Precio herrajes" value={money(precioHerr)} />
+          <Stat label="Precio con herrajes" value={money(precioCon)} highlight={conHerrajes} />
+        </div>
+        <div className="grid grid-cols-3 gap-3 mt-3 text-sm">
           <Stat label="Costo sin herrajes" value={money(result.costoSinHerrajes)} />
           <Stat label="Costo herrajes" value={money(result.costoHerrajes)} />
-          <Stat label="Costo total" value={money(costoTotal)} highlight />
+          <Stat label="Costo total" value={money(result.costoConHerrajes)} />
         </div>
       </div>
 
