@@ -36,6 +36,11 @@ export default async function CotizacionesPage() {
           cantos={data.cantos}
           presetDefault={data.presetDefault}
           trmDefault={data.trmDefault}
+          tipos={data.tipos}
+          rolesByTipo={data.rolesByTipo}
+          perfiles={data.perfiles}
+          perfilDefaultId={data.perfilDefaultId}
+          herrajesByTipo={data.herrajesByTipo}
         />
 
         <div data-tour="lista" className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-fit">

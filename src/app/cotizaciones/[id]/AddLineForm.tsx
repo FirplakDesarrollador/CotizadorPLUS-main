@@ -19,6 +19,19 @@ export type ProjectDefaults = {
   cantoCaja: string;
   recargoId: string;
   margen: string;
+  // Defaults del primer mueble (opcionales, vienen de NuevoCotizacionForm)
+  tipoId?: string;
+  largo?: string;
+  alto?: string;
+  prof?: string;
+  unidad?: 'in' | 'cm' | 'mm';
+  perfilId?: string;
+  modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
+  conHerrajes?: boolean;
+  herrajesExcl?: string[];
+  npuertas?: string;
+  ncajones?: string;
+  nentrepanos?: string;
 };
 
 export type LineaInicial = {
@@ -40,7 +53,7 @@ export type LineaInicial = {
   cantoCaja?: string;
 };
 
-const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja', refuerzo: 'Tablero refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
+const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -75,13 +88,13 @@ export default function AddLineForm({
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
   const ov = initial?.overrides ?? null;
 
-  // Estados
-  const [tipoId, setTipoId] = useState(initial?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '');
-  const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>(initial?.unidad ?? 'in');
-  const [largo, setLargo] = useState(initial?.largo != null ? String(initial.largo) : '33');
-  const [alto, setAlto] = useState(initial?.alto != null ? String(initial.alto) : '30');
-  const [prof, setProf] = useState(initial?.prof != null ? String(initial.prof) : '24');
-  const [perfilId, setPerfilId] = useState(initial ? '' : perfilDefaultId);
+  // Estados — si viene de NuevoCotizacionForm (projectDefaults), usar esos valores como defaults
+  const [tipoId, setTipoId] = useState(initial?.tipoId ?? projectDefaults?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '');
+  const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>(initial?.unidad ?? projectDefaults?.unidad ?? 'in');
+  const [largo, setLargo] = useState(initial?.largo != null ? String(initial.largo) : (projectDefaults?.largo ?? '33'));
+  const [alto, setAlto] = useState(initial?.alto != null ? String(initial.alto) : (projectDefaults?.alto ?? '30'));
+  const [prof, setProf] = useState(initial?.prof != null ? String(initial.prof) : (projectDefaults?.prof ?? '24'));
+  const [perfilId, setPerfilId] = useState(initial ? '' : (projectDefaults?.perfilId ?? perfilDefaultId));
   const [preset, setPreset] = useState<Record<string, string>>(() => {
     if (initial?.preset) return initial.preset;
     if (projectDefaults?.preset) return projectDefaults.preset;
@@ -113,17 +126,17 @@ export default function AddLineForm({
     return projectDefaults?.recargoId ?? '';
   });
 
-  const [conHerrajes, setConHerrajes] = useState(initial?.conHerrajes ?? true);
-  const [herrajesExcl, setHerrajesExcl] = useState<string[]>(initial?.herrajesExcluidos ?? []);
+  const [conHerrajes, setConHerrajes] = useState(initial?.conHerrajes ?? projectDefaults?.conHerrajes ?? true);
+  const [herrajesExcl, setHerrajesExcl] = useState<string[]>(initial?.herrajesExcluidos ?? projectDefaults?.herrajesExcl ?? []);
   const [cantidad, setCantidad] = useState(initial?.cantidad ?? 1);
   const [margenInput, setMargenInput] = useState(initial?.margenOverride != null ? String(initial.margenOverride) : (projectDefaults?.margen ?? ''));
 
-  const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : '');
-  const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : '');
-  const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : '');
+  const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : (projectDefaults?.npuertas ?? ''));
+  const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : (projectDefaults?.ncajones ?? ''));
+  const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : (projectDefaults?.nentrepanos ?? ''));
   const [nbarras, setNbarras] = useState(ov?.n_barras != null ? String(ov.n_barras) : '');
   const [dbTipo, setDbTipo] = useState('');
-  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? 'normal');
+  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? projectDefaults?.modoFrentes ?? 'normal');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -184,7 +197,7 @@ export default function AddLineForm({
       trm,
       recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
       cantidad,
-      prefLabel: tipo?.pref,
+      prefLabel: tipo?.pref ? `${tipo.pref}${Number(largo)}${esDB && dbTipo ? `-${dbTipo.split('-').slice(1).join('-')}` : ''}` : undefined,
       modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
       herrajesExcluidos: conHerrajes && herrajesExcl.length ? herrajesExcl : undefined,

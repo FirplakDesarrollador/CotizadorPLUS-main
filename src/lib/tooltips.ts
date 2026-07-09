@@ -14,10 +14,10 @@ export const TIPS_COTIZADOR: Record<string, Info> = {
   Un: { fn: 'Unidad de las dimensiones (in/cm/mm).', tip: 'Al cambiarla, las dimensiones se convierten automáticamente.' },
   caja: { fn: 'Tablero de la caja: laterales, base y tapa (estructura).', tip: 'Es el mayor consumo de área; impacta fuerte el costo.' },
   refuerzos: { fn: 'Tablero de refuerzos, entrepaños y gavetas.', tip: 'Suele ser un sustrato económico (p. ej. Polar 15mm).' },
+  'caja / refuerzos': { fn: 'Tablero de la caja y refuerzos: laterales, base, tapa, entrepaños y gavetas.', tip: 'Es el mayor consumo de área; impacta fuerte el costo.' },
   frente: { fn: 'Tablero de puertas y frentes (cara visible).', tip: 'Normalmente el más costoso; define el acabado/color.' },
   fondo: { fn: 'Tablero del fondo (espalda del mueble).', tip: 'Sustrato delgado; en algunos tipos no se cobra.' },
-  'Tablero caja': { fn: 'Tablero de la caja: laterales, base y tapa.', tip: 'Es el mayor consumo de área; impacta fuerte el costo.' },
-  'Tablero refuerzos': { fn: 'Tablero de refuerzos, entrepaños y gavetas.', tip: 'Suele ser un sustrato económico.' },
+  'Tablero caja / refuerzos': { fn: 'Tablero de la caja y refuerzos: laterales, base, tapa, entrepaños y gavetas.', tip: 'Es el mayor consumo de área; impacta fuerte el costo.' },
   'Tablero frente': { fn: 'Tablero de puertas y frentes (cara visible).', tip: 'Normalmente el más costoso; define el acabado.' },
   'Tablero fondo': { fn: 'Tablero del fondo (espalda del mueble).', tip: 'Sustrato delgado; en algunos tipos no se cobra.' },
   'Perfil de material': { fn: 'Set de tableros por rol según zona/línea (CEMA, Colombia 15mm, Salguero, Shaker…).', tip: 'Al elegirlo llena los tableros; puedes ajustar cada rol después.' },
@@ -34,6 +34,8 @@ export const TIPS_COTIZADOR: Record<string, Info> = {
   Frentes: { fn: 'Variante de armado: completo, sin frentes (open) o solo el kit de frentes.', tip: 'Open = carcasa lista sin puertas; Kit = solo puertas/frentes y su herraje.' },
   Cantidad: { fn: 'Número de muebles idénticos en esta línea.', tip: 'El subtotal multiplica el precio unitario por la cantidad.' },
   TRM: { fn: 'Tasa de cambio COP→USD usada para mostrar el precio en dólares.', tip: 'Editable aquí; solo afecta el valor en USD, no el costo en COP.' },
+  'Canto frentes': { fn: 'Calibre del canto a aplicar en los frentes (puertas).', tip: 'Se auto-sugiere según el espesor del tablero elegido (18mm→22x1, 15mm→19x0,45).' },
+  'Canto caja': { fn: 'Calibre del canto a aplicar en las piezas de caja y refuerzos.', tip: 'Se auto-sugiere según el espesor del tablero de caja.' },
 };
 
 // ---- Materiales-Parámetros (Admin) — clave = field.key de cada catálogo ----

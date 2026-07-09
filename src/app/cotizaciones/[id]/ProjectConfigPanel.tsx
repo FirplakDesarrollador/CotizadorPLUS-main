@@ -12,6 +12,19 @@ export type ProjectDefaults = {
   cantoCaja: string;
   recargoId: string;
   margen: string;
+  // Defaults del primer mueble (vienen del formulario de creación)
+  tipoId?: string;
+  largo?: string;
+  alto?: string;
+  prof?: string;
+  unidad?: 'in' | 'cm' | 'mm';
+  perfilId?: string;
+  modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
+  conHerrajes?: boolean;
+  herrajesExcl?: string[];
+  npuertas?: string;
+  ncajones?: string;
+  nentrepanos?: string;
 };
 
 interface ProjectConfigPanelProps {
@@ -96,7 +109,7 @@ export default function ProjectConfigPanel({ tableros, recargos, cantos, perfile
         )}
 
         {/* Tableros */}
-        <F label="Tablero caja">
+        <F label="Tablero caja / refuerzos">
           <Combobox
             value={defaults.preset['caja'] ?? ''}
             options={tableroOptions}

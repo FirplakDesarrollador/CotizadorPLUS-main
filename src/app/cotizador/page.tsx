@@ -17,7 +17,7 @@ export default async function CotizadorPage() {
     <div className="min-h-screen bg-slate-50">
       <AppHeader email={user?.email} rol={rol} active="cotizador" />
       <main className="mx-auto max-w-6xl px-4 py-6">
-        <CotizadorForm tipos={data.tipos} recargos={data.recargos} tableros={data.tableros} trmDefault={data.trmDefault} presetDefault={data.presetDefault} rolesByTipo={data.rolesByTipo} perfiles={data.perfiles} perfilDefaultId={data.perfilDefaultId} herrajesByTipo={data.herrajesByTipo} />
+        <CotizadorForm tipos={data.tipos} recargos={data.recargos} tableros={data.tableros} trmDefault={data.trmDefault} presetDefault={data.presetDefault} rolesByTipo={data.rolesByTipo} perfiles={data.perfiles} perfilDefaultId={data.perfilDefaultId} herrajesByTipo={data.herrajesByTipo} cantos={data.cantos} />
       </main>
     </div>
   );

@@ -87,6 +87,18 @@ export default function CotizacionDetalleClient({
         cantoCaja: initialConfig.cantoCaja ?? '',
         recargoId: initialConfig.recargoId ?? '',
         margen: initialConfig.margen ?? '',
+        tipoId: initialConfig.tipoId,
+        largo: initialConfig.largo,
+        alto: initialConfig.alto,
+        prof: initialConfig.prof,
+        unidad: initialConfig.unidad,
+        perfilId: initialConfig.perfilId,
+        modoFrentes: initialConfig.modoFrentes,
+        conHerrajes: initialConfig.conHerrajes,
+        herrajesExcl: initialConfig.herrajesExcl,
+        npuertas: initialConfig.npuertas,
+        ncajones: initialConfig.ncajones,
+        nentrepanos: initialConfig.nentrepanos,
       };
     }
 
