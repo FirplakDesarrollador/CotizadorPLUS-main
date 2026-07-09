@@ -1,9 +1,3 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
-
 # Reglas y Workflows de WikiLLM
 
 ## Schema de WikiLLM
@@ -57,4 +51,3 @@ Este flujo de trabajo define los pasos exactos a seguir para garantizar que la b
 - Asegurarse de que no se haya modificado ningún archivo dentro de `WikiLLM/raw/` (son de solo lectura).
 - Comprobar que todas las referencias cruzadas entre páginas usen rutas relativas adecuadas.
 - Validar que el formato se mantenga técnico, conciso y libre de fragmentos excesivamente grandes de código puro (a menos que sean esenciales para explicar un patrón).
-
