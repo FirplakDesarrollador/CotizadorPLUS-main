@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { signOutAction } from '@/app/cotizador/session-actions';
+import UndoRedoButtons from '@/components/UndoRedoButtons';
 
 export default function AppHeader({ email, rol, active }: { email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'manual' }) {
   const link = (href: string, label: string, key: string) => (
     <Link href={href} className={`px-3 py-1.5 rounded-lg text-sm ${active === key ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>{label}</Link>
   );
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="border-b border-slate-200 bg-white sticky top-0 z-40">
       <div className="mx-auto max-w-6xl px-4 py-2.5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-slate-900 mr-2 flex items-center gap-1.5">
@@ -20,6 +21,7 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
           {link('/manual', 'Manual', 'manual')}
         </div>
         <div className="flex items-center gap-3 text-sm text-slate-500">
+          <UndoRedoButtons />
           <span className="hidden sm:inline">{email}</span>
           <span className="text-xs rounded-full bg-slate-100 px-2 py-0.5 text-slate-600 capitalize">{rol}</span>
           <form action={signOutAction}>
@@ -30,3 +32,4 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
     </header>
   );
 }
+

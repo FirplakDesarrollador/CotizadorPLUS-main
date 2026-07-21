@@ -52,9 +52,6 @@ function assertCompatible(members: PreparedGroupMember[]) {
 
   const first = members[0].calc;
   for (const { calc } of members.slice(1)) {
-    if (Math.abs(mm(calc.dims.A - first.dims.A)) > 0.5) {
-      throw new Error('Los módulos de un grupo deben tener la misma altura física (tolerancia 0,5 mm).');
-    }
     if (Math.abs(mm(calc.dims.P - first.dims.P)) > 0.5) {
       throw new Error('Los módulos de un grupo deben tener la misma profundidad física (tolerancia 0,5 mm).');
     }
@@ -154,7 +151,31 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
       if (piece.modo_agrupacion === 'lateral_compartido') {
         const original = evaluated(piece, calc).cantidad;
         if (!near(original, 2)) throw new Error('La plantilla lateral agrupable debe declarar exactamente dos laterales.');
-        const allocated = n === 1 ? 2 : (index === 0 || index === n - 1 ? 1.5 : 1);
+
+        let discount = 0;
+        const currentHeight = calc.dims.A;
+
+        // Descuento en la unión izquierda (con index - 1)
+        if (index > 0) {
+          const leftHeight = members[index - 1].calc.dims.A;
+          if (Math.abs(currentHeight - leftHeight) <= 0.0001) {
+            discount += 0.5;
+          } else if (currentHeight < leftHeight) {
+            discount += 1.0;
+          }
+        }
+
+        // Descuento en la unión derecha (con index + 1)
+        if (index < n - 1) {
+          const rightHeight = members[index + 1].calc.dims.A;
+          if (Math.abs(currentHeight - rightHeight) <= 0.0001) {
+            discount += 0.5;
+          } else if (currentHeight < rightHeight) {
+            discount += 1.0;
+          }
+        }
+
+        const allocated = Math.max(0, 2 - discount);
         return { ...piece, formula_cantidad: String(allocated) };
       }
       if (piece.modo_agrupacion !== 'continua') {

@@ -3,9 +3,21 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
   crearCotizacion, agregarLinea, editarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
-  crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina, cambiarGrupoLinea,
+  crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
+  reordenarGruposCocina,
   type AgregarLineaInput,
 } from '@/lib/cotizaciones';
+
+export async function reordenarGruposCocinaAction(cocinaId: string, nuevosGrupoIds: string[]): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const cotizacionId = await reordenarGruposCocina(cocinaId, nuevosGrupoIds);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo reordenar los muebles' };
+  }
+}
+
 
 export async function crearCotizacionAction(
   _prev: unknown,
@@ -32,6 +44,16 @@ export async function cambiarGrupoLineaAction(lineaId: string, etiqueta: string)
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'No se pudo reagrupar el módulo' };
+  }
+}
+
+export async function desagruparGrupoAction(grupoId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const cotizacionId = await desagruparGrupo(grupoId);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo desagrupar el grupo' };
   }
 }
 

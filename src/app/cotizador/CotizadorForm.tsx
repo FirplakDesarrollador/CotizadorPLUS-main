@@ -5,6 +5,7 @@ import { useSimuladorStore } from '@/store/simuladorStore';
 import type { CotizarResult } from '@/lib/cotizar';
 import GuideButton from '@/components/GuideButton';
 import TooltipToggle from '@/components/TooltipToggle';
+import UndoRedoButtons from '@/components/UndoRedoButtons';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
@@ -200,7 +201,8 @@ export default function CotizadorForm({ tipos, recargos = [], tableros, trmDefau
       <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 h-fit">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-slate-900">Simular mueble</h2>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <UndoRedoButtons />
             <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
             <TooltipToggle />
           </div>
@@ -269,18 +271,6 @@ export default function CotizadorForm({ tipos, recargos = [], tableros, trmDefau
             return rendered;
           })()}
         </div>
-
-<<<<<<< HEAD
-        {/* <div data-tour="cliente">
-          <Field label="Cliente (recargo)">
-            <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
-              <option value="">Sin recargo</option>
-              {recargos.map((r) => <option key={r.id} value={r.id}>{r.cliente_nombre} (+{(r.recargo_pct * 100).toFixed(0)}%)</option>)}
-            </select>
-          </Field>
-        </div> */}
-=======
->>>>>>> DEV
 
         <div data-tour="opciones" className="grid grid-cols-2 gap-2 items-end">
           <Field label="Nº puertas (override)"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>

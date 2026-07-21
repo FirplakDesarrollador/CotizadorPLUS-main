@@ -135,11 +135,6 @@ test('bloquea incompatibilidades antes de transformar el despiece', () => {
 
   assert.throws(() => calcularGrupoFisico([
     member({ pref: 'B', width: 12 }),
-    member({ pref: 'DB', width: 10, height: 30.02 }),
-  ]), /misma altura/);
-
-  assert.throws(() => calcularGrupoFisico([
-    member({ pref: 'B', width: 12 }),
     member({ pref: 'DB', width: 10, permiteAgrupacion: false }),
   ]), /no admite agrupación/);
 
@@ -149,9 +144,26 @@ test('bloquea incompatibilidades antes de transformar el despiece', () => {
   ]), /mismo conjunto/);
 });
 
+test('permite combinar módulos con diferente altura y quita el lateral del módulo menos alto', () => {
+  const tall = member({ pref: 'B', width: 12, height: 30, omitBack: true });
+  const short = member({ pref: 'DB', width: 10, height: 20, omitBack: true });
+
+  const grouped = calcularGrupoFisico([tall, short]);
+  assert.equal(grouped.laterales, 3);
+
+  // Módulo alto (índice 0, height 30): conserva sus 2 laterales
+  const tallLaterals = grouped.lineas[0].piezas.find((p) => p.pieza === 'lateral')?.cant;
+  assert.equal(tallLaterals, 2);
+
+  // Módulo bajo (índice 1, height 20): descuenta su lateral en la unión (conserva 1)
+  const shortLaterals = grouped.lineas[1].piezas.find((p) => p.pieza === 'lateral')?.cant;
+  assert.equal(shortLaterals, 1);
+});
+
 test('bloquea grupos que exceden el largo del tablero', () => {
   assert.throws(() => calcularGrupoFisico([
     member({ pref: 'B', width: 50 }),
     member({ pref: 'DB', width: 50 }),
   ]), /supera el largo disponible/);
 });
+

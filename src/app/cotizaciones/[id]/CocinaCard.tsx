@@ -2,8 +2,9 @@
 import { Fragment, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineForm';
-import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction } from '../actions';
-import { colorGrupo } from '@/lib/module-groups';
+import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
+import { colorGrupo, indiceALetras } from '@/lib/module-groups';
+
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -25,6 +26,7 @@ type Linea = {
   pref: string | null;
   descripcion_es: string | null;
   cantidad: number;
+
   precio_unit_usd: number;
   precio_total_usd: number;
   precio_total_cop: number;
@@ -137,6 +139,117 @@ export default function CocinaCard({
     router.refresh();
   }
 
+  async function handleDesagrupar(grupoId: string) {
+    if (!grupoId) return;
+    setGroupBusy(grupoId);
+    setGroupError(null);
+    const res = await desagruparGrupoAction(grupoId);
+    setGroupBusy(null);
+    if (!res.ok) {
+      setGroupError(res.error ?? 'No se pudo desagrupar el grupo');
+    }
+    router.refresh();
+  }
+
+  // Estados para Drag and Drop de bloques de grupo
+
+  const [draggedGroupIndex, setDraggedGroupIndex] = useState<number | null>(null);
+  const [dragOverGroupIndex, setDragOverGroupIndex] = useState<number | null>(null);
+  const [localGroupOrder, setLocalGroupOrder] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    setLocalGroupOrder(null);
+  }, [cocina.lineas]);
+
+  type GroupBlock = {
+    grupoId: string;
+    orden: number;
+    etiqueta: string;
+    codigoGrupo?: string | null;
+    totalCop?: number;
+    totalUsd?: number;
+    lineas: Linea[];
+  };
+
+  const rawGroupBlocks: GroupBlock[] = [];
+  const groupMap = new Map<string, GroupBlock>();
+
+  for (const l of cocina.lineas) {
+    const gid = l.grupo_id ?? l.grupo?.id ?? l.id;
+    if (!groupMap.has(gid)) {
+      const block: GroupBlock = {
+        grupoId: gid,
+        orden: l.grupo?.orden ?? 0,
+        etiqueta: l.grupo?.etiqueta ?? 'A',
+        codigoGrupo: l.grupo?.codigo_grupo,
+        totalCop: l.grupo?.total_cop,
+        totalUsd: l.grupo?.total_usd,
+        lineas: [],
+      };
+      groupMap.set(gid, block);
+      rawGroupBlocks.push(block);
+    }
+    groupMap.get(gid)!.lineas.push(l);
+  }
+
+  const groupBlocks = [...rawGroupBlocks];
+  if (localGroupOrder) {
+    groupBlocks.sort((a, b) => {
+      const ia = localGroupOrder.indexOf(a.grupoId);
+      const ib = localGroupOrder.indexOf(b.grupoId);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
+  }
+
+  groupBlocks.forEach((block, idx) => {
+    block.etiqueta = indiceALetras(idx);
+    block.orden = idx;
+  });
+
+  async function handleDrop(targetIndex: number) {
+    if (draggedGroupIndex === null || draggedGroupIndex === targetIndex) return;
+
+    const currentIds = groupBlocks.map((g) => g.grupoId);
+    const reordered = [...currentIds];
+    const [removed] = reordered.splice(draggedGroupIndex, 1);
+    reordered.splice(targetIndex, 0, removed);
+
+    setLocalGroupOrder(reordered);
+    setDraggedGroupIndex(null);
+    setDragOverGroupIndex(null);
+
+    setGroupBusy('reorder');
+    const res = await reordenarGruposCocinaAction(cocina.id, reordered);
+    setGroupBusy(null);
+    if (!res.ok) {
+      setLocalGroupOrder(null);
+      setGroupError(res.error ?? 'Error al reordenar los muebles');
+    } else {
+      router.refresh();
+    }
+  }
+
+  async function handleMoveBlock(fromIndex: number, direction: 'up' | 'down') {
+    const targetIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+    if (targetIndex < 0 || targetIndex >= groupBlocks.length) return;
+
+    const currentIds = groupBlocks.map((g) => g.grupoId);
+    const reordered = [...currentIds];
+    const [removed] = reordered.splice(fromIndex, 1);
+    reordered.splice(targetIndex, 0, removed);
+
+    setLocalGroupOrder(reordered);
+    setGroupBusy('reorder');
+    const res = await reordenarGruposCocinaAction(cocina.id, reordered);
+    setGroupBusy(null);
+    if (!res.ok) {
+      setLocalGroupOrder(null);
+      setGroupError(res.error ?? 'Error al reordenar los muebles');
+    } else {
+      router.refresh();
+    }
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200">
       <div className="flex items-center justify-between p-4 border-b border-slate-100">
@@ -168,6 +281,7 @@ export default function CocinaCard({
       <div className="overflow-x-auto"><table className="w-full text-sm">
         <thead>
           <tr className="text-left text-slate-400 border-b border-slate-100">
+            <th className="px-2 py-2 text-center w-10" title="Arrastrar para reordenar"></th>
             <th className="px-4 py-2">Grupo</th>
             <th>Módulo</th>
             <th>Descripción</th>
@@ -179,55 +293,165 @@ export default function CocinaCard({
           </tr>
         </thead>
         <tbody>
-          {cocina.lineas.length === 0 && <tr><td colSpan={8} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
-          {cocina.lineas.map((l) => {
-            const members = cocina.lineas.filter((x) => x.grupo_id === l.grupo_id).length;
-            const label = members > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? '');
-            return (<Fragment key={l.id}>
-            <tr
-              className={`border-b border-slate-50 ${colorGrupo(l.grupo?.orden ?? 0)}`}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                setContextMenu({ x: e.clientX, y: e.clientY, lineaId: l.id });
-              }}
-            >
-              <td className="px-4 py-2">
-                <input
-                  key={`${l.id}-${label}`}
-                  defaultValue={label}
-                  disabled={groupBusy === l.id}
-                  aria-label={`Grupo del módulo ${l.codigo_modulo ?? l.pref ?? ''}`}
-                  title="A, B… para bloques; A1, A2… para unir y ordenar"
-                  onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-                  onBlur={(e) => saveGroup(l, e.currentTarget.value, e.currentTarget)}
-                  className="w-14 rounded-md border border-slate-300 bg-white/80 px-2 py-1 text-center font-semibold uppercase disabled:opacity-50"
-                />
-              </td>
-              <td className="py-2 font-medium text-slate-900 cursor-context-menu">
-                <div>{l.codigo_modulo ?? l.pref}</div>
-                {members > 1 && l.grupo?.codigo_grupo && <div className="max-w-48 truncate text-[10px] font-normal text-slate-500" title={l.grupo.codigo_grupo}>{l.grupo.codigo_grupo}</div>}
-              </td>
-              <td className="text-slate-600">{l.descripcion_es}</td>
-              <td className="text-right">{l.cantidad}</td>
-              <td className="text-right">{fmtUSD(l.precio_unit_usd)}</td>
-              <td className="text-right">{fmtUSD(l.precio_total_usd)}</td>
-              <td className="text-right px-4">{fmtCOP(l.precio_total_cop)}</td>
-              <td className="px-2 whitespace-nowrap text-right">
-                <button onClick={() => { setEditId(l.id); setShowAdd(false); }} className="text-slate-500 hover:text-slate-900 mr-2" title="Editar módulo">Editar</button>
-                <button onClick={() => delLinea(l.id)} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button>
-              </td>
-            </tr>
-            {members > 1 && l.posicion_grupo === members && (
-              <tr className={`${colorGrupo(l.grupo?.orden ?? 0)} border-b border-slate-200 text-xs font-semibold text-slate-600`}>
-                <td></td>
-                <td colSpan={4} className="py-1.5 text-left">Subtotal grupo {l.grupo?.etiqueta} · {l.grupo?.codigo_grupo}</td>
-                <td className="py-1.5 text-right">{fmtUSD(Number(l.grupo?.total_usd ?? 0))}</td>
-                <td className="px-4 py-1.5 text-right">{fmtCOP(Number(l.grupo?.total_cop ?? 0))}</td>
-                <td></td>
-              </tr>
-            )}
-          </Fragment>);})}
+          {cocina.lineas.length === 0 && <tr><td colSpan={9} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
+          {groupBlocks.map((block, blockIdx) => {
+            const members = block.lineas.length;
+            const isDraggingThis = draggedGroupIndex === blockIdx;
+            const isDragOverThis = dragOverGroupIndex === blockIdx;
+
+            return (
+              <Fragment key={block.grupoId}>
+                {block.lineas.map((l, lineIdx) => {
+                  const label = members > 1 ? `${block.etiqueta}${l.posicion_grupo}` : block.etiqueta;
+                  const isFirstLine = lineIdx === 0;
+
+                  return (
+                    <tr
+                      key={l.id}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', block.grupoId);
+                        e.dataTransfer.effectAllowed = 'move';
+                        setDraggedGroupIndex(blockIdx);
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        if (dragOverGroupIndex !== blockIdx) {
+                          setDragOverGroupIndex(blockIdx);
+                        }
+                      }}
+                      onDragEnd={() => {
+                        setDraggedGroupIndex(null);
+                        setDragOverGroupIndex(null);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        handleDrop(blockIdx);
+                      }}
+                      className={`border-b border-slate-50 transition-colors ${colorGrupo(block.orden)} ${
+                        isDraggingThis ? 'opacity-40 bg-blue-50' : ''
+                      } ${
+                        isDragOverThis ? 'border-t-2 border-t-blue-500 bg-blue-50/50' : ''
+                      }`}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setContextMenu({ x: e.clientX, y: e.clientY, lineaId: l.id });
+                      }}
+                    >
+                      <td className="px-2 py-2 text-center align-middle cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-700 select-none">
+                        {isFirstLine && (
+                          <div className="flex items-center justify-center gap-0.5" title="Arrastra sostenido para reordenar el mueble o grupo">
+                            <span className="text-base font-bold leading-none">⋮⋮</span>
+                            <div className="flex flex-col text-[9px] leading-tight font-bold">
+                              <button
+                                type="button"
+                                disabled={blockIdx === 0 || groupBusy !== null}
+                                onClick={(e) => { e.stopPropagation(); handleMoveBlock(blockIdx, 'up'); }}
+                                className="hover:text-blue-600 disabled:opacity-20"
+                                title="Mover arriba"
+                              >
+                                ▲
+                              </button>
+                              <button
+                                type="button"
+                                disabled={blockIdx === groupBlocks.length - 1 || groupBusy !== null}
+                                onClick={(e) => { e.stopPropagation(); handleMoveBlock(blockIdx, 'down'); }}
+                                className="hover:text-blue-600 disabled:opacity-20"
+                                title="Mover abajo"
+                              >
+                                ▼
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-2">
+                        <input
+                          key={`${l.id}-${label}`}
+                          defaultValue={label}
+                          disabled={groupBusy === l.id || groupBusy === 'reorder'}
+                          aria-label={`Grupo del módulo ${l.codigo_modulo ?? l.pref ?? ''}`}
+                          title="A, B… para bloques; A1, A2… para unir y ordenar"
+                          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                          onBlur={(e) => saveGroup(l, e.currentTarget.value, e.currentTarget)}
+                          className="w-14 rounded-md border border-slate-300 bg-white/80 px-2 py-1 text-center font-semibold uppercase disabled:opacity-50"
+                        />
+                      </td>
+                      <td className="py-2 font-medium text-slate-900 cursor-context-menu">
+                        <div>{l.codigo_modulo ?? l.pref}</div>
+                        {members > 1 && block.codigoGrupo && <div className="max-w-48 truncate text-[10px] font-normal text-slate-500" title={block.codigoGrupo}>{block.codigoGrupo}</div>}
+                      </td>
+                      <td className="text-slate-600">{l.descripcion_es}</td>
+                      <td className="text-right">{l.cantidad}</td>
+                      <td className="text-right">{fmtUSD(l.precio_unit_usd)}</td>
+                      <td className="text-right">{fmtUSD(l.precio_total_usd)}</td>
+                      <td className="text-right px-4">{fmtCOP(l.precio_total_cop)}</td>
+                      <td className="px-2 whitespace-nowrap text-right">
+                        <button onClick={() => { setEditId(l.id); setShowAdd(false); }} className="text-slate-500 hover:text-slate-900 mr-2" title="Editar módulo">Editar</button>
+                        <button onClick={() => delLinea(l.id)} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {members > 1 && (
+                  <tr
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', block.grupoId);
+                      e.dataTransfer.effectAllowed = 'move';
+                      setDraggedGroupIndex(blockIdx);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
+                      if (dragOverGroupIndex !== blockIdx) {
+                        setDragOverGroupIndex(blockIdx);
+                      }
+                    }}
+                    onDragEnd={() => {
+                      setDraggedGroupIndex(null);
+                      setDragOverGroupIndex(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      handleDrop(blockIdx);
+                    }}
+                    className={`${colorGrupo(block.orden)} border-b border-slate-200 text-xs font-semibold text-slate-600 ${
+                      isDraggingThis ? 'opacity-40 bg-blue-50' : ''
+                    } ${
+                      isDragOverThis ? 'border-b-2 border-b-blue-500 bg-blue-50/50' : ''
+                    }`}
+                  >
+                    <td className="px-2 py-2 text-center align-middle cursor-grab active:cursor-grabbing text-slate-400 select-none">
+                      <span className="text-base font-bold leading-none">⋮⋮</span>
+                    </td>
+                    <td className="px-4 py-2 text-left">
+                      <button
+                        type="button"
+                        disabled={groupBusy === block.grupoId}
+                        onClick={() => handleDesagrupar(block.grupoId)}
+                        className="rounded-md bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-bold text-[10px] px-2 py-1 shadow-sm transition-colors disabled:opacity-50 uppercase tracking-wider cursor-pointer"
+                        title={`Desagrupar el grupo ${block.etiqueta}`}
+                      >
+                        Desagrupar
+                      </button>
+                    </td>
+                    <td colSpan={4} className="py-2 text-left">
+                      Subtotal grupo {block.etiqueta} · {block.codigoGrupo}
+                    </td>
+                    <td className="py-2 text-right">{fmtUSD(Number(block.totalUsd ?? 0))}</td>
+                    <td className="px-4 py-2 text-right">{fmtCOP(Number(block.totalCop ?? 0))}</td>
+                    <td></td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
         </tbody>
+
       </table></div>
 
       <div className="p-4 border-t border-slate-100">

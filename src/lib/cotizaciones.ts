@@ -392,6 +392,61 @@ export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: str
   return current.cotizacion_id;
 }
 
+export async function desagruparGrupo(grupoId: string) {
+  const sb = await createClient();
+  const { data: grupo, error: ge } = await sb.from('cot_grupos_modulos').select('id, cotizacion_id, cocina_id').eq('id', grupoId).single();
+  if (ge || !grupo) throw new Error('Grupo no encontrado');
+
+  const { data: lineas, error: le } = await sb.from('cot_cotizacion_lineas').select('id').eq('grupo_id', grupoId).order('posicion_grupo');
+  if (le) throw new Error(le.message);
+  if (!lineas || lineas.length <= 1) return grupo.cotizacion_id;
+
+  const newGroupIds: string[] = [grupoId];
+  for (let i = 1; i < lineas.length; i += 1) {
+    const { data: newGrupo, error: groupErr } = await sb.from('cot_grupos_modulos').insert({
+      cotizacion_id: grupo.cotizacion_id,
+      cocina_id: grupo.cocina_id,
+      orden: 99999,
+      etiqueta: `NUEVO-${crypto.randomUUID()}`,
+    }).select('id').single();
+    if (groupErr || !newGrupo) throw new Error(groupErr?.message ?? 'Error al crear nuevo grupo');
+
+    const { error: updateErr } = await sb.from('cot_cotizacion_lineas').update({
+      grupo_id: newGrupo.id,
+      posicion_grupo: 1,
+    }).eq('id', lineas[i].id);
+    if (updateErr) throw new Error(updateErr.message);
+
+    newGroupIds.push(newGrupo.id);
+  }
+
+  for (const gid of newGroupIds) {
+    await recalcularGrupo(gid);
+  }
+
+  await normalizarGrupos(grupo.cocina_id);
+  await recomputarTotales(grupo.cotizacion_id);
+  return grupo.cotizacion_id;
+}
+
+export async function reordenarGruposCocina(cocinaId: string, nuevosGrupoIds: string[]) {
+  const sb = await createClient();
+  const { data: cocina, error: ce } = await sb.from('cot_cocinas').select('cotizacion_id').eq('id', cocinaId).single();
+  if (ce || !cocina) throw new Error('Cocina no encontrada');
+
+  for (let i = 0; i < nuevosGrupoIds.length; i += 1) {
+    await sb.from('cot_grupos_modulos').update({ orden: 10000 + i }).eq('id', nuevosGrupoIds[i]);
+  }
+  for (let i = 0; i < nuevosGrupoIds.length; i += 1) {
+    await sb.from('cot_grupos_modulos').update({ orden: i }).eq('id', nuevosGrupoIds[i]);
+  }
+
+  await normalizarGrupos(cocinaId);
+  return cocina.cotizacion_id;
+}
+
+
+
 export async function actualizarCotizacion(id: string, patch: { nombre?: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string }) {
   const sb = await createClient();
   const upd: Record<string, unknown> = {};

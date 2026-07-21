@@ -27,7 +27,9 @@ La agrupación debe reflejarse en despiece, costo, precio, UI, impresión y Exce
 - Cada línea nueva se crea como bloque independiente: `A`, `B`, `C`.
 - Un bloque de varios módulos usa posiciones consecutivas de izquierda a derecha: `A1`, `A2`, `A3`.
 - Editar `B` como `A2` transforma el antiguo `A` en `A1`, mueve físicamente `B` a la segunda posición y renumera los bloques posteriores.
+- **Drag & Drop de Bloques:** Los muebles individuales (ej. A) y los muebles combinados (ej. E1, E2) se pueden arrastrar y soltar verticalmente en la tabla. Al soltar o desplazar un bloque (o al usar los botones ▲/▼), los grupos de la cocina se reordenan automáticamente en base de datos (`reordenarGruposCocina`) y sus etiquetas se renombran en secuencia (A, B, C, D...).
 - Duplicados, huecos o posiciones imposibles se corrigen automáticamente. La base persistida siempre queda normalizada.
+
 - Al borrar `A2` de `A1,A2,A3`, `A3` pasa a `A2`. Si queda un integrante, vuelve a `A`.
 - Después de `Z` se continúa con `AA`, `AB`, `AC`, como en Excel.
 - Los grupos no atraviesan cocinas ni proyectos.
@@ -282,8 +284,10 @@ Repetir con caja de 18 mm y comprobar que no queden descuentos fijos de 30/15 mm
 - `A,B,C -> A1,A2,B` al editar `B` como `A2`.
 - Mover `C` a `A2` reordena filas.
 - Borrar renumera y un solo integrante colapsa a letra.
+- Botón contrastado **Desagrupar**: permite separar un grupo formado (`A1`, `A2`...) en módulos independientes (`A`, `B`...), recalculando precios individuales y renormalizando las etiquetas secuenciales de la cocina.
 - `Z -> AA`.
 - Copiar a otra cocina crea bloque independiente.
+
 
 ### Bloqueos
 

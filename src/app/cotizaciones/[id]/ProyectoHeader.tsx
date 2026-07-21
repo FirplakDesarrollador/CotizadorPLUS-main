@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { actualizarCotizacionAction } from '../actions';
+import UndoRedoButtons from '@/components/UndoRedoButtons';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -61,6 +62,7 @@ export default function ProyectoHeader({ cab }: { cab: Cab }) {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-slate-900">{cab.nombre || 'Proyecto sin nombre'}</h1>
           <button onClick={() => setEdit(true)} className="text-sm text-slate-500 hover:text-slate-900 underline">editar</button>
+          <UndoRedoButtons />
         </div>
         <p className="text-sm text-slate-500">
           {cab.cliente_nombre || 'Sin cliente'} · TRM {Number(cab.trm).toLocaleString('es-CO')} ·

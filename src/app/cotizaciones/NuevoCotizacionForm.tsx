@@ -158,18 +158,6 @@ export default function NuevoCotizacionForm({
           </F>
         </div>
 
-<<<<<<< HEAD
-        <F label="Cliente (recargo)">
-          <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
-            <option value="">Sin recargo</option>
-            {recargos?.map((r) => (
-              <option key={r.id} value={r.id}>{r.cliente_nombre} (+{(r.recargo_pct * 100).toFixed(0)}%)</option>
-            ))}
-          </select>
-        </F>
-
-=======
->>>>>>> DEV
         <F label="Margen (%)">
           <input type="number" min={0} max={100} step={0.5} placeholder="Auto (usa margen del sistema)"
             value={margen} onChange={(e) => setMargen(e.target.value)} className="inp" />
