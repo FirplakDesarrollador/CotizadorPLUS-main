@@ -26,6 +26,7 @@ type Linea = {
   pref: string | null;
   descripcion_es: string | null;
   cantidad: number;
+  costo_total_cop?: number;
 
   precio_unit_usd: number;
   precio_total_usd: number;
@@ -250,6 +251,13 @@ export default function CocinaCard({
     }
   }
 
+  const totalCant = cocina.lineas.reduce((acc, l) => acc + Number(l.cantidad || 0), 0);
+  const totalCostoUsd = cocina.lineas.reduce((acc, l) => {
+    const unitCop = l.costo_total_cop ?? (l as any).breakdown?.costoConHerrajes ?? 0;
+    const unitUsd = trm > 0 ? unitCop / trm : 0;
+    return acc + (unitUsd * Number(l.cantidad || 0));
+  }, 0);
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200">
       <div className="flex items-center justify-between p-4 border-b border-slate-100">
@@ -269,10 +277,6 @@ export default function CocinaCard({
           )}
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-right text-sm">
-            <span className="font-semibold text-slate-900">{fmtUSD(cocina.total_usd)}</span>
-            <span className="text-slate-400"> · {fmtCOP(cocina.total_cop)}</span>
-          </div>
           <button onClick={delCocina} className="text-slate-300 hover:text-red-600" title="Eliminar cocina">🗑</button>
         </div>
       </div>
@@ -280,11 +284,34 @@ export default function CocinaCard({
       {groupError && <div className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{groupError}</div>}
       <div className="overflow-x-auto"><table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-slate-400 border-b border-slate-100">
+          <tr className="bg-slate-100/90 text-slate-900 text-xs font-bold border-b border-slate-200">
+            <th className="px-2 py-2 text-center w-10"></th>
+            <th className="px-4 py-2 text-left uppercase text-slate-700 font-bold tracking-wider" colSpan={3}>
+              Totales Cocina
+            </th>
+            <th className="text-right py-2 font-bold text-slate-800" title="Costo Total USD de la cocina">
+              {fmtUSD(totalCostoUsd)}
+            </th>
+            <th className="text-right py-2 font-bold text-slate-900" title="Cantidad total de módulos">
+              {totalCant}
+            </th>
+            <th className="text-right py-2 text-slate-400 font-normal">
+              -
+            </th>
+            <th className="text-right py-2 font-bold text-slate-900">
+              {fmtUSD(cocina.total_usd)}
+            </th>
+            <th className="text-right px-4 py-2 font-bold text-slate-900">
+              {fmtCOP(cocina.total_cop)}
+            </th>
+            <th className="px-2 py-2"></th>
+          </tr>
+          <tr className="text-left text-slate-500 border-b border-slate-200 text-xs font-semibold bg-slate-50">
             <th className="px-2 py-2 text-center w-10" title="Arrastrar para reordenar"></th>
             <th className="px-4 py-2">Grupo</th>
             <th>Módulo</th>
             <th>Descripción</th>
+            <th className="text-right">Costo USD</th>
             <th className="text-right">Cant</th>
             <th className="text-right">Unit USD</th>
             <th className="text-right">Total USD</th>
@@ -293,17 +320,27 @@ export default function CocinaCard({
           </tr>
         </thead>
         <tbody>
-          {cocina.lineas.length === 0 && <tr><td colSpan={9} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
+          {cocina.lineas.length === 0 && <tr><td colSpan={10} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
           {groupBlocks.map((block, blockIdx) => {
             const members = block.lineas.length;
             const isDraggingThis = draggedGroupIndex === blockIdx;
             const isDragOverThis = dragOverGroupIndex === blockIdx;
+
+            const groupTotalCant = block.lineas.reduce((acc, l) => acc + Number(l.cantidad || 0), 0);
+            const groupTotalCostoUsd = block.lineas.reduce((acc, l) => {
+              const unitCop = l.costo_total_cop ?? (l as any).breakdown?.costoConHerrajes ?? 0;
+              const unitUsd = trm > 0 ? unitCop / trm : 0;
+              return acc + (unitUsd * Number(l.cantidad || 0));
+            }, 0);
 
             return (
               <Fragment key={block.grupoId}>
                 {block.lineas.map((l, lineIdx) => {
                   const label = members > 1 ? `${block.etiqueta}${l.posicion_grupo}` : block.etiqueta;
                   const isFirstLine = lineIdx === 0;
+
+                  const unitCostoCop = l.costo_total_cop ?? (l as any).breakdown?.costoConHerrajes ?? 0;
+                  const unitCostoUsd = trm > 0 ? unitCostoCop / trm : 0;
 
                   return (
                     <tr
@@ -384,6 +421,7 @@ export default function CocinaCard({
                         {members > 1 && block.codigoGrupo && <div className="max-w-48 truncate text-[10px] font-normal text-slate-500" title={block.codigoGrupo}>{block.codigoGrupo}</div>}
                       </td>
                       <td className="text-slate-600">{l.descripcion_es}</td>
+                      <td className="text-right font-medium text-slate-700">{fmtUSD(unitCostoUsd)}</td>
                       <td className="text-right">{l.cantidad}</td>
                       <td className="text-right">{fmtUSD(l.precio_unit_usd)}</td>
                       <td className="text-right">{fmtUSD(l.precio_total_usd)}</td>
@@ -439,9 +477,12 @@ export default function CocinaCard({
                         Desagrupar
                       </button>
                     </td>
-                    <td colSpan={4} className="py-2 text-left">
+                    <td colSpan={2} className="py-2 text-left">
                       Subtotal grupo {block.etiqueta} · {block.codigoGrupo}
                     </td>
+                    <td className="py-2 text-right font-medium text-slate-700">{fmtUSD(groupTotalCostoUsd)}</td>
+                    <td className="py-2 text-right font-semibold text-slate-900">{groupTotalCant}</td>
+                    <td className="py-2 text-right text-slate-400 font-normal">-</td>
                     <td className="py-2 text-right">{fmtUSD(Number(block.totalUsd ?? 0))}</td>
                     <td className="px-4 py-2 text-right">{fmtCOP(Number(block.totalCop ?? 0))}</td>
                     <td></td>
