@@ -32,15 +32,11 @@ export default async function CotizacionesPage() {
       <main className="mx-auto max-w-6xl px-4 pb-6 grid lg:grid-cols-[320px_1fr] gap-6">
         <NuevoCotizacionForm
           tableros={data.tableros}
-          recargos={data.recargos}
           cantos={data.cantos}
           presetDefault={data.presetDefault}
           trmDefault={data.trmDefault}
-          tipos={data.tipos}
-          rolesByTipo={data.rolesByTipo}
           perfiles={data.perfiles}
           perfilDefaultId={data.perfilDefaultId}
-          herrajesByTipo={data.herrajesByTipo}
         />
 
         <div data-tour="lista" className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-fit">

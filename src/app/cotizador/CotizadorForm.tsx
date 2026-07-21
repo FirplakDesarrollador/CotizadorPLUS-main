@@ -8,7 +8,7 @@ import TooltipToggle from '@/components/TooltipToggle';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_RIELES } from '@/lib/muebles';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -100,8 +100,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
   }
 
   const recargoId = store.recargoId;
-  const setRecargoId = (v: string) => setStore({ recargoId: v });
-  
+
   const conHerrajes = store.conHerrajes;
   const setConHerrajes = (v: boolean) => setStore({ conHerrajes: v });
   
@@ -128,6 +127,9 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
   
   const dbTipo = store.dbTipo;
   const setDbTipo = (v: string) => setStore({ dbTipo: v });
+
+  const rielCodigo = store.rielCodigo ?? 'RIELTANDEM';
+  const setRielCodigo = (v: string) => setStore({ rielCodigo: v });
   
   const modoFrentes = store.modoFrentes;
   const setModoFrentes = (v: 'normal' | 'sin_frentes' | 'solo_frentes') => setStore({ modoFrentes: v });
@@ -185,6 +187,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
       herrajesExcluidos: herrajesExcl.length ? herrajesExcl : undefined,
       cantoFrentes: cantoFrentes || undefined,
       cantoCaja: cantoCaja || undefined,
+      rielCodigo: esDB && rielCodigo ? rielCodigo : undefined,
     });
     setLoading(false);
     if (!res.ok) { setError(res.error); setResult(null); return; }
@@ -267,14 +270,6 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
           })()}
         </div>
 
-        <div data-tour="cliente">
-          <Field label="Cliente (recargo)">
-            <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
-              <option value="">Sin recargo</option>
-              {recargos.map((r) => <option key={r.id} value={r.id}>{r.cliente_nombre} (+{(r.recargo_pct * 100).toFixed(0)}%)</option>)}
-            </select>
-          </Field>
-        </div>
 
         <div data-tour="opciones" className="grid grid-cols-2 gap-2 items-end">
           <Field label="Nº puertas (override)"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
@@ -289,6 +284,15 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
             </Field>
           )}
           {esDB && <Field label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></Field>}
+          {esDB && (
+            <Field label="Tipo de riel">
+              <select value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
+                {DB_RIELES.map((r) => (
+                  <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field label="Frentes">
             <select value={modoFrentes} onChange={(e) => setModoFrentes(e.target.value as 'normal' | 'sin_frentes' | 'solo_frentes')} className="inp">
               <option value="normal">Completo</option><option value="sin_frentes">Sin frentes (open)</option><option value="solo_frentes">Solo kit de frentes</option>

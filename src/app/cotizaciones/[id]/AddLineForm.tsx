@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_RIELES } from '@/lib/muebles';
 
 type Tipo = { id: string; pref: string; nombre_es: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
@@ -136,6 +136,7 @@ export default function AddLineForm({
   const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : (projectDefaults?.nentrepanos ?? ''));
   const [nbarras, setNbarras] = useState(ov?.n_barras != null ? String(ov.n_barras) : '');
   const [dbTipo, setDbTipo] = useState('');
+  const [rielCodigo, setRielCodigo] = useState('RIELTANDEM');
   const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? projectDefaults?.modoFrentes ?? 'normal');
 
   const [loading, setLoading] = useState(false);
@@ -205,6 +206,7 @@ export default function AddLineForm({
       margenOverride: margenInput !== '' ? Number(margenInput) : undefined,
       cantoFrentes: cantoFrentesSel !== '' ? cantoFrentesSel : undefined,
       cantoCaja: cantoCajaSel !== '' ? cantoCajaSel : undefined,
+      rielCodigo: esDB && rielCodigo ? rielCodigo : undefined,
     };
 
     const res = esEdicion
@@ -303,6 +305,18 @@ export default function AddLineForm({
             </L>
             <L label="Nº barras (pares)">
               <input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" />
+            </L>
+          </div>
+        )}
+
+        {esDB && (
+          <div className="grid grid-cols-1 gap-1">
+            <L label="Tipo de riel">
+              <select value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
+                {DB_RIELES.map((r) => (
+                  <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
+                ))}
+              </select>
             </L>
           </div>
         )}

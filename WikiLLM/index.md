@@ -11,6 +11,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 
 ## Infraestructura de Datos
 - [Esquema de Base de Datos](wiki/esquema_base_datos.md) - Estructura de tablas y políticas en Supabase (prefijo `cot_`).
+- [Rieles de Cajón DB](wiki/rieles_db.md) - Catálogo de tipos de riel para muebles DB, mecanismo de override y archivos modificados.
 
 ## Entorno de Desarrollo
 - [Dependencias del Proyecto](wiki/dependencias_proyecto.md) - Stack tecnológico (Next.js, React, Zustand, Supabase client).

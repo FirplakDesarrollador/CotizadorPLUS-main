@@ -3,25 +3,17 @@ import { useActionState, useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { crearCotizacionAction } from './actions';
 import Combobox from '@/components/Combobox';
-import { DB_TIPOLOGIAS } from '@/lib/muebles';
 
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
-type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
-type Tipo = { id: string; pref: string; nombre_es: string | null };
 type Perfil = { id: string; nombre: string; valores: Record<string, string> };
-type HerrajeTipo = { rol: string; codigo: string | null };
 
 interface Props {
   tableros: Tablero[];
-  recargos: Recargo[];
   cantos: string[];
   presetDefault: Record<string, string>;
   trmDefault: number;
-  tipos: Tipo[];
-  rolesByTipo: Record<string, string[]>;
   perfiles: Perfil[];
   perfilDefaultId: string;
-  herrajesByTipo: Record<string, HerrajeTipo[]>;
 }
 
 const tableroLabel = (t: Tablero) =>
@@ -32,20 +24,12 @@ const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.replace(',', '.').toLowerCase() === target.replace(',', '.').toLowerCase()) ??
   target;
 
-const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
-const conv = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
-  Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
-
 export default function NuevoCotizacionForm({
-  tableros, recargos, cantos, presetDefault, trmDefault,
-  tipos, perfiles, perfilDefaultId, herrajesByTipo,
+  tableros, cantos, presetDefault, trmDefault, perfiles, perfilDefaultId,
 }: Props) {
   const router = useRouter();
 
-  // ── Datos del proyecto ──
   const [moneda, setMoneda] = useState<'USD' | 'COP'>('USD');
-
-  // ── Materiales globales ──
   const [preset, setPreset] = useState<Record<string, string>>({ ...presetDefault });
 
   const [cantoFrentes, setCantoFrentes] = useState(() => {
@@ -61,41 +45,13 @@ export default function NuevoCotizacionForm({
     return '';
   });
 
-  const [recargoId, setRecargoId] = useState('');
   const [margen, setMargen] = useState('');
   const [perfilId, setPerfilId] = useState(perfilDefaultId);
-
-  // ── Primer mueble ──
-  const sbfd = tipos.find((t) => t.pref === 'SBFD');
-  const [tipoId, setTipoId] = useState(sbfd?.id ?? tipos[0]?.id ?? '');
-  const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>('in');
-  const [largo, setLargo] = useState('33');
-  const [alto, setAlto] = useState('30');
-  const [prof, setProf] = useState('24');
-  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>('normal');
-  const [conHerrajes, setConHerrajes] = useState(true);
-  const [herrajesExcl, setHerrajesExcl] = useState<string[]>([]);
-  const [npuertas, setNpuertas] = useState('');
-  const [ncajones, setNcajones] = useState('');
-  const [nentrepanos, setNentrepanos] = useState('');
-  const [dbTipo, setDbTipo] = useState('');
-  const [nbarras, setNbarras] = useState('');
-
-  const esDB = (tipos.find((t) => t.id === tipoId)?.pref ?? '').startsWith('DB');
-  const herrajesTipo = herrajesByTipo[tipoId] ?? [];
-  const toggleHerraje = (rol: string) =>
-    setHerrajesExcl((p) => p.includes(rol) ? p.filter((x) => x !== rol) : [...p, rol]);
 
   function aplicarPerfil(id: string) {
     setPerfilId(id);
     const p = perfiles.find((x) => x.id === id);
     if (p) setPreset({ ...p.valores });
-  }
-
-  function aplicarDbTipo(k: string) {
-    setDbTipo(k);
-    const t = DB_TIPOLOGIAS.find((x) => x.key === k);
-    if (t) { setNcajones(String(t.nc)); setNbarras(String(t.nb)); }
   }
 
   function handleTablero(rol: string, value: string) {
@@ -110,33 +66,18 @@ export default function NuevoCotizacionForm({
     }
   }
 
-  function changeUnidad(nu: 'in' | 'cm' | 'mm') {
-    if (nu === unidad) return;
-    setLargo(String(conv(Number(largo), unidad, nu)));
-    setAlto(String(conv(Number(alto), unidad, nu)));
-    setProf(String(conv(Number(prof), unidad, nu)));
-    setUnidad(nu);
-  }
-
   const tableroOptions = useMemo(
     () => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({ value: t.codigo, label: tableroLabel(t) })),
     [tableros]
-  );
-  const tipoOptions = useMemo(
-    () => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })),
-    [tipos]
   );
 
   const configEncoded = useMemo(() => {
     const config = {
       preset: { ...preset, refuerzo: preset['caja'] ?? '' },
-      cantoFrentes, cantoCaja, recargoId, margen,
-      tipoId, largo, alto, prof, unidad, perfilId,
-      modoFrentes, conHerrajes, herrajesExcl,
-      npuertas, ncajones, nentrepanos,
+      cantoFrentes, cantoCaja, margen, perfilId,
     };
     return btoa(encodeURIComponent(JSON.stringify(config)));
-  }, [preset, cantoFrentes, cantoCaja, recargoId, margen, tipoId, largo, alto, prof, unidad, perfilId, modoFrentes, conHerrajes, herrajesExcl, npuertas, ncajones, nentrepanos]);
+  }, [preset, cantoFrentes, cantoCaja, margen, perfilId]);
 
   const [state, formAction, pending] = useActionState(crearCotizacionAction, null);
 
@@ -207,85 +148,10 @@ export default function NuevoCotizacionForm({
           </F>
         </div>
 
-        <F label="Cliente (recargo)">
-          <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
-            <option value="">Sin recargo</option>
-            {recargos.map((r) => (
-              <option key={r.id} value={r.id}>{r.cliente_nombre} (+{(r.recargo_pct * 100).toFixed(0)}%)</option>
-            ))}
-          </select>
-        </F>
-
         <F label="Margen (%)">
           <input type="number" min={0} max={100} step={0.5} placeholder="Auto (usa margen del sistema)"
             value={margen} onChange={(e) => setMargen(e.target.value)} className="inp" />
         </F>
-      </div>
-
-      {/* ── Primer mueble ── */}
-      <div className="border-t border-slate-100 pt-2 space-y-2">
-        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Primer mueble</p>
-
-        <F label="Tipo">
-          <Combobox value={tipoId} options={tipoOptions} onChange={setTipoId} placeholder="Buscar tipo…" />
-        </F>
-
-        <div className="grid grid-cols-4 gap-1">
-          <F label="Largo"><input type="text" value={largo} onChange={(e) => setLargo(e.target.value)} className="inp" /></F>
-          <F label="Alto"><input type="text" value={alto} onChange={(e) => setAlto(e.target.value)} className="inp" /></F>
-          <F label="Prof"><input type="text" value={prof} onChange={(e) => setProf(e.target.value)} className="inp" /></F>
-          <F label="Un">
-            <select value={unidad} onChange={(e) => changeUnidad(e.target.value as 'in' | 'cm' | 'mm')} className="inp">
-              <option>in</option><option>cm</option><option>mm</option>
-            </select>
-          </F>
-        </div>
-
-        <div className="grid grid-cols-3 gap-1">
-          <F label="Nº puertas"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></F>
-          <F label="Nº cajones"><input type="number" placeholder="auto" value={ncajones} onChange={(e) => setNcajones(e.target.value)} className="inp" /></F>
-          <F label="Nº entrepaños"><input type="number" placeholder="auto" value={nentrepanos} onChange={(e) => setNentrepanos(e.target.value)} className="inp" /></F>
-        </div>
-
-        {esDB && (
-          <div className="grid grid-cols-2 gap-1">
-            <F label="Tipología DB">
-              <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
-                <option value="">— manual —</option>
-                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{t.key}</option>)}
-              </select>
-            </F>
-            <F label="Nº barras">
-              <input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" />
-            </F>
-          </div>
-        )}
-
-        <F label="Frentes">
-          <select value={modoFrentes} onChange={(e) => setModoFrentes(e.target.value as 'normal' | 'sin_frentes' | 'solo_frentes')} className="inp">
-            <option value="normal">Completo</option>
-            <option value="sin_frentes">Sin frentes (open)</option>
-            <option value="solo_frentes">Solo kit de frentes</option>
-          </select>
-        </F>
-
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={conHerrajes} onChange={(e) => setConHerrajes(e.target.checked)} /> Con herrajes
-        </label>
-
-        {conHerrajes && herrajesTipo.length > 0 && (
-          <div className="rounded-lg border border-slate-200 p-2.5">
-            <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes (destilda para excluir)</p>
-            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-              {herrajesTipo.map((h) => (
-                <label key={h.rol} className="flex items-center gap-1 text-xs text-slate-700 capitalize">
-                  <input type="checkbox" checked={!herrajesExcl.includes(h.rol)} onChange={() => toggleHerraje(h.rol)} />
-                  {h.rol}{h.codigo ? <span className="text-slate-400 normal-case"> · {h.codigo}</span> : null}
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {state && !state.ok && (

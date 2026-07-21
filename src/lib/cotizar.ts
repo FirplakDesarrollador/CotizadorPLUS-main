@@ -24,6 +24,10 @@ export type CotizarInput = {
   etiquetas?: number;        // nº de etiquetas por mueble (override del proyecto, ej. 3)
   cantoFrentes?: string;
   cantoCaja?: string;
+  // Para muebles DB: código del riel de cajón a usar (ej. 'RIELMETALBOX').
+  // Si se especifica, se reemplaza el precio del riel por defecto (RIELTANDEM) con
+  // el precio del riel elegido, manteniendo la plantilla de herrajes sin tocar.
+  rielCodigo?: string;
 };
 
 export type CotizarResult = Breakdown & { trm: number; margen: number };
@@ -60,6 +64,19 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
   const consumiblesBySelector = Object.fromEntries(
     (herrajesAll ?? []).filter((h) => h.categoria === 'consumible' && h.selector_key).map((h) => [h.selector_key as string, Number(h.precio)])
   );
+
+  // Riel override para muebles DB: si el usuario elige un riel distinto al RIELTANDEM (por
+  // defecto en la plantilla), se sustituye el precio en herrajesByCode para el código del riel
+  // real elegido, asignándolo también como RIELTANDEM para que el motor lo encuentre por el
+  // codigo de la plantilla. El nombre visible en el breakdown cambia al código elegido.
+  if (inp.rielCodigo && inp.rielCodigo !== 'RIELTANDEM') {
+    const rielElegido = herrajesByCode[inp.rielCodigo];
+    if (rielElegido) {
+      // La plantilla de DB referencia herraje_codigo='RIELTANDEM', así que sobreescribimos
+      // su precio con el del riel elegido. El motor usa herrajesByCode[hp.herraje_codigo].
+      herrajesByCode['RIELTANDEM'] = { ...herrajesByCode['RIELTANDEM'], precio: Number(rielElegido.precio) };
+    }
+  }
 
   const margenes = (P.margenes ?? {}) as Record<string, number>;
   // Margen del mueble: el override del proyecto aplica solo a la categoría 'muebles';
