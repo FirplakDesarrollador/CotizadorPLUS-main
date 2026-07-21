@@ -21,6 +21,7 @@ interface Props {
   perfiles: Perfil[];
   perfilDefaultId: string;
   herrajesByTipo: Record<string, HerrajeTipo[]>;
+  recargos?: Recargo[];
 }
 
 const tableroLabel = (t: Tablero) =>
@@ -219,7 +220,7 @@ export default function NuevoCotizacionForm({
         <F label="Cliente (recargo)">
           <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
             <option value="">Sin recargo</option>
-            {recargos.map((r) => (
+            {recargos?.map((r) => (
               <option key={r.id} value={r.id}>{r.cliente_nombre} (+{(r.recargo_pct * 100).toFixed(0)}%)</option>
             ))}
           </select>
