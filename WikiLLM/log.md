@@ -22,5 +22,5 @@ Se añadió la migración de grupos y nomenclaturas, el cálculo de laterales/pi
 ## [2026-07-15] update | Pruebas integradas y correcciones de precisión en agrupación
 Se aplicó y verificó la migración 0020 en Supabase I+D; se añadieron ocho pruebas automatizadas y se ejecutó el flujo E2E B12.DB10.BFD20, métrico IP50, validaciones, impresión y Excel. Se corrigió el ruido de coma flotante en conversiones/prorrateos y se implementó el cierre determinístico del residuo monetario en la última línea.
 
-## [2026-07-15] update | Alineación del nombre de módulo agrupado
-Se movió el rótulo del subtotal y su código agrupado para que comience bajo la columna Módulo en la cotización, la impresión y la exportación a Excel, sin alterar la posición de los totales.
+## [2026-07-21] update | Integración de ramas DEV y Andres en rama Solve
+Se resolvió la integración de cambios remotos de DEV y Andres en la rama `Solve`, unificando las firmas de componentes (`NuevoCotizacionForm`, `CotizadorForm`, `CocinaCard`), resolviendo conflictos de tipos de TypeScript y verificando la compilación limpia de Next.js (`npm run build`).
