@@ -7,8 +7,7 @@ import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { DB_TIPOLOGIAS } from '@/lib/muebles';
 
-type Tipo = { id: string; pref: string; nombre_es: string | null };
-type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
+type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
@@ -17,7 +16,7 @@ export type ProjectDefaults = {
   preset: Record<string, string>;
   cantoFrentes: string;
   cantoCaja: string;
-  recargoId: string;
+  // recargoId: string;
   margen: string;
 };
 
@@ -45,7 +44,7 @@ const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja', refuerzo: 'Tab
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
 const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
-  Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
+  (v * TO_MM[de]) / TO_MM[a];
 
 const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ??
@@ -53,11 +52,10 @@ const getCantoMatch = (cantos: string[], target: string) =>
   target;
 
 export default function AddLineForm({
-  cocinaId, tipos, recargos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, projectDefaults, initial, onDone
+  cocinaId, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, initial, onDone
 }: {
   cocinaId: string;
   tipos: Tipo[];
-  recargos: Recargo[];
   tableros: Tablero[];
   cantos: string[];
   presetDefault: Record<string, string>;
@@ -66,6 +64,7 @@ export default function AddLineForm({
   perfilDefaultId: string;
   herrajesByTipo: Record<string, HerrajeTipo[]>;
   trm: number;
+  sistemaMedida: 'imperial' | 'metrico';
   projectDefaults?: ProjectDefaults;
   initial?: LineaInicial;
   onDone?: () => void;
@@ -74,13 +73,15 @@ export default function AddLineForm({
   const esEdicion = !!initial;
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
   const ov = initial?.overrides ?? null;
+  const projectUnit: 'in' | 'cm' = sistemaMedida === 'metrico' ? 'cm' : 'in';
+  const initialUnit = initial?.unidad ?? projectUnit;
 
   // Estados
   const [tipoId, setTipoId] = useState(initial?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '');
-  const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>(initial?.unidad ?? 'in');
-  const [largo, setLargo] = useState(initial?.largo != null ? String(initial.largo) : '33');
-  const [alto, setAlto] = useState(initial?.alto != null ? String(initial.alto) : '30');
-  const [prof, setProf] = useState(initial?.prof != null ? String(initial.prof) : '24');
+  const [unidad] = useState<'in' | 'cm' | 'mm'>(projectUnit);
+  const [largo, setLargo] = useState(initial?.largo != null ? String(convertir(Number(initial.largo), initialUnit, projectUnit)) : (projectUnit === 'in' ? '33' : '83.82'));
+  const [alto, setAlto] = useState(initial?.alto != null ? String(convertir(Number(initial.alto), initialUnit, projectUnit)) : (projectUnit === 'in' ? '30' : '76.2'));
+  const [prof, setProf] = useState(initial?.prof != null ? String(convertir(Number(initial.prof), initialUnit, projectUnit)) : (projectUnit === 'in' ? '24' : '60.96'));
   const [perfilId, setPerfilId] = useState(initial ? '' : perfilDefaultId);
   const [preset, setPreset] = useState<Record<string, string>>(() => {
     if (initial?.preset) return initial.preset;
@@ -106,17 +107,17 @@ export default function AddLineForm({
     return '';
   });
 
-  const [recargoId, setRecargoId] = useState(() => {
+  /* const [recargoId, setRecargoId] = useState(() => {
     if (initial) {
       return recargos.find((r) => r.recargo_pct === initial.recargoPct)?.id ?? '';
     }
     return projectDefaults?.recargoId ?? '';
-  });
+  }); */
 
   const [conHerrajes, setConHerrajes] = useState(initial?.conHerrajes ?? true);
   const [herrajesExcl, setHerrajesExcl] = useState<string[]>(initial?.herrajesExcluidos ?? []);
   const [cantidad, setCantidad] = useState(initial?.cantidad ?? 1);
-  const [margenInput, setMargenInput] = useState(initial?.margenOverride != null ? String(initial.margenOverride) : (projectDefaults?.margen ?? ''));
+  const [margenInput, setMargenInput] = useState(initial?.margenOverride != null ? String(initial.margenOverride * 100) : (projectDefaults?.margen ?? ''));
 
   const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : '');
   const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : '');
@@ -133,8 +134,11 @@ export default function AddLineForm({
   const esDB = (tipos.find((t) => t.id === tipoId)?.pref ?? '').startsWith('DB');
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
   const tipo = tipos.find((t) => t.id === tipoId);
+  const prefProyecto = (t: Tipo | undefined) => sistemaMedida === 'metrico'
+    ? (t?.pref_metrico || t?.pref || '')
+    : (t?.pref_imperial || t?.pref || '');
 
-  const tipoOptions = useMemo(() => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tipos]);
+  const tipoOptions = tipos.map((t) => ({ value: t.id, label: `${prefProyecto(t)} — ${t.nombre_es ?? ''}` }));
   const tableroOptions = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({ value: t.codigo, label: `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}` })), [tableros]);
 
   function aplicarPerfil(id: string) {
@@ -155,14 +159,6 @@ export default function AddLineForm({
   const toggleHerraje = (rol: string) =>
     setHerrajesExcl((xs) => xs.includes(rol) ? xs.filter((x) => x !== rol) : [...xs, rol]);
 
-  function changeUnidad(nu: 'in' | 'cm' | 'mm') {
-    if (nu === unidad) return;
-    setLargo((v) => String(convertir(Number(v), unidad, nu)));
-    setAlto((v) => String(convertir(Number(v), unidad, nu)));
-    setProf((v) => String(convertir(Number(v), unidad, nu)));
-    setUnidad(nu);
-  }
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -182,14 +178,14 @@ export default function AddLineForm({
       preset,
       conHerrajes,
       trm,
-      recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
+      // recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
       cantidad,
-      prefLabel: tipo?.pref,
+      prefLabel: prefProyecto(tipo),
       modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
       herrajesExcluidos: conHerrajes && herrajesExcl.length ? herrajesExcl : undefined,
       // Andrés overrides
-      margenOverride: margenInput !== '' ? Number(margenInput) : undefined,
+      margenOverride: margenInput !== '' ? Number(margenInput) / 100 : undefined,
       cantoFrentes: cantoFrentesSel !== '' ? cantoFrentesSel : undefined,
       cantoCaja: cantoCajaSel !== '' ? cantoCajaSel : undefined,
     };
@@ -233,15 +229,13 @@ export default function AddLineForm({
             <input type="text" value={prof} onChange={(e) => setProf(e.target.value)} className="inp" />
           </L>
           <L label="Un">
-            <select value={unidad} onChange={(e) => changeUnidad(e.target.value as 'in' | 'cm' | 'mm')} className="inp">
-              <option>in</option>
-              <option>cm</option>
-              <option>mm</option>
+            <select value={unidad} disabled className="inp bg-slate-100" title="La unidad se fija al crear el proyecto">
+              <option>{projectUnit}</option>
             </select>
           </L>
         </div>
 
-        <L label="Cliente (recargo)">
+        {/* <L label="Cliente (recargo)">
           <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
             <option value="">Sin recargo</option>
             {recargos.map((r) => (
@@ -250,7 +244,7 @@ export default function AddLineForm({
               </option>
             ))}
           </select>
-        </L>
+        </L> */}
 
         <div className="grid grid-cols-2 gap-1">
           <L label="Cantidad">

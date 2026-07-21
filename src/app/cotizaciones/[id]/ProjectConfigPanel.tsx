@@ -10,13 +10,12 @@ export type ProjectDefaults = {
   preset: Record<string, string>;
   cantoFrentes: string;
   cantoCaja: string;
-  recargoId: string;
+  // recargoId: string;
   margen: string;
 };
 
 interface ProjectConfigPanelProps {
   tableros: Tablero[];
-  recargos: Recargo[];
   cantos: string[];
   perfiles: Perfil[];
   defaults: ProjectDefaults;
@@ -26,7 +25,7 @@ interface ProjectConfigPanelProps {
 const tableroLabel = (t: Tablero) =>
   `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}`;
 
-export default function ProjectConfigPanel({ tableros, recargos, cantos, perfiles, defaults, onChange }: ProjectConfigPanelProps) {
+export default function ProjectConfigPanel({ tableros, cantos, perfiles, defaults, onChange }: ProjectConfigPanelProps) {
   const [perfilId, setPerfilId] = useState('');
 
   const tableroOptions = useMemo(
@@ -149,8 +148,7 @@ export default function ProjectConfigPanel({ tableros, recargos, cantos, perfile
           </select>
         </F>
 
-        {/* Recargo */}
-        <F label="Cliente (recargo)">
+        {/* <F label="Cliente (recargo)">
           <select
             value={defaults.recargoId}
             onChange={(e) => set({ recargoId: e.target.value })}
@@ -163,7 +161,7 @@ export default function ProjectConfigPanel({ tableros, recargos, cantos, perfile
               </option>
             ))}
           </select>
-        </F>
+        </F> */}
 
         {/* Margen */}
         <F label="Margen (%)">

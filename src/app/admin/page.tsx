@@ -12,7 +12,7 @@ export default async function AdminPage() {
     listarCatalogo('cot_tableros'),
     listarCatalogo('cot_cantos'),
     listarCatalogo('cot_herrajes'),
-    listarCatalogo('cot_recargos_cliente'),
+    Promise.resolve([]), // listarCatalogo('cot_recargos_cliente'),
     getParametros(),
     listarPerfiles(),
   ]);

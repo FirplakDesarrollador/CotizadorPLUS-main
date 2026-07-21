@@ -7,7 +7,7 @@ import { actualizarCotizacionAction } from '../actions';
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number };
+type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida?: 'imperial' | 'metrico' };
 
 export default function ProyectoHeader({ cab }: { cab: Cab }) {
   const router = useRouter();
@@ -65,6 +65,7 @@ export default function ProyectoHeader({ cab }: { cab: Cab }) {
         <p className="text-sm text-slate-500">
           {cab.cliente_nombre || 'Sin cliente'} · TRM {Number(cab.trm).toLocaleString('es-CO')} ·
           <span className="ml-1 text-xs rounded-full bg-slate-100 px-2 py-0.5 capitalize">{cab.estado}</span>
+          <span className="ml-1 text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">{cab.sistema_medida === 'metrico' ? 'cm · métrico' : 'in · imperial'}</span>
         </p>
       </div>
       <div className="text-right">

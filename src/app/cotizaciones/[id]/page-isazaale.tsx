@@ -4,7 +4,7 @@ import { getCotizacion } from '@/lib/cotizaciones';
 import { getCotizadorData } from '@/lib/cotizar';
 import AppHeader from '@/components/AppHeader';
 import ProyectoHeader from './ProyectoHeader';
-import CocinaCard from './CocinaCard';
+import CocinaCard from './CocinaCard-isazaale';
 import AddCocina from './AddCocina';
 import GuideButton from '@/components/GuideButton';
 import { eliminarCotizacionAction } from '../actions';
@@ -48,7 +48,7 @@ export default async function CotizacionDetallePage({ params }: { params: Promis
 
         <div className="space-y-4" data-tour="cocinas">
           {(cocinas as Cocina[]).map((c) => (
-            <CocinaCard key={c.id} cotizacionId={id} cocina={c} tipos={data.tipos} recargos={data.recargos} tableros={data.tableros} presetDefault={data.presetDefault} rolesByTipo={data.rolesByTipo} perfiles={data.perfiles} perfilDefaultId={data.perfilDefaultId} herrajesByTipo={data.herrajesByTipo} trm={Number((cabecera as { trm?: number }).trm ?? data.trmDefault)} />
+            <CocinaCard key={c.id} cotizacionId={id} cocina={c} tipos={data.tipos} tableros={data.tableros} presetDefault={data.presetDefault} rolesByTipo={data.rolesByTipo} perfiles={data.perfiles} perfilDefaultId={data.perfilDefaultId} herrajesByTipo={data.herrajesByTipo} trm={Number((cabecera as { trm?: number }).trm ?? data.trmDefault)} />
           ))}
           <div data-tour="add-cocina"><AddCocina cotizacionId={id} /></div>
         </div>

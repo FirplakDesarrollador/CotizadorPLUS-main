@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
   crearCotizacion, agregarLinea, editarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
-  crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina,
+  crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina, cambiarGrupoLinea,
   type AgregarLineaInput,
 } from '@/lib/cotizaciones';
 
@@ -16,11 +16,22 @@ export async function crearCotizacionAction(
     const cliente_nombre = String(formData.get('cliente_nombre') || '');
     const moneda = (String(formData.get('moneda') || 'USD') as 'COP' | 'USD');
     const trm = Number(formData.get('trm') || 4200);
-    const id = await crearCotizacion({ nombre, cliente_nombre, moneda, trm });
+    const sistema_medida = String(formData.get('sistema_medida') || 'imperial') === 'metrico' ? 'metrico' : 'imperial';
+    const id = await crearCotizacion({ nombre, cliente_nombre, moneda, trm, sistema_medida });
     revalidatePath('/cotizaciones');
     return { ok: true, id };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error al crear' };
+  }
+}
+
+export async function cambiarGrupoLineaAction(lineaId: string, etiqueta: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const cotizacionId = await cambiarGrupoLinea(lineaId, etiqueta);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo reagrupar el módulo' };
   }
 }
 

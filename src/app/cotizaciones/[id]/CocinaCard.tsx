@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineForm';
-import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction } from '../actions';
+import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction } from '../actions';
+import { colorGrupo } from '@/lib/module-groups';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -33,23 +34,25 @@ type Linea = {
   prof: number;
   unidad_dim: string;
   config: LineaConfig | null;
+  grupo_id: string | null;
+  posicion_grupo: number;
+  codigo_modulo: string | null;
+  grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
 };
 
 type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
-type Tipo = { id: string; pref: string; nombre_es: string | null };
-type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
+type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
 
 export default function CocinaCard({
-  cotizacionId, cocina, allCocinas, tipos, recargos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, projectDefaults
+  cotizacionId, cocina, allCocinas, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults
 }: {
   cotizacionId: string;
   cocina: Cocina;
   allCocinas: Cocina[];
   tipos: Tipo[];
-  recargos: Recargo[];
   tableros: Tablero[];
   cantos: string[];
   presetDefault: Record<string, string>;
@@ -58,6 +61,7 @@ export default function CocinaCard({
   perfilDefaultId: string;
   herrajesByTipo: Record<string, HerrajeTipo[]>;
   trm: number;
+  sistemaMedida: 'imperial' | 'metrico';
   projectDefaults?: ProjectDefaults;
 }) {
   const router = useRouter();
@@ -65,6 +69,8 @@ export default function CocinaCard({
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState(false);
   const [nombre, setNombre] = useState(cocina.nombre);
+  const [groupBusy, setGroupBusy] = useState<string | null>(null);
+  const [groupError, setGroupError] = useState<string | null>(null);
 
   // Estados de duplicación contextual (Andrés)
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, lineaId: string } | null>(null);
@@ -116,6 +122,21 @@ export default function CocinaCard({
     router.refresh();
   }
 
+  async function saveGroup(linea: Linea, value: string, input: HTMLInputElement) {
+    const members = cocina.lineas.filter((x) => x.grupo_id === linea.grupo_id).length;
+    const current = members > 1 ? `${linea.grupo?.etiqueta ?? ''}${linea.posicion_grupo}` : (linea.grupo?.etiqueta ?? '');
+    if (value.trim().toUpperCase() === current) return;
+    setGroupBusy(linea.id);
+    setGroupError(null);
+    const res = await cambiarGrupoLineaAction(linea.id, value);
+    setGroupBusy(null);
+    if (!res.ok) {
+      input.value = current;
+      setGroupError(res.error ?? 'No se pudo cambiar el grupo');
+    }
+    router.refresh();
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200">
       <div className="flex items-center justify-between p-4 border-b border-slate-100">
@@ -143,10 +164,12 @@ export default function CocinaCard({
         </div>
       </div>
 
-      <table className="w-full text-sm">
+      {groupError && <div className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{groupError}</div>}
+      <div className="overflow-x-auto"><table className="w-full text-sm">
         <thead>
           <tr className="text-left text-slate-400 border-b border-slate-100">
-            <th className="px-4 py-2">Módulo</th>
+            <th className="px-4 py-2">Grupo</th>
+            <th>Módulo</th>
             <th>Descripción</th>
             <th className="text-right">Cant</th>
             <th className="text-right">Unit USD</th>
@@ -156,17 +179,34 @@ export default function CocinaCard({
           </tr>
         </thead>
         <tbody>
-          {cocina.lineas.length === 0 && <tr><td colSpan={7} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
-          {cocina.lineas.map((l) => (
+          {cocina.lineas.length === 0 && <tr><td colSpan={8} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
+          {cocina.lineas.map((l) => {
+            const members = cocina.lineas.filter((x) => x.grupo_id === l.grupo_id).length;
+            const label = members > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? '');
+            return (<Fragment key={l.id}>
             <tr
-              key={l.id}
-              className="border-b border-slate-50 hover:bg-slate-50/50"
+              className={`border-b border-slate-50 ${colorGrupo(l.grupo?.orden ?? 0)}`}
               onContextMenu={(e) => {
                 e.preventDefault();
                 setContextMenu({ x: e.clientX, y: e.clientY, lineaId: l.id });
               }}
             >
-              <td className="px-4 py-2 font-medium text-slate-900 cursor-context-menu">{l.pref}</td>
+              <td className="px-4 py-2">
+                <input
+                  key={`${l.id}-${label}`}
+                  defaultValue={label}
+                  disabled={groupBusy === l.id}
+                  aria-label={`Grupo del módulo ${l.codigo_modulo ?? l.pref ?? ''}`}
+                  title="A, B… para bloques; A1, A2… para unir y ordenar"
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                  onBlur={(e) => saveGroup(l, e.currentTarget.value, e.currentTarget)}
+                  className="w-14 rounded-md border border-slate-300 bg-white/80 px-2 py-1 text-center font-semibold uppercase disabled:opacity-50"
+                />
+              </td>
+              <td className="py-2 font-medium text-slate-900 cursor-context-menu">
+                <div>{l.codigo_modulo ?? l.pref}</div>
+                {members > 1 && l.grupo?.codigo_grupo && <div className="max-w-48 truncate text-[10px] font-normal text-slate-500" title={l.grupo.codigo_grupo}>{l.grupo.codigo_grupo}</div>}
+              </td>
               <td className="text-slate-600">{l.descripcion_es}</td>
               <td className="text-right">{l.cantidad}</td>
               <td className="text-right">{fmtUSD(l.precio_unit_usd)}</td>
@@ -177,9 +217,18 @@ export default function CocinaCard({
                 <button onClick={() => delLinea(l.id)} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button>
               </td>
             </tr>
-          ))}
+            {members > 1 && l.posicion_grupo === members && (
+              <tr className={`${colorGrupo(l.grupo?.orden ?? 0)} border-b border-slate-200 text-xs font-semibold text-slate-600`}>
+                <td></td>
+                <td colSpan={4} className="py-1.5 text-left">Subtotal grupo {l.grupo?.etiqueta} · {l.grupo?.codigo_grupo}</td>
+                <td className="py-1.5 text-right">{fmtUSD(Number(l.grupo?.total_usd ?? 0))}</td>
+                <td className="px-4 py-1.5 text-right">{fmtCOP(Number(l.grupo?.total_cop ?? 0))}</td>
+                <td></td>
+              </tr>
+            )}
+          </Fragment>);})}
         </tbody>
-      </table>
+      </table></div>
 
       <div className="p-4 border-t border-slate-100">
         {lineaEnEdicion ? (
@@ -187,7 +236,6 @@ export default function CocinaCard({
             key={lineaEnEdicion.id}
             cocinaId={cocina.id}
             tipos={tipos}
-            recargos={recargos}
             tableros={tableros}
             cantos={cantos}
             presetDefault={presetDefault}
@@ -196,6 +244,7 @@ export default function CocinaCard({
             perfilDefaultId={perfilDefaultId}
             herrajesByTipo={herrajesByTipo}
             trm={trm}
+            sistemaMedida={sistemaMedida}
             projectDefaults={projectDefaults}
             initial={toInicial(lineaEnEdicion)}
             onDone={() => setEditId(null)}
@@ -205,7 +254,6 @@ export default function CocinaCard({
             <AddLineForm
               cocinaId={cocina.id}
               tipos={tipos}
-              recargos={recargos}
               tableros={tableros}
               cantos={cantos}
               presetDefault={presetDefault}
@@ -214,6 +262,7 @@ export default function CocinaCard({
               perfilDefaultId={perfilDefaultId}
               herrajesByTipo={herrajesByTipo}
               trm={trm}
+              sistemaMedida={sistemaMedida}
               projectDefaults={projectDefaults}
             />
             <button onClick={() => setShowAdd(false)} className="text-sm text-slate-400 hover:underline">Cerrar</button>

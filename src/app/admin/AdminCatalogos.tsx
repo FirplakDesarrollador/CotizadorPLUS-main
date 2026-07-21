@@ -41,13 +41,13 @@ const FIELDS: Record<CatalogoTabla, Field[]> = {
     { key: 'unidad', label: 'Unidad', type: 'text' },
     { key: 'activo', label: 'Activo', type: 'bool' },
   ],
-  cot_recargos_cliente: [
+  /* cot_recargos_cliente: [
     { key: 'cliente_nombre', label: 'Cliente', type: 'text', required: true },
     { key: 'recargo_pct', label: 'Recargo (0–1)', type: 'number' },
     { key: 'incluye_herrajes', label: 'Incluye herrajes', type: 'bool' },
     { key: 'notas', label: 'Notas', type: 'text' },
     { key: 'activo', label: 'Activo', type: 'bool' },
-  ],
+  ], */
 };
 
 type TabKey = CatalogoTabla | 'parametros' | 'perfiles';
@@ -55,7 +55,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'cot_tableros', label: 'Tableros' },
   { key: 'cot_cantos', label: 'Cantos' },
   { key: 'cot_herrajes', label: 'Herrajes' },
-  { key: 'cot_recargos_cliente', label: 'Clientes' },
+  // { key: 'cot_recargos_cliente', label: 'Clientes' },
   { key: 'perfiles', label: 'Perfiles de material' },
   { key: 'parametros', label: 'Parámetros' },
 ];
@@ -63,8 +63,8 @@ const TABS: { key: TabKey; label: string }[] = [
 export default function AdminCatalogos({ tableros, cantos, herrajes, recargos, parametros, perfiles }:
   { tableros: Row[]; cantos: Row[]; herrajes: Row[]; recargos: Row[]; parametros: Record<string, unknown>; perfiles: PresetPerfil[] }) {
   const [tab, setTab] = useState<TabKey>('cot_tableros');
-  const rowsByTab: Record<CatalogoTabla, Row[]> = {
-    cot_tableros: tableros, cot_cantos: cantos, cot_herrajes: herrajes, cot_recargos_cliente: recargos,
+  const rowsByTab: Partial<Record<CatalogoTabla, Row[]>> = {
+    cot_tableros: tableros, cot_cantos: cantos, cot_herrajes: herrajes, /* cot_recargos_cliente: recargos, */
   };
   const countByTab: Partial<Record<TabKey, number>> = { ...Object.fromEntries(Object.entries(rowsByTab).map(([k, v]) => [k, v.length])), perfiles: perfiles.length };
   return (
@@ -81,7 +81,7 @@ export default function AdminCatalogos({ tableros, cantos, herrajes, recargos, p
         ? <ParametrosEditor parametros={parametros} />
         : tab === 'perfiles'
         ? <PerfilesEditor perfiles={perfiles} tableros={tableros} />
-        : <CatalogManager key={tab} tabla={tab} fields={FIELDS[tab]} rows={rowsByTab[tab]} />}
+        : <CatalogManager key={tab} tabla={tab as CatalogoTabla} fields={FIELDS[tab as CatalogoTabla]} rows={rowsByTab[tab as CatalogoTabla] ?? []} />}
     </div>
   );
 }
@@ -306,12 +306,12 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
   const marg0 = (parametros.margenes ?? {}) as Record<string, number>;
   const [trmValor, setTrmValor] = useState<number>(Number(trm0.valor ?? 4200));
   const [trmModo, setTrmModo] = useState<string>(String(trm0.modo ?? 'manual'));
-  const [despMadera, setDespMadera] = useState<number>(Number(parametros.desperdicio_madera ?? 0.15));
-  const [recargo, setRecargo] = useState<number>(Number(parametros.recargo_extra ?? 0.1));
-  const [margenHerraje, setMargenHerraje] = useState<number>(Number(parametros.margen_herraje ?? 0.35));
-  const [mMuebles, setMMuebles] = useState<number>(Number(marg0.muebles ?? 0.57));
-  const [mFillers, setMFillers] = useState<number>(Number(marg0.fillers ?? 0.52));
-  const [mPnTk, setMPnTk] = useState<number>(Number(marg0.pn_tk ?? 0.44));
+  const [despMadera, setDespMadera] = useState<number>(Number(parametros.desperdicio_madera ?? 0.15) * 100);
+  const [recargo, setRecargo] = useState<number>(Number(parametros.recargo_extra ?? 0.1) * 100);
+  const [margenHerraje, setMargenHerraje] = useState<number>(Number(parametros.margen_herraje ?? 0.35) * 100);
+  const [mMuebles, setMMuebles] = useState<number>(Number(marg0.muebles ?? 0.57) * 100);
+  const [mFillers, setMFillers] = useState<number>(Number(marg0.fillers ?? 0.52) * 100);
+  const [mPnTk, setMPnTk] = useState<number>(Number(marg0.pn_tk ?? 0.44) * 100);
   const [avanzado, setAvanzado] = useState(false);
   const [jLamina, setJLamina] = useState(JSON.stringify(parametros.lamina ?? {}, null, 2));
   const [jCanto, setJCanto] = useState(JSON.stringify(parametros.desperdicio_canto ?? {}, null, 2));
@@ -324,10 +324,10 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
     setSaving(true); setError(null); setMsg(null);
     const updates: { key: string; value: unknown }[] = [
       { key: 'trm', value: { valor: trmValor, modo: trmModo } },
-      { key: 'desperdicio_madera', value: despMadera },
-      { key: 'recargo_extra', value: recargo },
-      { key: 'margen_herraje', value: margenHerraje },
-      { key: 'margenes', value: { muebles: mMuebles, fillers: mFillers, pn_tk: mPnTk } },
+      { key: 'desperdicio_madera', value: despMadera / 100 },
+      { key: 'recargo_extra', value: recargo / 100 },
+      { key: 'margen_herraje', value: margenHerraje / 100 },
+      { key: 'margenes', value: { muebles: mMuebles / 100, fillers: mFillers / 100, pn_tk: mPnTk / 100 } },
     ];
     try {
       if (avanzado) {
@@ -367,14 +367,14 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
         </div>
       </section>
       <section>
-        <h3 className="text-sm font-medium text-slate-900 mb-3">Márgenes y recargos (0–1)</h3>
+        <h3 className="text-sm font-medium text-slate-900 mb-3">Márgenes y recargos (%)</h3>
         <div className="grid sm:grid-cols-3 gap-3">
-          <Num label="Margen muebles" value={mMuebles} set={setMMuebles} hint="0.57 = 57%" />
+          <Num label="Margen muebles" value={mMuebles} set={setMMuebles} />
           <Num label="Margen fillers" value={mFillers} set={setMFillers} />
           <Num label="Margen paneles/zócalos" value={mPnTk} set={setMPnTk} />
-          <Num label="Margen herraje" value={margenHerraje} set={setMargenHerraje} hint="0.35 = 35%" />
-          <Num label="Recargo extra" value={recargo} set={setRecargo} hint="CEMA +10% = 0.10" />
-          <Num label="Desperdicio madera" value={despMadera} set={setDespMadera} hint="0.15 = 15%" />
+          <Num label="Margen herraje" value={margenHerraje} set={setMargenHerraje} />
+          {/* <Num label="Recargo extra" value={recargo} set={setRecargo} /> */}
+          <Num label="Desperdicio madera" value={despMadera} set={setDespMadera} />
         </div>
       </section>
 

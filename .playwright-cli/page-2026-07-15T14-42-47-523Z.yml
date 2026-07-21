@@ -1,0 +1,263 @@
+- generic [active] [ref=f2e1]:
+  - button "Open Next.js Dev Tools" [ref=f2e99] [cursor=pointer]
+  - alert [ref=f2e103]
+  - generic [ref=f2e104]:
+    - banner [ref=f2e105]:
+      - generic [ref=f2e106]:
+        - generic [ref=f2e107]:
+          - generic [ref=f2e108]:
+            - text: Cotizador PLUS
+            - generic [ref=f2e109]: v1.0.2
+          - link "Simulador" [ref=f2e110] [cursor=pointer]:
+            - /url: /cotizador
+          - link "Cotizaciones" [ref=f2e111] [cursor=pointer]:
+            - /url: /cotizaciones
+          - link "Manual" [ref=f2e112] [cursor=pointer]:
+            - /url: /manual
+        - generic [ref=f2e113]:
+          - generic [ref=f2e114]: codex-group-e2e-20260715@example.invalid
+          - generic [ref=f2e115]: vendedor
+          - button "Salir" [ref=f2e117]
+    - main [ref=f2e118]:
+      - generic [ref=f2e119]:
+        - generic [ref=f2e121]:
+          - generic [ref=f2e122]:
+            - link "← Cotizaciones" [ref=f2e123] [cursor=pointer]:
+              - /url: /cotizaciones
+            - generic [ref=f2e124]:
+              - heading "E2E Agrupación B12 DB10 BFD20 2026-07-15" [level=1] [ref=f2e125]
+              - button "editar" [ref=f2e126]
+            - paragraph [ref=f2e127]: Codex E2E · TRM 3.300 ·borradorin · imperial
+          - generic [ref=f2e128]:
+            - generic [ref=f2e129]: $0.00
+            - generic [ref=f2e130]: $ 0
+        - generic [ref=f2e131]:
+          - button "Guía" [ref=f2e132]:
+            - generic [ref=f2e133]: 💡
+            - text: Guía
+          - button "Tips" [ref=f2e134]:
+            - generic [ref=f2e135]: 💬
+            - text: Tips
+      - button "⚙️ Materiales del proyecto ▼ ver / editar ECOCARB15COLOR" [ref=f2e137]:
+        - generic [ref=f2e138]: ⚙️
+        - generic [ref=f2e139]: Materiales del proyecto
+        - generic [ref=f2e140]: ▼ ver / editar
+        - generic [ref=f2e141]: ECOCARB15COLOR
+      - generic [ref=f2e142]:
+        - link "⬇ Exportar Excel" [ref=f2e143] [cursor=pointer]:
+          - /url: /cotizaciones/3de74bdb-7c82-40a3-ba48-c130a9dbf9ab/export
+        - link "🖨 Imprimir / PDF" [ref=f2e144] [cursor=pointer]:
+          - /url: /cotizaciones/3de74bdb-7c82-40a3-ba48-c130a9dbf9ab/imprimir
+      - generic [ref=f2e145]:
+        - generic [ref=f2e146]:
+          - generic [ref=f2e147]:
+            - generic [ref=f2e148]:
+              - heading "🍳 Cocina 1" [level=3] [ref=f2e149]
+              - button "renombrar" [ref=f2e150]
+              - generic [ref=f2e151]: · 0 módulo(s)
+            - generic [ref=f2e152]:
+              - generic [ref=f2e153]:
+                - text: $0.00
+                - generic [ref=f2e154]: · $ 0
+              - button "🗑" [ref=f2e155]
+          - table [ref=f2e157]:
+            - rowgroup [ref=f2e158]:
+              - row [ref=f2e159]:
+                - columnheader "Grupo" [ref=f2e160]
+                - columnheader "Módulo" [ref=f2e161]
+                - columnheader "Descripción" [ref=f2e162]
+                - columnheader "Cant" [ref=f2e163]
+                - columnheader "Unit USD" [ref=f2e164]
+                - columnheader "Total USD" [ref=f2e165]
+                - columnheader "Total COP" [ref=f2e166]
+                - columnheader [ref=f2e167]
+            - rowgroup [ref=f2e168]:
+              - row [ref=f2e169]:
+                - cell "Agrega módulos a esta cocina." [ref=f2e170]
+          - generic [ref=f2e177]:
+            - generic [ref=f2e178]:
+              - generic [ref=f2e179]:
+                - heading "Agregar mueble" [level=2] [ref=f2e180]
+                - generic [ref=f2e181]: ✓ Materiales globales aplicados
+              - generic [ref=f2e182]:
+                - generic [ref=f2e183]:
+                  - generic [ref=f2e184]:
+                    - generic [ref=f2e185]: Tipo
+                    - generic [ref=f2e186]: ⓘ
+                  - textbox "Tipo ⓘ Define el tipo de mueble y su despiece (piezas, fórmulas y herrajes). 💡 Usa el buscador escribiendo el prefijo o el nombre." [ref=f2e188]:
+                    - /placeholder: SBFD — Mueble inferior lavaplatos (Sink Base Full Door)
+                    - text: SBFD — Mueble inferior lavaplatos (Sink Base Full Door)
+                  - generic:
+                    - generic: Define el tipo de mueble y su despiece (piezas, fórmulas y herrajes).
+                    - generic: 💡 Usa el buscador escribiendo el prefijo o el nombre.
+                - generic [ref=f2e189]:
+                  - generic [ref=f2e190]:
+                    - generic [ref=f2e191]:
+                      - generic [ref=f2e192]: Largo
+                      - generic [ref=f2e193]: ⓘ
+                    - textbox "Largo ⓘ Ancho frontal del mueble (dimensión L). 💡 Se expresa en la unidad seleccionada; al cambiar de unidad se convierte solo." [ref=f2e194]: "33"
+                    - generic:
+                      - generic: Ancho frontal del mueble (dimensión L).
+                      - generic: 💡 Se expresa en la unidad seleccionada; al cambiar de unidad se convierte solo.
+                  - generic [ref=f2e195]:
+                    - generic [ref=f2e196]:
+                      - generic [ref=f2e197]: Alto
+                      - generic [ref=f2e198]: ⓘ
+                    - textbox "Alto ⓘ Altura del mueble (dimensión A). 💡 Determina entrepaños y, en torres, el nº de puertas apiladas." [ref=f2e199]: "30"
+                    - generic:
+                      - generic: Altura del mueble (dimensión A).
+                      - generic: 💡 Determina entrepaños y, en torres, el nº de puertas apiladas.
+                  - generic [ref=f2e200]:
+                    - generic [ref=f2e201]:
+                      - generic [ref=f2e202]: Prof
+                      - generic [ref=f2e203]: ⓘ
+                    - textbox "Prof ⓘ Profundidad / fondo del mueble (dimensión P). 💡 Afecta el área de laterales, base y tapa." [ref=f2e204]: "24"
+                    - generic:
+                      - generic: Profundidad / fondo del mueble (dimensión P).
+                      - generic: 💡 Afecta el área de laterales, base y tapa.
+                  - generic [ref=f2e205]:
+                    - generic [ref=f2e206]:
+                      - generic [ref=f2e207]: Un
+                      - generic [ref=f2e208]: ⓘ
+                    - combobox "Un ⓘ Unidad de las dimensiones (in/cm/mm). 💡 Al cambiarla, las dimensiones se convierten automáticamente." [disabled] [ref=f2e209]:
+                      - option "in" [selected]
+                    - generic:
+                      - generic: Unidad de las dimensiones (in/cm/mm).
+                      - generic: 💡 Al cambiarla, las dimensiones se convierten automáticamente.
+                - generic [ref=f2e210]:
+                  - generic [ref=f2e211]:
+                    - generic [ref=f2e212]:
+                      - generic [ref=f2e213]: Cantidad
+                      - generic [ref=f2e214]: ⓘ
+                    - spinbutton "Cantidad ⓘ Número de muebles idénticos en esta línea. 💡 El subtotal multiplica el precio unitario por la cantidad." [ref=f2e215]: "1"
+                    - generic:
+                      - generic: Número de muebles idénticos en esta línea.
+                      - generic: 💡 El subtotal multiplica el precio unitario por la cantidad.
+                  - generic [ref=f2e216]:
+                    - generic [ref=f2e217]: Margen (%)
+                    - spinbutton "Margen (%)" [ref=f2e219]
+                - generic [ref=f2e220]:
+                  - generic [ref=f2e221]:
+                    - generic [ref=f2e222]:
+                      - generic [ref=f2e223]: Nº puertas
+                      - generic [ref=f2e224]: ⓘ
+                    - spinbutton "Nº puertas ⓘ Fuerza el número de puertas (vacío = automático). 💡 Cambia bisagras y manijas del mueble." [ref=f2e225]
+                    - generic:
+                      - generic: Fuerza el número de puertas (vacío = automático).
+                      - generic: 💡 Cambia bisagras y manijas del mueble.
+                  - generic [ref=f2e226]:
+                    - generic [ref=f2e227]:
+                      - generic [ref=f2e228]: Nº cajones
+                      - generic [ref=f2e229]: ⓘ
+                    - spinbutton "Nº cajones ⓘ Fuerza el número de cajones (vacío = automático). 💡 Cambia rieles y manijas del mueble." [ref=f2e230]
+                    - generic:
+                      - generic: Fuerza el número de cajones (vacío = automático).
+                      - generic: 💡 Cambia rieles y manijas del mueble.
+                  - generic [ref=f2e231]:
+                    - generic [ref=f2e232]:
+                      - generic [ref=f2e233]: Nº entrepaños
+                      - generic [ref=f2e234]: ⓘ
+                    - spinbutton "Nº entrepaños ⓘ Fuerza el número de entrepaños (vacío = automático). 💡 Ej. mueble superior para nevera = 0; a veces piden 2." [ref=f2e235]
+                    - generic:
+                      - generic: Fuerza el número de entrepaños (vacío = automático).
+                      - generic: 💡 Ej. mueble superior para nevera = 0; a veces piden 2.
+                - generic [ref=f2e236]:
+                  - generic [ref=f2e237]:
+                    - generic [ref=f2e238]: Perfil de material
+                    - generic [ref=f2e239]: ⓘ
+                  - textbox "Perfil de material ⓘ Set de tableros por rol según zona/línea (CEMA, Colombia 15mm, Salguero, Shaker…). 💡 Al elegirlo llena los tableros; puedes ajustar cada rol después." [ref=f2e241]:
+                    - /placeholder: CEMA (estándar)
+                    - text: CEMA (estándar)
+                  - generic:
+                    - generic: Set de tableros por rol según zona/línea (CEMA, Colombia 15mm, Salguero, Shaker…).
+                    - generic: 💡 Al elegirlo llena los tableros; puedes ajustar cada rol después.
+                - generic [ref=f2e242]:
+                  - generic [ref=f2e243]:
+                    - generic [ref=f2e244]: Tablero caja
+                    - generic [ref=f2e245]: ⓘ
+                  - 'textbox "Tablero caja ⓘ Tablero de la caja: laterales, base y tapa. 💡 Es el mayor consumo de área; impacta fuerte el costo." [ref=f2e247]':
+                    - /placeholder: ECOCARB15COLOR · ECOFORT CARB 15mm COLOR
+                    - text: ECOCARB15COLOR · ECOFORT CARB 15mm COLOR
+                  - generic:
+                    - generic: "Tablero de la caja: laterales, base y tapa."
+                    - generic: 💡 Es el mayor consumo de área; impacta fuerte el costo.
+                - generic [ref=f2e248]:
+                  - generic [ref=f2e249]:
+                    - generic [ref=f2e250]: Tablero frente
+                    - generic [ref=f2e251]: ⓘ
+                  - textbox "Tablero frente ⓘ Tablero de puertas y frentes (cara visible). 💡 Normalmente el más costoso; define el acabado." [ref=f2e253]:
+                    - /placeholder: ECOCARB18COLOR · ECOFORT CARB 18mm COLOR
+                    - text: ECOCARB18COLOR · ECOFORT CARB 18mm COLOR
+                  - generic:
+                    - generic: Tablero de puertas y frentes (cara visible).
+                    - generic: 💡 Normalmente el más costoso; define el acabado.
+                - generic [ref=f2e254]:
+                  - generic [ref=f2e255]:
+                    - generic [ref=f2e256]: Tablero fondo
+                    - generic [ref=f2e257]: ⓘ
+                  - textbox "Tablero fondo ⓘ Tablero del fondo (espalda del mueble). 💡 Sustrato delgado; en algunos tipos no se cobra." [ref=f2e259]:
+                    - /placeholder: PRICARB6CANDELARIA (POLAR) · PRIMADERA CARB 6mm CANDELARIA (POLAR)
+                    - text: PRICARB6CANDELARIA (POLAR) · PRIMADERA CARB 6mm CANDELARIA (POLAR)
+                  - generic:
+                    - generic: Tablero del fondo (espalda del mueble).
+                    - generic: 💡 Sustrato delgado; en algunos tipos no se cobra.
+                - generic [ref=f2e260]:
+                  - generic [ref=f2e261]:
+                    - generic [ref=f2e262]: Frentes
+                    - generic [ref=f2e263]: ⓘ
+                  - 'combobox "Frentes ⓘ Variante de armado: completo, sin frentes (open) o solo el kit de frentes. 💡 Open = carcasa lista sin puertas; Kit = solo puertas/frentes y su herraje." [ref=f2e264]':
+                    - option "Completo" [selected]
+                    - option "Sin frentes (open)"
+                    - option "Solo kit de frentes"
+                  - generic:
+                    - generic: "Variante de armado: completo, sin frentes (open) o solo el kit de frentes."
+                    - generic: 💡 Open = carcasa lista sin puertas; Kit = solo puertas/frentes y su herraje.
+                - generic [ref=f2e265]:
+                  - generic [ref=f2e266]:
+                    - generic [ref=f2e267]: Canto frentes
+                    - combobox "Canto frentes" [ref=f2e269]:
+                      - option "Por defecto"
+                      - option "19X0,45"
+                      - option "19X1"
+                      - option "19X2"
+                      - option "22x0,45"
+                      - option "22x1" [selected]
+                      - option "22x1 High Gloss"
+                      - option "NA"
+                  - generic [ref=f2e270]:
+                    - generic [ref=f2e271]: Canto caja
+                    - combobox "Canto caja" [ref=f2e273]:
+                      - option "Por defecto"
+                      - option "19X0,45" [selected]
+                      - option "19X1"
+                      - option "19X2"
+                      - option "22x0,45"
+                      - option "22x1"
+                      - option "22x1 High Gloss"
+                      - option "NA"
+                - generic [ref=f2e275]:
+                  - checkbox "Con herrajes" [checked] [ref=f2e276]
+                  - text: Con herrajes
+                - generic [ref=f2e277]:
+                  - paragraph [ref=f2e278]: Herrajes incluidos (destilda para excluir)
+                  - generic [ref=f2e279]:
+                    - generic [ref=f2e280]:
+                      - checkbox "pata · PATA10AJUST" [checked] [ref=f2e281]
+                      - text: pata
+                      - generic [ref=f2e282]: · PATA10AJUST
+                    - generic [ref=f2e283]:
+                      - checkbox "tornillo · TORNILLO858" [checked] [ref=f2e284]
+                      - text: tornillo
+                      - generic [ref=f2e285]: · TORNILLO858
+                    - generic [ref=f2e286]:
+                      - checkbox "bisagra · BISAGRAPAR" [checked] [ref=f2e287]
+                      - text: bisagra
+                      - generic [ref=f2e288]: · BISAGRAPAR
+                    - generic [ref=f2e289]:
+                      - checkbox "manija · MANIJA415" [checked] [ref=f2e290]
+                      - text: manija
+                      - generic [ref=f2e291]: · MANIJA415
+              - button "+ Agregar a la cotización" [ref=f2e293]
+            - button "Cerrar" [ref=f2e294]
+        - button "+ Agregar cocina" [ref=f2e174]
+      - button "Eliminar proyecto" [ref=f2e176]

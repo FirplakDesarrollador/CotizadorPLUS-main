@@ -3,7 +3,8 @@ import { getUserAndRole } from '@/lib/auth';
 import { listarCotizaciones } from '@/lib/cotizaciones';
 import AppHeader from '@/components/AppHeader';
 import GuideButton from '@/components/GuideButton';
-import { crearCotizacionAction } from './actions';
+import { getCotizadorData } from '@/lib/cotizar';
+import NuevoCotizacionForm from './NuevoCotizacionForm';
 import CotizacionRowActions from './CotizacionRowActions';
 
 const GUIA_LISTA = [
@@ -18,25 +19,19 @@ const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'curren
 export default async function CotizacionesPage() {
   const { user, rol } = await getUserAndRole();
   const cotizaciones = await listarCotizaciones();
+  const data = await getCotizadorData();
 
   return (
     <div className="min-h-screen bg-slate-50">
       <AppHeader email={user?.email} rol={rol} active="cotizaciones" />
       <div className="mx-auto max-w-6xl px-4 pt-4 flex justify-end"><GuideButton steps={GUIA_LISTA} label="Guía de uso" /></div>
       <main className="mx-auto max-w-6xl px-4 pb-6 grid lg:grid-cols-[320px_1fr] gap-6">
-        <form action={crearCotizacionAction} data-tour="nuevo" className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 h-fit">
-          <h2 className="font-semibold text-slate-900">Nuevo proyecto / cotización</h2>
-          <label className="block"><span className="block text-xs text-slate-500 mb-1">Nombre del proyecto *</span>
-            <input name="nombre" required placeholder="Ej. Cocina Torre A — Apto 502" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
-          <input name="cliente_nombre" placeholder="Cliente" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-          <div className="grid grid-cols-2 gap-2">
-            <select name="moneda" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" defaultValue="USD">
-              <option value="USD">USD</option><option value="COP">COP</option>
-            </select>
-            <input name="trm" type="number" step="any" defaultValue={4200} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="TRM" />
-          </div>
-          <button className="w-full rounded-lg bg-slate-900 text-white py-2 text-sm font-medium hover:bg-slate-800">Crear y agregar muebles</button>
-        </form>
+        <NuevoCotizacionForm
+          tableros={data.tableros}
+          cantos={data.cantos}
+          presetDefault={data.presetDefault}
+          trmDefault={data.trmDefault}
+        />
 
         <div data-tour="lista" className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-fit">
           <table className="w-full text-sm">

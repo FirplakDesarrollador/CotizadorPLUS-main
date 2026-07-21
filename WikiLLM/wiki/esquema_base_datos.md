@@ -16,6 +16,7 @@ La base de datos se estructura en torno a los siguientes modelos:
 *   **`cot_tableros`:** Catálogo de melaminas y sustratos (RH, estándar, CARB). Registra las dimensiones físicas de la lámina, el precio bruto y el precio por metro cuadrado.
 *   **`cot_cantos`:** Catálogo de tapacantos por calibre (ej: `22x1`, `19x0,45`), indicando el costo por metro lineal.
 *   **`cot_herrajes`:** Catálogo general de herrajes (bisagras, rieles, manijas) e insumos clasificados como `consumibles` (tarugos, cartón, etiquetas, soportes).
+*   **`cot_recargos_cliente`:** *(Desactivada)* Catálogo de recargos por cliente. Actualmente se maneja la rentabilidad de forma exclusiva mediante márgenes.
 
 ### Definición del Producto (Data-driven Template)
 *   **`cot_tipos_mueble`:** Cabecera de los muebles disponibles para cotizar (ej: BFD, SBFD). Vincula cada tipo a su política de margen respectiva (`margen_key`).
@@ -25,6 +26,21 @@ La base de datos se estructura en torno a los siguientes modelos:
 ### Transaccionales (Cotizaciones)
 *   **`cot_cotizaciones`:** Cabecera del documento de cotización (cliente, moneda, TRM congelada, estado del negocio).
 *   **`cot_cotizacion_lineas`:** Líneas individuales que componen el presupuesto. Almacena las dimensiones, cantidad solicitada, variables de diseño y guarda el objeto `breakdown` final (JSON) generado por el motor para auditoría histórica.
+*   **`cot_grupos_modulos`:** Bloques físicos ordenados dentro de una cocina. Almacena la letra canónica, el código concatenado, los subtotales y el breakdown estructural del grupo. Cada línea apunta a un grupo y conserva su posición de izquierda a derecha.
+
+### Extensiones para agrupación
+
+La migración `0020_agrupacion_modulos.sql` incorpora:
+
+- `sistema_medida` en la cotización (`imperial` o `metrico`), fijado al crear el proyecto.
+- Prefijos `pref_imperial` y `pref_metrico`, más `permite_agrupacion`, en los tipos de mueble. La equivalencia confirmada `BFD -> IP` se precarga; las demás quedan editables desde Diseño.
+- `modo_agrupacion`, `clave_fusion` y `formula_largo_grupo` en las plantillas de piezas, también editables por un administrador.
+- `grupo_id`, `posicion_grupo` y `codigo_modulo` en las líneas.
+- Backfill de cada línea histórica como bloque unitario A, B, C… sin modificar sus importes ni breakdown históricos.
+
+La tabla de grupos tiene RLS vinculada al propietario de la cotización o al rol administrador. La migración debe aplicarse antes de desplegar el código que consulta estas columnas.
+
+La migración 0020 fue aplicada y verificada en Supabase **I+D** el 2026-07-15. El backfill produjo un grupo por cada una de las ocho líneas históricas existentes, sin líneas huérfanas, y dejó activas las cuatro políticas RLS del nuevo modelo.
 
 ## 3. Seguridad y Triggers
 - Todos los registros cuentan con auditoría automática de fecha de modificación conectada al trigger `cot_touch_updated_at`.

@@ -1,10 +1,11 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import {
-  calcularMueble, derivarVars, toInches, normCalibre,
+  calcularMueble, toInches, normCalibre,
   type Dims, type UnidadDim, type Regla, type Pieza, type HerrajePlantilla,
-  type Breakdown,
+  type Breakdown, type CalcInput,
 } from '@/lib/engine';
+import { calcularGrupoFisico, type GroupCalculation, type PreparedGroupMember } from '@/lib/group-engine';
 
 export type CotizarInput = {
   tipoId: string;
@@ -12,7 +13,7 @@ export type CotizarInput = {
   unidad: UnidadDim;
   preset: Record<string, string>;       // rol_tablero -> codigo
   conHerrajes: boolean;
-  recargoPct: number;                    // recargo cliente (0.10 = 10%)
+  // recargoPct: number;                    // DESACTIVADO: recargo cliente (0.10 = 10%)
   trm?: number;                          // override TRM (si no, usa parámetro)
   overrides?: Record<string, number>;    // n_puertas, etc.
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
@@ -28,12 +29,19 @@ export type CotizarInput = {
 
 export type CotizarResult = Breakdown & { trm: number; margen: number };
 
-export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
+export type CotizacionPreparada = PreparedGroupMember & {
+  trm: number;
+  margen: number;
+  prefImperial: string;
+  prefMetrico: string;
+};
+
+export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionPreparada> {
   const sb = await createClient();
 
   const [{ data: params }, { data: tipo }] = await Promise.all([
     sb.from('cot_parametros').select('key,value'),
-    sb.from('cot_tipos_mueble').select('id,etiquetas_und,margen_key,usa_carton').eq('id', inp.tipoId).single(),
+    sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,etiquetas_und,margen_key,usa_carton').eq('id', inp.tipoId).single(),
   ]);
   if (!tipo) throw new Error('Tipo de mueble no encontrado');
   const P = Object.fromEntries((params ?? []).map((r) => [r.key, r.value])) as Record<string, unknown>;
@@ -52,7 +60,7 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
 
   // Tableros del preset
   const codes = [...new Set(Object.values(preset).filter(Boolean))];
-  const { data: tableros } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm').in('codigo', codes);
+  const { data: tableros } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato').in('codigo', codes);
 
   const tablerosByCode = Object.fromEntries((tableros ?? []).map((t) => [t.codigo, t]));
   const cantosByCalibre = Object.fromEntries((cantos ?? []).map((c) => [normCalibre(c.calibre), c]));
@@ -80,7 +88,7 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     P: toInches(inp.prof, inp.unidad),
   };
 
-  const breakdown = calcularMueble({
+  const calc: CalcInput = {
     dims,
     piezas: (piezas ?? []) as Pieza[],
     herrajesPlantilla: inp.conHerrajes ? ((herrajesPlant ?? []) as HerrajePlantilla[]) : [],
@@ -94,7 +102,7 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     usaCarton: tipo.usa_carton !== false,
     margen,
     margenHerraje,
-    recargo: inp.recargoPct ?? 0,
+    // recargo: inp.recargoPct ?? 0,
     trm,
     desperdicio,
     overrides: inp.overrides,
@@ -103,18 +111,36 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     descuento: inp.descuento,
     cantoFrentes: inp.cantoFrentes,
     cantoCaja: inp.cantoCaja,
-  });
+  };
 
-  return { ...breakdown, trm, margen };
+  return {
+    calc,
+    pref: tipo.pref,
+    prefImperial: tipo.pref_imperial || tipo.pref,
+    prefMetrico: tipo.pref_metrico || tipo.pref,
+    permiteAgrupacion: tipo.permite_agrupacion === true,
+    trm,
+    margen,
+  };
+}
+
+export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
+  const prepared = await prepararCotizacion(inp);
+  return { ...calcularMueble(prepared.calc), trm: prepared.trm, margen: prepared.margen };
+}
+
+export async function cotizarGrupo(inputs: CotizarInput[]): Promise<GroupCalculation & { preparados: CotizacionPreparada[] }> {
+  const preparados = await Promise.all(inputs.map(prepararCotizacion));
+  return { ...calcularGrupoFisico(preparados), preparados };
 }
 
 // Datos para poblar la UI del cotizador.
 export async function getCotizadorData() {
   const sb = await createClient();
-  const [{ data: tipos }, { data: recargos }, { data: tableros }, { data: params }, { data: piezasRoles }, { data: perfiles }, { data: cantos }] = await Promise.all([
-    sb.from('cot_tipos_mueble').select('id,pref,nombre_es,categoria,margen_key').eq('activo', true).order('pref'),
-    sb.from('cot_recargos_cliente').select('id,cliente_nombre,recargo_pct,incluye_herrajes').eq('activo', true).order('cliente_nombre'),
-    sb.from('cot_tableros').select('codigo,proveedor,sustrato,espesor_mm,color_nombre,precio_m2').eq('activo', true).order('codigo'),
+  const [{ data: tipos }, /* { data: recargos }, */ { data: tableros }, { data: params }, { data: piezasRoles }, { data: perfiles }, { data: cantos }] = await Promise.all([
+    sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,nombre_es,categoria,margen_key').eq('activo', true).order('pref'),
+    // sb.from('cot_recargos_cliente').select('id,cliente_nombre,recargo_pct,incluye_herrajes').eq('activo', true).order('cliente_nombre'),
+    sb.from('cot_tableros').select('codigo,proveedor,sustrato,espesor_mm,color_nombre,precio_m2,formato').eq('activo', true).order('codigo'),
     sb.from('cot_parametros').select('key,value'),
     sb.from('cot_piezas_plantilla').select('tipo_mueble_id,rol_tablero').not('rol_tablero', 'is', null),
     sb.from('cot_preset_perfiles').select('id,nombre,descripcion,valores,es_default,orden').eq('activo', true).order('orden').order('nombre'),
@@ -147,7 +173,7 @@ export async function getCotizadorData() {
 
   return {
     tipos: tipos ?? [],
-    recargos: recargos ?? [],
+    // recargos: recargos ?? [],
     tableros: tableros ?? [],
     cantos: (cantos ?? []).map((c) => c.calibre as string),
     trmDefault: Number((P.trm as { valor?: number })?.valor ?? 4200),

@@ -6,13 +6,13 @@ export const CATALOGOS = {
   cot_tableros: ['proveedor', 'espesor_mm', 'sustrato', 'color_code', 'color_nombre', 'codigo', 'formato', 'area_m2', 'precio', 'descuento', 'precio_real', 'precio_m2', 'aumento_pct', 'actualizado', 'notas', 'activo'],
   cot_cantos: ['referencia', 'codigo', 'calibre', 'espesor_mm', 'ancho_mm', 'precio', 'actualizado', 'activo'],
   cot_herrajes: ['codigo', 'nombre', 'categoria', 'selector_key', 'precio', 'unidad', 'notas', 'activo'],
-  cot_recargos_cliente: ['cliente_nombre', 'recargo_pct', 'incluye_herrajes', 'notas', 'activo'],
+  // cot_recargos_cliente: ['cliente_nombre', 'recargo_pct', 'incluye_herrajes', 'notas', 'activo'], // DESACTIVADO
 } as const;
 
 export type CatalogoTabla = keyof typeof CATALOGOS;
 
 const ORDEN: Record<CatalogoTabla, string> = {
-  cot_tableros: 'codigo', cot_cantos: 'codigo', cot_herrajes: 'nombre', cot_recargos_cliente: 'cliente_nombre',
+  cot_tableros: 'codigo', cot_cantos: 'codigo', cot_herrajes: 'nombre', /* cot_recargos_cliente: 'cliente_nombre', */
 };
 
 function sanitize(tabla: CatalogoTabla, row: Record<string, unknown>) {

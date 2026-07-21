@@ -12,7 +12,7 @@ export type CotizarInput = {
   unidad: UnidadDim;
   preset: Record<string, string>;       // rol_tablero -> codigo
   conHerrajes: boolean;
-  recargoPct: number;                    // recargo cliente (0.10 = 10%)
+  // recargoPct: number;                    // DESACTIVADO: recargo cliente (0.10 = 10%)
   trm?: number;                          // override TRM (si no, usa parámetro)
   overrides?: Record<string, number>;    // n_puertas, etc.
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
@@ -80,7 +80,7 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     usaCarton: tipo.usa_carton !== false,
     margen,
     margenHerraje,
-    recargo: inp.recargoPct ?? 0,
+    // recargo: inp.recargoPct ?? 0,
     trm,
     desperdicio,
     overrides: inp.overrides,
@@ -94,9 +94,9 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
 // Datos para poblar la UI del cotizador.
 export async function getCotizadorData() {
   const sb = await createClient();
-  const [{ data: tipos }, { data: recargos }, { data: tableros }, { data: params }, { data: piezasRoles }, { data: perfiles }] = await Promise.all([
+  const [{ data: tipos }, /* { data: recargos }, */ { data: tableros }, { data: params }, { data: piezasRoles }, { data: perfiles }] = await Promise.all([
     sb.from('cot_tipos_mueble').select('id,pref,nombre_es,categoria,margen_key').eq('activo', true).order('pref'),
-    sb.from('cot_recargos_cliente').select('id,cliente_nombre,recargo_pct,incluye_herrajes').eq('activo', true).order('cliente_nombre'),
+    // sb.from('cot_recargos_cliente').select('id,cliente_nombre,recargo_pct,incluye_herrajes').eq('activo', true).order('cliente_nombre'),
     sb.from('cot_tableros').select('codigo,proveedor,sustrato,espesor_mm,color_nombre,precio_m2').eq('activo', true).order('codigo'),
     sb.from('cot_parametros').select('key,value'),
     sb.from('cot_piezas_plantilla').select('tipo_mueble_id,rol_tablero').not('rol_tablero', 'is', null),
@@ -129,7 +129,7 @@ export async function getCotizadorData() {
 
   return {
     tipos: tipos ?? [],
-    recargos: recargos ?? [],
+    // recargos: recargos ?? [],
     tableros: tableros ?? [],
     trmDefault: Number((P.trm as { valor?: number })?.valor ?? 4200),
     presetDefault,

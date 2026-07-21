@@ -10,7 +10,7 @@ interface SimuladorState {
   prof: number;
   perfilId: string;
   preset: Record<string, string>;
-  recargoId: string;
+  // recargoId: string;
   conHerrajes: boolean;
   herrajesExcl: string[];
   moneda: 'COP' | 'USD';
@@ -35,7 +35,7 @@ const initialState = {
   prof: 24,
   perfilId: '',
   preset: {},
-  recargoId: '',
+  // recargoId: '',
   conHerrajes: true,
   herrajesExcl: [],
   moneda: 'USD' as const,

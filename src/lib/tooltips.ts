@@ -21,7 +21,7 @@ export const TIPS_COTIZADOR: Record<string, Info> = {
   'Tablero frente': { fn: 'Tablero de puertas y frentes (cara visible).', tip: 'Normalmente el más costoso; define el acabado.' },
   'Tablero fondo': { fn: 'Tablero del fondo (espalda del mueble).', tip: 'Sustrato delgado; en algunos tipos no se cobra.' },
   'Perfil de material': { fn: 'Set de tableros por rol según zona/línea (CEMA, Colombia 15mm, Salguero, Shaker…).', tip: 'Al elegirlo llena los tableros; puedes ajustar cada rol después.' },
-  'Cliente (recargo)': { fn: 'Aplica el recargo comercial del cliente sobre el precio final.', tip: 'Ej. CEMA +10%. Déjalo en “Sin recargo” para precio base.' },
+  // 'Cliente (recargo)': { fn: 'Aplica el recargo comercial del cliente sobre el precio final.', tip: 'Ej. CEMA +10%. Déjalo en “Sin recargo” para precio base.' },
   'Nº puertas (override)': { fn: 'Fuerza manualmente el número de puertas.', tip: 'Vacío = se deriva del ancho automáticamente. Cambia bisagras y manijas.' },
   'Nº cajones (override)': { fn: 'Fuerza manualmente el número de cajones.', tip: 'Vacío = automático. Cambia rieles y manijas (clave en cajoneras DB-2/3/4).' },
   'Nº puertas': { fn: 'Fuerza el número de puertas (vacío = automático).', tip: 'Cambia bisagras y manijas del mueble.' },
@@ -56,10 +56,10 @@ export const TIPS_MATERIALES: Record<string, Info> = {
   categoria: { fn: 'Categoría del ítem (herraje o consumible).', tip: '“consumible” + un Selector lo habilita como tarugo/soporte/cartón/etiqueta.' },
   selector_key: { fn: 'Clave de selector para consumibles (tarugo, soporte, carton, etiqueta).', tip: 'El motor busca el precio del consumible por esta clave.' },
   unidad: { fn: 'Unidad de venta/medida del ítem.' },
-  cliente_nombre: { fn: 'Nombre del cliente con recargo comercial.', tip: 'Obligatorio.' },
-  recargo_pct: { fn: 'Recargo comercial como fracción (0.10 = 10%).', tip: 'Se aplica después del margen en la cadena de precio.' },
-  incluye_herrajes: { fn: 'Indica si el recargo del cliente cubre herrajes.' },
-  notas: { fn: 'Notas internas sobre el cliente o el recargo.' },
+  // cliente_nombre: { fn: 'Nombre del cliente con recargo comercial.', tip: 'Obligatorio.' },
+  // recargo_pct: { fn: 'Recargo comercial como fracción (0.10 = 10%).', tip: 'Se aplica después del margen en la cadena de precio.' },
+  // incluye_herrajes: { fn: 'Indica si el recargo del cliente cubre herrajes.' },
+  // notas: { fn: 'Notas internas sobre el cliente o el recargo.' },
 };
 
 // ---- Diseño (DisenoEditor) — clave = etiqueta del campo ----

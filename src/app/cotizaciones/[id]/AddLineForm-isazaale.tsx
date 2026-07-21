@@ -25,8 +25,8 @@ const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
 const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
   Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
 
-export default function AddLineForm({ cocinaId, tipos, recargos, tableros, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, initial, onDone }:
-  { cocinaId: string; tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]>; trm: number; initial?: LineaInicial; onDone?: () => void }) {
+export default function AddLineForm({ cocinaId, tipos, tableros, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, initial, onDone }:
+  { cocinaId: string; tipos: Tipo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]>; trm: number; initial?: LineaInicial; onDone?: () => void }) {
   const router = useRouter();
   const esEdicion = !!initial;
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
@@ -53,7 +53,7 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
   }
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
   const toggleHerraje = (rol: string) => setHerrajesExcl((xs) => xs.includes(rol) ? xs.filter((x) => x !== rol) : [...xs, rol]);
-  const [recargoId, setRecargoId] = useState(initial ? (recargos.find((r) => r.recargo_pct === initial.recargoPct)?.id ?? '') : '');
+  // const [recargoId, setRecargoId] = useState(initial ? (recargos.find((r) => r.recargo_pct === initial.recargoPct)?.id ?? '') : '');
   const [conHerrajes, setConHerrajes] = useState(initial?.conHerrajes ?? true);
   const [herrajesExcl, setHerrajesExcl] = useState<string[]>(initial?.herrajesExcluidos ?? []);
   const [cantidad, setCantidad] = useState(initial?.cantidad ?? 1);
@@ -89,7 +89,7 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
     if (nbarras !== '') overrides.n_barras = Number(nbarras);
     const payload = {
       tipoId, largo, alto, prof, unidad, preset, conHerrajes, trm,
-      recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
+      // recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
       cantidad, prefLabel: tipo?.pref, modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
       herrajesExcluidos: conHerrajes && herrajesExcl.length ? herrajesExcl : undefined,
@@ -116,12 +116,12 @@ export default function AddLineForm({ cocinaId, tipos, recargos, tableros, prese
           <L label="Prof"><input type="number" step="any" value={prof} onChange={(e) => setProf(+e.target.value)} className="inp" /></L>
           <L label="Un"><select value={unidad} onChange={(e) => changeUnidad(e.target.value as 'in' | 'cm' | 'mm')} className="inp"><option>in</option><option>cm</option><option>mm</option></select></L>
         </div>
-        <L label="Cliente (recargo)">
+        {/* <L label="Cliente (recargo)">
           <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
             <option value="">Sin recargo</option>
             {recargos.map((r) => <option key={r.id} value={r.id}>{r.cliente_nombre} (+{(r.recargo_pct * 100).toFixed(0)}%)</option>)}
           </select>
-        </L>
+        </L> */}
         <div className="grid grid-cols-2 gap-1">
           <L label="Cantidad"><input type="number" min={1} value={cantidad} onChange={(e) => setCantidad(+e.target.value)} className="inp" /></L>
           <L label="Nº puertas"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></L>

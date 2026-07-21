@@ -32,6 +32,10 @@ type Linea = {
   prof: number;
   unidad_dim: string;
   config: LineaConfig | null;
+  grupo_id: string | null;
+  posicion_grupo: number;
+  codigo_modulo: string | null;
+  grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
 };
 
 type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
@@ -71,7 +75,6 @@ export default async function CotizacionDetallePage({
           cocinas={cocinas as Cocina[]}
           cotizacionId={id}
           tipos={data.tipos}
-          recargos={data.recargos}
           tableros={data.tableros}
           cantos={data.cantos}
           presetDefault={data.presetDefault}

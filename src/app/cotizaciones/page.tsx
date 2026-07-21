@@ -32,7 +32,6 @@ export default async function CotizacionesPage() {
       <main className="mx-auto max-w-6xl px-4 pb-6 grid lg:grid-cols-[320px_1fr] gap-6">
         <NuevoCotizacionForm
           tableros={data.tableros}
-          recargos={data.recargos}
           cantos={data.cantos}
           presetDefault={data.presetDefault}
           trmDefault={data.trmDefault}

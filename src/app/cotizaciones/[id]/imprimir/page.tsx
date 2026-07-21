@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation';
+import { Fragment } from 'react';
 import { getCotizacion } from '@/lib/cotizaciones';
 import PrintButton from './PrintButton';
 
 const fmtCOP = (n: number) => Number(n || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-type Linea = { id: string; pref: string | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_total_usd: number; precio_total_cop: number };
+type Linea = { id: string; pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_total_usd: number; precio_total_cop: number };
 type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
 
 export default async function ImprimirPage({ params }: { params: Promise<{ id: string }> }) {
@@ -37,23 +38,34 @@ export default async function ImprimirPage({ params }: { params: Promise<{ id: s
             <table className="w-full text-sm mt-1">
               <thead>
                 <tr className="text-left text-slate-500 border-b border-slate-300">
-                  <th className="py-1">Módulo</th><th>Descripción</th><th className="text-right">Cant</th>
+                  <th className="py-1">Grupo</th><th>Módulo</th><th>Descripción</th><th className="text-right">Cant</th>
                   <th className="text-right">Unit USD</th><th className="text-right">Total USD</th><th className="text-right">Total COP</th>
                 </tr>
               </thead>
               <tbody>
-                {c.lineas.map((l) => (
-                  <tr key={l.id} className="border-b border-slate-100">
-                    <td className="py-1 font-medium">{l.pref}</td>
+                {c.lineas.map((l) => {
+                  const count = c.lineas.filter((x) => x.grupo_id === l.grupo_id).length;
+                  const groupLabel = count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? '');
+                  const shades = ['#eff6ff','#ecfdf5','#fffbeb','#f5f3ff','#fff1f2','#ecfeff'];
+                  return (<Fragment key={l.id}>
+                  <tr key={l.id} className="border-b border-slate-100" style={{ backgroundColor: shades[(l.grupo?.orden ?? 0) % shades.length] }}>
+                    <td className="py-1 font-semibold">{groupLabel}</td>
+                    <td className="font-medium"><div>{l.codigo_modulo ?? l.pref}</div>{count > 1 && <div className="text-[9px] text-slate-500">{l.grupo?.codigo_grupo}</div>}</td>
                     <td className="text-slate-600">{l.descripcion_es}</td>
                     <td className="text-right">{l.cantidad}</td>
                     <td className="text-right">{fmtUSD(l.precio_unit_usd)}</td>
                     <td className="text-right">{fmtUSD(l.precio_total_usd)}</td>
                     <td className="text-right">{fmtCOP(l.precio_total_cop)}</td>
                   </tr>
-                ))}
+                  {count > 1 && l.posicion_grupo === count && <tr className="text-xs font-semibold" style={{ backgroundColor: shades[(l.grupo?.orden ?? 0) % shades.length] }}>
+                    <td></td>
+                    <td colSpan={4} className="py-1 text-left">Subtotal grupo {l.grupo?.etiqueta} · {l.grupo?.codigo_grupo}</td>
+                    <td className="text-right">{fmtUSD(Number(l.grupo?.total_usd ?? 0))}</td>
+                    <td className="text-right">{fmtCOP(Number(l.grupo?.total_cop ?? 0))}</td>
+                  </tr>}
+                </Fragment>);})}
                 <tr className="font-semibold">
-                  <td colSpan={4} className="text-right py-1">Subtotal {c.nombre}</td>
+                  <td colSpan={5} className="text-right py-1">Subtotal {c.nombre}</td>
                   <td className="text-right">{fmtUSD(c.total_usd)}</td>
                   <td className="text-right">{fmtCOP(c.total_cop)}</td>
                 </tr>

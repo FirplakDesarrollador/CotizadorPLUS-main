@@ -37,8 +37,8 @@ const GUIA_SIMULADOR = [
   { selector: '[data-tour="resultado"]', title: '7. Resultado', description: 'Verás el precio (COP/USD conmutable) y el desglose: materiales, piezas, canto y herrajes.' },
 ];
 
-export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo }:
-  { tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]> }) {
+export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo }:
+  { tipos: Tipo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]> }) {
 
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
   
@@ -73,8 +73,8 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
     if (p) setStore({ preset: { ...p.valores } });
   }
 
-  const recargoId = store.recargoId;
-  const setRecargoId = (v: string) => setStore({ recargoId: v });
+  // const recargoId = store.recargoId;
+  // const setRecargoId = (v: string) => setStore({ recargoId: v });
   
   const conHerrajes = store.conHerrajes;
   const setConHerrajes = (v: boolean) => setStore({ conHerrajes: v });
@@ -120,7 +120,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
 
   if (!isMounted) return null;
 
-  const recargoSel = recargos.find((r) => r.id === recargoId);
+  // const recargoSel = recargos.find((r) => r.id === recargoId);
 
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const tipoPref = tipos.find((t) => t.id === tipoId)?.pref ?? '';
@@ -153,7 +153,7 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
       // El simulador SIEMPRE calcula herrajes para poder mostrar ambos precios
       // (con y sin). El checkbox "Incluir herrajes" solo elige cuál se muestra.
       tipoId, largo, alto, prof, unidad, preset, conHerrajes: true,
-      recargoPct: recargoSel?.recargo_pct ?? 0,
+      // recargoPct: recargoSel?.recargo_pct ?? 0,
       trm, modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
       herrajesExcluidos: herrajesExcl.length ? herrajesExcl : undefined,
@@ -208,14 +208,14 @@ export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, p
           ))}
         </div>
 
-        <div data-tour="cliente">
+        {/* <div data-tour="cliente">
           <Field label="Cliente (recargo)">
             <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
               <option value="">Sin recargo</option>
               {recargos.map((r) => <option key={r.id} value={r.id}>{r.cliente_nombre} (+{(r.recargo_pct * 100).toFixed(0)}%)</option>)}
             </select>
           </Field>
-        </div>
+        </div> */}
 
         <div data-tour="opciones" className="grid grid-cols-2 gap-2 items-end">
           <Field label="Nº puertas (override)"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
@@ -278,9 +278,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function ResultadoView({ result, moneda, setMoneda, conHerrajes }:
   { result: CotizarResult; moneda: 'COP' | 'USD'; setMoneda: (m: 'COP' | 'USD') => void; conHerrajes: boolean }) {
-  const precioSin = result.precioCopConRecargo;
-  const precioHerr = result.precioHerrajesCopConRecargo;
-  const precioCon = result.precioConHerrajesCopConRecargo;
+  const precioSin = result.precioCop;
+  const precioHerr = result.precioHerrajesCop;
+  const precioCon = result.precioConHerrajesCop;
   const precioPrincipal = conHerrajes ? precioCon : precioSin;
   const money = (cop: number) => (moneda === 'COP' ? fmtCOP(cop) : fmtUSD(cop / result.trm));
   return (

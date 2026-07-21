@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { getUserAndRole } from '@/lib/auth';
-import { upsertPieza, deletePieza, upsertRegla, deleteRegla, upsertHerraje, deleteHerraje, getDiseno } from '@/lib/diseno';
+import { upsertPieza, deletePieza, upsertRegla, deleteRegla, upsertHerraje, deleteHerraje, getDiseno, updateTipoAgrupacion } from '@/lib/diseno';
 import { cotizar, type CotizarResult } from '@/lib/cotizar';
 
 export async function getDisenoAction(tipoId: string) {
@@ -25,13 +25,16 @@ export async function guardarReglaAction(id: string | null, row: Record<string, 
 export async function eliminarReglaAction(id: string) { return wrap(() => deleteRegla(id)); }
 export async function guardarHerrajeAction(id: string | null, row: Record<string, unknown>) { return wrap(() => upsertHerraje(id, row)); }
 export async function eliminarHerrajeAction(id: string) { return wrap(() => deleteHerraje(id)); }
+export async function guardarTipoAgrupacionAction(id: string, row: { pref_imperial: string; pref_metrico: string; permite_agrupacion: boolean }) {
+  return wrap(() => updateTipoAgrupacion(id, row));
+}
 
 // Previsualización de costo (sin/with herrajes) con un preset y dimensiones dadas.
 export async function previewAction(input: { tipoId: string; largo: number; alto: number; prof: number; unidad: 'in' | 'cm' | 'mm'; preset: Record<string, string>; conHerrajes: boolean })
   : Promise<{ ok: true; result: CotizarResult } | { ok: false; error: string }> {
   try {
     await assertAdmin();
-    const result = await cotizar({ ...input, recargoPct: 0 });
+    const result = await cotizar({ ...input });
     return { ok: true, result };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };

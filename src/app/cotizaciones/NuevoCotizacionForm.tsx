@@ -9,7 +9,6 @@ type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
 
 interface Props {
   tableros: Tablero[];
-  recargos: Recargo[];
   cantos: string[];
   presetDefault: Record<string, string>;
   trmDefault: number;
@@ -23,7 +22,7 @@ const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.replace(',', '.').toLowerCase() === target.replace(',', '.').toLowerCase()) ??
   target;
 
-export default function NuevoCotizacionForm({ tableros, recargos, cantos, presetDefault, trmDefault }: Props) {
+export default function NuevoCotizacionForm({ tableros, cantos, presetDefault, trmDefault }: Props) {
   const router = useRouter();
 
   // Campos básicos del proyecto
@@ -45,7 +44,7 @@ export default function NuevoCotizacionForm({ tableros, recargos, cantos, preset
   });
 
   // Recargo y margen
-  const [recargoId, setRecargoId] = useState('');
+  // const [recargoId, setRecargoId] = useState(''); // DESACTIVADO
   const [margen, setMargen] = useState('');
 
   const tableroOptions = useMemo(
@@ -75,11 +74,11 @@ export default function NuevoCotizacionForm({ tableros, recargos, cantos, preset
       preset: { caja: presetCaja, frente: presetFrente, fondo: presetFondo, refuerzo: presetCaja },
       cantoFrentes,
       cantoCaja,
-      recargoId,
+      // recargoId,
       margen,
     };
     return btoa(encodeURIComponent(JSON.stringify(config)));
-  }, [presetCaja, presetFrente, presetFondo, cantoFrentes, cantoCaja, recargoId, margen]);
+  }, [presetCaja, presetFrente, presetFondo, cantoFrentes, cantoCaja, /* recargoId, */ margen]);
 
   // Redirigir cuando el action tenga éxito
   useEffect(() => {
@@ -111,6 +110,16 @@ export default function NuevoCotizacionForm({ tableros, recargos, cantos, preset
         <input name="trm" type="number" step="any" defaultValue={trmDefault}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="TRM" />
       </div>
+
+      <label className="block">
+        <span className="block text-xs text-slate-500 mb-1">Sistema de medidas y nomenclatura</span>
+        <select name="sistema_medida" defaultValue="imperial"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <option value="imperial">Pulgadas · nomenclatura imperial</option>
+          <option value="metrico">Centímetros · nomenclatura métrica</option>
+        </select>
+        <span className="mt-1 block text-[11px] text-slate-400">Se fija para todo el proyecto y evita mezclar nomenclaturas.</span>
+      </label>
 
       {/* ── Materiales del proyecto ── */}
       <div className="border-t border-slate-100 pt-3 space-y-2">
@@ -150,7 +159,7 @@ export default function NuevoCotizacionForm({ tableros, recargos, cantos, preset
           </F>
         </div>
 
-        <F label="Cliente (recargo)">
+        {/* <F label="Cliente (recargo)">
           <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
             <option value="">Sin recargo</option>
@@ -160,7 +169,7 @@ export default function NuevoCotizacionForm({ tableros, recargos, cantos, preset
               </option>
             ))}
           </select>
-        </F>
+        </F> */}
 
         <F label="Margen (%)">
           <input type="number" min={0} max={100} step={0.5}

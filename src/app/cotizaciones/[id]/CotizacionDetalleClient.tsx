@@ -11,7 +11,7 @@ import { eliminarCotizacionAction } from '../actions';
 type LineaConfig = {
   preset?: Record<string, string>;
   conHerrajes?: boolean;
-  recargoPct?: number;
+  // recargoPct?: number;
   overrides?: Record<string, number> | null;
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
   herrajesExcluidos?: string[] | null;
@@ -34,15 +34,19 @@ type Linea = {
   prof: number;
   unidad_dim: string;
   config: LineaConfig | null;
+  grupo_id: string | null;
+  posicion_grupo: number;
+  codigo_modulo: string | null;
+  grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
 };
 
 type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
-type Tipo = { id: string; pref: string; nombre_es: string | null };
+type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number };
+type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
 
 const GUIA_PROYECTO = [
   { title: 'Proyecto / cotización', description: 'Un proyecto agrupa cocinas, y cada cocina agrupa módulos (muebles). Así se arma una cotización completa.' },
@@ -58,7 +62,6 @@ interface Props {
   cocinas: Cocina[];
   cotizacionId: string;
   tipos: Tipo[];
-  recargos: Recargo[];
   tableros: Tablero[];
   cantos: string[];
   presetDefault: Record<string, string>;
@@ -70,7 +73,7 @@ interface Props {
 }
 
 export default function CotizacionDetalleClient({
-  cabecera, cocinas, cotizacionId, tipos, recargos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo
+  cabecera, cocinas, cotizacionId, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo
 }: Props) {
   // Estado global del proyecto: si viene initialConfig del query param ?cfg, úsalo;
   // si no, inicializar con el presetDefault del sistema.
@@ -85,7 +88,7 @@ export default function CotizacionDetalleClient({
         preset: initialConfig.preset ?? { ...presetDefault },
         cantoFrentes: initialConfig.cantoFrentes ?? '',
         cantoCaja: initialConfig.cantoCaja ?? '',
-        recargoId: initialConfig.recargoId ?? '',
+        // recargoId: initialConfig.recargoId ?? '',
         margen: initialConfig.margen ?? '',
       };
     }
@@ -97,7 +100,7 @@ export default function CotizacionDetalleClient({
       preset: { ...presetDefault },
       cantoFrentes: frenteBoard?.espesor_mm === 18 ? getCantoMatch('22x1') : '',
       cantoCaja: cajaBoard?.espesor_mm === 15 ? getCantoMatch('19x0,45') : '',
-      recargoId: '',
+      // recargoId: '',
       margen: '',
     };
   });
@@ -131,7 +134,6 @@ export default function CotizacionDetalleClient({
           <div className="mt-2">
             <ProjectConfigPanel
               tableros={tableros}
-              recargos={recargos}
               cantos={cantos}
               perfiles={perfiles}
               defaults={projectDefaults}
@@ -154,7 +156,6 @@ export default function CotizacionDetalleClient({
             cocina={c}
             allCocinas={cocinas}
             tipos={tipos}
-            recargos={recargos}
             tableros={tableros}
             cantos={cantos}
             presetDefault={presetDefault}
@@ -163,6 +164,7 @@ export default function CotizacionDetalleClient({
             perfilDefaultId={perfilDefaultId}
             herrajesByTipo={herrajesByTipo}
             trm={Number(cabecera.trm)}
+            sistemaMedida={cabecera.sistema_medida ?? 'imperial'}
             projectDefaults={projectDefaults}
           />
         ))}

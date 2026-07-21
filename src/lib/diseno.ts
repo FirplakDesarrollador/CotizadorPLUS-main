@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 
 // ====== Editor de DISEÑO de muebles: piezas, reglas y herrajes por tipo ======
 
-const PIEZA_COLS = ['tipo_mueble_id', 'nombre', 'rol_tablero', 'formula_cantidad', 'formula_largo', 'formula_ancho', 'resta_largo', 'resta_ancho', 'cantos', 'tarugos', 'soportes', 'orden', 'notas'];
+const PIEZA_COLS = ['tipo_mueble_id', 'nombre', 'rol_tablero', 'formula_cantidad', 'formula_largo', 'formula_ancho', 'resta_largo', 'resta_ancho', 'cantos', 'tarugos', 'soportes', 'modo_agrupacion', 'clave_fusion', 'formula_largo_grupo', 'orden', 'notas'];
 const REGLA_COLS = ['tipo_mueble_id', 'variable', 'condicion', 'valor', 'prioridad', 'activo', 'notas'];
 const HERRAJE_COLS = ['tipo_mueble_id', 'rol', 'herraje_codigo', 'selector_key', 'formula_cantidad', 'orden', 'notas'];
 
@@ -15,7 +15,7 @@ function pick(cols: readonly string[], row: Record<string, unknown>) {
 
 export async function getTiposBasic() {
   const sb = await createClient();
-  const { data } = await sb.from('cot_tipos_mueble').select('id,pref,nombre_es,categoria,etiquetas_und').order('pref');
+  const { data } = await sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,nombre_es,categoria,etiquetas_und').order('pref');
   return data ?? [];
 }
 
@@ -35,6 +35,16 @@ export async function getDiseno(tipoId: string) {
     cantos: [...new Set((cantos ?? []).map((c) => c.calibre))],
     herrajeCat: herrajeCat ?? [],
   };
+}
+
+export async function updateTipoAgrupacion(id: string, row: { pref_imperial: string; pref_metrico: string; permite_agrupacion: boolean }) {
+  const sb = await createClient();
+  const { error } = await sb.from('cot_tipos_mueble').update({
+    pref_imperial: row.pref_imperial.trim(),
+    pref_metrico: row.pref_metrico.trim(),
+    permite_agrupacion: row.permite_agrupacion,
+  }).eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
 async function up(table: string, cols: readonly string[], id: string | null, row: Record<string, unknown>) {

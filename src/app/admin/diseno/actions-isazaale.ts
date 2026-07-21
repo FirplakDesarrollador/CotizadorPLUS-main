@@ -31,7 +31,7 @@ export async function previewAction(input: { tipoId: string; largo: number; alto
   : Promise<{ ok: true; result: CotizarResult } | { ok: false; error: string }> {
   try {
     await assertAdmin();
-    const result = await cotizar({ ...input, recargoPct: 0 });
+    const result = await cotizar({ ...input });
     return { ok: true, result };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };

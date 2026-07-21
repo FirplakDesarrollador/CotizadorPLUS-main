@@ -80,7 +80,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: Awaited<ReturnType<ty
   const cantidad = input.cantidad || 1;
   // Si la línea lleva herrajes, el precio de venta es sobre el costo CON herrajes
   // (mueble con su margen + herrajes con su margen propio). Si no, solo el mueble.
-  const precioUnitCop = input.conHerrajes ? res.precioConHerrajesCopConRecargo : res.precioCopConRecargo;
+  const precioUnitCop = input.conHerrajes ? res.precioConHerrajesCop /* res.precioConHerrajesCopConRecargo */ : res.precioCop /* res.precioCopConRecargo */;
   const precioUnitUsd = input.conHerrajes ? res.precioConHerrajesUsd : res.precioUsd;
   const desc = `${input.prefLabel ?? ''} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim()
     + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '');
@@ -89,7 +89,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: Awaited<ReturnType<ty
     pref: input.prefLabel ?? null,
     largo: input.largo, alto: input.alto, prof: input.prof, unidad_dim: input.unidad,
     config: {
-      preset: input.preset, conHerrajes: input.conHerrajes, recargoPct: input.recargoPct,
+      preset: input.preset, conHerrajes: input.conHerrajes, /* recargoPct: input.recargoPct, */
       overrides: input.overrides ?? null, modoFrentes: input.modoFrentes ?? 'normal',
       herrajesExcluidos: input.herrajesExcluidos ?? null,
       trm: res.trm, margen: res.margen, margenHerraje: res.margenHerraje,

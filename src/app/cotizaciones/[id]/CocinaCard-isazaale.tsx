@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AddLineForm, { type LineaInicial } from './AddLineForm';
+import AddLineForm, { type LineaInicial } from './AddLineForm-isazaale';
 import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction } from '../actions';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
@@ -20,8 +20,8 @@ type Tablero = { codigo: string; proveedor: string | null; sustrato: string | nu
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
 
-export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tableros, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm }:
-  { cotizacionId: string; cocina: Cocina; tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]>; trm: number }) {
+export default function CocinaCard({ cotizacionId, cocina, tipos, tableros, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm }:
+  { cotizacionId: string; cocina: Cocina; tipos: Tipo[]; tableros: Tablero[]; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]>; trm: number }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -103,10 +103,10 @@ export default function CocinaCard({ cotizacionId, cocina, tipos, recargos, tabl
 
       <div className="p-4 border-t border-slate-100">
         {lineaEnEdicion ? (
-          <AddLineForm key={lineaEnEdicion.id} cocinaId={cocina.id} tipos={tipos} recargos={recargos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} perfiles={perfiles} perfilDefaultId={perfilDefaultId} herrajesByTipo={herrajesByTipo} trm={trm} initial={toInicial(lineaEnEdicion)} onDone={() => setEditId(null)} />
+          <AddLineForm key={lineaEnEdicion.id} cocinaId={cocina.id} tipos={tipos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} perfiles={perfiles} perfilDefaultId={perfilDefaultId} herrajesByTipo={herrajesByTipo} trm={trm} initial={toInicial(lineaEnEdicion)} onDone={() => setEditId(null)} />
         ) : showAdd ? (
           <div className="space-y-2">
-            <AddLineForm cocinaId={cocina.id} tipos={tipos} recargos={recargos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} perfiles={perfiles} perfilDefaultId={perfilDefaultId} herrajesByTipo={herrajesByTipo} trm={trm} />
+            <AddLineForm cocinaId={cocina.id} tipos={tipos} tableros={tableros} presetDefault={presetDefault} rolesByTipo={rolesByTipo} perfiles={perfiles} perfilDefaultId={perfilDefaultId} herrajesByTipo={herrajesByTipo} trm={trm} />
             <button onClick={() => setShowAdd(false)} className="text-sm text-slate-400 hover:underline">Cerrar</button>
           </div>
         ) : (

@@ -41,7 +41,7 @@ export type Herraje = { codigo: string; precio: number };
 export type Parametros = {
   desperdicio_madera: number;
   margenes: Record<string, number>;
-  recargo_extra: number;
+  // recargo_extra: number; // DESACTIVADO: Se manejará rentabilidad con márgenes
   trm: { valor: number; modo?: string };
 };
 
@@ -62,7 +62,7 @@ export type CalcInput = {
   usaCarton?: boolean;
   margen: number;
   margenHerraje?: number; // margen propio de herrajes (ej. 0.35). Default 0.35.
-  recargo: number;     // recargo cliente (ej. 0.10)
+  // recargo: number;     // DESACTIVADO: recargo cliente (ej. 0.10)
   trm: number;
   desperdicio: number;
   overrides?: Record<string, number>; // forzar n_puertas, etc.
@@ -109,15 +109,15 @@ export type Breakdown = {
   costoConHerrajes: number;
   // Precio del mueble (sin herrajes) — se mantiene por compatibilidad.
   precioCop: number;
-  precioCopConRecargo: number;
+  // precioCopConRecargo: number; // DESACTIVADO
   precioUsd: number;
   // Herrajes con margen propio (margenHerraje).
   precioHerrajesCop: number;
-  precioHerrajesCopConRecargo: number;
+  // precioHerrajesCopConRecargo: number; // DESACTIVADO
   precioHerrajesUsd: number;
   // Total con herrajes (mueble con su margen + herrajes con el suyo).
   precioConHerrajesCop: number;
-  precioConHerrajesCopConRecargo: number;
+  // precioConHerrajesCopConRecargo: number; // DESACTIVADO
   precioConHerrajesUsd: number;
   margenHerraje: number;
 };
@@ -211,30 +211,30 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   }
 
   const costoConHerrajes = costoSinHerrajes + costoHerrajes;
-  const recF = 1 - inp.recargo;
+  // const recF = 1 - inp.recargo;
   const margenHerraje = inp.margenHerraje ?? 0.35;
 
   // Mueble: costo sin herrajes con el margen del tipo.
   const precioCop = costoSinHerrajes / (1 - inp.margen);
-  const precioCopConRecargo = precioCop / recF;
-  const precioUsd = precioCopConRecargo / inp.trm;
+  // const precioCopConRecargo = precioCop / recF;
+  const precioUsd = precioCop / inp.trm; // Se remueve precioCopConRecargo
 
   // Herrajes: costo de herrajes con su propio margen (35% por defecto).
   const precioHerrajesCop = costoHerrajes > 0 ? costoHerrajes / (1 - margenHerraje) : 0;
-  const precioHerrajesCopConRecargo = precioHerrajesCop / recF;
-  const precioHerrajesUsd = precioHerrajesCopConRecargo / inp.trm;
+  // const precioHerrajesCopConRecargo = precioHerrajesCop / recF;
+  const precioHerrajesUsd = precioHerrajesCop / inp.trm; // Se remueve precioHerrajesCopConRecargo
 
   // Total con herrajes = mueble (su margen) + herrajes (su margen).
   const precioConHerrajesCop = precioCop + precioHerrajesCop;
-  const precioConHerrajesCopConRecargo = precioCopConRecargo + precioHerrajesCopConRecargo;
-  const precioConHerrajesUsd = precioConHerrajesCopConRecargo / inp.trm;
+  // const precioConHerrajesCopConRecargo = precioCopConRecargo + precioHerrajesCopConRecargo;
+  const precioConHerrajesUsd = (precioCop + precioHerrajesCop) / inp.trm; // Se remueve precioConHerrajesCopConRecargo
 
   return {
     vars, piezas: piezasDet, maderaPorRol, cantoPorCalibre, consumibles, herrajes: herrajesDet,
     costoMadera, costoCanto, costoConsumibles, costoSinHerrajes, costoHerrajes, costoConHerrajes,
-    precioCop, precioCopConRecargo, precioUsd,
-    precioHerrajesCop, precioHerrajesCopConRecargo, precioHerrajesUsd,
-    precioConHerrajesCop, precioConHerrajesCopConRecargo, precioConHerrajesUsd,
+    precioCop, /* precioCopConRecargo, */ precioUsd,
+    precioHerrajesCop, /* precioHerrajesCopConRecargo, */ precioHerrajesUsd,
+    precioConHerrajesCop, /* precioConHerrajesCopConRecargo, */ precioConHerrajesUsd,
     margenHerraje,
   };
 }
