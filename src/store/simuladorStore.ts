@@ -20,6 +20,7 @@ interface SimuladorState {
   nentrepanos: string;
   nbarras: string;
   dbTipo: string;
+  rielCodigo: string;  // código del riel para muebles DB (por defecto 'RIELTANDEM')
   modoFrentes: 'normal' | 'sin_frentes' | 'solo_frentes';
   result: CotizarResult | null;
   
@@ -45,6 +46,7 @@ const initialState = {
   nentrepanos: '',
   nbarras: '',
   dbTipo: '',
+  rielCodigo: 'RIELTANDEM',
   modoFrentes: 'normal' as const,
   result: null,
 };
