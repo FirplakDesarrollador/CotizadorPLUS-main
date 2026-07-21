@@ -48,3 +48,9 @@ Se analizaron 59 referencias Blind Base de `Simulación muebles CEMA (1).xlsx`: 
 
 ## [2026-07-21] update | Frente falso paramétrico para BBLFD
 Se separó el frente de `BBLFD` en puertas y frente falso. La longitud del frente falso es la profundidad `P`; el vano de puertas es `L - P` y se divide entre `n_puertas`. Así, una o dos puertas más el paño ciego cierran exactamente el largo frontal del mueble sin requerir un override dimensional.
+
+## [2026-07-21] update | Casilla de cantidad por cocina en módulo de cotizaciones
+Se añadió la columna `cantidad` a la tabla `cot_cocinas` en base de datos (migración `0023_cocina_cantidad.sql`), permitiendo definir una cantidad por cocina que multiplica los importes y costos de la totalidad de sus muebles internos. Se actualizó la UI en `CocinaCard.tsx` con la casilla de edición rápida, la Server Action `actualizarCocinaAction`, el recomputo de totales en `lib/cotizaciones.ts`, y la visualización en la exportación Excel e impresión PDF.
+
+## [2026-07-21] update | Conteo de muebles agrupados como un solo mueble en totalización de cocina
+Se ajustó el contador total de muebles (`totalMuebles`) en `CocinaCard.tsx` para que cada bloque de muebles agrupados (que contenga 2, 3 o más módulos) contabilice como 1 solo mueble físico en los totales de la cocina y de la cabecera.

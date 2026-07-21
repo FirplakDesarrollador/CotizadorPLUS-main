@@ -77,9 +77,9 @@ export async function crearCocinaAction(cotizacionId: string, nombre: string): P
   }
 }
 
-export async function actualizarCocinaAction(cotizacionId: string, cocinaId: string, nombre: string): Promise<{ ok: boolean; error?: string }> {
+export async function actualizarCocinaAction(cotizacionId: string, cocinaId: string, data: { nombre?: string; cantidad?: number } | string): Promise<{ ok: boolean; error?: string }> {
   try {
-    await actualizarCocina(cocinaId, nombre);
+    await actualizarCocina(cocinaId, data);
     revalidatePath(`/cotizaciones/${cotizacionId}`);
     return { ok: true };
   } catch (e) {

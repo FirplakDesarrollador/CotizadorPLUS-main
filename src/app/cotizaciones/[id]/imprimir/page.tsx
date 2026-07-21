@@ -7,7 +7,7 @@ const fmtCOP = (n: number) => Number(n || 0).toLocaleString('es-CO', { style: 'c
 const fmtUSD = (n: number) => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 type Linea = { id: string; pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_total_usd: number; precio_total_cop: number };
-type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
+type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
 
 export default async function ImprimirPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,7 +34,9 @@ export default async function ImprimirPage({ params }: { params: Promise<{ id: s
 
         {(cocinas as Cocina[]).map((c) => (
           <div key={c.id} className="mb-5">
-            <h2 className="font-semibold text-slate-900 bg-slate-100 px-2 py-1 rounded">🍳 {c.nombre}</h2>
+            <h2 className="font-semibold text-slate-900 bg-slate-100 px-2 py-1 rounded">
+              🍳 {c.nombre} {c.cantidad && c.cantidad > 1 ? `(Cant: ${c.cantidad})` : ''}
+            </h2>
             <table className="w-full text-sm mt-1">
               <thead>
                 <tr className="text-left text-slate-500 border-b border-slate-300">

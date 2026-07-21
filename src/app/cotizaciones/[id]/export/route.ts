@@ -4,7 +4,7 @@ import { getCotizacion } from '@/lib/cotizaciones';
 import { createClient } from '@/lib/supabase/server';
 
 type Linea = { pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_unit_cop: number; precio_total_usd: number; precio_total_cop: number };
-type Cocina = { nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
+type Cocina = { nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -40,7 +40,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const header = ['Grupo', 'Módulo', 'Código agrupado', 'Descripción', 'Cant', 'Unit USD', 'Total USD', 'Total COP'];
 
   for (const c of (cocinas as Cocina[])) {
-    const titleRow = ws.addRow([`🍳 ${c.nombre}`]);
+    const cantLabel = c.cantidad && c.cantidad > 1 ? ` (Cant: ${c.cantidad})` : '';
+    const titleRow = ws.addRow([`🍳 ${c.nombre}${cantLabel}`]);
     titleRow.font = { bold: true, size: 12 };
     titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFEFEF' } };
     const hr = ws.addRow(header);

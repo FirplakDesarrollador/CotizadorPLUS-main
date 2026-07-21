@@ -25,6 +25,7 @@ La base de datos se estructura en torno a los siguientes modelos:
 
 ### Transaccionales (Cotizaciones)
 *   **`cot_cotizaciones`:** Cabecera del documento de cotización (cliente, moneda, TRM congelada, estado del negocio).
+*   **`cot_cocinas`:** Jerarquía de cocinas dentro de un proyecto. Almacena el nombre, orden, cantidad (multiplicador de los muebles internos) y totales acumulados en COP/USD.
 *   **`cot_cotizacion_lineas`:** Líneas individuales que componen el presupuesto. Almacena las dimensiones, cantidad solicitada, variables de diseño y guarda el objeto `breakdown` final (JSON) generado por el motor para auditoría histórica.
 *   **`cot_grupos_modulos`:** Bloques físicos ordenados dentro de una cocina. Almacena la letra canónica, el código concatenado, los subtotales y el breakdown estructural del grupo. Cada línea apunta a un grupo y conserva su posición de izquierda a derecha.
 

@@ -40,7 +40,7 @@ type Linea = {
   grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
 };
 
-type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
+type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };

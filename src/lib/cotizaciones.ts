@@ -74,10 +74,20 @@ export async function crearCocina(cotizacionId: string, nombre: string) {
   if (error) throw new Error(error.message);
 }
 
-export async function actualizarCocina(cocinaId: string, nombre: string) {
+export async function actualizarCocina(cocinaId: string, input: { nombre?: string; cantidad?: number } | string) {
   const sb = await createClient();
-  const { error } = await sb.from('cot_cocinas').update({ nombre }).eq('id', cocinaId);
+  const patch: Record<string, unknown> = {};
+  if (typeof input === 'string') {
+    patch.nombre = input;
+  } else {
+    if (input.nombre !== undefined) patch.nombre = input.nombre;
+    if (input.cantidad !== undefined) patch.cantidad = Math.max(1, Number(input.cantidad));
+  }
+  const { data: cocina, error } = await sb.from('cot_cocinas').update(patch).eq('id', cocinaId).select('cotizacion_id').single();
   if (error) throw new Error(error.message);
+  if (cocina?.cotizacion_id) {
+    await recomputarTotales(cocina.cotizacion_id);
+  }
 }
 
 export async function eliminarCocina(cocinaId: string, cotizacionId: string) {
@@ -536,15 +546,20 @@ async function recomputarTotales(cotizacionId: string) {
     porCocina[k].cop += Number(l.precio_total_cop || 0);
     porCocina[k].usd += Number(l.precio_total_usd || 0);
   }
-  const { data: cocinas } = await sb.from('cot_cocinas').select('id').eq('cotizacion_id', cotizacionId);
+  const { data: cocinas } = await sb.from('cot_cocinas').select('id, cantidad').eq('cotizacion_id', cotizacionId);
+  let total_cop = 0;
+  let total_usd = 0;
   for (const c of (cocinas ?? [])) {
     const id = (c as { id: string }).id;
-    const t = porCocina[id] ?? { cop: 0, usd: 0 };
-    await sb.from('cot_cocinas').update({ total_cop: t.cop, total_usd: t.usd }).eq('id', id);
+    const cant = Math.max(1, Number((c as { cantidad?: number }).cantidad || 1));
+    const base = porCocina[id] ?? { cop: 0, usd: 0 };
+    const t_cop = base.cop * cant;
+    const t_usd = base.usd * cant;
+    await sb.from('cot_cocinas').update({ total_cop: t_cop, total_usd: t_usd }).eq('id', id);
+    total_cop += t_cop;
+    total_usd += t_usd;
   }
 
   // Proyecto
-  const total_cop = rows.reduce((a, l) => a + Number(l.precio_total_cop || 0), 0);
-  const total_usd = rows.reduce((a, l) => a + Number(l.precio_total_usd || 0), 0);
   await sb.from('cot_cotizaciones').update({ total_cop, total_usd }).eq('id', cotizacionId);
 }

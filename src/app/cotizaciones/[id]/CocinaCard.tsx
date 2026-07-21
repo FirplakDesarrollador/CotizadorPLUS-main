@@ -43,7 +43,7 @@ type Linea = {
   grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
 };
 
-type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
+type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
@@ -72,8 +72,27 @@ export default function CocinaCard({
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState(false);
   const [nombre, setNombre] = useState(cocina.nombre);
+  const [cantCocina, setCantCocina] = useState<number>(cocina.cantidad ?? 1);
   const [groupBusy, setGroupBusy] = useState<string | null>(null);
   const [groupError, setGroupError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCantCocina(cocina.cantidad ?? 1);
+  }, [cocina.cantidad]);
+
+  async function saveCantidad(val: number) {
+    const cleanVal = Math.max(1, Math.floor(val || 1));
+    if (cleanVal === (cocina.cantidad ?? 1)) return;
+    setGroupBusy('cantidad');
+    const res = await actualizarCocinaAction(cotizacionId, cocina.id, { cantidad: cleanVal });
+    setGroupBusy(null);
+    if (!res.ok) {
+      setCantCocina(cocina.cantidad ?? 1);
+      setGroupError(res.error ?? 'No se pudo actualizar la cantidad de la cocina');
+    } else {
+      router.refresh();
+    }
+  }
 
   // Estados de duplicación contextual (Andrés)
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, lineaId: string } | null>(null);
@@ -251,7 +270,7 @@ export default function CocinaCard({
     }
   }
 
-  const totalCant = cocina.lineas.reduce((acc, l) => acc + Number(l.cantidad || 0), 0);
+  const totalMuebles = groupBlocks.length;
   const totalCostoUsd = cocina.lineas.reduce((acc, l) => {
     const unitCop = l.costo_total_cop ?? (l as any).breakdown?.costoConHerrajes ?? 0;
     const unitUsd = trm > 0 ? unitCop / trm : 0;
@@ -260,8 +279,8 @@ export default function CocinaCard({
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200">
-      <div className="flex items-center justify-between p-4 border-b border-slate-100">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between p-4 border-b border-slate-100 flex-wrap gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {editName ? (
             <>
               <input value={nombre} onChange={(e) => setNombre(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-1 text-sm font-semibold" />
@@ -272,9 +291,23 @@ export default function CocinaCard({
             <>
               <h3 className="font-semibold text-slate-900">🍳 {cocina.nombre}</h3>
               <button onClick={() => setEditName(true)} className="text-xs text-slate-400 hover:text-slate-700 underline">renombrar</button>
-              <span className="text-xs text-slate-400">· {cocina.lineas.length} módulo(s)</span>
+              <span className="text-xs text-slate-400">· {totalMuebles} mueble(s)</span>
             </>
           )}
+
+          <div className="flex items-center gap-1.5 ml-2 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
+            <span className="text-xs font-semibold text-slate-600">Cant. Cocina:</span>
+            <input
+              type="number"
+              min={1}
+              value={cantCocina}
+              onChange={(e) => setCantCocina(Math.max(1, parseInt(e.target.value) || 1))}
+              onBlur={() => saveCantidad(cantCocina)}
+              onKeyDown={(e) => { if (e.key === 'Enter') saveCantidad(cantCocina); }}
+              className="w-14 text-center text-xs font-bold border border-slate-300 rounded px-1 py-0.5 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              title="Cantidad de cocinas (multiplica los muebles internos)"
+            />
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <button onClick={delCocina} className="text-slate-300 hover:text-red-600" title="Eliminar cocina">🗑</button>
@@ -287,13 +320,13 @@ export default function CocinaCard({
           <tr className="bg-slate-100/90 text-slate-900 text-xs font-bold border-b border-slate-200">
             <th className="px-2 py-2 text-center w-10"></th>
             <th className="px-4 py-2 text-left uppercase text-slate-700 font-bold tracking-wider" colSpan={3}>
-              Totales Cocina
+              Totales Cocina {(cocina.cantidad ?? 1) > 1 ? `(x${cocina.cantidad})` : ''}
             </th>
-            <th className="text-right py-2 font-bold text-slate-800" title="Costo Total USD de la cocina">
-              {fmtUSD(totalCostoUsd)}
+            <th className="text-right py-2 font-bold text-slate-800" title="Costo Total USD de la cocina (multiplicado por cantidad de cocinas)">
+              {fmtUSD(totalCostoUsd * (cocina.cantidad ?? 1))}
             </th>
-            <th className="text-right py-2 font-bold text-slate-900" title="Cantidad total de módulos">
-              {totalCant}
+            <th className="text-right py-2 font-bold text-slate-900" title="Cantidad total de muebles (módulos agrupados cuentan como 1 mueble)">
+              {totalMuebles * (cocina.cantidad ?? 1)}
             </th>
             <th className="text-right py-2 text-slate-400 font-normal">
               -
