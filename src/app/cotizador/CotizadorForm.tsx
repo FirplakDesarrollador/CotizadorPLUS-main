@@ -24,7 +24,12 @@ type HerrajeTipo = { rol: string; codigo: string | null };
 const fmtCOP = (n: number) => n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', fondo: 'fondo' };
+const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', fondo: 'fondo' }
+
+const getCantoMatch = (cantos: string[], target: string) =>
+  cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ??
+  cantos.find((c) => c.replace(',', '.').toLowerCase() === target.replace(',', '.').toLowerCase()) ??
+  target;
 
 const GUIA_SIMULADOR = [
   { title: 'Simulador de muebles', description: 'Calcula el precio de un mueble individual a partir de sus dimensiones y materiales. Sigue estos pasos.' },
@@ -37,8 +42,8 @@ const GUIA_SIMULADOR = [
   { selector: '[data-tour="resultado"]', title: '7. Resultado', description: 'Verás el precio (COP/USD conmutable) y el desglose: materiales, piezas, canto y herrajes.' },
 ];
 
-export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo }:
-  { tipos: Tipo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]> }) {
+export default function CotizadorForm({ tipos, recargos, tableros, trmDefault, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, cantos }:
+  { tipos: Tipo[]; recargos: Recargo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]>; cantos: string[] }) {
 
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
   
@@ -46,7 +51,19 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const setStore = store.setSimuladorState;
 
   const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => setIsMounted(true), []);
+  const [cantoFrentes, setCantoFrentes] = useState('');
+  const [cantoCaja, setCantoCaja] = useState('');
+
+  useEffect(() => {
+    setIsMounted(true);
+    const frenteBoard = tableros.find((t) => t.codigo === preset['frente']);
+    const cajaBoard = tableros.find((t) => t.codigo === preset['caja']);
+    if (frenteBoard?.espesor_mm === 18) setCantoFrentes(getCantoMatch(cantos, '22x1'));
+    else if (frenteBoard?.espesor_mm === 15) setCantoFrentes(getCantoMatch(cantos, '19x0,45'));
+    if (cajaBoard?.espesor_mm === 18) setCantoCaja(getCantoMatch(cantos, '22x1'));
+    else if (cajaBoard?.espesor_mm === 15) setCantoCaja(getCantoMatch(cantos, '19x0,45'));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const tipoId = store.tipoId || (sbfd?.id ?? tipos[0]?.id ?? '');
   const setTipoId = (v: string) => setStore({ tipoId: v });
@@ -64,7 +81,16 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const setProf = (v: number | ((prev: number) => number)) => setStore({ prof: typeof v === 'function' ? v(prof) : v });
   
   const perfilId = store.perfilId || perfilDefaultId;
-  const preset = Object.keys(store.preset).length > 0 ? store.preset : presetDefault;
+  // Validar que los códigos del store persisten contra los tableros disponibles.
+  // Si un código fue eliminado del catálogo, usar el preset por defecto.
+  const validCodes = useMemo(() => new Set(tableros.map((t) => t.codigo)), [tableros]);
+  const preset = useMemo(() => {
+    const stored = store.preset;
+    if (!Object.keys(stored).length) return presetDefault;
+    return Object.fromEntries(
+      Object.entries(stored).map(([rol, cod]) => [rol, validCodes.has(cod) ? cod : (presetDefault[rol] ?? '')])
+    );
+  }, [store.preset, validCodes, presetDefault]);
   const setPreset = (v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => setStore({ preset: typeof v === 'function' ? v(preset) : v });
 
   function aplicarPerfil(id: string) {
@@ -157,6 +183,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       trm, modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
       herrajesExcluidos: herrajesExcl.length ? herrajesExcl : undefined,
+      cantoFrentes: cantoFrentes || undefined,
+      cantoCaja: cantoCaja || undefined,
     });
     setLoading(false);
     if (!res.ok) { setError(res.error); setResult(null); return; }
@@ -199,13 +227,44 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               <Combobox value={perfilId} options={perfiles.map((p) => ({ value: p.id, label: p.nombre }))} onChange={aplicarPerfil} placeholder="Elegir perfil…" />
             </Field>
           )}
-          {roles.map((rol) => (
-            <Field key={rol} label={ROL_LABEL[rol] ?? rol}>
-              <Combobox value={preset[rol] ?? ''} options={tableroOptions}
-                onChange={(v) => setPreset((p) => ({ ...p, [rol]: v }))}
-                placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
-            </Field>
-          ))}
+          {(() => {
+            const rendered: React.ReactNode[] = [];
+            let cajaRendered = false;
+            for (const rol of roles) {
+              if (rol === 'caja' || rol === 'refuerzo') {
+                if (cajaRendered) continue;
+                cajaRendered = true;
+                rendered.push(
+                  <Field key="caja-refuerzo" label="caja / refuerzos">
+                    <Combobox value={preset.caja ?? ''} options={tableroOptions}
+                      onChange={(v) => {
+                        setPreset((p) => ({ ...p, caja: v, refuerzo: v }));
+                        const b = tableros.find((t) => t.codigo === v);
+                        if (b?.espesor_mm === 18) setCantoCaja(getCantoMatch(cantos, '22x1'));
+                        else if (b?.espesor_mm === 15) setCantoCaja(getCantoMatch(cantos, '19x0,45'));
+                      }}
+                      placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+                  </Field>
+                );
+              } else {
+                rendered.push(
+                  <Field key={rol} label={ROL_LABEL[rol] ?? rol}>
+                    <Combobox value={preset[rol] ?? ''} options={tableroOptions}
+                      onChange={(v) => {
+                        setPreset((p) => ({ ...p, [rol]: v }));
+                        if (rol === 'frente') {
+                          const b = tableros.find((t) => t.codigo === v);
+                          if (b?.espesor_mm === 18) setCantoFrentes(getCantoMatch(cantos, '22x1'));
+                          else if (b?.espesor_mm === 15) setCantoFrentes(getCantoMatch(cantos, '19x0,45'));
+                        }
+                      }}
+                      placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+                  </Field>
+                );
+              }
+            }
+            return rendered;
+          })()}
         </div>
 
         {/* <div data-tour="cliente">
@@ -236,6 +295,18 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
             </select>
           </Field>
           <Field label="TRM"><input type="number" step="any" value={trm} onChange={(e) => setTrm(+e.target.value)} className="inp" /></Field>
+          <Field label="Canto frentes">
+            <select value={cantoFrentes} onChange={(e) => setCantoFrentes(e.target.value)} className="inp">
+              <option value="">Por defecto</option>
+              {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field label="Canto caja">
+            <select value={cantoCaja} onChange={(e) => setCantoCaja(e.target.value)} className="inp">
+              <option value="">Por defecto</option>
+              {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </Field>
         </div>
 
         <label className="flex items-center gap-2 text-sm text-slate-700">
