@@ -14,12 +14,56 @@ export type CotizacionHeader = {
   total_cop: number; total_usd: number; created_at: string;
 };
 
+export type CotizacionVersion = {
+  id: string;
+  cotizacion_id: string;
+  numero: number;
+  nombre: string | null;
+  creada_por: string;
+  created_at: string;
+};
+
 export async function listarCotizaciones(): Promise<CotizacionHeader[]> {
   const sb = await createClient();
   const { data } = await sb.from('cot_cotizaciones')
     .select('id,codigo,nombre,cliente_nombre,moneda,trm,estado,total_cop,total_usd,created_at')
     .order('created_at', { ascending: false });
   return (data ?? []) as CotizacionHeader[];
+}
+
+export async function listarVersionesCotizacion(cotizacionId: string): Promise<CotizacionVersion[]> {
+  const sb = await createClient();
+  const { data, error } = await sb.from('cot_cotizacion_versiones')
+    .select('id,cotizacion_id,numero,nombre,creada_por,created_at')
+    .eq('cotizacion_id', cotizacionId)
+    .order('numero', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as CotizacionVersion[];
+}
+
+export async function guardarVersionCotizacion(cotizacionId: string, nombre?: string) {
+  const sb = await createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error('No autenticado');
+
+  const { data, error } = await sb.rpc('cot_guardar_version', {
+    p_cotizacion_id: cotizacionId,
+    p_nombre: nombre?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
+  return data as string;
+}
+
+export async function restaurarVersionCotizacion(cotizacionId: string, versionId: string) {
+  const sb = await createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error('No autenticado');
+
+  const { error } = await sb.rpc('cot_restaurar_version', {
+    p_cotizacion_id: cotizacionId,
+    p_version_id: versionId,
+  });
+  if (error) throw new Error(error.message);
 }
 
 // Proyecto con sus cocinas y, dentro de cada cocina, sus módulos (líneas).

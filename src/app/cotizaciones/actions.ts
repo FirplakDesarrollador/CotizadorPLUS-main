@@ -5,6 +5,7 @@ import {
   crearCotizacion, agregarLinea, editarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
   crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
   reordenarGruposCocina,
+  guardarVersionCotizacion, restaurarVersionCotizacion,
   type AgregarLineaInput,
 } from '@/lib/cotizaciones';
 
@@ -152,5 +153,26 @@ export async function renombrarCotizacionAction(id: string, nombre: string): Pro
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };
+  }
+}
+
+export async function guardarVersionCotizacionAction(cotizacionId: string, nombre?: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await guardarVersionCotizacion(cotizacionId, nombre);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo guardar la versión' };
+  }
+}
+
+export async function restaurarVersionCotizacionAction(cotizacionId: string, versionId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await restaurarVersionCotizacion(cotizacionId, versionId);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    revalidatePath('/cotizaciones');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo restaurar la versión' };
   }
 }
