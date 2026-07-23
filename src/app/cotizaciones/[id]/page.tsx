@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getUserAndRole } from '@/lib/auth';
-import { getCotizacion } from '@/lib/cotizaciones';
+import { getCotizacion, listarVersionesCotizacion } from '@/lib/cotizaciones';
 import { getCotizadorData } from '@/lib/cotizar';
 import AppHeader from '@/components/AppHeader';
 import CotizacionDetalleClient from './CotizacionDetalleClient';
@@ -58,10 +58,13 @@ export default async function CotizacionDetallePage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const { user, rol } = await getUserAndRole();
-  const { cabecera, cocinas } = await getCotizacion(id);
+  const [{ user, rol }, { cabecera, cocinas }, data, versiones] = await Promise.all([
+    getUserAndRole(),
+    getCotizacion(id),
+    getCotizadorData(),
+    listarVersionesCotizacion(id),
+  ]);
   if (!cabecera) notFound();
-  const data = await getCotizadorData();
 
   // Si viene del formulario de creación, la config viene en ?cfg=<base64>
   const initialConfig = parseConfigParam(sp['cfg']);
@@ -83,6 +86,7 @@ export default async function CotizacionDetallePage({
           perfiles={data.perfiles}
           perfilDefaultId={data.perfilDefaultId}
           herrajesByTipo={data.herrajesByTipo}
+          versiones={versiones}
         />
       </main>
     </div>

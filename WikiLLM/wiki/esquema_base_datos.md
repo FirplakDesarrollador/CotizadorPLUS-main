@@ -28,6 +28,7 @@ La base de datos se estructura en torno a los siguientes modelos:
 *   **`cot_cocinas`:** Jerarquía de cocinas dentro de un proyecto. Almacena el nombre, orden, cantidad (multiplicador de los muebles internos) y totales acumulados en COP/USD.
 *   **`cot_cotizacion_lineas`:** Líneas individuales que componen el presupuesto. Almacena las dimensiones, cantidad solicitada, variables de diseño y guarda el objeto `breakdown` final (JSON) generado por el motor para auditoría histórica.
 *   **`cot_grupos_modulos`:** Bloques físicos ordenados dentro de una cocina. Almacena la letra canónica, el código concatenado, los subtotales y el breakdown estructural del grupo. Cada línea apunta a un grupo y conserva su posición de izquierda a derecha.
+*   **`cot_cotizacion_versiones`:** Historial inmutable de snapshots JSONB del agregado completo (cabecera, cocinas, grupos y líneas). La numeración es consecutiva por cotización y cada restauración crea primero un respaldo automático.
 
 ### Extensiones para agrupación
 
@@ -42,6 +43,12 @@ La migración `0020_agrupacion_modulos.sql` incorpora:
 La tabla de grupos tiene RLS vinculada al propietario de la cotización o al rol administrador. La migración debe aplicarse antes de desplegar el código que consulta estas columnas.
 
 La migración 0020 fue aplicada y verificada en Supabase **I+D** el 2026-07-15. El backfill produjo un grupo por cada una de las ocho líneas históricas existentes, sin líneas huérfanas, y dejó activas las cuatro políticas RLS del nuevo modelo.
+
+### Versionado persistente
+
+La migración `0024_versiones_cotizacion.sql` añade la tabla de versiones y las funciones RPC `cot_guardar_version` y `cot_restaurar_version`. La captura se serializa bajo bloqueo de la cabecera para evitar números duplicados. La restauración valida propiedad o rol administrador, repone todo el agregado dentro de una transacción y conserva el estado anterior como una nueva versión de respaldo.
+
+La migración 0024 fue aplicada en Supabase **I+D** el 2026-07-22. Se verificó la existencia de la tabla, las dos funciones RPC y las dos políticas RLS.
 
 ## 3. Seguridad y Triggers
 - Todos los registros cuentan con auditoría automática de fecha de modificación conectada al trigger `cot_touch_updated_at`.

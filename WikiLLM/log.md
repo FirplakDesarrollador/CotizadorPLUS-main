@@ -54,3 +54,5 @@ Se añadió la columna `cantidad` a la tabla `cot_cocinas` en base de datos (mig
 
 ## [2026-07-21] update | Conteo de muebles agrupados como un solo mueble en totalización de cocina
 Se ajustó el contador total de muebles (`totalMuebles`) en `CocinaCard.tsx` para que cada bloque de muebles agrupados (que contenga 2, 3 o más módulos) contabilice como 1 solo mueble físico en los totales de la cocina y de la cabecera.
+
+## [2026-07-22] update | Se implementó el historial persistente de versiones de cotizaciones con snapshots completos, restauración transaccional, respaldo automático e interfaz de gestión.

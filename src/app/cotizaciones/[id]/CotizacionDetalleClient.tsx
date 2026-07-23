@@ -7,6 +7,8 @@ import GuideButton from '@/components/GuideButton';
 import TooltipToggle from '@/components/TooltipToggle';
 import ProjectConfigPanel, { type ProjectDefaults } from './ProjectConfigPanel';
 import { eliminarCotizacionAction } from '../actions';
+import VersionesCotizacion from './VersionesCotizacion';
+import type { CotizacionVersion } from '@/lib/cotizaciones';
 
 type LineaConfig = {
   preset?: Record<string, string>;
@@ -42,7 +44,6 @@ type Linea = {
 
 type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
-type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
@@ -53,6 +54,7 @@ const GUIA_PROYECTO = [
   { selector: '[data-tour="proyecto"]', title: 'Datos del proyecto', description: 'Nombre, cliente, moneda, TRM y estado. Usa "editar" para cambiarlos. A la derecha ves el total.' },
   { selector: '[data-tour="config"]', title: 'Configuración global', description: 'Define los tableros, cantos, recargo y margen que se pre-llenan en cada mueble nuevo. Puedes cambiarlos por mueble si es necesario.' },
   { selector: '[data-tour="export"]', title: 'Exportar', description: 'Descarga la cotización en Excel, o ábrela como PDF para imprimir/guardar.' },
+  { selector: '[data-tour="versiones"]', title: 'Versiones', description: 'Guarda puntos de retorno del proyecto y restaura una versión anterior cuando lo necesites.' },
   { selector: '[data-tour="cocinas"]', title: 'Cocinas y módulos', description: 'Cada tarjeta es una cocina. Dentro agregas módulos con "+ Agregar módulo"; el subtotal por cocina se calcula solo.' },
   { selector: '[data-tour="add-cocina"]', title: 'Agregar cocina', description: 'Añade tantas cocinas como necesite el proyecto. El total del proyecto suma todas.' },
 ];
@@ -70,10 +72,11 @@ interface Props {
   perfiles: Perfil[];
   perfilDefaultId: string;
   herrajesByTipo: Record<string, HerrajeTipo[]>;
+  versiones: CotizacionVersion[];
 }
 
 export default function CotizacionDetalleClient({
-  cabecera, cocinas, cotizacionId, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo
+  cabecera, cocinas, cotizacionId, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo, versiones
 }: Props) {
   // Estado global del proyecto: si viene initialConfig del query param ?cfg, úsalo;
   // si no, inicializar con el presetDefault del sistema.
@@ -155,9 +158,10 @@ export default function CotizacionDetalleClient({
         )}
       </div>
 
-      <div className="flex gap-2" data-tour="export">
+      <div className="flex flex-wrap gap-2" data-tour="export">
         <a href={`/cotizaciones/${cotizacionId}/export`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">⬇ Exportar Excel</a>
         <a href={`/cotizaciones/${cotizacionId}/imprimir`} target="_blank" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">🖨 Imprimir / PDF</a>
+        <VersionesCotizacion cotizacionId={cotizacionId} versiones={versiones} />
       </div>
 
       <div className="space-y-4" data-tour="cocinas">
