@@ -19,6 +19,7 @@ type LineaConfig = {
   margenOverride?: number;
   cantoFrentes?: string;
   cantoCaja?: string;
+  rielCodigo?: string;
 };
 
 type Linea = {
@@ -123,6 +124,7 @@ export default function CocinaCard({
     margenOverride: l.config?.margenOverride ?? undefined,
     cantoFrentes: l.config?.cantoFrentes ?? undefined,
     cantoCaja: l.config?.cantoCaja ?? undefined,
+    rielCodigo: l.config?.rielCodigo ?? undefined,
   });
 
   const lineaEnEdicion = cocina.lineas.find((l) => l.id === editId) ?? null;

@@ -25,7 +25,7 @@ export type CotizarInput = {
   etiquetas?: number;        // nº de etiquetas por mueble (override del proyecto, ej. 3)
   cantoFrentes?: string;
   cantoCaja?: string;
-  // Para muebles DB: código del riel de cajón a usar (ej. 'RIELMETALBOX').
+  // Para diseños con cajón (DB/PCFD-OP): código del riel a usar.
   // Si se especifica, se reemplaza el precio del riel por defecto (RIELTANDEM) con
   // el precio del riel elegido, manteniendo la plantilla de herrajes sin tocar.
   rielCodigo?: string;
@@ -104,6 +104,18 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
     A: toInches(inp.alto, inp.unidad),
     P: toInches(inp.prof, inp.unidad),
   };
+
+  for (const key of ['n_puertas', 'n_cajones', 'n_entrepanos', 'n_barras'] as const) {
+    const value = inp.overrides?.[key];
+    if (value == null) continue;
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(`${key} debe ser un número entero mayor o igual a cero`);
+    }
+  }
+  const zocaloOverride = inp.overrides?.zocalo;
+  if (zocaloOverride != null && (!Number.isFinite(zocaloOverride) || zocaloOverride < 0 || zocaloOverride >= dims.A)) {
+    throw new Error('zocalo debe ser mayor o igual a cero y menor que el alto del mueble');
+  }
 
   const calc: CalcInput = {
     dims,

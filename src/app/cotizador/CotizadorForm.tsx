@@ -9,7 +9,7 @@ import UndoRedoButtons from '@/components/UndoRedoButtons';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_RIELES } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES } from '@/lib/muebles';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -122,12 +122,18 @@ export default function CotizadorForm({ tipos, recargos = [], tableros, trmDefau
   
   const nentrepanos = store.nentrepanos;
   const setNentrepanos = (v: string) => setStore({ nentrepanos: v });
+
+  const zocalo = store.zocalo ?? '';
+  const setZocalo = (v: string) => setStore({ zocalo: v });
   
   const nbarras = store.nbarras;
   const setNbarras = (v: string) => setStore({ nbarras: v });
   
   const dbTipo = store.dbTipo;
   const setDbTipo = (v: string) => setStore({ dbTipo: v });
+
+  const pcfdConfig = store.pcfdConfig ?? '';
+  const setPcfdConfig = (v: string) => setStore({ pcfdConfig: v });
 
   const rielCodigo = store.rielCodigo ?? 'RIELTANDEM';
   const setRielCodigo = (v: string) => setStore({ rielCodigo: v });
@@ -154,10 +160,20 @@ export default function CotizadorForm({ tipos, recargos = [], tableros, trmDefau
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const tipoPref = tipos.find((t) => t.id === tipoId)?.pref ?? '';
   const esDB = tipoPref.startsWith('DB');
+  const esPCFD = tipoPref === 'PCFD';
+  const usaRiel = esDB || esPCFD;
   function aplicarDbTipo(k: string) {
     setDbTipo(k);
     const t = DB_TIPOLOGIAS.find((x) => x.key === k);
     if (t) { setNcajones(String(t.nc)); setNbarras(String(t.nb)); }
+  }
+  function aplicarPcfdConfig(k: string) {
+    setPcfdConfig(k);
+    const config = PCFD_CONFIGURACIONES.find((x) => x.key === k);
+    if (!config) return;
+    setNcajones(String(config.nc));
+    setNentrepanos(String(config.ne));
+    setZocalo(String(config.zocalo));
   }
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
   const toggleHerraje = (rol: string) => setStore({ herrajesExcl: herrajesExcl.includes(rol) ? herrajesExcl.filter((x) => x !== rol) : [...herrajesExcl, rol] });
@@ -177,6 +193,7 @@ export default function CotizadorForm({ tipos, recargos = [], tableros, trmDefau
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
+    if (zocalo !== '') overrides.zocalo = Number(zocalo);
     if (nbarras !== '') overrides.n_barras = Number(nbarras);
     const res = await cotizarAction({
       // El simulador SIEMPRE calcula herrajes para poder mostrar ambos precios
@@ -188,7 +205,7 @@ export default function CotizadorForm({ tipos, recargos = [], tableros, trmDefau
       herrajesExcluidos: herrajesExcl.length ? herrajesExcl : undefined,
       cantoFrentes: cantoFrentes || undefined,
       cantoCaja: cantoCaja || undefined,
-      rielCodigo: esDB && rielCodigo ? rielCodigo : undefined,
+      rielCodigo: usaRiel && rielCodigo ? rielCodigo : undefined,
     });
     setLoading(false);
     if (!res.ok) { setError(res.error); setResult(null); return; }
@@ -274,8 +291,17 @@ export default function CotizadorForm({ tipos, recargos = [], tableros, trmDefau
 
         <div data-tour="opciones" className="grid grid-cols-2 gap-2 items-end">
           <Field label="Nº puertas (override)"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
-          <Field label="Nº cajones (override)"><input type="number" placeholder="auto" value={ncajones} onChange={(e) => setNcajones(e.target.value)} className="inp" /></Field>
-          <Field label="Nº entrepaños (override)"><input type="number" placeholder="auto" value={nentrepanos} onChange={(e) => setNentrepanos(e.target.value)} className="inp" /></Field>
+          <Field label="Nº cajones (override)"><input type="number" min={0} step={1} placeholder="auto" value={ncajones} onChange={(e) => { setNcajones(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" /></Field>
+          <Field label="Nº entrepaños (override)"><input type="number" min={0} step={1} placeholder="auto" value={nentrepanos} onChange={(e) => { setNentrepanos(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" /></Field>
+          {esPCFD && (
+            <Field label="Configuración PCFD">
+              <select value={pcfdConfig} onChange={(e) => aplicarPcfdConfig(e.target.value)} className="inp">
+                <option value="">— manual —</option>
+                {PCFD_CONFIGURACIONES.map((config) => <option key={config.key} value={config.key}>{config.key} · {config.desc}</option>)}
+              </select>
+            </Field>
+          )}
+          {esPCFD && <Field label="Zócalo TK (in)"><input type="number" min={0} step="any" placeholder="auto" value={zocalo} onChange={(e) => { setZocalo(e.target.value); setPcfdConfig(''); }} className="inp" /></Field>}
           {esDB && (
             <Field label="Tipología DB">
               <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
@@ -285,7 +311,7 @@ export default function CotizadorForm({ tipos, recargos = [], tableros, trmDefau
             </Field>
           )}
           {esDB && <Field label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></Field>}
-          {esDB && (
+          {usaRiel && (
             <Field label="Tipo de riel">
               <select value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
                 {DB_RIELES.map((r) => (

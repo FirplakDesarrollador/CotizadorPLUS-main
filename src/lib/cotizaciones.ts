@@ -154,7 +154,9 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
   const precioUnitCop = (input.conHerrajes && !usarUnificado) ? res.precioConHerrajesCop /* res.precioConHerrajesCopConRecargo */ : res.precioCop /* res.precioCopConRecargo */;
   const precioUnitUsd = (input.conHerrajes && !usarUnificado) ? res.precioConHerrajesUsd : res.precioUsd;
   const desc = `${input.prefLabel ?? ''} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim()
-    + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '');
+    + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '')
+    + (res.vars.n_cajones ? ` · ${res.vars.n_cajones} gaveta(s)` : '')
+    + (res.vars.n_entrepanos != null ? ` · ${res.vars.n_entrepanos} entrepaño(s)` : '');
   return {
     tipo_mueble_id: input.tipoId,
     pref: input.prefLabel ?? null,
@@ -170,6 +172,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
       descuento: input.descuento ?? null,
       cantoFrentes: input.cantoFrentes ?? null,
       cantoCaja: input.cantoCaja ?? null,
+      rielCodigo: input.rielCodigo ?? null,
     },
     cantidad,
     costo_sin_herrajes_cop: res.costoSinHerrajes,
@@ -218,6 +221,7 @@ function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     descuento: c.descuento == null ? undefined : Number(c.descuento),
     cantoFrentes: c.cantoFrentes == null ? undefined : String(c.cantoFrentes),
     cantoCaja: c.cantoCaja == null ? undefined : String(c.cantoCaja),
+    rielCodigo: c.rielCodigo == null ? undefined : String(c.rielCodigo),
     cantidad: Number(linea.cantidad || 1),
     prefLabel: linea.pref ?? undefined,
   };

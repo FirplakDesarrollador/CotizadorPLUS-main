@@ -17,9 +17,11 @@ export type SimuladorValues = {
   npuertas: string;
   ncajones: string;
   nentrepanos: string;
+  zocalo: string;
   nbarras: string;
   dbTipo: string;
-  rielCodigo: string;  // código del riel para muebles DB (por defecto 'RIELTANDEM')
+  pcfdConfig: string;
+  rielCodigo: string;  // código del riel para muebles DB/PCFD-OP
   modoFrentes: 'normal' | 'sin_frentes' | 'solo_frentes';
 };
 
@@ -51,8 +53,10 @@ const initialStateValues: SimuladorValues = {
   npuertas: '',
   ncajones: '',
   nentrepanos: '',
+  zocalo: '',
   nbarras: '',
   dbTipo: '',
+  pcfdConfig: '',
   rielCodigo: 'RIELTANDEM',
   modoFrentes: 'normal' as const,
 };
@@ -72,8 +76,10 @@ const getValuesFromState = (state: SimuladorState): SimuladorValues => ({
   npuertas: state.npuertas,
   ncajones: state.ncajones,
   nentrepanos: state.nentrepanos,
+  zocalo: state.zocalo,
   nbarras: state.nbarras,
   dbTipo: state.dbTipo,
+  pcfdConfig: state.pcfdConfig,
   rielCodigo: state.rielCodigo,
   modoFrentes: state.modoFrentes,
 });
