@@ -388,7 +388,24 @@ export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: str
     .select('*').eq('id', lineaId).single();
   if (lineError || !linea) throw new Error('Módulo no encontrado');
   const current = linea as LineaPersistida;
-  if (!current.cocina_id || !current.grupo_id) throw new Error('El módulo no tiene un bloque asignado');
+  if (!current.cocina_id) throw new Error('El módulo no pertenece a una cocina');
+
+  if (!current.grupo_id) {
+    const { count: groupCount } = await sb.from('cot_grupos_modulos')
+      .select('id', { count: 'exact', head: true }).eq('cocina_id', current.cocina_id);
+    const { data: createdG, error: gErr } = await sb.from('cot_grupos_modulos').insert({
+      cotizacion_id: current.cotizacion_id,
+      cocina_id: current.cocina_id,
+      orden: groupCount ?? 0,
+      etiqueta: `NUEVO-${crypto.randomUUID()}`,
+    }).select('id').single();
+    if (gErr || !createdG) throw new Error(gErr?.message ?? 'No se pudo crear el bloque');
+    await sb.from('cot_cotizacion_lineas').update({
+      grupo_id: createdG.id,
+      posicion_grupo: 1,
+    }).eq('id', current.id);
+    current.grupo_id = createdG.id;
+  }
 
   const { data: grupos, error: groupsError } = await sb.from('cot_grupos_modulos')
     .select('id,etiqueta,orden').eq('cocina_id', current.cocina_id).order('orden');

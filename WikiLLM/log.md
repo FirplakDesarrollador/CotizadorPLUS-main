@@ -65,3 +65,6 @@ Se implementó y aplicó en Supabase la migración `0025_pcfd_gavetas_parametric
 
 ## [2026-07-23] ingest | Variantes de frente Gola identificadas como SM
 Se analizaron 1.026 referencias `SM`, 209 referencias `SMG` y 478 pares exactos contra muebles base en `Simulación muebles CEMA (1).xlsx`, además de las especificaciones comerciales de las cotizaciones 25083 y 26052. Se documentó que la gola es una variante transversal de frentes, que los refuerzos cambian por familia y que la nomenclatura histórica distingue de forma inconsistente `SM`, `SMG` y `GOAL`. Se propuso un sistema de frente persistido por proyecto/línea con modificadores paramétricos por tipo de mueble.
+
+## [2026-07-31] update | Corrección en asignación automática de bloque al agrupar o editar líneas sin grupo_id
+Se corrigió la función `cambiarGrupoLinea` en `src/lib/cotizaciones.ts` para asignar y crear automáticamente un bloque de grupo en base de datos si la línea carece de `grupo_id`. Además, se previno la sustitución errónea por el índice `"1"` en `CocinaCard.tsx` cuando se edita un grupo sin bloque persistido.
