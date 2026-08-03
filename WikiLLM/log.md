@@ -68,3 +68,9 @@ Se analizaron 1.026 referencias `SM`, 209 referencias `SMG` y 478 pares exactos 
 
 ## [2026-07-31] update | Corrección en asignación automática de bloque al agrupar o editar líneas sin grupo_id
 Se corrigió la función `cambiarGrupoLinea` en `src/lib/cotizaciones.ts` para asignar y crear automáticamente un bloque de grupo en base de datos si la línea carece de `grupo_id`. Además, se previno la sustitución errónea por el índice `"1"` en `CocinaCard.tsx` cuando se edita un grupo sin bloque persistido.
+
+## [2026-08-03] update | Ajuste visual en el simulador para evitar apiñamiento de botones
+Se modificaron los botones del encabezado en `CotizadorForm.tsx` para hacerlos compactos (`UndoRedoButtons compact`) y se ajustó el contenedor con `flex-wrap` y espaciado adaptativo, previniendo solapamiento en pantallas pequeñas y anchos restringidos (380px).
+
+## [2026-08-03] update | Simulación incremental de muebles combinados
+El simulador ahora permite confirmar, heredar, editar, eliminar y reordenar múltiples módulos bajo las reglas físicas del cotizador. Se añadió validación inmediata, recálculo del conjunto, persistencia versionada del constructor y un único desglose consolidado de materiales, piezas, cantos, consumibles y herrajes.

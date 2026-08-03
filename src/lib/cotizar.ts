@@ -6,6 +6,7 @@ import {
   type Breakdown, type CalcInput,
 } from '@/lib/engine';
 import { calcularGrupoFisico, type GroupCalculation, type PreparedGroupMember } from '@/lib/group-engine';
+import { consolidarGrupo, type CotizarGrupoResult } from '@/lib/group-result';
 
 export type CotizarInput = {
   tipoId: string;
@@ -162,6 +163,15 @@ export async function cotizarGrupo(inputs: CotizarInput[]): Promise<GroupCalcula
   const preparados = await Promise.all(inputs.map(prepararCotizacion));
   return { ...calcularGrupoFisico(preparados), preparados };
 }
+
+export async function cotizarGrupoConsolidado(inputs: CotizarInput[]): Promise<CotizarGrupoResult> {
+  if (inputs.length === 0) throw new Error('Agrega al menos un módulo para calcular.');
+  const group = await cotizarGrupo(inputs);
+  const first = group.preparados[0];
+  return consolidarGrupo(group, { trm: first.trm, margen: first.margen });
+}
+
+export type { CotizarGrupoResult } from '@/lib/group-result';
 
 // Datos para poblar la UI del cotizador.
 export async function getCotizadorData() {

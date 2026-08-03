@@ -1,13 +1,13 @@
 {
   "name": "cotizador-plus",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:groups": "tsx --test tests/module-groups.test.ts tests/group-engine.test.ts"
+    "test:groups": "tsx --test tests/module-groups.test.ts tests/group-engine.test.ts tests/group-result.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
