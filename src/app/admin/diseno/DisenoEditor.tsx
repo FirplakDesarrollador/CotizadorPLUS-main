@@ -8,8 +8,12 @@ import {
   guardarReglaAction, eliminarReglaAction, guardarHerrajeAction, eliminarHerrajeAction, previewAction,
   guardarTipoAgrupacionAction,
 } from './actions';
+import type { CotizarResult } from '@/lib/cotizar';
 
 type Tipo = { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; permite_agrupacion: boolean; nombre_es: string | null };
+// Fila de catálogo con forma dinámica (piezas/reglas/herrajes tienen columnas distintas);
+// tipar cada campo obligaría a castear en cada acceso a lo largo del archivo sin beneficio real.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any> & { id?: string };
 type Diseno = {
   piezas: Row[]; reglas: Row[]; herrajes: Row[];
@@ -232,7 +236,7 @@ function HerrajesEditor({ tipoId, herrajes, herrajeCat, onChange }: { tipoId: st
 function Preview({ tipoId, presetDefault, tableros }: { tipoId: string; presetDefault: Record<string, string>; tableros: string[] }) {
   const [L, setL] = useState(33); const [A, setA] = useState(30); const [P, setP] = useState(24);
   const [conH, setConH] = useState(false);
-  const [res, setRes] = useState<any>(null); const [err, setErr] = useState<string | null>(null);
+  const [res, setRes] = useState<CotizarResult | null>(null); const [err, setErr] = useState<string | null>(null);
   async function run() {
     setErr(null);
     const r = await previewAction({ tipoId, largo: L, alto: A, prof: P, unidad: 'in', preset: presetDefault, conHerrajes: conH });
@@ -252,8 +256,8 @@ function Preview({ tipoId, presetDefault, tableros }: { tipoId: string; presetDe
         <div className="mt-3 grid sm:grid-cols-2 gap-3 text-sm">
           <div>
             <p className="text-slate-500">Madera por rol</p>
-            {res.maderaPorRol.map((m: any) => <div key={m.rol} className="flex justify-between"><span className="capitalize">{m.rol} ({m.codigo})</span><span>{fmt(m.costo)}</span></div>)}
-            {res.cantoPorCalibre.map((c: any) => <div key={c.calibre} className="flex justify-between text-slate-500"><span>canto {c.calibre}</span><span>{fmt(c.costo)}</span></div>)}
+            {res.maderaPorRol.map((m) => <div key={m.rol} className="flex justify-between"><span className="capitalize">{m.rol} ({m.codigo})</span><span>{fmt(m.costo)}</span></div>)}
+            {res.cantoPorCalibre.map((c) => <div key={c.calibre} className="flex justify-between text-slate-500"><span>canto {c.calibre}</span><span>{fmt(c.costo)}</span></div>)}
           </div>
           <div className="space-y-1">
             <div className="flex justify-between"><span className="text-slate-500">Madera</span><span>{fmt(res.costoMadera)}</span></div>

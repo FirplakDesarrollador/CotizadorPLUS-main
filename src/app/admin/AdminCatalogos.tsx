@@ -299,6 +299,30 @@ function PerfilesEditor({ perfiles, tableros }: { perfiles: PresetPerfil[]; tabl
   );
 }
 
+// Input numérico con edición local en string: evita que el input controlado
+// pierda el cursor al escribir (ver WikiLLM log 2026-08-04). Debe vivir fuera
+// de ParametrosEditor para no recrearse (y perder su estado) en cada render.
+function NumInput({ label, value, set, hint }: { label: string; value: number; set: (n: number) => void; hint?: string }) {
+  const [localVal, setLocalVal] = useState(String(value));
+  return (
+    <label className="block">
+      <span className="block text-xs text-slate-500 mb-1">{label}{hint && <span className="text-slate-400"> · {hint}</span>}</span>
+      <input
+        type="number"
+        step="any"
+        value={localVal}
+        onChange={(e) => setLocalVal(e.target.value)}
+        onBlur={(e) => {
+          const n = parseFloat(e.target.value);
+          if (!isNaN(n)) set(n);
+          else setLocalVal(String(value));
+        }}
+        className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+      />
+    </label>
+  );
+}
+
 // ---- Editor de parámetros globales ----
 function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> }) {
   const router = useRouter();
@@ -343,27 +367,6 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
     if (!res.ok) { setError(res.error ?? 'Error'); return; }
     setMsg('Parámetros guardados'); router.refresh();
   }
-
-  const NumInput = ({ label, value, set, hint }: { label: string; value: number; set: (n: number) => void; hint?: string }) => {
-    const [localVal, setLocalVal] = useState(String(value));
-    return (
-      <label className="block">
-        <span className="block text-xs text-slate-500 mb-1">{label}{hint && <span className="text-slate-400"> · {hint}</span>}</span>
-        <input
-          type="number"
-          step="any"
-          value={localVal}
-          onChange={(e) => setLocalVal(e.target.value)}
-          onBlur={(e) => {
-            const n = parseFloat(e.target.value);
-            if (!isNaN(n)) set(n);
-            else setLocalVal(String(value));
-          }}
-          className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
-        />
-      </label>
-    );
-  };
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-5">

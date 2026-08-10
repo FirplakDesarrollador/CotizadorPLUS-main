@@ -43,6 +43,8 @@ type Linea = {
   posicion_grupo: number;
   codigo_modulo: string | null;
   grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
+  // Presente en líneas antiguas sin costo_total_cop, como respaldo para el costo con herrajes.
+  breakdown?: { costoConHerrajes?: number };
 };
 
 type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
@@ -79,9 +81,13 @@ export default function CocinaCard({
   const [groupBusy, setGroupBusy] = useState<string | null>(null);
   const [groupError, setGroupError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Sincroniza cantCocina con el prop cuando cambia desde afuera (ej. tras guardar),
+  // ajustando el estado durante el render en vez de en un efecto.
+  const [prevCantidadProp, setPrevCantidadProp] = useState(cocina.cantidad ?? 1);
+  if (prevCantidadProp !== (cocina.cantidad ?? 1)) {
+    setPrevCantidadProp(cocina.cantidad ?? 1);
     setCantCocina(cocina.cantidad ?? 1);
-  }, [cocina.cantidad]);
+  }
 
   async function saveCantidad(val: number) {
     const cleanVal = Math.max(1, Math.floor(val || 1));
@@ -184,9 +190,13 @@ export default function CocinaCard({
   const [dragOverGroupIndex, setDragOverGroupIndex] = useState<number | null>(null);
   const [localGroupOrder, setLocalGroupOrder] = useState<string[] | null>(null);
 
-  useEffect(() => {
+  // Descarta el orden de arrastre local cuando llegan líneas nuevas del servidor
+  // (ej. tras confirmar el reordenamiento), ajustando el estado durante el render.
+  const [prevLineas, setPrevLineas] = useState(cocina.lineas);
+  if (prevLineas !== cocina.lineas) {
+    setPrevLineas(cocina.lineas);
     setLocalGroupOrder(null);
-  }, [cocina.lineas]);
+  }
 
   type GroupBlock = {
     grupoId: string;
@@ -279,7 +289,7 @@ export default function CocinaCard({
 
   const totalMuebles = groupBlocks.length;
   const totalCostoUsd = cocina.lineas.reduce((acc, l) => {
-    const unitCop = l.costo_total_cop ?? (l as any).breakdown?.costoConHerrajes ?? 0;
+    const unitCop = l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0;
     const unitUsd = trm > 0 ? unitCop / trm : 0;
     return acc + (unitUsd * Number(l.cantidad || 0));
   }, 0);
@@ -368,7 +378,7 @@ export default function CocinaCard({
 
             const groupTotalCant = block.lineas.reduce((acc, l) => acc + Number(l.cantidad || 0), 0);
             const groupTotalCostoUsd = block.lineas.reduce((acc, l) => {
-              const unitCop = l.costo_total_cop ?? (l as any).breakdown?.costoConHerrajes ?? 0;
+              const unitCop = l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0;
               const unitUsd = trm > 0 ? unitCop / trm : 0;
               return acc + (unitUsd * Number(l.cantidad || 0));
             }, 0);
@@ -379,7 +389,7 @@ export default function CocinaCard({
                   const label = members > 1 ? `${block.etiqueta}${l.posicion_grupo}` : block.etiqueta;
                   const isFirstLine = lineIdx === 0;
 
-                  const unitCostoCop = l.costo_total_cop ?? (l as any).breakdown?.costoConHerrajes ?? 0;
+                  const unitCostoCop = l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0;
                   const unitCostoUsd = trm > 0 ? unitCostoCop / trm : 0;
 
                   return (
