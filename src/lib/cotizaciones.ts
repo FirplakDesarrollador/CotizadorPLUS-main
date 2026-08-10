@@ -2,7 +2,7 @@ import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { cotizar, cotizarGrupo, type CotizarInput, type CotizarResult } from '@/lib/cotizar';
 import {
-  codigoGrupo, codigoModulo, indiceALetras, letrasAIndice, normalizarEtiquetaGrupo,
+  codigoGrupo, codigoModulo, anchoCodigo, indiceALetras, letrasAIndice, normalizarEtiquetaGrupo,
   distribuirResiduoMoneda, redondearMoneda,
   type SistemaMedida,
 } from '@/lib/module-groups';
@@ -92,7 +92,7 @@ export async function getCotizacion(id: string) {
   return { cabecera: cab, cocinas: cocinasConLineas, lineasSinCocina: lineasByCocina['sin'] ?? [] };
 }
 
-export async function crearCotizacion(input: { nombre: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; sistema_medida?: SistemaMedida }) {
+export async function crearCotizacion(input: { nombre: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; sistema_medida?: SistemaMedida; configDefault?: Record<string, unknown> | null }) {
   const sb = await createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) throw new Error('No autenticado');
@@ -102,6 +102,7 @@ export async function crearCotizacion(input: { nombre: string; cliente_nombre?: 
     moneda: input.moneda ?? 'USD',
     trm: input.trm ?? 4200,
     sistema_medida: input.sistema_medida ?? 'imperial',
+    config_default: input.configDefault ?? null,
     creado_por: user.id,
   }).select('id').single();
   if (error) throw new Error(error.message);
@@ -142,7 +143,7 @@ export async function eliminarCocina(cocinaId: string, cotizacionId: string) {
 }
 
 // ---- Módulos (líneas) dentro de una cocina ----
-export type AgregarLineaInput = CotizarInput & { cantidad: number; prefLabel?: string };
+export type AgregarLineaInput = CotizarInput & { cantidad: number; prefLabel?: string; dbTipo?: string };
 
 // Construye las columnas de una línea a partir del input y el resultado del motor.
 // Lo comparten agregarLinea y editarLinea para garantizar el mismo cálculo.
@@ -170,6 +171,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
       descuento: input.descuento ?? null,
       cantoFrentes: input.cantoFrentes ?? null,
       cantoCaja: input.cantoCaja ?? null,
+      dbTipo: input.dbTipo ?? null,
     },
     cantidad,
     costo_sin_herrajes_cop: res.costoSinHerrajes,
@@ -220,6 +222,7 @@ function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     cantoCaja: c.cantoCaja == null ? undefined : String(c.cantoCaja),
     cantidad: Number(linea.cantidad || 1),
     prefLabel: linea.pref ?? undefined,
+    dbTipo: (c.dbTipo ?? undefined) as string | undefined,
   };
 }
 
@@ -272,7 +275,14 @@ async function recalcularGrupo(grupoId: string) {
     const pref = sistema === 'metrico'
       ? (prepared?.prefMetrico ?? lineas[i].pref ?? '')
       : (prepared?.prefImperial ?? lineas[i].pref ?? '');
-    const code = codigoModulo(pref, inputs[i].largo, inputs[i].unidad, sistema);
+    // Anexa el sufijo de tipología de cajonera DB (ej. "-1S") al código del módulo:
+    // el motor solo conoce el prefijo base del tipo (ej. "DB"), no la tipología elegida en el formulario.
+    const dbTipoLinea = inputs[i].dbTipo;
+    const dbSufijo = dbTipoLinea ? `-${dbTipoLinea.split('-').slice(1).join('-')}` : '';
+    // Los muebles superiores de pared (W) incluyen el alto en el código (ej. W3614 = 36 de largo, 14 de alto),
+    // porque a diferencia de los demás tipos su alto sí varía y no es un dato implícito.
+    const altoSufijo = pref === 'W' ? anchoCodigo(inputs[i].alto, inputs[i].unidad, sistema) : '';
+    const code = codigoModulo(pref, inputs[i].largo, inputs[i].unidad, sistema) + altoSufijo + dbSufijo;
     const baseResult = calculated.lineas[i] as CotizarResult;
     const result = {
       ...baseResult,
@@ -501,7 +511,7 @@ export async function reordenarGruposCocina(cocinaId: string, nuevosGrupoIds: st
 
 
 
-export async function actualizarCotizacion(id: string, patch: { nombre?: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string }) {
+export async function actualizarCotizacion(id: string, patch: { nombre?: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }) {
   const sb = await createClient();
   const upd: Record<string, unknown> = {};
   if (patch.nombre !== undefined) upd.nombre = patch.nombre;
@@ -509,6 +519,7 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
   if (patch.moneda !== undefined) upd.moneda = patch.moneda;
   if (patch.trm !== undefined) upd.trm = patch.trm;
   if (patch.estado !== undefined) upd.estado = patch.estado;
+  if (patch.configDefault !== undefined) upd.config_default = patch.configDefault;
   const { error } = await sb.from('cot_cotizaciones').update(upd).eq('id', id);
   if (error) throw new Error(error.message);
 }

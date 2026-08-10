@@ -6,7 +6,7 @@ import AddCocina from './AddCocina';
 import GuideButton from '@/components/GuideButton';
 import TooltipToggle from '@/components/TooltipToggle';
 import ProjectConfigPanel, { type ProjectDefaults } from './ProjectConfigPanel';
-import { eliminarCotizacionAction } from '../actions';
+import { eliminarCotizacionAction, actualizarCotizacionAction } from '../actions';
 import VersionesCotizacion from './VersionesCotizacion';
 import type { CotizacionVersion } from '@/lib/cotizaciones';
 
@@ -122,6 +122,17 @@ export default function CotizacionDetalleClient({
 
   const [showConfig, setShowConfig] = useState(false);
 
+  function handleProjectDefaultsChange(next: ProjectDefaults) {
+    setProjectDefaults(next);
+    actualizarCotizacionAction(cotizacionId, { configDefault: next }).catch(() => {});
+  }
+
+  // Al agregar un mueble, sus materiales y cantos quedan como default del proyecto
+  // para que el próximo mueble (incluso en otra pestaña o al día siguiente) arranque con los mismos valores.
+  function handleMaterialesUsados(materiales: { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string }) {
+    handleProjectDefaultsChange({ ...projectDefaults, ...materiales });
+  }
+
   return (
     <>
       <div className="flex items-start justify-between gap-2" data-tour="proyecto">
@@ -152,7 +163,7 @@ export default function CotizacionDetalleClient({
               cantos={cantos}
               perfiles={perfiles}
               defaults={projectDefaults}
-              onChange={setProjectDefaults}
+              onChange={handleProjectDefaultsChange}
             />
           </div>
         )}
@@ -182,6 +193,7 @@ export default function CotizacionDetalleClient({
             trm={Number(cabecera.trm)}
             sistemaMedida={cabecera.sistema_medida ?? 'imperial'}
             projectDefaults={projectDefaults}
+            onMaterialesUsados={handleMaterialesUsados}
           />
         ))}
         <div data-tour="add-cocina"><AddCocina cotizacionId={cotizacionId} /></div>

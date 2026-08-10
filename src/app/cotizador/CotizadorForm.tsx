@@ -199,9 +199,9 @@ export default function CotizadorForm({ tipos, recargos = [], tableros, trmDefau
     <div className="grid lg:grid-cols-[380px_1fr] gap-6">
       {/* ---- Formulario ---- */}
       <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 h-fit">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold text-slate-900">Simular mueble</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <UndoRedoButtons />
             <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
             <TooltipToggle />

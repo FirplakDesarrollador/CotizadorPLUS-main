@@ -50,6 +50,7 @@ export type LineaInicial = {
   margenOverride?: number;
   cantoFrentes?: string;
   cantoCaja?: string;
+  dbTipo?: string;
 };
 
 const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
@@ -65,7 +66,7 @@ const getCantoMatch = (cantos: string[], target: string) =>
   target;
 
 export default function AddLineForm({
-  cocinaId, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, initial, onDone
+  cocinaId, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, initial, onDone, onMaterialesUsados
 }: {
   cocinaId: string;
   tipos: Tipo[];
@@ -81,6 +82,9 @@ export default function AddLineForm({
   projectDefaults?: ProjectDefaults;
   initial?: LineaInicial;
   onDone?: () => void;
+  // Se dispara al agregar un mueble (no al editar) con los materiales y cantos usados,
+  // para que el próximo mueble de la cocina arranque con esos mismos valores por defecto.
+  onMaterialesUsados?: (materiales: { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string }) => void;
 }) {
   const router = useRouter();
   const esEdicion = !!initial;
@@ -136,7 +140,7 @@ export default function AddLineForm({
   const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : (projectDefaults?.ncajones ?? ''));
   const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : (projectDefaults?.nentrepanos ?? ''));
   const [nbarras, setNbarras] = useState(ov?.n_barras != null ? String(ov.n_barras) : '');
-  const [dbTipo, setDbTipo] = useState('');
+  const [dbTipo, setDbTipo] = useState(initial?.dbTipo ?? '');
   const [rielCodigo, setRielCodigo] = useState('RIELTANDEM');
   const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? projectDefaults?.modoFrentes ?? 'normal');
 
@@ -154,6 +158,13 @@ export default function AddLineForm({
 
   const tipoOptions = tipos.map((t) => ({ value: t.id, label: `${prefProyecto(t)} — ${t.nombre_es ?? ''}` }));
   const tableroOptions = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({ value: t.codigo, label: `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}` })), [tableros]);
+
+  function handleTipoChange(id: string) {
+    setTipoId(id);
+    // Los muebles superiores de pared (W) siempre parten de 12 de fondo por defecto.
+    const nuevoPref = prefProyecto(tipos.find((t) => t.id === id));
+    if (nuevoPref === 'W') setProf('12');
+  }
 
   function aplicarPerfil(id: string) {
     setPerfilId(id);
@@ -203,6 +214,7 @@ export default function AddLineForm({
       cantoFrentes: cantoFrentesSel !== '' ? cantoFrentesSel : undefined,
       cantoCaja: cantoCajaSel !== '' ? cantoCajaSel : undefined,
       rielCodigo: esDB && rielCodigo ? rielCodigo : undefined,
+      dbTipo: esDB && dbTipo ? dbTipo : undefined,
     };
 
     const res = esEdicion
@@ -212,6 +224,9 @@ export default function AddLineForm({
     if (!res.ok) {
       setError(res.error ?? 'Error al guardar');
       return;
+    }
+    if (!esEdicion) {
+      onMaterialesUsados?.({ preset, cantoFrentes: cantoFrentesSel, cantoCaja: cantoCajaSel });
     }
     router.refresh();
     onDone?.();
@@ -230,7 +245,7 @@ export default function AddLineForm({
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
         <L label="Tipo">
-          <Combobox value={tipoId} options={tipoOptions} onChange={setTipoId} placeholder="Buscar tipo…" />
+          <Combobox value={tipoId} options={tipoOptions} onChange={handleTipoChange} placeholder="Buscar tipo…" />
         </L>
 
         <div className="grid grid-cols-4 gap-1">

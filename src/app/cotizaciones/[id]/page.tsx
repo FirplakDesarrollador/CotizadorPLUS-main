@@ -66,8 +66,10 @@ export default async function CotizacionDetallePage({
   ]);
   if (!cabecera) notFound();
 
-  // Si viene del formulario de creación, la config viene en ?cfg=<base64>
-  const initialConfig = parseConfigParam(sp['cfg']);
+  // La config de materiales globales queda guardada en el proyecto (config_default);
+  // ?cfg=<base64> es solo el fallback del primer render justo tras crear el proyecto.
+  const dbConfig = (cabecera as { config_default?: Partial<ProjectDefaults> | null }).config_default ?? null;
+  const initialConfig = dbConfig ?? parseConfigParam(sp['cfg']);
 
   return (
     <div className="min-h-screen bg-slate-50">

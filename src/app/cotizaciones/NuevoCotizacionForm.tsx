@@ -71,13 +71,15 @@ export default function NuevoCotizacionForm({
     [tableros]
   );
 
-  const configEncoded = useMemo(() => {
-    const config = {
-      preset: { ...preset, refuerzo: preset['caja'] ?? '' },
-      cantoFrentes, cantoCaja, margen, perfilId,
-    };
-    return btoa(encodeURIComponent(JSON.stringify(config)));
-  }, [preset, cantoFrentes, cantoCaja, margen, perfilId]);
+  const configObj = useMemo(() => ({
+    preset: { ...preset, refuerzo: preset['caja'] ?? '' },
+    cantoFrentes, cantoCaja, margen, perfilId,
+  }), [preset, cantoFrentes, cantoCaja, margen, perfilId]);
+
+  const configEncoded = useMemo(
+    () => btoa(encodeURIComponent(JSON.stringify(configObj))),
+    [configObj]
+  );
 
   const [state, formAction, pending] = useActionState(crearCotizacionAction, null);
 
@@ -89,6 +91,7 @@ export default function NuevoCotizacionForm({
 
   return (
     <form action={formAction} data-tour="nuevo" className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 h-fit">
+      <input type="hidden" name="config_default" value={JSON.stringify(configObj)} />
       <h2 className="font-semibold text-slate-900">Nuevo proyecto / cotización</h2>
 
       {/* ── Datos del proyecto ── */}

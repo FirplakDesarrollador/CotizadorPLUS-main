@@ -16,6 +16,7 @@ export default function ProyectoHeader({ cab }: { cab: Cab }) {
   const [cliente, setCliente] = useState(cab.cliente_nombre ?? '');
   const [moneda, setMoneda] = useState<'COP' | 'USD'>((cab.moneda as 'COP' | 'USD') ?? 'USD');
   const [trm, setTrm] = useState(Number(cab.trm));
+  const [trmInput, setTrmInput] = useState(String(cab.trm));
   const [estado, setEstado] = useState(cab.estado);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +40,10 @@ export default function ProyectoHeader({ cab }: { cab: Cab }) {
           <label className="block"><span className="block text-xs text-slate-500 mb-1">Moneda</span>
             <select value={moneda} onChange={(e) => setMoneda(e.target.value as 'COP' | 'USD')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><option>USD</option><option>COP</option></select></label>
           <label className="block"><span className="block text-xs text-slate-500 mb-1">TRM</span>
-            <input type="number" step="any" value={trm} onChange={(e) => setTrm(Number(e.target.value))} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+            <input type="number" step="any" value={trmInput}
+              onChange={(e) => setTrmInput(e.target.value)}
+              onBlur={(e) => { const n = parseFloat(e.target.value); if (!isNaN(n)) setTrm(n); else setTrmInput(String(trm)); }}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
           <label className="block"><span className="block text-xs text-slate-500 mb-1">Estado</span>
             <select value={estado} onChange={(e) => setEstado(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
               <option value="borrador">borrador</option><option value="enviada">enviada</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option>

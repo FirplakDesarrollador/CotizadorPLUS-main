@@ -42,6 +42,12 @@ La migración `0020_agrupacion_modulos.sql` incorpora:
 
 La tabla de grupos tiene RLS vinculada al propietario de la cotización o al rol administrador. La migración debe aplicarse antes de desplegar el código que consulta estas columnas.
 
+`codigo_modulo` (el código que se ve en la columna "Módulo" de la tabla de la cocina) lo recalcula siempre `recalcularGrupo()` en `src/lib/cotizaciones.ts`, a partir del prefijo base del tipo de mueble (`prefImperial`/`prefMetrico`, ej. `DB`) y el largo — nunca a partir del `pref` guardado en la línea. Para los muebles `DB` (cajonera), la tipología elegida en el formulario (ej. `DB-1S`, campo "Tipología DB") se guarda por separado como `config.dbTipo` en `cot_cotizacion_lineas` y `recalcularGrupo()` la anexa como sufijo al final del código (`DB15-1S`). Antes de este fix, `dbTipo` no se persistía y el sufijo se perdía cada vez que se creaba o editaba el módulo, aunque el formulario lo mostrara seleccionado.
+
+Para los muebles `W` (superior de pared / Wall cabinet), `recalcularGrupo()` también anexa el alto justo después del largo (`W3614` = 36 de largo, 14 de alto), porque a diferencia de los demás tipos su alto sí es variable y no queda implícito en el resto de la descripción. El orden final del código es `prefijo + largo + alto(solo W) + sufijo DB(solo DB)`.
+
+En el formulario (`AddLineForm.tsx`), al seleccionar un tipo `W` en el combo "Tipo", el campo "Prof" se fuerza a `12` por defecto (`handleTipoChange`), porque el fondo estándar de un mueble superior de pared es 12" y rara vez cambia.
+
 La migración 0020 fue aplicada y verificada en Supabase **I+D** el 2026-07-15. El backfill produjo un grupo por cada una de las ocho líneas históricas existentes, sin líneas huérfanas, y dejó activas las cuatro políticas RLS del nuevo modelo.
 
 ### Versionado persistente
@@ -49,6 +55,17 @@ La migración 0020 fue aplicada y verificada en Supabase **I+D** el 2026-07-15. 
 La migración `0024_versiones_cotizacion.sql` añade la tabla de versiones y las funciones RPC `cot_guardar_version` y `cot_restaurar_version`. La captura se serializa bajo bloqueo de la cabecera para evitar números duplicados. La restauración valida propiedad o rol administrador, repone todo el agregado dentro de una transacción y conserva el estado anterior como una nueva versión de respaldo.
 
 La migración 0024 fue aplicada en Supabase **I+D** el 2026-07-22. Se verificó la existencia de la tabla, las dos funciones RPC y las dos políticas RLS.
+
+### Materiales globales persistentes del proyecto
+
+La migración `0025_config_default_cotizacion.sql` añade `config_default jsonb` a `cot_cotizaciones`. Guarda el preset de materiales (tableros por rol, perfil, cantos de frente/caja, margen) capturado en el formulario "Nuevo proyecto / cotización". Antes de esta migración ese preset solo viajaba codificado en el parámetro `?cfg=` de la redirección tras crear el proyecto, así que se perdía al volver a abrir la cotización más tarde (los formularios de módulo y el panel "Materiales del proyecto" volvían a los valores por defecto del sistema). Ahora:
+
+- `crearCotizacion` guarda el preset elegido en `config_default` al crear el proyecto.
+- Cada cambio en el panel "Materiales del proyecto" (`ProjectConfigPanel` dentro de `CotizacionDetalleClient`) se persiste vía `actualizarCotizacionAction` con `configDefault`.
+- Al abrir `/cotizaciones/[id]`, el servidor prioriza `cabecera.config_default`; el parámetro `?cfg=` queda solo como respaldo del primer render justo después de crear el proyecto.
+- Cada vez que se agrega un mueble (no al editar), `AddLineForm` reporta sus tableros y cantos usados vía `onMaterialesUsados`; `CotizacionDetalleClient` los mezcla en `config_default` y los persiste. Así el próximo mueble que se agregue (misma pestaña, otra pestaña o al día siguiente) arranca con los materiales del último mueble agregado, no con los del momento de creación del proyecto.
+
+La migración 0025 fue aplicada y verificada en Supabase **I+D** el 2026-08-10 (columna `config_default` de tipo `jsonb` confirmada en `information_schema.columns`).
 
 ## 3. Seguridad y Triggers
 - Todos los registros cuentan con auditoría automática de fecha de modificación conectada al trigger `cot_touch_updated_at`.

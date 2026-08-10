@@ -30,7 +30,12 @@ export async function crearCotizacionAction(
     const moneda = (String(formData.get('moneda') || 'USD') as 'COP' | 'USD');
     const trm = Number(formData.get('trm') || 4200);
     const sistema_medida = String(formData.get('sistema_medida') || 'imperial') === 'metrico' ? 'metrico' : 'imperial';
-    const id = await crearCotizacion({ nombre, cliente_nombre, moneda, trm, sistema_medida });
+    let configDefault: Record<string, unknown> | null = null;
+    const configRaw = formData.get('config_default');
+    if (typeof configRaw === 'string' && configRaw) {
+      try { configDefault = JSON.parse(configRaw); } catch { configDefault = null; }
+    }
+    const id = await crearCotizacion({ nombre, cliente_nombre, moneda, trm, sistema_medida, configDefault });
     revalidatePath('/cotizaciones');
     return { ok: true, id };
   } catch (e) {
@@ -93,7 +98,7 @@ export async function eliminarCocinaAction(cotizacionId: string, cocinaId: strin
   revalidatePath(`/cotizaciones/${cotizacionId}`);
 }
 
-export async function actualizarCotizacionAction(id: string, patch: { nombre?: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string }): Promise<{ ok: boolean; error?: string }> {
+export async function actualizarCotizacionAction(id: string, patch: { nombre?: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }): Promise<{ ok: boolean; error?: string }> {
   try {
     await actualizarCotizacion(id, patch);
     revalidatePath(`/cotizaciones/${id}`);

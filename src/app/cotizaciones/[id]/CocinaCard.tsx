@@ -19,6 +19,7 @@ type LineaConfig = {
   margenOverride?: number;
   cantoFrentes?: string;
   cantoCaja?: string;
+  dbTipo?: string;
 };
 
 type Linea = {
@@ -50,7 +51,7 @@ type Perfil = { id: string; nombre: string; descripcion: string | null; valores:
 type HerrajeTipo = { rol: string; codigo: string | null };
 
 export default function CocinaCard({
-  cotizacionId, cocina, allCocinas, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults
+  cotizacionId, cocina, allCocinas, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, onMaterialesUsados
 }: {
   cotizacionId: string;
   cocina: Cocina;
@@ -66,6 +67,7 @@ export default function CocinaCard({
   trm: number;
   sistemaMedida: 'imperial' | 'metrico';
   projectDefaults?: ProjectDefaults;
+  onMaterialesUsados?: (materiales: { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string }) => void;
 }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
@@ -123,6 +125,7 @@ export default function CocinaCard({
     margenOverride: l.config?.margenOverride ?? undefined,
     cantoFrentes: l.config?.cantoFrentes ?? undefined,
     cantoCaja: l.config?.cantoCaja ?? undefined,
+    dbTipo: l.config?.dbTipo ?? undefined,
   });
 
   const lineaEnEdicion = cocina.lineas.find((l) => l.id === editId) ?? null;
@@ -562,6 +565,7 @@ export default function CocinaCard({
               trm={trm}
               sistemaMedida={sistemaMedida}
               projectDefaults={projectDefaults}
+              onMaterialesUsados={onMaterialesUsados}
             />
             <button onClick={() => setShowAdd(false)} className="text-sm text-slate-400 hover:underline">Cerrar</button>
           </div>

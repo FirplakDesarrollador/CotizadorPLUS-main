@@ -344,20 +344,33 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
     setMsg('Parámetros guardados'); router.refresh();
   }
 
-  const Num = ({ label, value, set, hint }: { label: string; value: number; set: (n: number) => void; hint?: string }) => (
-    <label className="block">
-      <span className="block text-xs text-slate-500 mb-1">{label}{hint && <span className="text-slate-400"> · {hint}</span>}</span>
-      <input type="number" step="any" value={value} onChange={(e) => set(Number(e.target.value))}
-        className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />
-    </label>
-  );
+  const NumInput = ({ label, value, set, hint }: { label: string; value: number; set: (n: number) => void; hint?: string }) => {
+    const [localVal, setLocalVal] = useState(String(value));
+    return (
+      <label className="block">
+        <span className="block text-xs text-slate-500 mb-1">{label}{hint && <span className="text-slate-400"> · {hint}</span>}</span>
+        <input
+          type="number"
+          step="any"
+          value={localVal}
+          onChange={(e) => setLocalVal(e.target.value)}
+          onBlur={(e) => {
+            const n = parseFloat(e.target.value);
+            if (!isNaN(n)) set(n);
+            else setLocalVal(String(value));
+          }}
+          className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+        />
+      </label>
+    );
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-5">
       <section>
         <h3 className="text-sm font-medium text-slate-900 mb-3">Tasa de cambio</h3>
         <div className="grid sm:grid-cols-3 gap-3">
-          <Num label="TRM (COP por USD)" value={trmValor} set={setTrmValor} />
+          <NumInput label="TRM (COP por USD)" value={trmValor} set={setTrmValor} />
           <label className="block">
             <span className="block text-xs text-slate-500 mb-1">Modo</span>
             <select value={trmModo} onChange={(e) => setTrmModo(e.target.value)} className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
@@ -369,12 +382,12 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
       <section>
         <h3 className="text-sm font-medium text-slate-900 mb-3">Márgenes y recargos (%)</h3>
         <div className="grid sm:grid-cols-3 gap-3">
-          <Num label="Margen muebles" value={mMuebles} set={setMMuebles} />
-          <Num label="Margen fillers" value={mFillers} set={setMFillers} />
-          <Num label="Margen paneles/zócalos" value={mPnTk} set={setMPnTk} />
-          <Num label="Margen herraje" value={margenHerraje} set={setMargenHerraje} />
-          {/* <Num label="Recargo extra" value={recargo} set={setRecargo} /> */}
-          <Num label="Desperdicio madera" value={despMadera} set={setDespMadera} />
+          <NumInput label="Margen muebles" value={mMuebles} set={setMMuebles} />
+          <NumInput label="Margen fillers" value={mFillers} set={setMFillers} />
+          <NumInput label="Margen paneles/zócalos" value={mPnTk} set={setMPnTk} />
+          <NumInput label="Margen herraje" value={margenHerraje} set={setMargenHerraje} />
+          {/* <NumInput label="Recargo extra" value={recargo} set={setRecargo} /> */}
+          <NumInput label="Desperdicio madera" value={despMadera} set={setDespMadera} />
         </div>
       </section>
 
