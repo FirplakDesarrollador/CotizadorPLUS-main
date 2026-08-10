@@ -20,6 +20,7 @@ type LineaConfig = {
   cantoFrentes?: string;
   cantoCaja?: string;
   dbTipo?: string;
+  rielCodigo?: string;
 };
 
 type Linea = {
@@ -126,6 +127,7 @@ export default function CocinaCard({
     cantoFrentes: l.config?.cantoFrentes ?? undefined,
     cantoCaja: l.config?.cantoCaja ?? undefined,
     dbTipo: l.config?.dbTipo ?? undefined,
+    rielCodigo: l.config?.rielCodigo ?? undefined,
   });
 
   const lineaEnEdicion = cocina.lineas.find((l) => l.id === editId) ?? null;
@@ -147,10 +149,12 @@ export default function CocinaCard({
     router.refresh();
   }
 
-  async function saveGroup(linea: Linea, value: string, input: HTMLInputElement) {
-    const members = cocina.lineas.filter((x) => x.grupo_id === linea.grupo_id).length;
-    const current = members > 1 ? `${linea.grupo?.etiqueta ?? ''}${linea.posicion_grupo}` : (linea.grupo?.etiqueta ?? '');
-    if (value.trim().toUpperCase() === current) return;
+  async function saveGroup(linea: Linea, value: string, input: HTMLInputElement, fallbackLabel?: string) {
+    const members = linea.grupo_id ? cocina.lineas.filter((x) => x.grupo_id === linea.grupo_id).length : 1;
+    const current = (linea.grupo_id && linea.grupo?.etiqueta)
+      ? (members > 1 ? `${linea.grupo.etiqueta}${linea.posicion_grupo}` : linea.grupo.etiqueta)
+      : (fallbackLabel ?? '');
+    if (value.trim().toUpperCase() === current.trim().toUpperCase()) return;
     setGroupBusy(linea.id);
     setGroupError(null);
     const res = await cambiarGrupoLineaAction(linea.id, value);
@@ -448,7 +452,7 @@ export default function CocinaCard({
                           aria-label={`Grupo del módulo ${l.codigo_modulo ?? l.pref ?? ''}`}
                           title="A, B… para bloques; A1, A2… para unir y ordenar"
                           onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-                          onBlur={(e) => saveGroup(l, e.currentTarget.value, e.currentTarget)}
+                          onBlur={(e) => saveGroup(l, e.currentTarget.value, e.currentTarget, label)}
                           className="w-14 rounded-md border border-slate-300 bg-white/80 px-2 py-1 text-center font-semibold uppercase disabled:opacity-50"
                         />
                       </td>

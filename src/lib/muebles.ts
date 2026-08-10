@@ -13,7 +13,23 @@ export const DB_TIPOLOGIAS: DbTipologia[] = [
   { key: 'DB2-1OP', nc: 3, nb: 1, desc: '2 cajones + 1 oculto · 1 par de barra' },
 ];
 
-// Tipos de riel de cajón para muebles DB (fuente: Excel materiales.xlsx Hoja1 sección HERRAJES).
+// Configuraciones rápidas de torre PCFD. Son presets editables: después de
+// aplicarlos el usuario puede ajustar cajones, entrepaños, puertas y zócalo.
+export type PcfdConfiguracion = {
+  key: 'STANDARD' | '2OP' | '4OP';
+  nc: number;
+  ne: number;
+  zocalo: number;
+  desc: string;
+};
+export const PCFD_CONFIGURACIONES: PcfdConfiguracion[] = [
+  { key: 'STANDARD', nc: 0, ne: 5, zocalo: 5.25, desc: 'Estándar · sin gavetas · 5 entrepaños · TK5' },
+  { key: '2OP', nc: 2, ne: 3, zocalo: 4.5, desc: '2 gavetas ocultas · 3 entrepaños · PUSH · TK4' },
+  { key: '4OP', nc: 4, ne: 3, zocalo: 5.25, desc: '4 gavetas ocultas · 3 entrepaños · PUSH · TK5' },
+];
+
+// Tipos de riel de cajón para muebles DB y PCFD-OP
+// (fuente: Excel materiales.xlsx Hoja1 sección HERRAJES).
 // El código corresponde al registro en cot_herrajes.
 // El riel por defecto del sistema es RIELTANDEM (plantilla heredada de 0016_herrajes_tipos.sql).
 export type DbRiel = { codigo: string; nombre: string; precio: number };

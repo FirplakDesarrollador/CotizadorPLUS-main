@@ -57,11 +57,29 @@ Se ajustó el contador total de muebles (`totalMuebles`) en `CocinaCard.tsx` par
 
 ## [2026-07-22] update | Se implementó el historial persistente de versiones de cotizaciones con snapshots completos, restauración transaccional, respaldo automático e interfaz de gestión.
 
+## [2026-07-23] ingest | Torres PCFD con gavetas ocultas de la cotización 26037
+Se cruzó la cotización POD 26037 White con las filas 5448–5451 de `Simulación muebles CEMA (1).xlsx`. Se confirmó que `2OP/4OP` representa dos/cuatro gavetas ocultas, se documentaron geometría, cantos, consumibles y herrajes, y se identificó que la plantilla `PCFD` vigente no usa `n_cajones` ni `n_entrepanos` y por tanto no puede reproducir esta familia. También se registraron las inconsistencias de la descripción comercial inglesa sobre cantidad de pull-outs y puertas.
+
+## [2026-07-23] update | PCFD paramétrico con gavetas ocultas y entrepaños editables
+Se implementó y aplicó en Supabase la migración `0025_pcfd_gavetas_parametricas.sql`, los presets `STANDARD`, `2OP` y `4OP`, la edición manual de cajones, entrepaños y zócalo, la selección persistente de riel y la generación del sufijo comercial `OP-PUSH`. Se añadieron validaciones de entradas y pruebas de regresión contra la geometría CEMA de la fila 5449.
+
+## [2026-07-23] ingest | Variantes de frente Gola identificadas como SM
+Se analizaron 1.026 referencias `SM`, 209 referencias `SMG` y 478 pares exactos contra muebles base en `Simulación muebles CEMA (1).xlsx`, además de las especificaciones comerciales de las cotizaciones 25083 y 26052. Se documentó que la gola es una variante transversal de frentes, que los refuerzos cambian por familia y que la nomenclatura histórica distingue de forma inconsistente `SM`, `SMG` y `GOAL`. Se propuso un sistema de frente persistido por proyecto/línea con modificadores paramétricos por tipo de mueble.
+
+## [2026-07-31] update | Corrección en asignación automática de bloque al agrupar o editar líneas sin grupo_id
+Se corrigió la función `cambiarGrupoLinea` en `src/lib/cotizaciones.ts` para asignar y crear automáticamente un bloque de grupo en base de datos si la línea carece de `grupo_id`. Además, se previno la sustitución errónea por el índice `"1"` en `CocinaCard.tsx` cuando se edita un grupo sin bloque persistido.
+
+## [2026-08-03] update | Ajuste visual en el simulador para evitar apiñamiento de botones
+Se modificaron los botones del encabezado en `CotizadorForm.tsx` para hacerlos compactos (`UndoRedoButtons compact`) y se ajustó el contenedor con `flex-wrap` y espaciado adaptativo, previniendo solapamiento en pantallas pequeñas y anchos restringidos (380px).
+
+## [2026-08-03] update | Simulación incremental de muebles combinados
+El simulador ahora permite confirmar, heredar, editar, eliminar y reordenar múltiples módulos bajo las reglas físicas del cotizador. Se añadió validación inmediata, recálculo del conjunto, persistencia versionada del constructor y un único desglose consolidado de materiales, piezas, cantos, consumibles y herrajes.
+
 ## [2026-08-04] update | Corrección de escritura en campos numéricos (cursor-jump)
 Se corrigió el bug donde al escribir en los campos numéricos de `AdminCatalogos.tsx` (parámetros globales: TRM, márgenes, desperdicios) y `ProyectoHeader-isazaale.tsx` (campo TRM), era necesario hacer clic en cada carácter. La causa era que el estado React era `number`, y cada pulsación de tecla disparaba `Number(e.target.value)` que re-renderizaba el input controlado perdiendo el cursor. Solución: el campo ahora usa estado local `string` para la edición libre (`onChange`), y solo convierte y propaga el número al padre en el evento `onBlur`.
 
 ## [2026-08-10] update | Los "materiales globales" del proyecto ahora se persisten en BD
-Se corrigió que el preset de materiales globales (tableros, perfil, cantos, margen) elegido en "Nuevo proyecto / cotización" se perdía al reabrir la cotización más tarde: solo viajaba en el parámetro `?cfg=` de la redirección de creación, nunca se guardaba. Se agregó la columna `config_default jsonb` a `cot_cotizaciones` (migración `0025_config_default_cotizacion.sql`, aplicada y verificada en Supabase I+D). `crearCotizacion` ahora la guarda al crear el proyecto, y cada cambio en el panel "Materiales del proyecto" se persiste vía `actualizarCotizacionAction`. `page.tsx` prioriza `config_default` de BD sobre `?cfg` al cargar la página. Ver [esquema_base_datos.md](wiki/esquema_base_datos.md).
+Se corrigió que el preset de materiales globales (tableros, perfil, cantos, margen) elegido en "Nuevo proyecto / cotización" se perdía al reabrir la cotización más tarde: solo viajaba en el parámetro `?cfg=` de la redirección de creación, nunca se guardaba. Se agregó la columna `config_default jsonb` a `cot_cotizaciones` (migración `0026_config_default_cotizacion.sql`, aplicada y verificada en Supabase I+D). `crearCotizacion` ahora la guarda al crear el proyecto, y cada cambio en el panel "Materiales del proyecto" se persiste vía `actualizarCotizacionAction`. `page.tsx` prioriza `config_default` de BD sobre `?cfg` al cargar la página. Ver [esquema_base_datos.md](wiki/esquema_base_datos.md).
 
 ## [2026-08-10] update | El código de módulo DB ahora incluye el sufijo de tipología (ej. DB15-1S)
 Se corrigió que el código de módulo mostrado en la tabla de la cocina (`codigo_modulo`) perdía el sufijo de la "Tipología DB" (ej. `-1S`, `-2S`) elegida en el formulario, tanto al crear como al editar un mueble de cajonera. La causa: `recalcularGrupo()` en `src/lib/cotizaciones.ts` siempre reconstruye `codigo_modulo` a partir del prefijo base del tipo (`prefImperial`/`prefMetrico`, ej. `DB`) más el largo, y la tipología elegida nunca se guardaba en ningún campo — solo existía transitoriamente en el estado del formulario. Se agregó `dbTipo` a `AgregarLineaInput`/`config` de la línea (persistido en `cot_cotizacion_lineas.config.dbTipo`) y `recalcularGrupo()` ahora anexa el sufijo (`dbTipo.split('-').slice(1).join('-')`) al código recalculado. También se restauró `dbTipo` al abrir "Editar mueble" (antes siempre arrancaba en blanco). Ver [esquema_base_datos.md](wiki/esquema_base_datos.md).

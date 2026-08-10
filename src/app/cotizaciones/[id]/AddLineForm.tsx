@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_RIELES } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES } from '@/lib/muebles';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
@@ -51,6 +51,7 @@ export type LineaInicial = {
   cantoFrentes?: string;
   cantoCaja?: string;
   dbTipo?: string;
+  rielCodigo?: string;
 };
 
 const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
@@ -139,9 +140,16 @@ export default function AddLineForm({
   const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : (projectDefaults?.npuertas ?? ''));
   const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : (projectDefaults?.ncajones ?? ''));
   const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : (projectDefaults?.nentrepanos ?? ''));
+  const [zocalo, setZocalo] = useState(ov?.zocalo != null ? String(ov.zocalo) : '');
   const [nbarras, setNbarras] = useState(ov?.n_barras != null ? String(ov.n_barras) : '');
   const [dbTipo, setDbTipo] = useState(initial?.dbTipo ?? '');
-  const [rielCodigo, setRielCodigo] = useState('RIELTANDEM');
+  const [rielCodigo, setRielCodigo] = useState(initial?.rielCodigo ?? 'RIELTANDEM');
+  const [pcfdConfig, setPcfdConfig] = useState(() => {
+    if (ov?.n_cajones === 2 && ov?.n_entrepanos === 3) return '2OP';
+    if (ov?.n_cajones === 4 && ov?.n_entrepanos === 3) return '4OP';
+    if (ov?.n_cajones === 0 && ov?.n_entrepanos === 5) return 'STANDARD';
+    return '';
+  });
   const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? projectDefaults?.modoFrentes ?? 'normal');
 
   const [loading, setLoading] = useState(false);
@@ -150,6 +158,8 @@ export default function AddLineForm({
   // Mapeos y opciones
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const esDB = (tipos.find((t) => t.id === tipoId)?.pref ?? '').startsWith('DB');
+  const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
+  const usaRiel = esDB || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
   const tipo = tipos.find((t) => t.id === tipoId);
   const prefProyecto = (t: Tipo | undefined) => sistemaMedida === 'metrico'
@@ -181,6 +191,15 @@ export default function AddLineForm({
     }
   }
 
+  function aplicarPcfdConfig(k: string) {
+    setPcfdConfig(k);
+    const config = PCFD_CONFIGURACIONES.find((x) => x.key === k);
+    if (!config) return;
+    setNcajones(String(config.nc));
+    setNentrepanos(String(config.ne));
+    setZocalo(String(config.zocalo));
+  }
+
   const toggleHerraje = (rol: string) =>
     setHerrajesExcl((xs) => xs.includes(rol) ? xs.filter((x) => x !== rol) : [...xs, rol]);
 
@@ -192,6 +211,7 @@ export default function AddLineForm({
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
+    if (zocalo !== '') overrides.zocalo = Number(zocalo);
     if (nbarras !== '') overrides.n_barras = Number(nbarras);
 
     const payload = {
@@ -205,7 +225,7 @@ export default function AddLineForm({
       trm,
       // recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
       cantidad,
-      prefLabel: prefProyecto(tipo) ? `${prefProyecto(tipo)}${Number(largo)}${esDB && dbTipo ? `-${dbTipo.split('-').slice(1).join('-')}` : ''}` : undefined,
+      prefLabel: prefProyecto(tipo) ? `${prefProyecto(tipo)}${Number(largo)}${esDB && dbTipo ? `-${dbTipo.split('-').slice(1).join('-')}` : ''}${esPCFD && Number(ncajones) > 0 ? `-${Number(ncajones)}OP-PUSH` : ''}` : undefined,
       modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
       herrajesExcluidos: conHerrajes && herrajesExcl.length ? herrajesExcl : undefined,
@@ -213,7 +233,7 @@ export default function AddLineForm({
       margenOverride: margenInput !== '' ? Number(margenInput) / 100 : undefined,
       cantoFrentes: cantoFrentesSel !== '' ? cantoFrentesSel : undefined,
       cantoCaja: cantoCajaSel !== '' ? cantoCajaSel : undefined,
-      rielCodigo: esDB && rielCodigo ? rielCodigo : undefined,
+      rielCodigo: usaRiel && rielCodigo ? rielCodigo : undefined,
       dbTipo: esDB && dbTipo ? dbTipo : undefined,
     };
 
@@ -297,12 +317,26 @@ export default function AddLineForm({
             <input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" />
           </L>
           <L label="Nº cajones">
-            <input type="number" placeholder="auto" value={ncajones} onChange={(e) => setNcajones(e.target.value)} className="inp" />
+            <input type="number" min={0} step={1} placeholder="auto" value={ncajones} onChange={(e) => { setNcajones(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" />
           </L>
           <L label="Nº entrepaños">
-            <input type="number" placeholder="auto" value={nentrepanos} onChange={(e) => setNentrepanos(e.target.value)} className="inp" />
+            <input type="number" min={0} step={1} placeholder="auto" value={nentrepanos} onChange={(e) => { setNentrepanos(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" />
           </L>
         </div>
+
+        {esPCFD && (
+          <div className="grid grid-cols-2 gap-1 md:col-span-2">
+            <L label="Configuración PCFD">
+              <select value={pcfdConfig} onChange={(e) => aplicarPcfdConfig(e.target.value)} className="inp">
+                <option value="">— manual —</option>
+                {PCFD_CONFIGURACIONES.map((config) => <option key={config.key} value={config.key}>{config.key} · {config.desc}</option>)}
+              </select>
+            </L>
+            <L label="Zócalo TK (in)">
+              <input type="number" min={0} step="any" placeholder="auto" value={zocalo} onChange={(e) => { setZocalo(e.target.value); setPcfdConfig(''); }} className="inp" />
+            </L>
+          </div>
+        )}
 
         {esDB && (
           <div className="grid grid-cols-2 gap-1">
@@ -318,7 +352,7 @@ export default function AddLineForm({
           </div>
         )}
 
-        {esDB && (
+        {usaRiel && (
           <div className="grid grid-cols-1 gap-1">
             <L label="Tipo de riel">
               <select value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">

@@ -155,7 +155,9 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
   const precioUnitCop = (input.conHerrajes && !usarUnificado) ? res.precioConHerrajesCop /* res.precioConHerrajesCopConRecargo */ : res.precioCop /* res.precioCopConRecargo */;
   const precioUnitUsd = (input.conHerrajes && !usarUnificado) ? res.precioConHerrajesUsd : res.precioUsd;
   const desc = `${input.prefLabel ?? ''} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim()
-    + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '');
+    + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '')
+    + (res.vars.n_cajones ? ` · ${res.vars.n_cajones} gaveta(s)` : '')
+    + (res.vars.n_entrepanos != null ? ` · ${res.vars.n_entrepanos} entrepaño(s)` : '');
   return {
     tipo_mueble_id: input.tipoId,
     pref: input.prefLabel ?? null,
@@ -172,6 +174,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
       cantoFrentes: input.cantoFrentes ?? null,
       cantoCaja: input.cantoCaja ?? null,
       dbTipo: input.dbTipo ?? null,
+      rielCodigo: input.rielCodigo ?? null,
     },
     cantidad,
     costo_sin_herrajes_cop: res.costoSinHerrajes,
@@ -220,6 +223,7 @@ function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     descuento: c.descuento == null ? undefined : Number(c.descuento),
     cantoFrentes: c.cantoFrentes == null ? undefined : String(c.cantoFrentes),
     cantoCaja: c.cantoCaja == null ? undefined : String(c.cantoCaja),
+    rielCodigo: c.rielCodigo == null ? undefined : String(c.rielCodigo),
     cantidad: Number(linea.cantidad || 1),
     prefLabel: linea.pref ?? undefined,
     dbTipo: (c.dbTipo ?? undefined) as string | undefined,
@@ -394,7 +398,24 @@ export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: str
     .select('*').eq('id', lineaId).single();
   if (lineError || !linea) throw new Error('Módulo no encontrado');
   const current = linea as LineaPersistida;
-  if (!current.cocina_id || !current.grupo_id) throw new Error('El módulo no tiene un bloque asignado');
+  if (!current.cocina_id) throw new Error('El módulo no pertenece a una cocina');
+
+  if (!current.grupo_id) {
+    const { count: groupCount } = await sb.from('cot_grupos_modulos')
+      .select('id', { count: 'exact', head: true }).eq('cocina_id', current.cocina_id);
+    const { data: createdG, error: gErr } = await sb.from('cot_grupos_modulos').insert({
+      cotizacion_id: current.cotizacion_id,
+      cocina_id: current.cocina_id,
+      orden: groupCount ?? 0,
+      etiqueta: `NUEVO-${crypto.randomUUID()}`,
+    }).select('id').single();
+    if (gErr || !createdG) throw new Error(gErr?.message ?? 'No se pudo crear el bloque');
+    await sb.from('cot_cotizacion_lineas').update({
+      grupo_id: createdG.id,
+      posicion_grupo: 1,
+    }).eq('id', current.id);
+    current.grupo_id = createdG.id;
+  }
 
   const { data: grupos, error: groupsError } = await sb.from('cot_grupos_modulos')
     .select('id,etiqueta,orden').eq('cocina_id', current.cocina_id).order('orden');

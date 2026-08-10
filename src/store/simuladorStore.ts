@@ -1,34 +1,51 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CotizarResult } from '@/lib/cotizar';
+import type { CotizarGrupoResult } from '@/lib/group-result';
 
-export type SimuladorValues = {
+export type SimuladorModuloValues = {
   tipoId: string;
-  unidad: 'in' | 'cm' | 'mm';
   largo: number;
   alto: number;
   prof: number;
   perfilId: string;
   preset: Record<string, string>;
+  cantoFrentes: string;
+  cantoCaja: string;
   conHerrajes: boolean;
   herrajesExcl: string[];
-  moneda: 'COP' | 'USD';
-  trm: number | null;
   npuertas: string;
   ncajones: string;
   nentrepanos: string;
+  zocalo: string;
   nbarras: string;
   dbTipo: string;
-  rielCodigo: string;  // código del riel para muebles DB (por defecto 'RIELTANDEM')
+  pcfdConfig: string;
+  rielCodigo: string;
   modoFrentes: 'normal' | 'sin_frentes' | 'solo_frentes';
 };
 
-interface SimuladorState extends SimuladorValues {
-  result: CotizarResult | null;
-  past: SimuladorValues[];
-  future: SimuladorValues[];
-  
-  setSimuladorState: (state: Partial<SimuladorValues & { result: CotizarResult | null }>) => void;
+export type SimuladorValues = SimuladorModuloValues & {
+  unidad: 'in' | 'cm' | 'mm';
+  moneda: 'COP' | 'USD';
+  trm: number | null;
+};
+
+export type SimuladorModulo = SimuladorModuloValues & { id: string };
+
+type SimuladorSnapshot = SimuladorValues & {
+  modulos: SimuladorModulo[];
+  editingId: string | null;
+  pendingDraft: SimuladorModuloValues | null;
+};
+
+type SimuladorHistoryEntry = SimuladorSnapshot & { result: CotizarGrupoResult | null };
+
+interface SimuladorState extends SimuladorSnapshot {
+  result: CotizarGrupoResult | null;
+  past: SimuladorHistoryEntry[];
+  future: SimuladorHistoryEntry[];
+
+  setSimuladorState: (state: Partial<SimuladorSnapshot & { result: CotizarGrupoResult | null }>) => void;
   resetSimuladorState: () => void;
   undo: () => boolean;
   redo: () => boolean;
@@ -36,46 +53,80 @@ interface SimuladorState extends SimuladorValues {
   canRedo: () => boolean;
 }
 
-const initialStateValues: SimuladorValues = {
+export const initialModuloValues: SimuladorModuloValues = {
   tipoId: '',
-  unidad: 'in' as const,
   largo: 33,
   alto: 30,
   prof: 24,
   perfilId: '',
   preset: {},
+  cantoFrentes: '',
+  cantoCaja: '',
   conHerrajes: true,
   herrajesExcl: [],
-  moneda: 'USD' as const,
-  trm: null,
   npuertas: '',
   ncajones: '',
   nentrepanos: '',
+  zocalo: '',
   nbarras: '',
   dbTipo: '',
+  pcfdConfig: '',
   rielCodigo: 'RIELTANDEM',
-  modoFrentes: 'normal' as const,
+  modoFrentes: 'normal',
 };
 
-const getValuesFromState = (state: SimuladorState): SimuladorValues => ({
+const initialStateValues: SimuladorSnapshot = {
+  ...initialModuloValues,
+  unidad: 'in',
+  moneda: 'USD',
+  trm: null,
+  modulos: [],
+  editingId: null,
+  pendingDraft: null,
+};
+
+export const moduloFromValues = (values: SimuladorModuloValues, id: string): SimuladorModulo => ({
+  id,
+  ...values,
+  preset: { ...values.preset },
+  herrajesExcl: [...values.herrajesExcl],
+});
+
+export const getModuloValues = (state: SimuladorModuloValues): SimuladorModuloValues => ({
   tipoId: state.tipoId,
-  unidad: state.unidad,
   largo: state.largo,
   alto: state.alto,
   prof: state.prof,
   perfilId: state.perfilId,
-  preset: state.preset,
+  preset: { ...state.preset },
+  cantoFrentes: state.cantoFrentes,
+  cantoCaja: state.cantoCaja,
   conHerrajes: state.conHerrajes,
-  herrajesExcl: state.herrajesExcl,
-  moneda: state.moneda,
-  trm: state.trm,
+  herrajesExcl: [...state.herrajesExcl],
   npuertas: state.npuertas,
   ncajones: state.ncajones,
   nentrepanos: state.nentrepanos,
+  zocalo: state.zocalo,
   nbarras: state.nbarras,
   dbTipo: state.dbTipo,
+  pcfdConfig: state.pcfdConfig,
   rielCodigo: state.rielCodigo,
   modoFrentes: state.modoFrentes,
+});
+
+const getSnapshot = (state: SimuladorState): SimuladorSnapshot => ({
+  ...getModuloValues(state),
+  unidad: state.unidad,
+  moneda: state.moneda,
+  trm: state.trm,
+  modulos: state.modulos.map((modulo) => moduloFromValues(modulo, modulo.id)),
+  editingId: state.editingId,
+  pendingDraft: state.pendingDraft ? getModuloValues(state.pendingDraft) : null,
+});
+
+const getHistoryEntry = (state: SimuladorState): SimuladorHistoryEntry => ({
+  ...getSnapshot(state),
+  result: state.result,
 });
 
 export const useSimuladorStore = create<SimuladorState>()(
@@ -88,20 +139,18 @@ export const useSimuladorStore = create<SimuladorState>()(
 
       setSimuladorState: (newState) =>
         set((state) => {
-          const currentValues = getValuesFromState(state);
-          // Verificar si hay cambios reales en las propiedades
-          const keys = Object.keys(newState) as (keyof SimuladorValues)[];
-          const hasChange = keys.some(
-            (k) => JSON.stringify(newState[k]) !== JSON.stringify(currentValues[k])
+          const current = getSnapshot(state);
+          const durableKeys = (Object.keys(newState) as (keyof SimuladorSnapshot)[])
+            .filter((key) => key !== ('result' as keyof SimuladorSnapshot));
+          const hasChange = durableKeys.some(
+            (key) => JSON.stringify(newState[key]) !== JSON.stringify(current[key]),
           );
-          if (!hasChange) return state;
-
-          const newPast = [...state.past, currentValues].slice(-50); // máx 50 pasos
+          if (!hasChange) return { ...state, ...newState };
           return {
             ...state,
             ...newState,
-            past: newPast,
-            future: [], // borrar futuro tras nueva acción
+            past: [...state.past, getHistoryEntry(state)].slice(-50),
+            future: [],
           };
         }),
 
@@ -110,23 +159,19 @@ export const useSimuladorStore = create<SimuladorState>()(
           ...state,
           ...initialStateValues,
           result: null,
-          past: [...state.past, getValuesFromState(state)].slice(-50),
+          past: [...state.past, getHistoryEntry(state)].slice(-50),
           future: [],
         })),
 
       undo: () => {
         const state = get();
         if (state.past.length === 0) return false;
-
-        const previousValues = state.past[state.past.length - 1];
-        const newPast = state.past.slice(0, state.past.length - 1);
-        const currentValues = getValuesFromState(state);
-
+        const previous = state.past[state.past.length - 1];
         set({
           ...state,
-          ...previousValues,
-          past: newPast,
-          future: [currentValues, ...state.future].slice(0, 50),
+          ...previous,
+          past: state.past.slice(0, -1),
+          future: [getHistoryEntry(state), ...state.future].slice(0, 50),
         });
         return true;
       },
@@ -134,16 +179,12 @@ export const useSimuladorStore = create<SimuladorState>()(
       redo: () => {
         const state = get();
         if (state.future.length === 0) return false;
-
-        const nextValues = state.future[0];
-        const newFuture = state.future.slice(1);
-        const currentValues = getValuesFromState(state);
-
+        const next = state.future[0];
         set({
           ...state,
-          ...nextValues,
-          past: [...state.past, currentValues].slice(-50),
-          future: newFuture,
+          ...next,
+          past: [...state.past, getHistoryEntry(state)].slice(-50),
+          future: state.future.slice(1),
         });
         return true;
       },
@@ -153,12 +194,26 @@ export const useSimuladorStore = create<SimuladorState>()(
     }),
     {
       name: 'simulador-storage',
+      version: 2,
+      migrate: (persistedState) => {
+        const state = (persistedState ?? {}) as Partial<SimuladorState>;
+        return {
+          ...initialStateValues,
+          ...state,
+          modulos: state.modulos ?? [],
+          editingId: null,
+          pendingDraft: null,
+          result: null,
+          past: [],
+          future: [],
+        } as SimuladorState;
+      },
       partialize: (state) => {
-        // Excluir past/future de la persistencia local para evitar almacenamiento redundante enorme
         const { past, future, ...persistedState } = state;
+        void past;
+        void future;
         return persistedState;
       },
-    }
-  )
+    },
+  ),
 );
-

@@ -1,7 +1,7 @@
 # Plan funcional y técnico: agrupación de módulos
 
 **Estado:** implementado y probado; `db/migrations/0020_agrupacion_modulos.sql` fue aplicada al proyecto Supabase I+D el 2026-07-15. Otros entornos deben migrarse antes de desplegar el código.  
-**Alcance:** proyectos/cotizaciones, con grupos limitados a una cocina.  
+**Alcance:** proyectos/cotizaciones, con grupos limitados a una cocina, y simulaciones locales de un único conjunto combinado.
 **Fuentes:** decisiones del usuario, código actual, Supabase consultado el 2026-07-14 y libros Excel del proyecto.
 
 ## Validación ejecutada (2026-07-15)
@@ -318,3 +318,15 @@ Repetir con caja de 18 mm y comprobar que no queden descuentos fijos de 30/15 mm
 ## 14. Dependencia pendiente
 
 Completar el catálogo imperial↔métrico. La arquitectura no usa nombres hardcodeados, pero un proyecto métrico no podrá utilizar un tipo cuyo `pref_metrico` esté vacío. La equivalencia inicial confirmada es `BFD -> IP`.
+
+## 15. Constructor de grupos en el simulador (2026-08-03)
+
+El módulo `/cotizador` reutiliza el motor físico sin crear proyecto, cocina ni filas en Supabase:
+
+- El primer formulario funciona como borrador. Calcular o agregar valida la lista propuesta completa mediante `cotizarGrupoAction`.
+- `+ Agregar módulo` confirma el actual y abre el siguiente como copia editable. La unidad del primero es global y queda bloqueada; materiales, cantos, frentes y herrajes se heredan, pero mantienen las reglas de edición y compatibilidad de cotizaciones.
+- La franja superior muestra el orden izquierda→derecha y permite editar, eliminar, arrastrar o desplazar cada integrante.
+- Un error del motor deja intacta la última configuración válida y bloquea nuevas confirmaciones hasta que cambie el formulario.
+- El resultado público es un desglose único del conjunto. Las líneas y precios individuales solo se usan internamente para distribuir y conciliar costos.
+- La sesión, incluido borrador, orden, edición y resultado, persiste en `simulador-storage` y participa en Undo/Redo.
+- No se añadió un límite global de dos metros ni un parámetro administrativo. Continúa vigente la validación física contra el formato real del tablero para las piezas continuas.

@@ -21,6 +21,8 @@ Este archivo actúa como puente entre la base de datos y el motor de cálculo. S
 3. Construye los objetos de parámetros que espera el `engine.ts` (resolviendo presets y overrides).
 4. Invoca `calcularMueble()` y devuelve el `Breakdown` al frontend.
 
+El simulador combinado llama `cotizarGrupoConsolidado()` mediante una Server Action con la lista completa de `CotizarInput`. La validación ocurre antes de confirmar un módulo, por lo que una incompatibilidad no altera la última lista ni el último resultado válidos.
+
 **Carga de Datos (`getCotizadorData`):**
 Provee al frontend con toda la metadata necesaria para construir la interfaz (tipos de mueble, tableros habilitados, herrajes filtrados por rol), asegurando que la UI esté sincronizada con la Base de Datos en tiempo real.
 
@@ -35,3 +37,16 @@ La agrupación se implementa en `src/lib/group-engine.ts` como una transformaci�
 - Antes de calcular se validan profundidad (tolerancia 0,5 mm; las alturas pueden diferir), materiales/espesores estructurales, canto de caja, espesor de frente, margen, cantidad unitaria y largo máximo del tablero.
 - El costo de las piezas continuas se reparte en proporción al ancho; los divisores interiores se reparten por mitades cuando la altura es idéntica o al mueble correspondiente si difiere. El resultado sigue siendo un precio individual por línea y el grupo almacena además su subtotal y breakdown estructural.
 - Las participaciones usan complemento en la última línea para sumar exactamente una unidad pese a la aritmética binaria. Los importes se cierran a dos decimales y cualquier residuo se asigna determinísticamente al último módulo; por ello el subtotal almacenado coincide con la suma de líneas.
+
+## 4. Consolidación para el simulador
+
+`src/lib/group-result.ts` transforma las asignaciones internas de `GroupCalculation.lineas` en un único `CotizarGrupoResult`. No recalcula precios ni introduce otra cadena financiera: suma los valores conciliados del motor y agrupa el detalle físico.
+
+- Piezas: clave compuesta por nombre, rol y dimensiones; las participaciones fraccionarias de una pieza continua vuelven a sumar su cantidad física total.
+- Tableros: agrupados por rol y código.
+- Cantos: agrupados por calibre y precio.
+- Herrajes: agrupados por rol, código y precio. Cada módulo puede incluirlos o excluirlos de forma independiente.
+- Consumibles: sumados por selector.
+- Resumen estructural: cantidad de módulos, largo exterior, laterales/divisiones, uniones y claves de piezas continuas.
+
+El frontend recibe únicamente el consolidado; los precios individuales permanecen como detalle interno del algoritmo de reparto. El simulador no persiste grupos en Supabase: la sesión combinada reside en Zustand/localStorage. Editar, eliminar o reordenar confirma una nueva lista válida y vuelve a ejecutar el mismo cálculo grupal.

@@ -58,14 +58,14 @@ La migración 0024 fue aplicada en Supabase **I+D** el 2026-07-22. Se verificó 
 
 ### Materiales globales persistentes del proyecto
 
-La migración `0025_config_default_cotizacion.sql` añade `config_default jsonb` a `cot_cotizaciones`. Guarda el preset de materiales (tableros por rol, perfil, cantos de frente/caja, margen) capturado en el formulario "Nuevo proyecto / cotización". Antes de esta migración ese preset solo viajaba codificado en el parámetro `?cfg=` de la redirección tras crear el proyecto, así que se perdía al volver a abrir la cotización más tarde (los formularios de módulo y el panel "Materiales del proyecto" volvían a los valores por defecto del sistema). Ahora:
+La migración `0026_config_default_cotizacion.sql` añade `config_default jsonb` a `cot_cotizaciones`. Guarda el preset de materiales (tableros por rol, perfil, cantos de frente/caja, margen) capturado en el formulario "Nuevo proyecto / cotización". Antes de esta migración ese preset solo viajaba codificado en el parámetro `?cfg=` de la redirección tras crear el proyecto, así que se perdía al volver a abrir la cotización más tarde (los formularios de módulo y el panel "Materiales del proyecto" volvían a los valores por defecto del sistema). Ahora:
 
 - `crearCotizacion` guarda el preset elegido en `config_default` al crear el proyecto.
 - Cada cambio en el panel "Materiales del proyecto" (`ProjectConfigPanel` dentro de `CotizacionDetalleClient`) se persiste vía `actualizarCotizacionAction` con `configDefault`.
 - Al abrir `/cotizaciones/[id]`, el servidor prioriza `cabecera.config_default`; el parámetro `?cfg=` queda solo como respaldo del primer render justo después de crear el proyecto.
 - Cada vez que se agrega un mueble (no al editar), `AddLineForm` reporta sus tableros y cantos usados vía `onMaterialesUsados`; `CotizacionDetalleClient` los mezcla en `config_default` y los persiste. Así el próximo mueble que se agregue (misma pestaña, otra pestaña o al día siguiente) arranca con los materiales del último mueble agregado, no con los del momento de creación del proyecto.
 
-La migración 0025 fue aplicada y verificada en Supabase **I+D** el 2026-08-10 (columna `config_default` de tipo `jsonb` confirmada en `information_schema.columns`).
+La migración 0026 fue aplicada y verificada en Supabase **I+D** el 2026-08-10 (columna `config_default` de tipo `jsonb` confirmada en `information_schema.columns`). Nota: el número 0025 ya estaba tomado por `0025_pcfd_gavetas_parametricas.sql` (rama paralela); esta migración se renombró a 0026 al integrar ambas ramas en DEV.
 
 ## 3. Seguridad y Triggers
 - Todos los registros cuentan con auditoría automática de fecha de modificación conectada al trigger `cot_touch_updated_at`.
