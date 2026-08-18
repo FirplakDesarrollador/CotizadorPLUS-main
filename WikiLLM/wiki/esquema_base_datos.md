@@ -44,7 +44,7 @@ La tabla de grupos tiene RLS vinculada al propietario de la cotización o al rol
 
 `codigo_modulo` (el código que se ve en la columna "Módulo" de la tabla de la cocina) lo recalcula siempre `recalcularGrupo()` en `src/lib/cotizaciones.ts`, a partir del prefijo base del tipo de mueble (`prefImperial`/`prefMetrico`, ej. `DB`) y el largo — nunca a partir del `pref` guardado en la línea. Para los muebles `DB` (cajonera), la tipología elegida en el formulario (ej. `DB-1S`, campo "Tipología DB") se guarda por separado como `config.dbTipo` en `cot_cotizacion_lineas` y `recalcularGrupo()` la anexa como sufijo al final del código (`DB15-1S`). Antes de este fix, `dbTipo` no se persistía y el sufijo se perdía cada vez que se creaba o editaba el módulo, aunque el formulario lo mostrara seleccionado.
 
-Para los muebles `W` (superior de pared / Wall cabinet), `recalcularGrupo()` también anexa el alto justo después del largo (`W3614` = 36 de largo, 14 de alto), porque a diferencia de los demás tipos su alto sí es variable y no queda implícito en el resto de la descripción. El orden final del código es `prefijo + largo + alto(solo W) + sufijo DB(solo DB)`.
+Para los muebles `W` (superior de pared / Wall cabinet) y `PN` (Panel), `recalcularGrupo()` también anexa el alto justo después del largo (`W3614` = 36 de largo, 14 de alto), porque a diferencia de los demás tipos su alto sí es variable y no queda implícito en el resto de la descripción. El orden final del código es `prefijo + largo + alto(solo W/PN) + sufijo DB(solo DB)`.
 
 En el formulario (`AddLineForm.tsx`), al seleccionar un tipo `W` en el combo "Tipo", el campo "Prof" se fuerza a `12` por defecto (`handleTipoChange`), porque el fondo estándar de un mueble superior de pared es 12" y rara vez cambia.
 

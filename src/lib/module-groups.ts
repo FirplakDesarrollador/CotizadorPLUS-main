@@ -45,6 +45,25 @@ export function convertirExacto(value: number, from: UnidadDim, to: UnidadDim): 
   return Number((value * factors[from][to]).toPrecision(15));
 }
 
+// Interpreta medidas escritas en fracción imperial (ej. "24 7/8", "24-7/8", "7/8")
+// además de números planos ("24.875"). Los campos de Largo/Alto/Prof de AddLineForm
+// son de texto libre justamente para permitir este formato; sin este parseo,
+// Number("24 7/8") da NaN, que Supabase guarda como NULL y se lee de vuelta como 0
+// (un módulo "0x0x0" con costo casi nulo en una cotización real).
+export function parseMedida(raw: string | number): number {
+  if (typeof raw === 'number') return raw;
+  const s = raw.trim().replace(/["”]/g, '');
+  if (s === '') return NaN;
+  const directo = Number(s);
+  if (!Number.isNaN(directo)) return directo;
+  const m = /^(\d+(?:\.\d+)?)?\s*[-\s]?\s*(\d+)\s*\/\s*(\d+)$/.exec(s);
+  if (m && Number(m[3]) > 0) {
+    const entero = m[1] ? Number(m[1]) : 0;
+    return entero + Number(m[2]) / Number(m[3]);
+  }
+  return NaN;
+}
+
 export function anchoCodigo(value: number, unidad: UnidadDim, sistema: SistemaMedida): string {
   const target: UnidadDim = sistema === 'imperial' ? 'in' : 'cm';
   const converted = convertirExacto(value, unidad, target);

@@ -26,4 +26,10 @@ Ejemplos de componentes destacados:
 - **Constructor combinado (`CotizadorForm.tsx`)**: Presenta arriba los módulos confirmados en orden físico, permite editarlos, eliminarlos, arrastrarlos o moverlos con botones. `+ Agregar módulo` valida el formulario activo, lo confirma y abre el siguiente heredando su configuración. La unidad queda bloqueada después del primer módulo.
 - **Tarjeta de Cocina (`CocinaCard.tsx`)**: Renderiza los módulos de cada cocina con arrastre de grupos, columna de Costo USD, desgloses por línea y una fila de totales superiores alineada exactamente con las columnas de valores (Costo USD, Cant, Unit USD, Total USD, Total COP).
 
+## 4. Medidas en fracción imperial (`AddLineForm.tsx`)
+
+Los campos Largo/Alto/Prof del formulario de módulos en Cotizaciones (`AddLineForm.tsx`, distinto del Simulador) son `<input type="text">` a propósito, para permitir fracciones imperiales comunes en carpintería (`24 7/8`), en vez del `<input type="number">` nativo del Simulador que las rechaza. Antes de guardar, esos valores pasan por `parseMedida()` (`src/lib/module-groups.ts`), que interpreta `24 7/8`, `24-7/8`, `7/8` o un decimal plano. Si el texto no es interpretable, `onSubmit` bloquea el guardado con un mensaje de error.
+
+Esto reemplazó un `Number(largo)` directo: `Number("24 7/8")` da `NaN`, que al serializarse a JSON para el insert de Supabase se convierte silenciosamente en `null` (`JSON.stringify(NaN) → null`), y una columna `numeric` nullable lo guarda como `NULL` — al releerlo, `Number(null)` es `0`. El síntoma era un módulo con Largo/Alto/Prof en `0`, código como `PN0` y un costo casi nulo, sin ningún error visible para el usuario.
+
 *NOTA: Gran parte del diseño y la interacción fluye a través de Server Actions de Next.js, conectando directamente los componentes interactivos con funciones seguras del servidor (como `cotizar.ts`).*

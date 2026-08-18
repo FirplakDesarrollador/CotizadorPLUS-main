@@ -6,6 +6,7 @@ import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES } from '@/lib/muebles';
+import { parseMedida } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
@@ -205,27 +206,34 @@ export default function AddLineForm({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    const dimsInvalidas = [['Largo', largo], ['Alto', alto], ['Prof', prof]]
+      .filter(([, v]) => Number.isNaN(parseMedida(v as string)));
+    if (dimsInvalidas.length > 0) {
+      setError(`Medida inválida en ${dimsInvalidas.map(([label]) => label).join(', ')}. Usa un número (24.875) o una fracción (24 7/8).`);
+      return;
+    }
+    setLoading(true);
     const overrides: Record<string, number> = {};
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
     if (zocalo !== '') overrides.zocalo = Number(zocalo);
     if (nbarras !== '') overrides.n_barras = Number(nbarras);
+    if (esDB && dbTipo) overrides.n_cajones_pequenos = DB_TIPOLOGIAS.find((x) => x.key === dbTipo)?.npeq ?? 0;
 
     const payload = {
       tipoId,
-      largo: Number(largo),
-      alto: Number(alto),
-      prof: Number(prof),
+      largo: parseMedida(largo),
+      alto: parseMedida(alto),
+      prof: parseMedida(prof),
       unidad,
       preset,
       conHerrajes,
       trm,
       // recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
       cantidad,
-      prefLabel: prefProyecto(tipo) ? `${prefProyecto(tipo)}${Number(largo)}${esDB && dbTipo ? `-${dbTipo.split('-').slice(1).join('-')}` : ''}${esPCFD && Number(ncajones) > 0 ? `-${Number(ncajones)}OP-PUSH` : ''}` : undefined,
+      prefLabel: prefProyecto(tipo) ? `${prefProyecto(tipo)}${parseMedida(largo)}${esDB && dbTipo ? `-${dbTipo.split('-').slice(1).join('-')}` : ''}${esPCFD && Number(ncajones) > 0 ? `-${Number(ncajones)}OP-PUSH` : ''}` : undefined,
       modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
       herrajesExcluidos: conHerrajes && herrajesExcl.length ? herrajesExcl : undefined,

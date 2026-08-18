@@ -211,6 +211,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (modulo.zocalo !== '') overrides.zocalo = Number(modulo.zocalo);
     if (modulo.nbarras !== '') overrides.n_barras = Number(modulo.nbarras);
     const pref = tipos.find((tipo) => tipo.id === modulo.tipoId)?.pref ?? '';
+    if (pref.startsWith('DB') && modulo.dbTipo) overrides.n_cajones_pequenos = DB_TIPOLOGIAS.find((x) => x.key === modulo.dbTipo)?.npeq ?? 0;
     return {
       tipoId: modulo.tipoId,
       largo: modulo.largo,
@@ -686,7 +687,9 @@ function ResultadoView({ result, moneda, setMoneda }:
         <table className="w-full text-sm">
           <thead><tr className="text-left text-slate-400"><th className="py-1">Pieza</th><th>Rol</th><th className="text-right">Cant</th><th className="text-right">Largo&quot;</th><th className="text-right">Ancho&quot;</th><th className="text-right">cm²</th></tr></thead>
           <tbody>
-            {result.piezas.map((p, i) => (
+            {/* Piezas con cantidad 0 no se producen (ej. "frente" uniforme queda en 0 cuando
+                la tipología DB es mixta y usa frente_gaveta_pequena/grande en su lugar). */}
+            {result.piezas.filter((p) => p.cant > 0).map((p, i) => (
               <tr key={i} className="border-t border-slate-100">
                 <td className="py-1">{p.pieza}</td><td className="text-slate-500">{p.rol}</td>
                 <td className="text-right">{p.cant}</td><td className="text-right">{p.largoIn}</td>

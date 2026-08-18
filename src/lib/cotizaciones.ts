@@ -283,9 +283,10 @@ async function recalcularGrupo(grupoId: string) {
     // el motor solo conoce el prefijo base del tipo (ej. "DB"), no la tipología elegida en el formulario.
     const dbTipoLinea = inputs[i].dbTipo;
     const dbSufijo = dbTipoLinea ? `-${dbTipoLinea.split('-').slice(1).join('-')}` : '';
-    // Los muebles superiores de pared (W) incluyen el alto en el código (ej. W3614 = 36 de largo, 14 de alto),
-    // porque a diferencia de los demás tipos su alto sí varía y no es un dato implícito.
-    const altoSufijo = pref === 'W' ? anchoCodigo(inputs[i].alto, inputs[i].unidad, sistema) : '';
+    // Los muebles superiores de pared (W) y los paneles (PN) incluyen el alto en el código
+    // (ej. W3614 = 36 de largo, 14 de alto), porque a diferencia de los demás tipos su alto
+    // sí varía y no es un dato implícito.
+    const altoSufijo = (pref === 'W' || pref === 'PN') ? anchoCodigo(inputs[i].alto, inputs[i].unidad, sistema) : '';
     const code = codigoModulo(pref, inputs[i].largo, inputs[i].unidad, sistema) + altoSufijo + dbSufijo;
     const baseResult = calculated.lineas[i] as CotizarResult;
     const result = {

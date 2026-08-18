@@ -9,6 +9,7 @@ import {
   indiceALetras,
   letrasAIndice,
   normalizarEtiquetaGrupo,
+  parseMedida,
   redondearMoneda,
 } from '@/lib/module-groups';
 
@@ -45,4 +46,16 @@ test('convierte dimensiones y construye códigos sin redondear a anchos de catá
   assert.equal(codigoModulo('B', 12, 'in', 'imperial'), 'B12');
   assert.equal(codigoModulo('IP', 50, 'cm', 'metrico'), 'IP50');
   assert.equal(codigoGrupo(['B12', 'DB10', 'BFD20']), 'B12.DB10.BFD20');
+});
+
+test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {
+  assert.equal(parseMedida('24 7/8'), 24.875);
+  assert.equal(parseMedida('24-7/8'), 24.875);
+  assert.equal(parseMedida('7/8'), 0.875);
+  assert.equal(parseMedida('24.875'), 24.875);
+  assert.equal(parseMedida('24'), 24);
+  assert.equal(parseMedida('  30  '), 30);
+  assert.equal(parseMedida('24 7/8"'), 24.875);
+  assert.ok(Number.isNaN(parseMedida('')));
+  assert.ok(Number.isNaN(parseMedida('abc')));
 });
