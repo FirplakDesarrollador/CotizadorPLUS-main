@@ -143,7 +143,11 @@ export async function eliminarCocina(cocinaId: string, cotizacionId: string) {
 }
 
 // ---- Módulos (líneas) dentro de una cocina ----
-export type AgregarLineaInput = CotizarInput & { cantidad: number; prefLabel?: string; dbTipo?: string };
+export type AgregarLineaInput = CotizarInput & {
+  cantidad: number; prefLabel?: string; dbTipo?: string;
+  // Variantes transversales; se persisten para que sobrevivan al recargar la cotización.
+  sistemaFrente?: string; removible?: boolean;
+};
 
 // Construye las columnas de una línea a partir del input y el resultado del motor.
 // Lo comparten agregarLinea y editarLinea para garantizar el mismo cálculo.
@@ -174,6 +178,8 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
       cantoFrentes: input.cantoFrentes ?? null,
       cantoCaja: input.cantoCaja ?? null,
       dbTipo: input.dbTipo ?? null,
+      sistemaFrente: input.sistemaFrente ?? 'manija',
+      removible: input.removible ?? false,
       rielCodigo: input.rielCodigo ?? null,
     },
     cantidad,
@@ -227,6 +233,8 @@ function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     cantidad: Number(linea.cantidad || 1),
     prefLabel: linea.pref ?? undefined,
     dbTipo: (c.dbTipo ?? undefined) as string | undefined,
+    sistemaFrente: (c.sistemaFrente ?? undefined) as string | undefined,
+    removible: c.removible === true,
   };
 }
 

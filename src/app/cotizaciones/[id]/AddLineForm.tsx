@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
@@ -27,6 +27,8 @@ export type ProjectDefaults = {
   unidad?: 'in' | 'cm' | 'mm';
   perfilId?: string;
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
+  sistemaFrente?: SistemaFrente;
+  removible?: boolean;
   conHerrajes?: boolean;
   herrajesExcl?: string[];
   npuertas?: string;
@@ -53,6 +55,9 @@ export type LineaInicial = {
   cantoCaja?: string;
   dbTipo?: string;
   rielCodigo?: string;
+  // Variantes transversales (ver src/lib/muebles.ts).
+  sistemaFrente?: SistemaFrente;
+  removible?: boolean;
 };
 
 const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
@@ -152,13 +157,16 @@ export default function AddLineForm({
     return '';
   });
   const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? projectDefaults?.modoFrentes ?? 'normal');
+  const [sistemaFrente, setSistemaFrente] = useState<SistemaFrente>(initial?.sistemaFrente ?? 'manija');
+  const [removible, setRemovible] = useState<boolean>(initial?.removible ?? false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Mapeos y opciones
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
-  const esDB = (tipos.find((t) => t.id === tipoId)?.pref ?? '').startsWith('DB');
+  const prefTipo = tipos.find((t) => t.id === tipoId)?.pref ?? '';
+  const esDB = prefTipo.startsWith('DB');
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
   const usaRiel = esDB || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
@@ -221,6 +229,9 @@ export default function AddLineForm({
     if (zocalo !== '') overrides.zocalo = Number(zocalo);
     if (nbarras !== '') overrides.n_barras = Number(nbarras);
     if (esDB && dbTipo) overrides.n_cajones_pequenos = DB_TIPOLOGIAS.find((x) => x.key === dbTipo)?.npeq ?? 0;
+    // Variantes transversales: override numérico 0/1 (migración 0028).
+    overrides.gola = sistemaFrente === 'gola' ? 1 : 0;
+    if (permiteRemovible(prefTipo)) overrides.removible = removible ? 1 : 0;
 
     const payload = {
       tipoId,
@@ -235,6 +246,8 @@ export default function AddLineForm({
       cantidad,
       prefLabel: prefProyecto(tipo) ? `${prefProyecto(tipo)}${parseMedida(largo)}${esDB && dbTipo ? `-${dbTipo.split('-').slice(1).join('-')}` : ''}${esPCFD && Number(ncajones) > 0 ? `-${Number(ncajones)}OP-PUSH` : ''}` : undefined,
       modoFrentes,
+      sistemaFrente,
+      removible: permiteRemovible(prefTipo) ? removible : undefined,
       overrides: Object.keys(overrides).length ? overrides : undefined,
       herrajesExcluidos: conHerrajes && herrajesExcl.length ? herrajesExcl : undefined,
       // Andrés overrides
@@ -399,6 +412,21 @@ export default function AddLineForm({
             />
           </L>
         ))}
+
+        <L label="Sistema de frente">
+          <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
+            {SISTEMAS_FRENTE.map((x) => <option key={x.key} value={x.key} title={x.desc}>{x.label}</option>)}
+          </select>
+        </L>
+
+        {permiteRemovible(prefTipo) && (
+          <L label="Removible">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={removible} onChange={(e) => setRemovible(e.target.checked)} />
+              <span>Panel removible</span>
+            </label>
+          </L>
+        )}
 
         <L label="Frentes">
           <select value={modoFrentes} onChange={(e) => setModoFrentes(e.target.value as 'normal' | 'sin_frentes' | 'solo_frentes')} className="inp">

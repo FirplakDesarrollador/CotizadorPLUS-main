@@ -2,6 +2,7 @@ import {
   calcularMueble,
   derivarVars,
   evalExpr,
+  geoVars,
   IN2CM,
   type Breakdown,
   type CalcInput,
@@ -32,8 +33,9 @@ function longSideCm(formato: string | null | undefined): number | null {
 }
 
 function evaluated(pieza: Pieza, calc: CalcInput) {
-  const vars = derivarVars(calc.reglas, calc.dims, calc.overrides ?? {});
-  const V = { ...calc.dims, ...vars };
+  const geo = geoVars(calc);
+  const vars = derivarVars(calc.reglas, calc.dims, calc.overrides ?? {}, geo);
+  const V = { ...calc.dims, ...geo, ...vars };
   return {
     cantidad: Number(evalExpr(pieza.formula_cantidad, V)),
     largo: Number(evalExpr(pieza.formula_largo, V)) - Number(pieza.resta_largo || 0),
@@ -196,7 +198,7 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
         const match = memberCalc.piezas.find((p) => p.modo_agrupacion === 'continua' && (p.clave_fusion || p.nombre) === key)!;
         return evaluated(match, memberCalc).cantidad;
       }));
-      const groupVars = { ...first.dims, LG: totalL, TC: tc };
+      const groupVars = { ...first.dims, ...geoVars(first), LG: totalL, TC: tc };
       const length = Number(evalExpr(representative.formula_largo_grupo, groupVars));
       if (!(length > 0)) throw new Error(`La fórmula agrupada de “${key}” produjo un largo inválido.`);
       return {

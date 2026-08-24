@@ -48,3 +48,7 @@ next-env.d.ts
 /videos/
 *.mp4
 /Cotizaciones de muestra/
+
+# Python (scripts de análisis)
+__pycache__/
+*.pyc

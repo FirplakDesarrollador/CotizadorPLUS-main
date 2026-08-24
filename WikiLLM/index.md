@@ -19,6 +19,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Muebles esquineros ciegos BBL](wiki/muebles_bbl.md) - Análisis del Excel CEMA y plantillas paramétricas `BBLFD`/`BBL` disponibles en Supabase.
 - [Torres PCFD con gavetas ocultas](wiki/muebles_pcfd_gavetas_ocultas.md) - Variantes `STANDARD`/`2OP`/`4OP`, fórmulas CEMA y uso paramétrico de cajones y entrepaños.
 - [Variantes de frente Gola SM](wiki/variantes_frente_gola_sm.md) - Investigación de códigos `SM`/`SMG`, refuerzos por familia y modelo recomendado como opción transversal de frentes.
+- [Validación contra hojas de ruta](wiki/validacion_hojas_de_ruta.md) - Estudio de 1.937 hojas de ruta reales: DSL de fórmulas de producción, constante interior por espesor, reglas de reparto de frentes DB, modificadores transversales (`O`/`R`/`SM`/`F9`), tipologías sin mapear y errores detectados en la fuente.
 
 ## Entorno de Desarrollo
 - [Dependencias del Proyecto](wiki/dependencias_proyecto.md) - Stack tecnológico (Next.js, React, Zustand, Supabase client).

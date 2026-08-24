@@ -1,6 +1,33 @@
 // Datos de dominio de tipologías de mueble compartidos por los formularios (cliente).
 // NO importar 'server-only' aquí: se usa en componentes cliente.
 
+// ---------------------------------------------------------------------------
+// Variantes transversales (aplican sobre el mismo tipo de mueble, no lo duplican)
+// ---------------------------------------------------------------------------
+
+// Sistema de apertura del frente. `gola` corresponde a los códigos comerciales
+// SM / SMG / GOAL del maestro histórico; internamente se guarda la clave
+// semántica, no el sufijo (ver WikiLLM/wiki/variantes_frente_gola_sm.md).
+//
+// Efecto medido en las hojas de ruta: la gola consume 53.6mm del alto disponible
+// para la pila de frentes y, en DB, agrega 2 perfiles de gola y retira un
+// refuerzo delantero. Se aplica vía el override `gola` (0/1).
+export type SistemaFrente = 'manija' | 'gola';
+export const SISTEMAS_FRENTE: { key: SistemaFrente; label: string; desc: string }[] = [
+  { key: 'manija', label: 'Manija', desc: 'Frente con manija (estándar)' },
+  { key: 'gola', label: 'Gola', desc: 'Gola en melamina; sin manijas. Sufijo comercial SM' },
+];
+
+// Familias con pares base/removible verificados en las hojas de ruta. Fuera de
+// esta lista la opción se bloquea: la regla estructural (rails más anchos, base
+// más profunda, fondo reorientado) no se extrapola sin datos.
+export const PREFS_CON_REMOVIBLE = ['USVFD', 'USBFD', 'UB', 'UDB', 'UBFD'] as const;
+
+export function permiteRemovible(pref: string | null | undefined): boolean {
+  const p = String(pref ?? '').toUpperCase();
+  return (PREFS_CON_REMOVIBLE as readonly string[]).includes(p);
+}
+
 // Tipologías de cajonera DB: definen nº de cajones, nº de pares de barra estabilizadora
 // y nº de cajones "pequeños" (frente fijo de 6", ver cot_piezas_plantilla del tipo DB).
 // Las barras van en los cajones grandes; es fijo por tipología, no depende de la medida.

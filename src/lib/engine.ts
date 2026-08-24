@@ -83,16 +83,32 @@ export function toInches(value: number, unidad: UnidadDim): number {
   return value / 25.4; // mm
 }
 
+// Separación (reveal) entre frentes contiguos y entre frente y caja: 3.2 mm.
+// Confirmado contra 1.937 hojas de ruta de producción (ver
+// WikiLLM/wiki/validacion_hojas_de_ruta.md §7).
+export const REVEAL_MM = 3.2;
+export const REVEAL_IN = REVEAL_MM / 25.4;
+
 // Deriva variables (n_puertas, n_entrepanos, n_patas, n_cajones...) desde reglas.
-export function derivarVars(reglas: Regla[], dims: Dims, overrides: Record<string, number> = {}): Record<string, number> {
+// `extra` aporta al contexto de evaluación las constantes geométricas (RV, TC, TF, TB).
+// Los overrides se inyectan TAMBIÉN en el contexto, no solo al final: una regla puede
+// depender de una variable que el usuario fijó a mano (p. ej. `alto_frente_pequeno`
+// depende de `n_cajones_pequenos`, que viene de la tipología DB elegida en el formulario).
+export function derivarVars(
+  reglas: Regla[],
+  dims: Dims,
+  overrides: Record<string, number> = {},
+  extra: Record<string, number> = {},
+): Record<string, number> {
   const out: Record<string, number> = {};
   const byVar: Record<string, Regla[]> = {};
   for (const r of reglas) (byVar[r.variable] ||= []).push(r);
   for (const [variable, rs] of Object.entries(byVar)) {
     rs.sort((a, b) => a.prioridad - b.prioridad);
     for (const r of rs) {
-      if (evalExpr(r.condicion, { ...dims, ...out }) === true) {
-        out[variable] = Number(evalExpr(r.valor, { ...dims, ...out }));
+      const ctx = { ...dims, ...extra, ...out, ...overrides };
+      if (evalExpr(r.condicion, ctx) === true) {
+        out[variable] = Number(evalExpr(r.valor, ctx));
         break;
       }
     }
@@ -128,10 +144,34 @@ export type Breakdown = {
   margenHerraje: number;
 };
 
+// Espesor (en pulgadas) del tablero asignado a un rol dentro del preset.
+// Devuelve 0 si el rol no está en el preset o el tablero no declara espesor.
+export function espesorRolIn(inp: Pick<CalcInput, 'preset' | 'tablerosByCode'>, rol: string): number {
+  const codigo = inp.preset[rol];
+  if (!codigo) return 0;
+  return Number(inp.tablerosByCode[codigo]?.espesor_mm ?? 0) / 25.4;
+}
+
+// Constantes geométricas disponibles para toda fórmula de pieza y de regla.
+// TC/TF/TB salen del espesor real del tablero elegido para cada rol, así que el
+// despiece sigue al material en vez de asumir 15 mm. Las hojas de ruta confirman
+// que el descuento interior es exactamente 2 × espesor del lateral (§3 de la wiki).
+// Debe usarse en TODO punto donde se evalúen fórmulas — también en group-engine —
+// o una fórmula que referencie TC lanzará ReferenceError.
+export function geoVars(inp: Pick<CalcInput, 'preset' | 'tablerosByCode'>): Record<string, number> {
+  return {
+    RV: REVEAL_IN,
+    TC: espesorRolIn(inp, 'caja'),
+    TF: espesorRolIn(inp, 'frente'),
+    TB: espesorRolIn(inp, 'fondo'),
+  };
+}
+
 export function calcularMueble(inp: CalcInput): Breakdown {
   const dims = inp.dims;
-  const vars = derivarVars(inp.reglas, dims, inp.overrides || {});
-  const V: Record<string, number> = { ...dims, ...vars };
+  const geo = geoVars(inp);
+  const vars = derivarVars(inp.reglas, dims, inp.overrides || {}, geo);
+  const V: Record<string, number> = { ...dims, ...geo, ...vars };
   const num = (e: string | number | null | undefined) => Number(evalExpr(e, V));
 
   const areaPorRol: Record<string, number> = {};

@@ -1,3 +1,4 @@
+import type { SistemaFrente } from '@/lib/muebles';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CotizarGrupoResult } from '@/lib/group-result';
@@ -22,6 +23,9 @@ export type SimuladorModuloValues = {
   pcfdConfig: string;
   rielCodigo: string;
   modoFrentes: 'normal' | 'sin_frentes' | 'solo_frentes';
+  // Variantes transversales (ver src/lib/muebles.ts).
+  sistemaFrente: SistemaFrente;
+  removible: boolean;
 };
 
 export type SimuladorValues = SimuladorModuloValues & {
@@ -73,6 +77,8 @@ export const initialModuloValues: SimuladorModuloValues = {
   pcfdConfig: '',
   rielCodigo: 'RIELTANDEM',
   modoFrentes: 'normal',
+  sistemaFrente: 'manija',
+  removible: false,
 };
 
 const initialStateValues: SimuladorSnapshot = {
@@ -112,6 +118,8 @@ export const getModuloValues = (state: SimuladorModuloValues): SimuladorModuloVa
   pcfdConfig: state.pcfdConfig,
   rielCodigo: state.rielCodigo,
   modoFrentes: state.modoFrentes,
+  sistemaFrente: state.sistemaFrente,
+  removible: state.removible,
 });
 
 const getSnapshot = (state: SimuladorState): SimuladorSnapshot => ({

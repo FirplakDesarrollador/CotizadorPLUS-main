@@ -15,7 +15,7 @@ import UndoRedoButtons from '@/components/UndoRedoButtons';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, type SistemaFrente } from '@/lib/muebles';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -152,6 +152,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   
   const modoFrentes = store.modoFrentes;
   const setModoFrentes = (v: 'normal' | 'sin_frentes' | 'solo_frentes') => setStore({ modoFrentes: v });
+  const sistemaFrente = store.sistemaFrente;
+  const setSistemaFrente = (v: SistemaFrente) => setStore({ sistemaFrente: v });
+  const removible = store.removible;
+  const setRemovible = (v: boolean) => setStore({ removible: v });
 
   const result = store.result;
 
@@ -212,6 +216,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (modulo.nbarras !== '') overrides.n_barras = Number(modulo.nbarras);
     const pref = tipos.find((tipo) => tipo.id === modulo.tipoId)?.pref ?? '';
     if (pref.startsWith('DB') && modulo.dbTipo) overrides.n_cajones_pequenos = DB_TIPOLOGIAS.find((x) => x.key === modulo.dbTipo)?.npeq ?? 0;
+    // Variantes transversales: viajan como override numérico 0/1 para que las
+    // fórmulas de pieza y las reglas puedan reaccionar (ver migración 0028).
+    overrides.gola = modulo.sistemaFrente === 'gola' ? 1 : 0;
+    if (permiteRemovible(pref)) overrides.removible = modulo.removible ? 1 : 0;
     return {
       tipoId: modulo.tipoId,
       largo: modulo.largo,
@@ -538,6 +546,19 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               <option value="normal">Completo</option><option value="sin_frentes">Sin frentes (open)</option><option value="solo_frentes">Solo kit de frentes</option>
             </select>
           </Field>
+          <Field label="Sistema de frente">
+            <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
+              {SISTEMAS_FRENTE.map((s) => <option key={s.key} value={s.key} title={s.desc}>{s.label}</option>)}
+            </select>
+          </Field>
+          {permiteRemovible(tipoPref) && (
+            <Field label="Removible">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={removible} onChange={(e) => setRemovible(e.target.checked)} />
+                <span>Panel removible</span>
+              </label>
+            </Field>
+          )}
           <Field label="TRM"><input type="number" step="any" value={trm} onChange={(e) => setTrm(+e.target.value)} className="inp" /></Field>
           <Field label="Canto frentes">
             <select value={cantoFrentes} onChange={(e) => setCantoFrentes(e.target.value)} className="inp">
