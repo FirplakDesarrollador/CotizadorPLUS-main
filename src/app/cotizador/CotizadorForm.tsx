@@ -14,6 +14,7 @@ import TooltipToggle from '@/components/TooltipToggle';
 import UndoRedoButtons from '@/components/UndoRedoButtons';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
+import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, type SistemaFrente } from '@/lib/muebles';
 
@@ -265,6 +266,21 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (store.modulos.length === 0) {
+      // Modo individual: cotizar únicamente el módulo actual sin agregarlo a una lista de combinación
+      setLoading(true);
+      setError(null);
+      const singleInput = inputFromModule(moduloFromValues(activeValues(), 'single'));
+      const res = await cotizarGrupoAction([singleInput]);
+      setLoading(false);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      setStore({ result: res.result });
+      return;
+    }
+
     const { id, nextModules } = currentCandidate();
     await validateAndCommit(nextModules, {
       editingId: id,
@@ -273,6 +289,30 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   }
 
   async function onAddModule() {
+    if (store.modulos.length === 0) {
+      // Iniciar modo combinado: el módulo actual pasa a ser Módulo 1 y preparamos Módulo 2
+      const mod1Id = globalThis.crypto.randomUUID();
+      const mod1 = moduloFromValues(activeValues(), mod1Id);
+      const mod2Draft = getModuloValues(mod1);
+
+      setLoading(true);
+      setError(null);
+      const res = await cotizarGrupoAction([inputFromModule(mod1)]);
+      setLoading(false);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      setStore({
+        ...modulePatch(mod2Draft),
+        modulos: [mod1],
+        editingId: null,
+        pendingDraft: null,
+        result: res.result,
+      });
+      return;
+    }
+
     const { current, nextModules } = currentCandidate();
     const nextDraft = getModuloValues(current);
     await validateAndCommit(nextModules, {
@@ -280,6 +320,23 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       editingId: null,
       pendingDraft: null,
     });
+  }
+
+  async function onClearCombined() {
+    setLoading(true);
+    setError(null);
+    const singleInput = inputFromModule(moduloFromValues(activeValues(), 'single'));
+    const res = await cotizarGrupoAction([singleInput]);
+    setLoading(false);
+    setStore({
+      modulos: [],
+      editingId: null,
+      pendingDraft: null,
+      result: res.ok ? res.result : null,
+    });
+    if (!res.ok) {
+      setError(res.error);
+    }
   }
 
   function onEditModule(modulo: SimuladorModulo) {
@@ -300,16 +357,29 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     const nextModules = store.modulos.filter((modulo) => modulo.id !== id);
     const deletingActive = store.editingId === id;
     const restore = deletingActive ? (store.pendingDraft ?? activeValues()) : null;
-    if (nextModules.length === 0) {
+
+    // Si queda 1 o 0 módulos, revertir automáticamente al modo individual
+    if (nextModules.length <= 1) {
+      const remaining = nextModules[0];
+      const draft = remaining ? getModuloValues(remaining) : (restore ?? activeValues());
+
+      setLoading(true);
+      setError(null);
+      const singleInput = inputFromModule(moduloFromValues(draft, 'single'));
+      const res = await cotizarGrupoAction([singleInput]);
+      setLoading(false);
+
       setStore({
-        ...(restore ? modulePatch(restore) : {}),
+        ...modulePatch(draft),
         modulos: [],
-        editingId: deletingActive ? null : store.editingId,
-        pendingDraft: deletingActive ? null : store.pendingDraft,
-        result: null,
+        editingId: null,
+        pendingDraft: null,
+        result: res.ok ? res.result : null,
       });
+      if (!res.ok) setError(res.error);
       return;
     }
+
     await validateAndCommit(nextModules, deletingActive ? {
       ...modulePatch(restore!),
       editingId: null,
@@ -359,23 +429,29 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl border border-slate-200 bg-white p-4" aria-label="Módulos del mueble combinado">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="font-semibold text-slate-900">Mueble combinado</h2>
-            <p className="text-xs text-slate-500">Orden físico de izquierda a derecha</p>
+      {store.modulos.length > 0 && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-4" aria-label="Módulos del mueble combinado">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold text-slate-900">Mueble combinado</h2>
+                <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                  {store.modulos.length} módulo{store.modulos.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">Orden físico de izquierda a derecha</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void onClearCombined()}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 hover:border-red-300 transition disabled:opacity-50"
+              title="Eliminar la combinación y volver a simular un módulo individual"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              Eliminar combinación
+            </button>
           </div>
-          {store.modulos.length > 0 && (
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-              {store.modulos.length} módulo{store.modulos.length === 1 ? '' : 's'}
-            </span>
-          )}
-        </div>
-        {store.modulos.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-400">
-            Configura el primer módulo y usa “Calcular precio” o “+ Agregar módulo”.
-          </p>
-        ) : (
           <div className="flex gap-2 overflow-x-auto pb-1">
             {store.modulos.map((modulo, index) => {
               const isEditing = store.editingId === modulo.id;
@@ -429,15 +505,19 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               );
             })}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
       {/* ---- Formulario ---- */}
       <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 h-fit">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold text-slate-900">
-            {editingPosition > 0 ? `Editar módulo ${editingPosition}` : `Configurar módulo ${store.modulos.length + 1}`}
+            {editingPosition > 0
+              ? `Editar módulo ${editingPosition}`
+              : store.modulos.length > 0
+              ? `Configurar módulo ${store.modulos.length + 1}`
+              : 'Configurar módulo'}
           </h2>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <UndoRedoButtons compact />
@@ -594,10 +674,16 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         {error && <p className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-sm text-red-700" role="alert" aria-live="polite">{error}</p>}
         <div className="grid gap-2">
           <button data-tour="calcular" disabled={loading || !!error} className="w-full rounded-lg bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50">
-            {loading ? 'Calculando…' : store.editingId ? 'Guardar y recalcular' : 'Calcular precio'}
+            {loading
+              ? 'Calculando…'
+              : store.editingId
+              ? 'Guardar y recalcular'
+              : store.modulos.length > 0
+              ? `Guardar módulo ${store.modulos.length + 1} y recalcular`
+              : 'Calcular precio'}
           </button>
           <button type="button" onClick={() => void onAddModule()} disabled={loading || !!error} className="w-full rounded-lg border border-slate-300 bg-white py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-            + Agregar módulo
+            {store.modulos.length === 0 ? '+ Agregar módulo (Combinar)' : '+ Agregar otro módulo'}
           </button>
           {store.editingId && (
             <button type="button" onClick={onCancelEdit} disabled={loading} className="w-full py-1 text-xs font-medium text-slate-500 hover:text-slate-900 disabled:opacity-50">
@@ -643,7 +729,7 @@ function ResultadoView({ result, moneda, setMoneda }:
         </div>
         <div className="text-4xl font-bold text-slate-900">{money(precioPrincipal)}</div>
         <p className="text-sm text-slate-500 mt-1">
-          Conjunto de {result.modulos} módulo{result.modulos === 1 ? '' : 's'} · Margen mueble {(result.margen * 100).toFixed(0)}% · Margen herraje {(result.margenHerraje * 100).toFixed(0)}% · TRM {result.trm.toLocaleString('es-CO')}
+          {result.modulos > 1 ? `Conjunto de ${result.modulos} módulos` : 'Módulo individual'} · Margen mueble {(result.margen * 100).toFixed(0)}% · Margen herraje {(result.margenHerraje * 100).toFixed(0)}% · TRM {result.trm.toLocaleString('es-CO')}
           {moneda === 'COP' ? '' : ` · ${fmtCOP(precioPrincipal)}`}
         </p>
         <div className="grid grid-cols-3 gap-3 mt-4 text-sm">
@@ -665,7 +751,7 @@ function ResultadoView({ result, moneda, setMoneda }:
           <Row k="Consumibles" v={money(result.costoConsumibles)} />
           {result.costoHerrajes > 0 && <Row k="Herrajes" v={money(result.costoHerrajes)} />}
         </Card>
-        <Card title="Resumen físico del conjunto">
+        <Card title={result.modulos > 1 ? 'Resumen físico del conjunto' : 'Resumen físico del mueble'}>
           <Row k="Módulos" v={String(result.modulos)} />
           <Row k="Largo exterior" v={`${result.largoTotalIn.toLocaleString('es-CO')} in`} />
           <Row k="Laterales / divisiones" v={String(result.laterales)} />
@@ -703,6 +789,8 @@ function ResultadoView({ result, moneda, setMoneda }:
           </tbody>
         </table>
       </Card>
+
+      <MuebleVisualizer scene={result.visualizacion} />
 
       <Card title="Piezas (despiece)">
         <table className="w-full text-sm">

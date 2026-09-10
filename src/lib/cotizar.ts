@@ -7,6 +7,7 @@ import {
 } from '@/lib/engine';
 import { calcularGrupoFisico, type GroupCalculation, type PreparedGroupMember } from '@/lib/group-engine';
 import { consolidarGrupo, type CotizarGrupoResult } from '@/lib/group-result';
+import { construirVisualizacion } from './visualizacion';
 
 export type CotizarInput = {
   tipoId: string;
@@ -168,7 +169,8 @@ export async function cotizarGrupoConsolidado(inputs: CotizarInput[]): Promise<C
   if (inputs.length === 0) throw new Error('Agrega al menos un módulo para calcular.');
   const group = await cotizarGrupo(inputs);
   const first = group.preparados[0];
-  return consolidarGrupo(group, { trm: first.trm, margen: first.margen });
+  const result = consolidarGrupo(group, { trm: first.trm, margen: first.margen });
+  return { ...result, visualizacion: construirVisualizacion(group.preparados, group) };
 }
 
 export type { CotizarGrupoResult } from '@/lib/group-result';

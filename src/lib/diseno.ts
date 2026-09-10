@@ -1,9 +1,10 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
+import { validarMontaje } from './visualizacion-config';
 
 // ====== Editor de DISEÑO de muebles: piezas, reglas y herrajes por tipo ======
 
-const PIEZA_COLS = ['tipo_mueble_id', 'nombre', 'rol_tablero', 'formula_cantidad', 'formula_largo', 'formula_ancho', 'resta_largo', 'resta_ancho', 'cantos', 'tarugos', 'soportes', 'modo_agrupacion', 'clave_fusion', 'formula_largo_grupo', 'orden', 'notas'];
+const PIEZA_COLS = ['tipo_mueble_id', 'nombre', 'rol_tablero', 'formula_cantidad', 'formula_largo', 'formula_ancho', 'resta_largo', 'resta_ancho', 'cantos', 'tarugos', 'soportes', 'modo_agrupacion', 'clave_fusion', 'formula_largo_grupo', 'orden', 'notas', 'visualizacion'];
 const REGLA_COLS = ['tipo_mueble_id', 'variable', 'condicion', 'valor', 'prioridad', 'activo', 'notas'];
 const HERRAJE_COLS = ['tipo_mueble_id', 'rol', 'herraje_codigo', 'selector_key', 'formula_cantidad', 'orden', 'notas'];
 
@@ -59,7 +60,10 @@ async function del(table: string, id: string) {
   if (error) throw new Error(error.message);
 }
 
-export const upsertPieza = (id: string | null, row: Record<string, unknown>) => up('cot_piezas_plantilla', PIEZA_COLS, id, row);
+export const upsertPieza = (id: string | null, row: Record<string, unknown>) => {
+  if ('visualizacion' in row) row = { ...row, visualizacion: validarMontaje(row.visualizacion) };
+  return up('cot_piezas_plantilla', PIEZA_COLS, id, row);
+};
 export const deletePieza = (id: string) => del('cot_piezas_plantilla', id);
 export const upsertRegla = (id: string | null, row: Record<string, unknown>) => up('cot_reglas_config', REGLA_COLS, id, row);
 export const deleteRegla = (id: string) => del('cot_reglas_config', id);

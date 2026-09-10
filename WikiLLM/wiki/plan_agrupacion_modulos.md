@@ -319,14 +319,16 @@ Repetir con caja de 18 mm y comprobar que no queden descuentos fijos de 30/15 mm
 
 Completar el catálogo imperial↔métrico. La arquitectura no usa nombres hardcodeados, pero un proyecto métrico no podrá utilizar un tipo cuyo `pref_metrico` esté vacío. La equivalencia inicial confirmada es `BFD -> IP`.
 
-## 15. Constructor de grupos en el simulador (2026-08-03)
+## 15. Constructor de grupos en el simulador (2026-08-03, actualizado 2026-09-10)
 
 El módulo `/cotizador` reutiliza el motor físico sin crear proyecto, cocina ni filas en Supabase:
 
-- El primer formulario funciona como borrador. Calcular o agregar valida la lista propuesta completa mediante `cotizarGrupoAction`.
-- `+ Agregar módulo` confirma el actual y abre el siguiente como copia editable. La unidad del primero es global y queda bloqueada; materiales, cantos, frentes y herrajes se heredan, pero mantienen las reglas de edición y compatibilidad de cotizaciones.
-- La franja superior muestra el orden izquierda→derecha y permite editar, eliminar, arrastrar o desplazar cada integrante.
+- **Modo individual por defecto:** Al ingresar o calcular un único mueble con "Calcular precio", el simulador opera en modo individual sin mostrar la barra superior de "Mueble combinado". El resultado y resumen físico se expresan para un único módulo.
+- **Activación explícita con `+ Agregar módulo`:** El mueble combinado es una funcionalidad que el usuario debe indicar de forma voluntaria. Al pulsar `+ Agregar módulo`, el módulo actual del formulario se confirma como Módulo 1, se activa el modo combinado y se hace visible la franja superior de "Mueble combinado", abriendo el formulario para configurar el siguiente módulo con la configuración heredada.
+- **Eliminación y Descombinación:**
+  - La cabecera de "Mueble combinado" incluye el botón `Eliminar combinación` para vaciar el conjunto de un solo clic y regresar a modo individual con el módulo activo.
+  - Al eliminar integrantes con la papelera (🗑️) hasta quedar en 1 o 0 módulos, el sistema revierte automáticamente a módulo individual, ocultando la franja superior y evitando estados bloqueados o inconsistencias.
+- La franja superior muestra el orden izquierda→derecha y permite editar, eliminar, arrastrar o desplazar cada integrante cuando hay módulos combinados.
 - Un error del motor deja intacta la última configuración válida y bloquea nuevas confirmaciones hasta que cambie el formulario.
-- El resultado público es un desglose único del conjunto. Las líneas y precios individuales solo se usan internamente para distribuir y conciliar costos.
+- El resultado público es un desglose único del conjunto en modo combinado o del módulo en modo individual.
 - La sesión, incluido borrador, orden, edición y resultado, persiste en `simulador-storage` y participa en Undo/Redo.
-- No se añadió un límite global de dos metros ni un parámetro administrativo. Continúa vigente la validación física contra el formato real del tablero para las piezas continuas.

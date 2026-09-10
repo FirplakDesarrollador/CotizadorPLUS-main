@@ -6,6 +6,8 @@
 // y devuelve el desglose completo.
 // ============================================================================
 
+import type { MontajeConfig } from './visualizacion-config';
+
 export const IN2CM = 2.54;
 const norm = (s: unknown) => String(s ?? '').toUpperCase().replace(/\s+/g, '');
 
@@ -13,7 +15,9 @@ const norm = (s: unknown) => String(s ?? '').toUpperCase().replace(/\s+/g, '');
 const ALLOWED = /^[0-9+\-*/().\s A-Za-z_<>=!&|?:]*$/;
 export function evalExpr(expr: string | number | null | undefined, vars: Record<string, number | boolean>): number | boolean {
   if (expr === null || expr === undefined || expr === '') return 0;
-  const s = String(expr);
+  // The production DSL generator can emit P--4.5 (P minus a negative offset).
+  // Separate the two minus tokens so JS does not parse a postfix decrement.
+  const s = String(expr).replace(/--(?=\d|\.)/g, '- -');
   if (!ALLOWED.test(s)) throw new Error(`Expresión no permitida: ${s}`);
   const keys = Object.keys(vars);
   // eslint-disable-next-line @typescript-eslint/no-implied-eval
@@ -28,6 +32,7 @@ export type UnidadDim = 'in' | 'cm' | 'mm';
 
 export type Regla = { variable: string; condicion: string; valor: string; prioridad: number; tipo_mueble_id: string | null };
 export type Pieza = {
+  visualizacion?: MontajeConfig | null;
   nombre: string; rol_tablero: string;
   formula_cantidad: string; formula_largo: string | null; formula_ancho: string | null;
   resta_largo?: number; resta_ancho?: number;

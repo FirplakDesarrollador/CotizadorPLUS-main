@@ -1,0 +1,5435 @@
+{
+  "tipos": [
+    {
+      "id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "pref": "DB",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "35f82ed0-a0e6-44f9-933d-bd6e5daad70f",
+      "pref": "SBFD",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "0b046c19-ed30-4e26-82d1-3edb88fc4faf",
+      "pref": "BFD",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "98a5022c-ed8e-4ae4-8223-0ab6ecf332c5",
+      "pref": "VFD",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "62001e6e-7466-4f1c-9ccd-678e9fcf6d2b",
+      "pref": "WBL",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "pref": "DV",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "pref": "UB",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "0fa8f60a-b6f0-4f69-b9a3-f5ffd149b782",
+      "pref": "UBFD",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "da494186-8fdc-49a3-9b96-f716ccff628c",
+      "pref": "SV",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "pref": "DVE",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "pref": "B",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "c6f0792c-1b74-4cb5-8bf5-7ea33ac8c06e",
+      "pref": "W",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "8a115d21-7080-40e1-8f73-c55ef993f919",
+      "pref": "SVFD",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "pref": "V",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "94ca80d7-72ae-4437-9888-5dc2296b8b06",
+      "pref": "OVPC",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "2de3a3b3-9241-4bed-beb8-8da6d9ec6cfe",
+      "pref": "F",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "abe13e89-da8d-4663-ba5b-af08cee42c27",
+      "pref": "PN",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "10e38246-fd7d-4a45-92bf-8878aef7a30b",
+      "pref": "TK",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "pref": "BBL",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "pref": "PCFD",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "67cc2836-c0e0-4749-9fea-3322d126678e",
+      "pref": "AL",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "pref": "BLS",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "pref": "BMW",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "80bd0b5f-8a5e-47b4-a9b4-210a1953843b",
+      "pref": "BOV",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "c918587b-4dac-4fba-bb56-7659c1924238",
+      "pref": "BT",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "4bb809bb-8640-47f1-91fc-530c1e4b16be",
+      "pref": "CC",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "4f4fb96b-aba8-4312-8b5a-175c593ef10f",
+      "pref": "CLV",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "pref": "DD",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "4806f873-2225-4124-b53f-d1c5895efa83",
+      "pref": "DF",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "4e432771-a505-488a-8913-580a9e7b9428",
+      "pref": "DFE",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "60f3486b-bacb-485c-a2bf-3b64d6fed1fd",
+      "pref": "E",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "20f97181-f7e4-4691-b045-504d713c464f",
+      "pref": "FL",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "5ed4a903-6f5d-41d2-8429-34fc7d8fc08a",
+      "pref": "KD",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "48f62cb2-8850-430b-9d87-c6dfd7b0e8fe",
+      "pref": "KF",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "c29b9334-4a6b-48f1-9158-a3d6d8cb40d8",
+      "pref": "POD",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "887d9695-f25d-42ac-9070-24891c88523b",
+      "pref": "S",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "pref": "UDV",
+      "permite_agrupacion": true
+    },
+    {
+      "id": "dcc1b2eb-64ea-49be-83dd-9792889dd331",
+      "pref": "D",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "48ac3e9f-99f5-4ba3-9db6-6ffa27ca1c4c",
+      "pref": "R",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "963c6348-2b7d-41cc-b933-5d1293a1adf3",
+      "pref": "PC",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "06675b3e-dadc-4f04-9234-483155c1e287",
+      "pref": "VPC",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "3fc5b69c-cc8f-464c-9575-99040290b94b",
+      "pref": "TW",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "5c493e88-2fcb-4d21-9bb6-2151cebd9844",
+      "pref": "BOMH",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "07a4f78b-c312-4393-9fc1-9db2538658a2",
+      "pref": "SA",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "pref": "SBAS",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "pref": "SDB",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "2bca979b-467a-4a99-9da9-430040b3a42b",
+      "pref": "SLOC",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "pref": "BBLFD",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "c71901b7-760a-4148-9399-88fe8ece1c9d",
+      "pref": "SMO",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "pref": "UDB",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "a945a9fd-cd78-4546-b7b2-db16facb2afb",
+      "pref": "USVFD",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "pref": "UV",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "eb739839-8c7a-4865-8a44-1bfd72d549e9",
+      "pref": "UVFD",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "9d8618e5-6369-4e12-b408-7b4b9e7cd277",
+      "pref": "WCC",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "6c0ded5a-f134-46fe-882b-9fc8523ce921",
+      "pref": "WER",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "7d2c4440-4be9-4a1c-8ce6-536433d0a326",
+      "pref": "WLD",
+      "permite_agrupacion": false
+    },
+    {
+      "id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "pref": "WPC",
+      "permite_agrupacion": false
+    }
+  ],
+  "piezas": [
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "(n_cajones)-gola",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "94ca80d7-72ae-4437-9888-5dc2296b8b06",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "35f82ed0-a0e6-44f9-933d-bd6e5daad70f",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "c6f0792c-1b74-4cb5-8bf5-7ea33ac8c06e",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "nombre": "refuerzo_horizontal",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "nombre": "refuerzo_horizontal",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "94ca80d7-72ae-4437-9888-5dc2296b8b06",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "5",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.54",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "35f82ed0-a0e6-44f9-933d-bd6e5daad70f",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "5",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "0b046c19-ed30-4e26-82d1-3edb88fc4faf",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c6f0792c-1b74-4cb5-8bf5-7ea33ac8c06e",
+      "nombre": "base_tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base_tapa",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "c6f0792c-1b74-4cb5-8bf5-7ea33ac8c06e",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_entrepanos",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "94ca80d7-72ae-4437-9888-5dc2296b8b06",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A-4.5",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "35f82ed0-a0e6-44f9-933d-bd6e5daad70f",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P*0.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "94ca80d7-72ae-4437-9888-5dc2296b8b06",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A-4.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "nombre": "refuerzo_vert_bisagras",
+      "rol_tablero": null,
+      "formula_cantidad": "1",
+      "formula_largo": "A",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "nombre": "puerta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-P)/n_puertas",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "nombre": "frente_falso",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "P",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-27.75",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-30.70",
+      "formula_ancho": "P-4.63",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-30.427",
+      "formula_ancho": "2.6875",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "frente_cajon",
+      "rol_tablero": null,
+      "formula_cantidad": "1",
+      "formula_largo": "L-27.75",
+      "formula_ancho": "0",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "refuerzo_horizontal",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-27.75",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "refuerzo_vert_bisagras",
+      "rol_tablero": null,
+      "formula_cantidad": "1",
+      "formula_largo": "A",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "refuerzo_profundidad",
+      "rol_tablero": null,
+      "formula_cantidad": "1",
+      "formula_largo": "P",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P*0.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "98a5022c-ed8e-4ae4-8223-0ab6ecf332c5",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "2de3a3b3-9241-4bed-beb8-8da6d9ec6cfe",
+      "nombre": "panel",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "abe13e89-da8d-4663-ba5b-af08cee42c27",
+      "nombre": "panel",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "10e38246-fd7d-4a45-92bf-8878aef7a30b",
+      "nombre": "panel",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0b046c19-ed30-4e26-82d1-3edb88fc4faf",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-4.607",
+      "formula_ancho": "2.6875",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-4.607",
+      "formula_ancho": "2.6875",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A-zocalo",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "frente_area_op",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_cajones>0 ? 1 : 0",
+      "formula_largo": "L",
+      "formula_ancho": "(A-5.25)*1.25",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "frente_canto_puertas_op",
+      "rol_tablero": null,
+      "formula_cantidad": "n_cajones>0 ? n_puertas : 0",
+      "formula_largo": "L",
+      "formula_ancho": "(A-5.25)/n_puertas",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "frente_canto_gavetas_op",
+      "rol_tablero": null,
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L",
+      "formula_ancho": "n_cajones>0 ? (A-5.25)/n_cajones : 0",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-2.95",
+      "formula_ancho": "P-4.63",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "62001e6e-7466-4f1c-9ccd-678e9fcf6d2b",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "frente_delgado_informativo_op",
+      "rol_tablero": null,
+      "formula_cantidad": "n_cajones>0 ? 1 : 0",
+      "formula_largo": "L",
+      "formula_ancho": "5.25",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "base_tapa_division",
+      "rol_tablero": "caja",
+      "formula_cantidad": "n_cajones>0 ? 3 : 2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.9",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "62001e6e-7466-4f1c-9ccd-678e9fcf6d2b",
+      "nombre": "base_tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-2.95",
+      "formula_ancho": "P-4.63",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L",
+      "formula_ancho": "A/n_cajones",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "98a5022c-ed8e-4ae4-8223-0ab6ecf332c5",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones_pequenos>0?0:n_cajones",
+      "formula_largo": "L-4.607",
+      "formula_ancho": "183/25.4",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "refuerzo_horizontal",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-4.13",
+      "formula_ancho": "P-4.63",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0fa8f60a-b6f0-4f69-b9a3-f5ffd149b782",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "trasero_gaveta_pequena",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones_pequenos",
+      "formula_largo": "L-4.607",
+      "formula_ancho": "68/25.4",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "trasero_gaveta_grande",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones_pequenos>0?n_cajones-n_cajones_pequenos:0",
+      "formula_largo": "L-4.607",
+      "formula_ancho": "183/25.4",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P*0.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0fa8f60a-b6f0-4f69-b9a3-f5ffd149b782",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "nombre": "refuerzo_horizontal",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "0fa8f60a-b6f0-4f69-b9a3-f5ffd149b782",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "da494186-8fdc-49a3-9b96-f716ccff628c",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "7",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "e5cd2dc2-94f3-4c40-9dfa-65795190f094",
+      "nombre": "base_tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base_tapa",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "e5cd2dc2-94f3-4c40-9dfa-65795190f094",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_entrepanos",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "35f82ed0-a0e6-44f9-933d-bd6e5daad70f",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "62001e6e-7466-4f1c-9ccd-678e9fcf6d2b",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A-0.59",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "n_cajones>0 ? A-5.25 : A-zocalo",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "06675b3e-dadc-4f04-9234-483155c1e287",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A-zocalo",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3fc5b69c-cc8f-464c-9575-99040290b94b",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A-0.59",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c493e88-2fcb-4d21-9bb6-2151cebd9844",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "dcc1b2eb-64ea-49be-83dd-9792889dd331",
+      "nombre": "panel",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "48ac3e9f-99f5-4ba3-9db6-6ffa27ca1c4c",
+      "nombre": "panel",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e5cd2dc2-94f3-4c40-9dfa-65795190f094",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-4.607",
+      "formula_ancho": "2.6875",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2.95",
+      "formula_ancho": "P-4.63",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "62001e6e-7466-4f1c-9ccd-678e9fcf6d2b",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "963c6348-2b7d-41cc-b933-5d1293a1adf3",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_entrepanos",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.54",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "963c6348-2b7d-41cc-b933-5d1293a1adf3",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A-zocalo",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "06675b3e-dadc-4f04-9234-483155c1e287",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3fc5b69c-cc8f-464c-9575-99040290b94b",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "06675b3e-dadc-4f04-9234-483155c1e287",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A-zocalo",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "963c6348-2b7d-41cc-b933-5d1293a1adf3",
+      "nombre": "puerta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "L",
+      "formula_ancho": "(A-zocalo)/n_puertas",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "06675b3e-dadc-4f04-9234-483155c1e287",
+      "nombre": "puerta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "L",
+      "formula_ancho": "(A-zocalo)/n_puertas",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3fc5b69c-cc8f-464c-9575-99040290b94b",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3fc5b69c-cc8f-464c-9575-99040290b94b",
+      "nombre": "puerta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "A+0.75",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c493e88-2fcb-4d21-9bb6-2151cebd9844",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c493e88-2fcb-4d21-9bb6-2151cebd9844",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "6",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "da494186-8fdc-49a3-9b96-f716ccff628c",
+      "nombre": "frente_falso",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "6",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "62001e6e-7466-4f1c-9ccd-678e9fcf6d2b",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_entrepanos",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "963c6348-2b7d-41cc-b933-5d1293a1adf3",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "5",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.54",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "06675b3e-dadc-4f04-9234-483155c1e287",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "5",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.54",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3fc5b69c-cc8f-464c-9575-99040290b94b",
+      "nombre": "base_tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "963c6348-2b7d-41cc-b933-5d1293a1adf3",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A-zocalo",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "nombre": "refuerzo_horizontal",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "98a5022c-ed8e-4ae4-8223-0ab6ecf332c5",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "nombre": "refuerzo_horizontal",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-4.607",
+      "formula_ancho": "2.6875",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0b046c19-ed30-4e26-82d1-3edb88fc4faf",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "L<12 ? 5 : 3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "98a5022c-ed8e-4ae4-8223-0ab6ecf332c5",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2.95",
+      "formula_ancho": "P-4.63",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "nombre": "frente_cajon",
+      "rol_tablero": null,
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "0",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c6f0792c-1b74-4cb5-8bf5-7ea33ac8c06e",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "8a115d21-7080-40e1-8f73-c55ef993f919",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e5cd2dc2-94f3-4c40-9dfa-65795190f094",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "8a115d21-7080-40e1-8f73-c55ef993f919",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-4.607",
+      "formula_ancho": "2.6875",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-4.607",
+      "formula_ancho": "2.6875",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2.95",
+      "formula_ancho": "P-4.63",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "nombre": "frente_cajon",
+      "rol_tablero": null,
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "0",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-2.95",
+      "formula_ancho": "P-4.63",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L",
+      "formula_ancho": "A/n_cajones",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "8a115d21-7080-40e1-8f73-c55ef993f919",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "5",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_frontal",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "5c493e88-2fcb-4d21-9bb6-2151cebd9844",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "frente_cajon",
+      "rol_tablero": null,
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "0",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "da494186-8fdc-49a3-9b96-f716ccff628c",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "0fa8f60a-b6f0-4f69-b9a3-f5ffd149b782",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0b046c19-ed30-4e26-82d1-3edb88fc4faf",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-4.607",
+      "formula_ancho": "2.6875",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L-2.95",
+      "formula_ancho": "P-4.63",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_cajones",
+      "formula_largo": "L",
+      "formula_ancho": "A/n_cajones",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "da494186-8fdc-49a3-9b96-f716ccff628c",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "da494186-8fdc-49a3-9b96-f716ccff628c",
+      "nombre": "canto_lavamanos",
+      "rol_tablero": null,
+      "formula_cantidad": "1",
+      "formula_largo": "90*4/2.54",
+      "formula_ancho": "0",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e5cd2dc2-94f3-4c40-9dfa-65795190f094",
+      "nombre": "gola_frame",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "4*L + 4*(A-8)*n_puertas",
+      "formula_ancho": "1",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e5cd2dc2-94f3-4c40-9dfa-65795190f094",
+      "nombre": "gola_canto",
+      "rol_tablero": null,
+      "formula_cantidad": "1",
+      "formula_largo": "2*(n_puertas*2*(A-8)) + (2*L-8) + 2*((L-8)-(n_puertas*4))",
+      "formula_ancho": "0",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c493e88-2fcb-4d21-9bb6-2151cebd9844",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "caja",
+      "formula_cantidad": "5",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P*0.5",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0b046c19-ed30-4e26-82d1-3edb88fc4faf",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "c6f0792c-1b74-4cb5-8bf5-7ea33ac8c06e",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A-0.59",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "8a115d21-7080-40e1-8f73-c55ef993f919",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "98a5022c-ed8e-4ae4-8223-0ab6ecf332c5",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "0fa8f60a-b6f0-4f69-b9a3-f5ffd149b782",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "da494186-8fdc-49a3-9b96-f716ccff628c",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "e5cd2dc2-94f3-4c40-9dfa-65795190f094",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "A-0.59",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "94ca80d7-72ae-4437-9888-5dc2296b8b06",
+      "nombre": "base_tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "35f82ed0-a0e6-44f9-933d-bd6e5daad70f",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "8a115d21-7080-40e1-8f73-c55ef993f919",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "da494186-8fdc-49a3-9b96-f716ccff628c",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "963c6348-2b7d-41cc-b933-5d1293a1adf3",
+      "nombre": "base_tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "06675b3e-dadc-4f04-9234-483155c1e287",
+      "nombre": "base_tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "98a5022c-ed8e-4ae4-8223-0ab6ecf332c5",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "5c493e88-2fcb-4d21-9bb6-2151cebd9844",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0b046c19-ed30-4e26-82d1-3edb88fc4faf",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "62001e6e-7466-4f1c-9ccd-678e9fcf6d2b",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "nombre": "puerta_estandar",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_cajones<=0 ? n_puertas : 0",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-zocalo",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "da494186-8fdc-49a3-9b96-f716ccff628c",
+      "nombre": "puerta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-6",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.07874",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-TC"
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "removible ? P-TC : (P-0.70866-TB)",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "0fa8f60a-b6f0-4f69-b9a3-f5ffd149b782",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "removible ? P-TC : (P-0.70866-TB)",
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base",
+      "formula_largo_grupo": "LG-(2*TC)"
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "35f82ed0-a0e6-44f9-933d-bd6e5daad70f",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0b046c19-ed30-4e26-82d1-3edb88fc4faf",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c6f0792c-1b74-4cb5-8bf5-7ea33ac8c06e",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "8a115d21-7080-40e1-8f73-c55ef993f919",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_cajones_pequenos>0?0:n_cajones",
+      "formula_largo": "L-RV",
+      "formula_ancho": "(A-n_cajones*RV-gola*2.11024)/n_cajones",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "frente_gaveta_pequena",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_cajones_pequenos",
+      "formula_largo": "L-RV",
+      "formula_ancho": "alto_frente_pequeno",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "frente_gaveta_grande",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_cajones_pequenos>0?n_cajones-n_cajones_pequenos:0",
+      "formula_largo": "L-RV",
+      "formula_ancho": "(n_cajones-n_cajones_pequenos)>0 ? (A-n_cajones*RV-gola*2.11024-n_cajones_pequenos*alto_frente_pequeno)/(n_cajones-n_cajones_pequenos) : 0",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "nombre": "gola_perfil",
+      "rol_tablero": "caja",
+      "formula_cantidad": "gola*2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "67cc2836-c0e0-4749-9fea-3322d126678e",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "4",
+      "formula_largo": "L-1.22047",
+      "formula_ancho": "P-1.53937",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "67cc2836-c0e0-4749-9fea-3322d126678e",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "67cc2836-c0e0-4749-9fea-3322d126678e",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A-3.93701",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "67cc2836-c0e0-4749-9fea-3322d126678e",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "67cc2836-c0e0-4749-9fea-3322d126678e",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "67cc2836-c0e0-4749-9fea-3322d126678e",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "67cc2836-c0e0-4749-9fea-3322d126678e",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-4.01575",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "67cc2836-c0e0-4749-9fea-3322d126678e",
+      "nombre": "gola_perfil",
+      "rol_tablero": "caja",
+      "formula_cantidad": "gola*1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A-TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-4.94882",
+      "formula_ancho": "A-TC",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "L",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "7.87402",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "A-RV",
+      "formula_ancho": "L*0.30556",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-TC",
+      "formula_ancho": "7.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-24.59055",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "29.82677",
+      "formula_ancho": "29.82677",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-23.52756",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "98a5022c-ed8e-4ae4-8223-0ab6ecf332c5",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0fa8f60a-b6f0-4f69-b9a3-f5ffd149b782",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "34.77953",
+      "formula_ancho": "34.77953",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "A-2*TC",
+      "formula_ancho": "11.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e8680223-bdf9-4a7c-9875-cb061fc45a71",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "A-2*TC",
+      "formula_ancho": "11.74803",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.06299",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-4.37008",
+      "formula_ancho": "19.37008",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-4.84252",
+      "formula_ancho": "2.67717",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "nombre": "frente_gaveta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "7.61102",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "9.50079",
+      "formula_ancho": "L-0.86614",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.06299",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "cf3cfddb-c32b-4f45-bd8c-68b317f28a0e",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "18.33386",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "80bd0b5f-8a5e-47b4-a9b4-210a1953843b",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "80bd0b5f-8a5e-47b4-a9b4-210a1953843b",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "80bd0b5f-8a5e-47b4-a9b4-210a1953843b",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "80bd0b5f-8a5e-47b4-a9b4-210a1953843b",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-TC",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c918587b-4dac-4fba-bb56-7659c1924238",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c918587b-4dac-4fba-bb56-7659c1924238",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4bb809bb-8640-47f1-91fc-530c1e4b16be",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4bb809bb-8640-47f1-91fc-530c1e4b16be",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-1.45669",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4bb809bb-8640-47f1-91fc-530c1e4b16be",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A-4.50000",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4bb809bb-8640-47f1-91fc-530c1e4b16be",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4bb809bb-8640-47f1-91fc-530c1e4b16be",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4bb809bb-8640-47f1-91fc-530c1e4b16be",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "A-4.62598",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4bb809bb-8640-47f1-91fc-530c1e4b16be",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4f4fb96b-aba8-4312-8b5a-175c593ef10f",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4f4fb96b-aba8-4312-8b5a-175c593ef10f",
+      "nombre": "zocalo",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "2.75591",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4f4fb96b-aba8-4312-8b5a-175c593ef10f",
+      "nombre": "lateral_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "4",
+      "formula_largo": "17.71654",
+      "formula_ancho": "6.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4f4fb96b-aba8-4312-8b5a-175c593ef10f",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4f4fb96b-aba8-4312-8b5a-175c593ef10f",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4f4fb96b-aba8-4312-8b5a-175c593ef10f",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4f4fb96b-aba8-4312-8b5a-175c593ef10f",
+      "nombre": "ref_sup",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4f4fb96b-aba8-4312-8b5a-175c593ef10f",
+      "nombre": "ref_inf",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "4.72441",
+      "formula_ancho": "P-3.28346",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "nombre": "ref_inf_tra",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "nombre": "trasero_gav",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "3.93701",
+      "formula_ancho": "L-3.36220",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "nombre": "contraparche_gav_r13l",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "4.72441",
+      "formula_ancho": "L-3.36220",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "nombre": "base_gaveta",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "P-3.55906",
+      "formula_ancho": "L-2.81102",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "nombre": "parche_gaveta",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "A-RV",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "nombre": "ref_tra",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "nombre": "ref_inf_del",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "64d0567a-6423-4afd-a24a-9c5d4f683ca2",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4806f873-2225-4124-b53f-d1c5895efa83",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4e432771-a505-488a-8913-580a9e7b9428",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "4.00000",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4e432771-a505-488a-8913-580a9e7b9428",
+      "nombre": "filler_der",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "A",
+      "formula_ancho": "P--4.50000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4e432771-a505-488a-8913-580a9e7b9428",
+      "nombre": "base_gaveta",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "17.72441",
+      "formula_ancho": "19.15354",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4e432771-a505-488a-8913-580a9e7b9428",
+      "nombre": "trasero_gav",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "A-2.78740",
+      "formula_ancho": "L-3.89764",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4e432771-a505-488a-8913-580a9e7b9428",
+      "nombre": "contraparche_gav_r13a",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "4.00000",
+      "formula_ancho": "L-3.89764",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "4e432771-a505-488a-8913-580a9e7b9428",
+      "nombre": "parche_gaveta",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "A",
+      "formula_ancho": "L-0.82677",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "60f3486b-bacb-485c-a2bf-3b64d6fed1fd",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-1.22047",
+      "formula_ancho": "22.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "20f97181-f7e4-4691-b045-504d713c464f",
+      "nombre": "filler",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "A",
+      "formula_ancho": "L",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5ed4a903-6f5d-41d2-8429-34fc7d8fc08a",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2.43110",
+      "formula_ancho": "19.62520",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "5ed4a903-6f5d-41d2-8429-34fc7d8fc08a",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2.43110",
+      "formula_ancho": "2.75000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "48f62cb2-8850-430b-9d87-c6dfd7b0e8fe",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "A-RV",
+      "formula_ancho": "(L-n_puertas*RV)/n_puertas",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c29b9334-4a6b-48f1-9158-a3d6d8cb40d8",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c29b9334-4a6b-48f1-9158-a3d6d8cb40d8",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c29b9334-4a6b-48f1-9158-a3d6d8cb40d8",
+      "nombre": "frente_gaveta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "A-RV",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c29b9334-4a6b-48f1-9158-a3d6d8cb40d8",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "A",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c29b9334-4a6b-48f1-9158-a3d6d8cb40d8",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-4.60630",
+      "formula_ancho": "2.67717",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c29b9334-4a6b-48f1-9158-a3d6d8cb40d8",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-4.13386",
+      "formula_ancho": "P-4.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "887d9695-f25d-42ac-9070-24891c88523b",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "887d9695-f25d-42ac-9070-24891c88523b",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "887d9695-f25d-42ac-9070-24891c88523b",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-1.22047",
+      "formula_ancho": "P-1.50000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "887d9695-f25d-42ac-9070-24891c88523b",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "887d9695-f25d-42ac-9070-24891c88523b",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "887d9695-f25d-42ac-9070-24891c88523b",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.62992",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "07a4f78b-c312-4393-9fc1-9db2538658a2",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "07a4f78b-c312-4393-9fc1-9db2538658a2",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "07a4f78b-c312-4393-9fc1-9db2538658a2",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "07a4f78b-c312-4393-9fc1-9db2538658a2",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "07a4f78b-c312-4393-9fc1-9db2538658a2",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-1.22047",
+      "formula_ancho": "P-1.50000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "07a4f78b-c312-4393-9fc1-9db2538658a2",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.62992",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.62992",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "nombre": "gola_perfil",
+      "rol_tablero": "caja",
+      "formula_cantidad": "gola*1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "14.60039",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "11.84843",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.90551",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eca678ba-8867-477f-bc74-f841bda2b105",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "A--1.60827",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.06299",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "17.62992",
+      "formula_ancho": "19.37008",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "frente_gaveta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "13.81890",
+      "formula_ancho": "21.87402",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.07874",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "19.62992",
+      "formula_ancho": "19.37008",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "frente_gaveta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "13.81890",
+      "formula_ancho": "23.87402",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "panel",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "13.81890",
+      "formula_ancho": "23.87402",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "division",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "A-2*TC",
+      "formula_ancho": "P-1.06299",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "16.62992",
+      "formula_ancho": "19.37008",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "frente_gaveta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "13.81890",
+      "formula_ancho": "20.87402",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "tras_gav_sup_l_a",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "17.15748",
+      "formula_ancho": "7.20472",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "tras_gav_inf_l_a",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "17.15748",
+      "formula_ancho": "7.20472",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "tras_gav_inf_l_b",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "19.15748",
+      "formula_ancho": "19.37008",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "tras_gav_sup_l_a",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "16.15748",
+      "formula_ancho": "7.20472",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "tras_gav_inf_l_a",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "16.15748",
+      "formula_ancho": "7.20472",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "tras_gav_inf_l_b",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "19.15748",
+      "formula_ancho": "7.20472",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "19.33071",
+      "formula_ancho": "4.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "16.62992",
+      "formula_ancho": "17.36220",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "bb0dfb50-82cb-4eb9-bb3d-5d53fb213854",
+      "nombre": "trasero_pod21",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "16.15748",
+      "formula_ancho": "2.67717",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2bca979b-467a-4a99-9da9-430040b3a42b",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2bca979b-467a-4a99-9da9-430040b3a42b",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2bca979b-467a-4a99-9da9-430040b3a42b",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "A--0.62402",
+      "formula_ancho": "(L-n_puertas*RV)/n_puertas",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2bca979b-467a-4a99-9da9-430040b3a42b",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2bca979b-467a-4a99-9da9-430040b3a42b",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2bca979b-467a-4a99-9da9-430040b3a42b",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.62992",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c71901b7-760a-4148-9399-88fe8ece1c9d",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c71901b7-760a-4148-9399-88fe8ece1c9d",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c71901b7-760a-4148-9399-88fe8ece1c9d",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P--4.72441",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c71901b7-760a-4148-9399-88fe8ece1c9d",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c71901b7-760a-4148-9399-88fe8ece1c9d",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.62992",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "c71901b7-760a-4148-9399-88fe8ece1c9d",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-1.22047",
+      "formula_ancho": "11.49213",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "base_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "3",
+      "formula_largo": "L-4.13386",
+      "formula_ancho": "19.37008",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-4.60630",
+      "formula_ancho": "7.20472",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "frente_gaveta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "A*0.39781",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-4.60630",
+      "formula_ancho": "2.67717",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "frente_gaveta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "5.50000",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.07874",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "a945a9fd-cd78-4546-b7b2-db16facb2afb",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "A-RV",
+      "formula_ancho": "(L-n_puertas*RV)/n_puertas",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "a945a9fd-cd78-4546-b7b2-db16facb2afb",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "a945a9fd-cd78-4546-b7b2-db16facb2afb",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "a945a9fd-cd78-4546-b7b2-db16facb2afb",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.77953",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "a945a9fd-cd78-4546-b7b2-db16facb2afb",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.07874",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "nombre": "trasero_gaveta",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-4.60630",
+      "formula_ancho": "2.67717",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-1.22047",
+      "formula_ancho": "11.81102",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "A-5.75197",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "nombre": "frente_gaveta",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "5.50000",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "nombre": "pieza_cajon",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-4.13386",
+      "formula_ancho": "19.37008",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2909e597-6f05-4e7a-bbe4-92a214d72c93",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.07874",
+      "formula_ancho": "L-0.70866",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eb739839-8c7a-4865-8a44-1bfd72d549e9",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eb739839-8c7a-4865-8a44-1bfd72d549e9",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eb739839-8c7a-4865-8a44-1bfd72d549e9",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "A-RV",
+      "formula_ancho": "(L-n_puertas*RV)/n_puertas",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eb739839-8c7a-4865-8a44-1bfd72d549e9",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-0.70866-TB",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eb739839-8c7a-4865-8a44-1bfd72d549e9",
+      "nombre": "refuerzo_delantero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eb739839-8c7a-4865-8a44-1bfd72d549e9",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.07874",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "eb739839-8c7a-4865-8a44-1bfd72d549e9",
+      "nombre": "shlef",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-1.22047",
+      "formula_ancho": "P-2.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9d8618e5-6369-4e12-b408-7b4b9e7cd277",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A-0.01181",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9d8618e5-6369-4e12-b408-7b4b9e7cd277",
+      "nombre": "zocalo",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "2.75591",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9d8618e5-6369-4e12-b408-7b4b9e7cd277",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9d8618e5-6369-4e12-b408-7b4b9e7cd277",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9d8618e5-6369-4e12-b408-7b4b9e7cd277",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9d8618e5-6369-4e12-b408-7b4b9e7cd277",
+      "nombre": "ref_sup",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "9d8618e5-6369-4e12-b408-7b4b9e7cd277",
+      "nombre": "ref_inf",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6c0ded5a-f134-46fe-882b-9fc8523ce921",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "22.00000",
+      "formula_ancho": "22.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6c0ded5a-f134-46fe-882b-9fc8523ce921",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6c0ded5a-f134-46fe-882b-9fc8523ce921",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "2",
+      "formula_largo": "A-2*TC",
+      "formula_ancho": "L-2.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6c0ded5a-f134-46fe-882b-9fc8523ce921",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-2*TC",
+      "formula_ancho": "6.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6c0ded5a-f134-46fe-882b-9fc8523ce921",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "L-TC",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6c0ded5a-f134-46fe-882b-9fc8523ce921",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-TC",
+      "formula_ancho": "L-TC",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6c0ded5a-f134-46fe-882b-9fc8523ce921",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "A--0.62402",
+      "formula_ancho": "11.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "6c0ded5a-f134-46fe-882b-9fc8523ce921",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "A--0.62402",
+      "formula_ancho": "11.75000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "7d2c4440-4be9-4a1c-8ce6-536433d0a326",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A-1.00000",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "7d2c4440-4be9-4a1c-8ce6-536433d0a326",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "7d2c4440-4be9-4a1c-8ce6-536433d0a326",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "A-RV",
+      "formula_ancho": "(L-n_puertas*RV)/n_puertas",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "7d2c4440-4be9-4a1c-8ce6-536433d0a326",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "7d2c4440-4be9-4a1c-8ce6-536433d0a326",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "7d2c4440-4be9-4a1c-8ce6-536433d0a326",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-1.62992",
+      "formula_ancho": "L-0.62992",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "7d2c4440-4be9-4a1c-8ce6-536433d0a326",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-1.22047",
+      "formula_ancho": "10.50000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "3",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "3.14961",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "3",
+      "formula_largo": "L-1.45669",
+      "formula_ancho": "P-1.53937",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "36.62402",
+      "formula_ancho": "L*0.49475",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "2",
+      "formula_largo": "A-36.87598",
+      "formula_ancho": "L*0.49475",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-1.45669",
+      "formula_ancho": "22.00000",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "entrepano",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-1.02362",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.07874",
+      "formula_ancho": "L-0.86614",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-0.86614",
+      "formula_ancho": "L-0.86614",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "e125f312-3848-40be-9881-3fc1ecf8bd80",
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "A-RV",
+      "formula_ancho": "L-RV",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "a945a9fd-cd78-4546-b7b2-db16facb2afb",
+      "nombre": "refuerzo_delantero_removible",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "removible",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "5.51181",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "a945a9fd-cd78-4546-b7b2-db16facb2afb",
+      "nombre": "refuerzo_trasero_removible",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "removible",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "4.75394",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "a945a9fd-cd78-4546-b7b2-db16facb2afb",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "removible ? P-TC : (P-0.70866-TB)",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "refuerzo_delantero_removible",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "removible",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "5.51181",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "nombre": "refuerzo_trasero_removible",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "removible",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "4.75394",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "refuerzo_delantero_removible",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "removible",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "5.51181",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "refuerzo_trasero_removible",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "removible",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "4.75394",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "b149e137-d3c8-4297-905a-179d46492ba8",
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "removible ? P-TC : (P-0.70866-TB)",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0fa8f60a-b6f0-4f69-b9a3-f5ffd149b782",
+      "nombre": "refuerzo_delantero_removible",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "removible",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "5.51181",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    },
+    {
+      "tipo_mueble_id": "0fa8f60a-b6f0-4f69-b9a3-f5ffd149b782",
+      "nombre": "refuerzo_trasero_removible",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "removible",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "4.75394",
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null
+    }
+  ],
+  "reglas": [
+    {
+      "tipo_mueble_id": null,
+      "variable": "n_puertas",
+      "condicion": "L <= 21",
+      "valor": "1",
+      "prioridad": 10
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "n_puertas",
+      "condicion": "L >= 24",
+      "valor": "2",
+      "prioridad": 20
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 99
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "n_entrepanos",
+      "condicion": "A <= 16",
+      "valor": "0",
+      "prioridad": 10
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "n_entrepanos",
+      "condicion": "A <= 24",
+      "valor": "1",
+      "prioridad": 20
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "n_entrepanos",
+      "condicion": "A <= 36",
+      "valor": "2",
+      "prioridad": 30
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "n_entrepanos",
+      "condicion": "true",
+      "valor": "3",
+      "prioridad": 99
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "4",
+      "prioridad": 100
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 100
+    },
+    {
+      "tipo_mueble_id": "c6f0792c-1b74-4cb5-8bf5-7ea33ac8c06e",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "2de3a3b3-9241-4bed-beb8-8da6d9ec6cfe",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "abe13e89-da8d-4663-ba5b-af08cee42c27",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "10e38246-fd7d-4a45-92bf-8878aef7a30b",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "19e348ac-5658-4a62-8e4d-1438a844a0e8",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "f82ee312-0141-4384-b578-22d6e74dad4c",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "2",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "94ca80d7-72ae-4437-9888-5dc2296b8b06",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "4",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "62001e6e-7466-4f1c-9ccd-678e9fcf6d2b",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "2",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "6d0e3498-0ff4-4d92-a6f5-74e8edcf6269",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "2",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "dcbd18b7-c01f-4bb4-b050-afa1ee64d7d1",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "2162712b-9f99-4b1c-b79d-ffaf4979e09e",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "2",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "53b14280-a810-4095-b48e-65e80e60f41f",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "dcc1b2eb-64ea-49be-83dd-9792889dd331",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "48ac3e9f-99f5-4ba3-9db6-6ffa27ca1c4c",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "zocalo",
+      "condicion": "true",
+      "valor": "5.25",
+      "prioridad": 100
+    },
+    {
+      "tipo_mueble_id": "06675b3e-dadc-4f04-9234-483155c1e287",
+      "variable": "zocalo",
+      "condicion": "true",
+      "valor": "4.5",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "963c6348-2b7d-41cc-b933-5d1293a1adf3",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "2",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "06675b3e-dadc-4f04-9234-483155c1e287",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "2",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "3fc5b69c-cc8f-464c-9575-99040290b94b",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "3fc5b69c-cc8f-464c-9575-99040290b94b",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "3fc5b69c-cc8f-464c-9575-99040290b94b",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "5c493e88-2fcb-4d21-9bb6-2151cebd9844",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "4",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "5c493e88-2fcb-4d21-9bb6-2151cebd9844",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "5c493e88-2fcb-4d21-9bb6-2151cebd9844",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "e5cd2dc2-94f3-4c40-9dfa-65795190f094",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "n_barras",
+      "condicion": "true",
+      "valor": "-1",
+      "prioridad": 100
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "4",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "37d7de1b-d410-41b0-96f2-29f5fb3490c3",
+      "variable": "n_entrepanos",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "4",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "5c33022b-db50-4bf0-b9a6-f08845388f94",
+      "variable": "n_entrepanos",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "variable": "n_puertas",
+      "condicion": "L < 24",
+      "valor": "1",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "2",
+      "prioridad": 10
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "3f802d72-43b3-49a0-9396-33a423afd6ea",
+      "variable": "n_entrepanos",
+      "condicion": "true",
+      "valor": "5",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "variable": "n_cajones_pequenos",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "gola",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "variable": "alto_frente_pequeno_base",
+      "condicion": "n_cajones_pequenos>=2",
+      "valor": "(A-4*RV)/4",
+      "prioridad": 10
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "variable": "alto_frente_pequeno_base",
+      "condicion": "n_cajones_pequenos==1",
+      "valor": "6",
+      "prioridad": 20
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "variable": "alto_frente_pequeno_base",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 99
+    },
+    {
+      "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "variable": "alto_frente_pequeno",
+      "condicion": "true",
+      "valor": "alto_frente_pequeno_base*(A-n_cajones*RV-gola*2.11024)/(A-n_cajones*RV)",
+      "prioridad": 10
+    },
+    {
+      "tipo_mueble_id": null,
+      "variable": "removible",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5
+    }
+  ],
+  "preset": {
+    "caja": "ECOCARB15COLOR",
+    "fondo": "PRICARB6CANDELARIA (POLAR)",
+    "frente": "ECOCARB18COLOR",
+    "refuerzo": "ECOCARB15ARLINGTON"
+  },
+  "tableros": [
+    {
+      "codigo": "CHI4,5CARBH002 YM002 BLANCO - BLACK",
+      "espesor_mm": 4.5,
+      "formato": "122X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHIRHCARB4BLANCO AMERICANO",
+      "espesor_mm": 4,
+      "formato": "122X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHICARB18SD 4075 DARK BROWN",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHIRHCARB18H002 YM002 BLANCO 183",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "ECOCARB15ARLINGTON",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHIRHCARB15BLANCO AMERICANO",
+      "espesor_mm": 15,
+      "formato": "124X246",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHIRHCARB18H002 YM002 BLANCO",
+      "espesor_mm": 18,
+      "formato": "124X246",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHIRHCARB18H4001 MD133 DARK",
+      "espesor_mm": 18,
+      "formato": "124X246",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "ECOCARB18ARLINGTON",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "PRICARB15CANDELARIA (POLAR)",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "PRICARB18CANDELARIA (POLAR)",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "PRICARB15COLOR",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "PRICARB18COLOR",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "PRICARB15COLORCLASICO",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "PRICARB18COLORCLASICO",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "PRICARB6CANDELARIA (POLAR)",
+      "espesor_mm": 6,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "PRICARB6COLOR",
+      "espesor_mm": 6,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHIRHCARB18BLANCO AMERICANO",
+      "espesor_mm": 18,
+      "formato": "124X246",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHIRHCARB6BLANCO AMERICANO",
+      "espesor_mm": 6,
+      "formato": "122X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHIRHCARB18M7394-1 MD133",
+      "espesor_mm": 18,
+      "formato": "124X246",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "ECOCARB15COLOR",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "ECOCARB18COLOR",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "ECOCARB9ARLINGTON 2 LADOS",
+      "espesor_mm": 9,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB15BALANCE",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB18COLOR",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB18COLORLIQ",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB18POLAR",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB15POLAR",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB15COLOR",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB6POLAR",
+      "espesor_mm": 6,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB6COLOR",
+      "espesor_mm": 6,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB9POLAR 2 LADOS",
+      "espesor_mm": 9,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB9POLAR 1 LADO",
+      "espesor_mm": 9,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURCARB9COLOR 2 LADOS",
+      "espesor_mm": 9,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURRH15NEVADO",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURRH18NEVADO",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURRH15COLOR",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURRH15CDL",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURRH18COLOR",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURRH18CDL",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURRH6NEVADO",
+      "espesor_mm": 6,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURRH6COLOR",
+      "espesor_mm": 6,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURST15COLOR",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURST15CDL",
+      "espesor_mm": 15,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURST18COLOR",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "DURST18CDL",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHICARB181124 COLD WHITE",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    },
+    {
+      "codigo": "CHIRHCARB18H4001 MD133 DARK 183",
+      "espesor_mm": 18,
+      "formato": "183X244",
+      "precio_m2": 1
+    }
+  ]
+}

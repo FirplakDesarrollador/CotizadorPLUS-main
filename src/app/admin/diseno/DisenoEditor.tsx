@@ -2,6 +2,8 @@
 import { useMemo, useState } from 'react';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
+import MontajeFields from '@/components/MontajeFields';
+import { inferirMontaje } from '@/lib/visualizacion-config';
 import { TIPS_DISENO } from '@/lib/tooltips';
 import {
   getDisenoAction, guardarPiezaAction, eliminarPiezaAction,
@@ -105,6 +107,7 @@ function PiezasEditor({ tipoId, piezas, cantos, onChange }: { tipoId: string; pi
       formula_cantidad: e.formula_cantidad, formula_largo: e.formula_largo, formula_ancho: e.formula_ancho,
       modo_agrupacion: e.modo_agrupacion ?? 'local', clave_fusion: e.clave_fusion || null,
       formula_largo_grupo: e.formula_largo_grupo || null,
+      visualizacion: e.visualizacion ?? inferirMontaje({ nombre:e.nombre, rol_tablero:e.rol_tablero, formula_largo:e.formula_largo, formula_ancho:e.formula_ancho }),
       cantos, tarugos: Number(e.tarugos) || 0, soportes: Number(e.soportes) || 0, orden: Number(e.orden) || 0,
     };
     const r = await guardarPiezaAction(e.id ?? null, row);
@@ -149,6 +152,7 @@ function PiezasEditor({ tipoId, piezas, cantos, onChange }: { tipoId: string; pi
           <F l="Aristas desperdicio (opc)"><input type="number" className={inp} placeholder="auto" value={edit._de} onChange={(e) => setEdit({ ...edit, _de: e.target.value })} /></F>
           <F l="Tarugos"><input type="number" className={inp} value={edit.tarugos} onChange={(e) => setEdit({ ...edit, tarugos: e.target.value })} /></F>
           <F l="Soportes"><input type="number" className={inp} value={edit.soportes} onChange={(e) => setEdit({ ...edit, soportes: e.target.value })} /></F>
+          <MontajeFields value={edit.visualizacion ?? inferirMontaje({ nombre:edit.nombre, rol_tablero:edit.rol_tablero, formula_largo:edit.formula_largo, formula_ancho:edit.formula_ancho })} onChange={v=>setEdit({...edit,visualizacion:v})} />
           <div className="col-span-full flex gap-2"><button onClick={save} className="rounded-lg bg-slate-900 text-white px-4 py-1.5 text-sm">Guardar</button><button onClick={() => setEdit(null)} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm">Cancelar</button></div>
         </div>
       )}

@@ -57,9 +57,12 @@ sospechosa cualquier
 pieza que no concuerde, sin necesidad de conocer de antemano la tipología. Esa
 es la base de las tres validaciones de este estudio.
 
-Convención confirmada: `P` (Profundo) es la profundidad **exterior**, incluye el
-espesor del frente. En un inferior de 24" reales, las piezas dan
-P = 627,6 mm = 609,6 + 18.
+Precisión confirmada para DB (2026-09-10): los **142 laterales de las 71 hojas DB**
+usan `AxP{0}PyA` y miden 609,6 mm de profundidad. Allí P es la profundidad del
+lateral; con frente sobrepuesto de 18 mm, la profundidad exterior interpretada
+es **627,6 mm = P + 18**, no P. La afirmación anterior de que P ya incluía el
+frente era incorrecta para estas DB. No extrapolar esa convención a otras
+familias sin revisar sus fórmulas. Ver [interpretación espacial DB](interpretacion_espacial_db.md).
 
 ## 2. Calidad de la fuente
 
@@ -110,8 +113,10 @@ estructural (`TC`, que ya existe en el motor de agrupación — ver
 
 ## 4. Tipología DB: reglas confirmadas y una regla equivocada
 
-Las 71 hojas DB (A = 762 mm / 30" en todas) permiten cerrar la geometría de
-gavetas por completo.
+Las 71 hojas DB (A = 762 mm / 30" en todas) permiten contrastar dimensiones de
+corte de las gavetas. No aportan todas las cotas de montaje. La
+[reconstrucción espacial](interpretacion_espacial_db.md) distingue medidas
+documentadas de posiciones inferidas.
 
 ### 4.1 Confirmado contra `0027_db_gavetas_mixtas.sql`
 

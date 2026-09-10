@@ -1,7 +1,9 @@
 import type { Breakdown } from '@/lib/engine';
 import type { GroupCalculation } from '@/lib/group-engine';
+import type { EscenaMueble } from './visualizacion';
 
 export type CotizarGrupoResult = Breakdown & {
+  visualizacion?: EscenaMueble;
   trm: number;
   margen: number;
   modulos: number;

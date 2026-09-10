@@ -1,5 +1,7 @@
 # Cajoneras DB con gavetas de tamaño mixto (DB-1S, DB-2S)
 
+> Esta página registra la implementación histórica de 0027. La migración local 0028 corrige el reparto DB-2S, el reveal y la base; ver [estado de implementación](validacion_hojas_de_ruta.md#10-estado-de-implementación-2026-08-24). La [interpretación espacial DB del 2026-09-10](interpretacion_espacial_db.md) contrasta las piezas con el Excel y precisa las discrepancias pendientes de respaldo, traseros genéricos, refuerzo de gola y gaveta interior. No interpretar las conclusiones históricas siguientes como validación completa de todas las tipologías o del estado remoto actual.
+
 ## Problema
 
 El motor (`calcularMueble` en `src/lib/engine.ts`) evalúa cada fila de `cot_piezas_plantilla` como "N copias de un mismo tamaño" (`area = cant * largo * ancho`). Eso es correcto para tipologías DB con cajones iguales (DB-2, DB-3, DB-4), pero **no puede representar tipologías con cajones de tamaño distinto** como `DB-1S` (1 cajón pequeño arriba + 2 grandes) o `DB-2S` (2 pequeños arriba + 1 grande), donde el "frente" y el "trasero_gaveta" antes se repartían el Alto en partes iguales (`A/n_cajones`) sin importar la tipología elegida.
