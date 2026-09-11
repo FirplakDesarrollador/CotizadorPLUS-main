@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { calcularGrupoFisico, type PreparedGroupMember } from '../src/lib/group-engine';
 import { construirVisualizacion } from '../src/lib/visualizacion';
 import { inferirMontaje, validarMontaje } from '../src/lib/visualizacion-config';
-import { type Pieza, type Regla, type Tablero } from '../src/lib/engine';
+import { type Pieza, type Regla, type Tablero, type Canto } from '../src/lib/engine';
 
 const data=JSON.parse(fs.readFileSync('tests/fixtures/catalogo-visualizacion.json','utf8')) as {
   tipos:{id:string;pref:string;permite_agrupacion:boolean}[];
@@ -18,7 +18,7 @@ function member(pref:string,overrides:Record<string,number>={}):PreparedGroupMem
     piezas:data.piezas.filter(p=>p.tipo_mueble_id===tipo.id).map(p=>({...p,visualizacion:inferirMontaje(p)})),
     reglas:data.reglas.filter(r=>!r.tipo_mueble_id||r.tipo_mueble_id===tipo.id),overrides,
     preset:data.preset,tablerosByCode:Object.fromEntries(data.tableros.map(t=>[t.codigo,t])),
-    cantosByCalibre: new Proxy({}, { get: () => 1000 }) as Record<string, number>,
+    cantosByCalibre: new Proxy({}, { get: () => ({ calibre: '0.5', precio: 1000 }) }) as Record<string, Canto>,
     herrajesByCode:{},consumiblesBySelector:{},etiquetasUnd:0,usaCarton:false,
     margen:0,trm:1,desperdicio:0,
   }};

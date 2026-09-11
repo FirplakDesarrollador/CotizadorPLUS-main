@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { calcularMueble, type Pieza, type Regla, type Tablero } from '../src/lib/engine';
+import { calcularMueble, type Pieza, type Regla, type Tablero, type Canto, type CalcInput } from '../src/lib/engine';
 import { calcularGrupoFisico, type PreparedGroupMember } from '../src/lib/group-engine';
 import { construirVisualizacion } from '../src/lib/visualizacion';
 import { inferirMontaje } from '../src/lib/visualizacion-config';
@@ -29,14 +29,17 @@ test('DB2-1OP despiece: 2 frentes exteriores, 1 frente interior de 100mm, 2 tras
     reglas,
     preset: data.preset,
     tablerosByCode,
-    cantosByCalibre: new Proxy({}, { get: () => 1000 }) as Record<string, number>,
+    cantosByCalibre: new Proxy({}, { get: () => ({ calibre: '0.5', precio: 1000 }) }) as Record<string, Canto>,
     consumiblesBySelector: { tarugo: 50, soporte: 200, tornillo_ensamble: 30 },
     herrajesPlantilla: [],
-    herrajesByCodigo: {},
+    herrajesByCode: {},
     overrides,
     usaCarton: true,
     etiquetasUnd: 4,
     modoFrentes: 'normal',
+    margen: 0,
+    trm: 1,
+    desperdicio: 0,
   });
 
   const pFrenteExt = calc.piezas.find((p) => p.pieza === 'frente_gaveta_exterior')!;
@@ -72,20 +75,23 @@ test('DB2-1OP visualización 3 vistas: 2 frentes en fachada, gaveta oculta en in
   const dims = { L: 30, A: 30, P: 24 };
   const overrides = { n_cajones: 3, n_barras: 1, n_cajones_pequenos: 0, n_cajones_ocultos: 1 };
 
-  const calcInput = {
+  const calcInput: CalcInput = {
     dims,
     piezas,
     reglas,
     preset: data.preset,
     tablerosByCode,
-    cantosByCalibre: new Proxy({}, { get: () => 1000 }) as Record<string, number>,
+    cantosByCalibre: new Proxy({}, { get: () => ({ calibre: '0.5', precio: 1000 }) }) as Record<string, Canto>,
     consumiblesBySelector: { tarugo: 50, soporte: 200, tornillo_ensamble: 30 },
     herrajesPlantilla: [],
-    herrajesByCodigo: {},
+    herrajesByCode: {},
     overrides,
     usaCarton: true,
     etiquetasUnd: 4,
-    modoFrentes: 'normal' as const,
+    modoFrentes: 'normal',
+    margen: 0,
+    trm: 1,
+    desperdicio: 0,
   };
 
   const member: PreparedGroupMember = {
