@@ -194,7 +194,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
   };
 }
 
-type LineaPersistida = {
+export type LineaPersistida = {
   id: string;
   cotizacion_id: string;
   cocina_id: string;
@@ -208,9 +208,11 @@ type LineaPersistida = {
   unidad_dim: 'in' | 'cm' | 'mm';
   cantidad: number;
   config: Record<string, unknown> | null;
+  codigo_modulo?: string | null;
+  descripcion_es?: string | null;
 };
 
-function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
+export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
   const c = linea.config ?? {};
   return {
     tipoId: linea.tipo_mueble_id,

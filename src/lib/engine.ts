@@ -145,7 +145,7 @@ export function derivarVars(
 
 export type Breakdown = {
   vars: Record<string, number>;
-  piezas: { pieza: string; rol: string; cant: number; largoIn: number; anchoIn: number; areaCm2: number }[];
+  piezas: { pieza: string; rol: string; cant: number; largoIn: number; anchoIn: number; areaCm2: number; cantoLargos: number; cantoAnchos: number; cantoCalibre: string | null }[];
   maderaPorRol: { rol: string; codigo: string; cm2: number; costo: number }[];
   cantoPorCalibre: { calibre: string; longCm: number; precio: number; costo: number }[];
   consumibles: Record<string, number>;
@@ -218,6 +218,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     // Solo suma área si la pieza tiene rol de tablero; piezas "canto-only" (sin rol) aportan únicamente canto.
     if (pz.rol_tablero) areaPorRol[pz.rol_tablero] = (areaPorRol[pz.rol_tablero] || 0) + area;
     const c = pz.cantos || {};
+    let cantoLargos = 0, cantoAnchos = 0, cantoCalibreResuelto: string | null = null;
     if (c.calibre) {
       let cal = c.calibre;
       const tabCode = inp.preset[pz.rol_tablero];
@@ -231,6 +232,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
       if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
       if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
       const largos = c.largos || 0, anchos = c.anchos || 0;
+      cantoLargos = largos; cantoAnchos = anchos; cantoCalibreResuelto = cal;
       const e = (cantoPorCal[cal] ||= { lenIn: 0, edges: 0 });
       e.lenIn += cant * (largos * lIn + anchos * aIn);
       if (/refuerzo/i.test(pz.nombre)) {
@@ -243,7 +245,10 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     }
     tarugos += cant * Number(pz.tarugos || 0);
     soportes += cant * Number(pz.soportes || 0);
-    piezasDet.push({ pieza: pz.nombre, rol: pz.rol_tablero, cant, largoIn: +lIn.toFixed(3), anchoIn: +aIn.toFixed(3), areaCm2: +area.toFixed(2) });
+    piezasDet.push({
+      pieza: pz.nombre, rol: pz.rol_tablero, cant, largoIn: +lIn.toFixed(3), anchoIn: +aIn.toFixed(3), areaCm2: +area.toFixed(2),
+      cantoLargos, cantoAnchos, cantoCalibre: cantoCalibreResuelto,
+    });
   }
 
   // Madera. El desperdicio (tarifa madera) es el ÚNICO factor de merma; se fija por proyecto

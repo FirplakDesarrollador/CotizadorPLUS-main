@@ -31,8 +31,8 @@ function breakdown(patch: Partial<Breakdown> = {}): Breakdown {
 test('consolida las asignaciones internas en un único resultado físico y comercial', () => {
   const first = breakdown({
     piezas: [
-      { pieza: 'base', rol: 'caja', cant: 0.3, largoIn: 40, anchoIn: 23, areaCm2: 1000 },
-      { pieza: 'entrepaño', rol: 'caja', cant: 1, largoIn: 12, anchoIn: 22, areaCm2: 500 },
+      { pieza: 'base', rol: 'caja', cant: 0.3, largoIn: 40, anchoIn: 23, areaCm2: 1000, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null },
+      { pieza: 'entrepaño', rol: 'caja', cant: 1, largoIn: 12, anchoIn: 22, areaCm2: 500, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null },
     ],
     maderaPorRol: [{ rol: 'caja', codigo: 'M15', cm2: 1500, costo: 15000 }],
     cantoPorCalibre: [{ calibre: '22x1', longCm: 100, precio: 20, costo: 2000 }],
@@ -50,8 +50,8 @@ test('consolida las asignaciones internas en un único resultado físico y comer
   });
   const second = breakdown({
     piezas: [
-      { pieza: 'base', rol: 'caja', cant: 0.7, largoIn: 40, anchoIn: 23, areaCm2: 2000 },
-      { pieza: 'entrepaño', rol: 'caja', cant: 1, largoIn: 28, anchoIn: 22, areaCm2: 900 },
+      { pieza: 'base', rol: 'caja', cant: 0.7, largoIn: 40, anchoIn: 23, areaCm2: 2000, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null },
+      { pieza: 'entrepaño', rol: 'caja', cant: 1, largoIn: 28, anchoIn: 22, areaCm2: 900, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null },
     ],
     maderaPorRol: [{ rol: 'caja', codigo: 'M15', cm2: 2900, costo: 29000 }],
     cantoPorCalibre: [{ calibre: '22x1', longCm: 180, precio: 20, costo: 3600 }],
@@ -87,7 +87,7 @@ test('consolida las asignaciones internas en un único resultado físico y comer
 
 test('limpia residuos binarios al sumar participaciones de una pieza continua', () => {
   const row = (cant: number) => breakdown({
-    piezas: [{ pieza: 'fondo', rol: 'fondo', cant, largoIn: 60, anchoIn: 30, areaCm2: cant * 1000 }],
+    piezas: [{ pieza: 'fondo', rol: 'fondo', cant, largoIn: 60, anchoIn: 30, areaCm2: cant * 1000, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null }],
   });
   const result = consolidarGrupo({
     lineas: [row(1 / 3), row(1 / 3), row(1 - 2 / 3)],
