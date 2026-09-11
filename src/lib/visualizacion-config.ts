@@ -54,7 +54,7 @@ export function inferirMontaje(p: { nombre: string; rol_tablero: string; formula
   else if (n === 'lateral') funcion = /\bA\b/.test(p.formula_largo ?? '') ? 'lateral' : 'lateral_gaveta';
   else if (/base_gav|pieza_cajon/.test(n)) funcion = 'base_gaveta';
   else if (/^tras.*gav|^tras.*caj|^trasero_pod/.test(n)) funcion = 'trasero_gaveta';
-  else if (/contraparche/.test(n)) funcion = 'frente_interior';
+  else if (/contraparche|frente.*int|frente.*ocul/.test(n)) funcion = 'frente_interior';
   else if (/frente.*gav|frente_cajon|parche_gaveta/.test(n)) funcion = 'frente_gaveta';
   else if (n === 'frente_falso') funcion = 'frente_falso';
   else if (/^frente|^puerta/.test(n)) funcion = 'frente';

@@ -19,7 +19,14 @@ Regla por defecto en `cot_reglas_config` para el tipo `DB`: `condicion='true', v
 | `DB-1S` | 3 | 1 (arriba) |
 | `DB-2S` | 3 | 2 (arriba) |
 | `DB-2`, `DB-3`, `DB-4` | 2/3/4 | 0 |
-| `DB2-1OP` | 3 | 0 *(el "oculto" no es un cajón pequeño de frente; no se tocó — sin datos de referencia)* |
+| `DB2-1OP` | 3 | 0 | 1 (`noculto=1`: 2 frentes exteriores de fachada + 1 gaveta oculta interior de 100mm) |
+
+### Tipología DB2-1OP (2 cajones exteriores + 1 cajón oculto interior)
+En producción real (CEMA filas 2275-2276 `CDB12-2s-SMG`/`CDB21-2s-SM`, y Hojas de Ruta `HRJ DB22-2+INT` e `IC55-1PINT`), `DB2-1OP` cuenta con **3 cajones totales**:
+1. **Fachada exterior:** Solo tiene **2 frentes exteriores** de igual altura (`(A - 2*RV)/2`), que cubren el vano visible del mueble. La pieza generada es `frente_gaveta_exterior` (cantidad 2).
+2. **Gaveta oculta (interior):** Ubicada dentro del vano superior, detrás del frente exterior superior. Cuenta con la pieza `frente_gaveta_interior` (cantidad 1, alto 100mm = 3.937", ancho `L - 2*TC - RV`), `trasero_gaveta_pequena` (68mm de alto) y `base_gaveta`.
+3. **Herrajes:** 3 rieles TANDEM (uno por cada cajón) y 1 par de barras estabilizadoras (solo para la gaveta inferior grande).
+4. **Visualización 3D:** La vista frontal muestra únicamente los 2 frentes exteriores. La vista lateral y superior proyectan la gaveta oculta en el interior del vano superior (`Y = 10mm`), permitiendo su apertura ilustrativa y selección independiente.
 
 ### Piezas nuevas y modificadas
 

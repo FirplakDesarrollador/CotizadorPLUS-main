@@ -32,14 +32,14 @@ export function permiteRemovible(pref: string | null | undefined): boolean {
 // y nº de cajones "pequeños" (frente fijo de 6", ver cot_piezas_plantilla del tipo DB).
 // Las barras van en los cajones grandes; es fijo por tipología, no depende de la medida.
 // El/los cajón(es) pequeño(s) siempre van arriba (SUP); el resto se reparte por igual abajo.
-export type DbTipologia = { key: string; nc: number; nb: number; npeq: number; desc: string };
+export type DbTipologia = { key: string; nc: number; nb: number; npeq: number; noculto?: number; desc: string };
 export const DB_TIPOLOGIAS: DbTipologia[] = [
   { key: 'DB-1S', nc: 3, nb: 2, npeq: 1, desc: '1 cajón pequeño + 2 grandes · 2 pares de barra' },
   { key: 'DB-2S', nc: 3, nb: 1, npeq: 2, desc: '2 cajones pequeños + 1 grande · 1 par de barra' },
   { key: 'DB-2', nc: 2, nb: 2, npeq: 0, desc: '2 cajones iguales (grandes) · 2 pares de barra' },
   { key: 'DB-3', nc: 3, nb: 0, npeq: 0, desc: '3 cajones iguales · sin barras' },
   { key: 'DB-4', nc: 4, nb: 0, npeq: 0, desc: '4 cajones iguales · sin barras' },
-  { key: 'DB2-1OP', nc: 3, nb: 1, npeq: 0, desc: '2 cajones + 1 oculto · 1 par de barra' },
+  { key: 'DB2-1OP', nc: 3, nb: 1, npeq: 0, noculto: 1, desc: '2 cajones + 1 oculto · 1 par de barra' },
 ];
 
 // Configuraciones rápidas de torre PCFD. Son presets editables: después de

@@ -79,8 +79,9 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const innerH=sideH||A;
     const fronts=items.filter(i=>i.funcion==='frente_gaveta').flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
     fronts.sort((a,b)=>a.item.h-b.item.h||a.item.source-b.item.source);
-    const bodyCount=Math.max(0,...items.filter(i=>i.funcion==='base_gaveta').map(i=>i.count),fronts.length);
-    const drawerSlots: {z:number;h:number;key:string}[]=[];
+    const intFronts=items.filter(i=>i.funcion==='frente_interior').flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
+    const bodyCount=Math.max(0,...items.filter(i=>i.funcion==='base_gaveta').map(i=>i.count),fronts.length+intFronts.length);
+    const drawerSlots: {z:number;h:number;key:string;interior?:boolean}[]=[];
     const gola=vars.gola?53.6:0;
     if(fronts.length) {
       const sum=fronts.reduce((s,f)=>s+f.item.h,0), gap=3.2;
@@ -90,6 +91,15 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         if(gola && (j===0||j===fronts.length-1)) z-=gola/2;
         z-=f.item.h; drawerSlots.push({z,h:f.item.h,key:`${mi}:gaveta:${j}`}); z-=gap;
       });
+      // Gavetas interiores detrás de un frente exterior (ej. DB2-1OP):
+      if(intFronts.length && drawerSlots.length) {
+        const topSlot=drawerSlots[0];
+        const half=topSlot.h/2;
+        topSlot.h=half;
+        intFronts.forEach((_,idx)=>{
+          drawerSlots.push({z:topSlot.z+half,h:half,key:`${mi}:gaveta:int:${idx}`,interior:true});
+        });
+      }
     } else {
       // Internal drawers use the lower cabinet zone; their exact mounting remains editable.
       const zone=vars.n_puertas?Math.min(innerH*.5,bodyCount*200):innerH;
@@ -126,10 +136,19 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         let x=(width-w)/2, y=0, z=foot, cajon:string|null=null;
         let drawerIndex=i;
         if(funcion==='frente_gaveta') drawerIndex=fronts.findIndex(f=>f.item===item&&f.k===k);
-        // Small backs precede large backs regardless of row order in the catalogue.
-        if(funcion==='trasero_gaveta') {
-          const ordered=items.filter(q=>q.funcion===funcion).flatMap(q=>Array.from({length:q.count},(_,j)=>({q,j}))).sort((a,b)=>a.q.h-b.q.h||a.q.source-b.q.source);
-          drawerIndex=ordered.findIndex(v=>v.q===item&&v.j===k);
+        else if(funcion==='frente_interior') drawerIndex=Math.max(0,drawerSlots.findIndex(s=>s.interior));
+        else if(funcion==='base_gaveta') {
+          if(intFronts.length && k>=fronts.length) drawerIndex=Math.max(0,drawerSlots.findIndex(s=>s.interior))+(k-fronts.length);
+          else drawerIndex=k;
+        }
+        else if(funcion==='trasero_gaveta') {
+          if(intFronts.length) {
+            if(h>100) drawerIndex=1;
+            else drawerIndex=k===0?0:Math.max(0,drawerSlots.findIndex(s=>s.interior));
+          } else {
+            const ordered=items.filter(q=>q.funcion===funcion).flatMap(q=>Array.from({length:q.count},(_,j)=>({q,j}))).sort((a,b)=>a.q.h-b.q.h||a.q.source-b.q.source);
+            drawerIndex=ordered.findIndex(v=>v.q===item&&v.j===k);
+          }
         }
         if(funcion==='lateral_gaveta') drawerIndex=Math.floor(i/2);
         const slot=drawerSlots[drawerIndex%Math.max(1,drawerSlots.length)];

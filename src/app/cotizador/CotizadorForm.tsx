@@ -237,7 +237,11 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (modulo.zocalo !== '') overrides.zocalo = Number(modulo.zocalo);
     if (modulo.nbarras !== '') overrides.n_barras = Number(modulo.nbarras);
     const pref = tipos.find((tipo) => tipo.id === modulo.tipoId)?.pref ?? '';
-    if (pref.startsWith('DB') && modulo.dbTipo) overrides.n_cajones_pequenos = DB_TIPOLOGIAS.find((x) => x.key === modulo.dbTipo)?.npeq ?? 0;
+    if (pref.startsWith('DB') && modulo.dbTipo) {
+      const dbT = DB_TIPOLOGIAS.find((x) => x.key === modulo.dbTipo);
+      overrides.n_cajones_pequenos = dbT?.npeq ?? 0;
+      overrides.n_cajones_ocultos = dbT?.noculto ?? 0;
+    }
     // Variantes transversales: viajan como override numérico 0/1 para que las
     // fórmulas de pieza y las reglas puedan reaccionar (ver migración 0028).
     overrides.gola = modulo.sistemaFrente === 'gola' ? 1 : 0;

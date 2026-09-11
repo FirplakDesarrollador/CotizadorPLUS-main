@@ -251,7 +251,11 @@ export default function AddLineForm({
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
     if (zocalo !== '') overrides.zocalo = Number(zocalo);
     if (nbarras !== '') overrides.n_barras = Number(nbarras);
-    if (esDB && dbTipo) overrides.n_cajones_pequenos = DB_TIPOLOGIAS.find((x) => x.key === dbTipo)?.npeq ?? 0;
+    if (esDB && dbTipo) {
+      const dbT = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
+      overrides.n_cajones_pequenos = dbT?.npeq ?? 0;
+      overrides.n_cajones_ocultos = dbT?.noculto ?? 0;
+    }
     // Variantes transversales: override numérico 0/1 (migración 0028).
     overrides.gola = sistemaFrente === 'gola' ? 1 : 0;
     if (permiteRemovible(prefTipo)) overrides.removible = removible ? 1 : 0;

@@ -18,7 +18,8 @@ function member(pref:string,overrides:Record<string,number>={}):PreparedGroupMem
     piezas:data.piezas.filter(p=>p.tipo_mueble_id===tipo.id).map(p=>({...p,visualizacion:inferirMontaje(p)})),
     reglas:data.reglas.filter(r=>!r.tipo_mueble_id||r.tipo_mueble_id===tipo.id),overrides,
     preset:data.preset,tablerosByCode:Object.fromEntries(data.tableros.map(t=>[t.codigo,t])),
-    cantosByCalibre:{},herrajesByCode:{},consumiblesBySelector:{},etiquetasUnd:0,usaCarton:false,
+    cantosByCalibre: new Proxy({}, { get: () => 1000 }) as Record<string, number>,
+    herrajesByCode:{},consumiblesBySelector:{},etiquetasUnd:0,usaCarton:false,
     margen:0,trm:1,desperdicio:0,
   }};
 }

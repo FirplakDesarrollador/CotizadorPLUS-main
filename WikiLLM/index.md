@@ -15,7 +15,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 ## Infraestructura de Datos
 - [Esquema de Base de Datos](wiki/esquema_base_datos.md) - Estructura de tablas y políticas en Supabase (prefijo `cot_`).
 - [Rieles de Cajón DB](wiki/rieles_db.md) - Catálogo de tipos de riel para muebles DB, mecanismo de override y archivos modificados.
-- [Cajoneras DB con gavetas mixtas](wiki/db_gavetas_mixtas.md) - Piezas diferenciadas por posición (pequeña/grande) para tipologías `DB-1S`/`DB-2S`, fórmulas de frente/trasero de gaveta y variable `n_cajones_pequenos`.
+- [Cajoneras DB con gavetas mixtas](wiki/db_gavetas_mixtas.md) - Piezas diferenciadas por posición (pequeña/grande) para tipologías `DB-1S`/`DB-2S` y `DB2-1OP` (gaveta oculta interior), fórmulas de frentes exteriores/interiores y variables `n_cajones_pequenos`/`n_cajones_ocultos`.
 - [Interpretación espacial DB en tres vistas](wiki/interpretacion_espacial_db.md) - Reconstrucción de siete referencias reales, nombres y planos de piezas, fórmulas contrastadas, gaveta interior y límites de las hipótesis de montaje.
 - [Muebles esquineros ciegos BBL](wiki/muebles_bbl.md) - Análisis del Excel CEMA y plantillas paramétricas `BBLFD`/`BBL` disponibles en Supabase.
 - [Torres PCFD con gavetas ocultas](wiki/muebles_pcfd_gavetas_ocultas.md) - Variantes `STANDARD`/`2OP`/`4OP`, fórmulas CEMA y uso paramétrico de cajones y entrepaños.
