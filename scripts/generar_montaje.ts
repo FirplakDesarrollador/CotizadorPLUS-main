@@ -37,5 +37,5 @@ where p.tipo_mueble_id=t.id and t.pref=v.pref and p.nombre=v.nombre
   and coalesce(p.formula_largo,'')=v.largo and coalesce(p.formula_ancho,'')=v.ancho
   and p.formula_cantidad=v.cantidad and p.visualizacion is null;
 `;
-fs.writeFileSync('db/migrations/0031_visualizacion_montaje.sql',sql);
+fs.writeFileSync('db/migrations/0035_visualizacion_montaje.sql',sql);
 console.log(`Generated ${rows.size} mounting rules.`);

@@ -173,8 +173,29 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const esDB = tipoPref.startsWith('DB');
   const esPCFD = tipoPref === 'PCFD';
   const usaRiel = esDB || esPCFD;
+  // Un DB sin herrajes no lleva el costo real de riel/barras en el precio
+  // (herrajesPlantilla queda vacío cuando conHerrajes=false), así que se
+  // fuerza al elegir el tipo, no en un efecto (evita un hook nuevo después
+  // del `if (!isMounted) return null` de arriba).
+  function handleTipoChange(v: string) {
+    setTipoId(v);
+    // El simulador hereda la configuración del módulo anterior a propósito
+    // (ver arquitectura_frontend.md §3), pero un override numérico de un tipo
+    // distinto (ej. n_cajones=3 de un DB-1S) no debe sobrevivir a un cambio de
+    // Tipo — terminaba cobrando herraje de cajón en un módulo sin gavetas.
+    setNpuertas('');
+    setNcajones('');
+    setNentrepanos('');
+    setZocalo('');
+    setNbarras('');
+    setDbTipo('');
+    setRielCodigo('RIELTANDEM');
+    setPcfdConfig('');
+    if ((tipos.find((t) => t.id === v)?.pref ?? '').startsWith('DB')) setConHerrajes(true);
+  }
   function aplicarDbTipo(k: string) {
     setDbTipo(k);
+    setConHerrajes(true);
     const t = DB_TIPOLOGIAS.find((x) => x.key === k);
     if (t) { setNcajones(String(t.nc)); setNbarras(String(t.nb)); }
   }
@@ -228,7 +249,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       prof: modulo.prof,
       unidad,
       preset: modulo.preset,
-      conHerrajes: modulo.conHerrajes,
+      // Un DB sin herrajes no lleva el costo real de riel/barras en el precio.
+      conHerrajes: pref.startsWith('DB') ? true : modulo.conHerrajes,
       trm,
       modoFrentes: modulo.modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
@@ -528,7 +550,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
         <div data-tour="tipo">
           <Field label="Tipo de mueble">
-            <Combobox value={tipoId} options={tipoOptions} onChange={setTipoId} placeholder="Buscar tipo…" />
+            <Combobox value={tipoId} options={tipoOptions} onChange={handleTipoChange} placeholder="Buscar tipo…" />
           </Field>
         </div>
 
@@ -655,9 +677,16 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         </div>
 
         <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={conHerrajes} onChange={(e) => setConHerrajes(e.target.checked)} /> Incluir herrajes
+          <input
+            type="checkbox"
+            checked={esDB ? true : conHerrajes}
+            disabled={esDB}
+            onChange={(e) => setConHerrajes(e.target.checked)}
+            title={esDB ? 'Los muebles DB siempre incluyen herrajes: sin esto, el riel y las barras no entrarían en el precio.' : undefined}
+          /> Incluir herrajes
+          {esDB && <span className="text-xs text-slate-400 ml-1">(obligatorio en DB: riel y barras)</span>}
         </label>
-        {conHerrajes && herrajesTipo.length > 0 && (
+        {(esDB || conHerrajes) && herrajesTipo.length > 0 && (
           <div className="rounded-lg border border-slate-200 p-2.5">
             <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes incluidos (destilda para excluir)</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">
@@ -794,7 +823,7 @@ function ResultadoView({ result, moneda, setMoneda }:
 
       <Card title="Piezas (despiece)">
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-slate-400"><th className="py-1">Pieza</th><th>Rol</th><th className="text-right">Cant</th><th className="text-right">Largo&quot;</th><th className="text-right">Ancho&quot;</th><th className="text-right">cm²</th></tr></thead>
+          <thead><tr className="text-left text-slate-400"><th className="py-1">Pieza</th><th>Rol</th><th className="text-right">Cant</th><th className="text-right">Largo&quot;</th><th className="text-right">Ancho&quot;</th><th className="text-right">m²</th></tr></thead>
           <tbody>
             {/* Piezas con cantidad 0 no se producen (ej. "frente" uniforme queda en 0 cuando
                 la tipología DB es mixta y usa frente_gaveta_pequena/grande en su lugar). */}
@@ -802,9 +831,15 @@ function ResultadoView({ result, moneda, setMoneda }:
               <tr key={i} className="border-t border-slate-100">
                 <td className="py-1">{p.pieza}</td><td className="text-slate-500">{p.rol}</td>
                 <td className="text-right">{p.cant}</td><td className="text-right">{p.largoIn}</td>
-                <td className="text-right">{p.anchoIn}</td><td className="text-right">{p.areaCm2.toLocaleString('es-CO')}</td>
+                <td className="text-right">{p.anchoIn}</td><td className="text-right">{(p.areaCm2 / 10000).toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
               </tr>
             ))}
+            <tr className="border-t-2 border-slate-300 font-semibold text-slate-900">
+              <td className="py-1">TOTAL</td><td></td>
+              <td className="text-right">{result.piezas.filter((p) => p.cant > 0).reduce((sum, p) => sum + p.cant, 0)}</td>
+              <td></td><td></td>
+              <td className="text-right">{(result.piezas.filter((p) => p.cant > 0).reduce((sum, p) => sum + p.areaCm2, 0) / 10000).toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+            </tr>
           </tbody>
         </table>
       </Card>

@@ -14,7 +14,7 @@ if(!listing.ok) throw new Error(`Cannot inspect migration history: ${listing.sta
 const migrations=await listing.json();
 if(migrations.some(m=>m.name===name)) console.log('Mounting migration already recorded; no changes.');
 else {
-  const query=fs.readFileSync('db/migrations/0031_visualizacion_montaje.sql','utf8');
+  const query=fs.readFileSync('db/migrations/0035_visualizacion_montaje.sql','utf8');
   const result=await fetch(endpoint,{method:'POST',headers,body:JSON.stringify({name,query})});
   if(!result.ok) throw new Error(`Migration failed (${result.status}): ${await result.text()}`);
   console.log(`Migration applied to configured project ${ref}.`);

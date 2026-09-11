@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { signOutAction } from '@/app/cotizador/session-actions';
 import UndoRedoButtons from '@/components/UndoRedoButtons';
 
-export default function AppHeader({ email, rol, active }: { email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'manual' }) {
+export default function AppHeader({ email, rol, active }: { email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'hdr' | 'manual' }) {
   const link = (href: string, label: string, key: string) => (
     <Link href={href} className={`px-3 py-1.5 rounded-lg text-sm ${active === key ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>{label}</Link>
   );
@@ -18,6 +18,7 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
           {link('/cotizaciones', 'Cotizaciones', 'cotizaciones')}
           {rol === 'admin' && link('/admin', 'Materiales-Parámetros', 'admin')}
           {rol === 'admin' && link('/admin/diseno', 'Diseño', 'diseno')}
+          {rol === 'admin' && link('/hdr', 'HDR', 'hdr')}
           {link('/manual', 'Manual', 'manual')}
         </div>
         <div className="flex items-center gap-3 text-sm text-slate-500">

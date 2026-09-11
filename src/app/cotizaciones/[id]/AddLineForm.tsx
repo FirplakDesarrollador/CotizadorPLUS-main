@@ -170,6 +170,16 @@ export default function AddLineForm({
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
   const usaRiel = esDB || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
+
+  // Un DB sin herrajes no lleva el costo real de riel/barras en el precio
+  // (herrajesPlantilla queda vacío cuando conHerrajes=false). Se fuerza a
+  // incluido al entrar a una tipología DB, ajustando el estado durante el
+  // render en vez de en un efecto.
+  const [prevEsDB, setPrevEsDB] = useState(esDB);
+  if (esDB !== prevEsDB) {
+    setPrevEsDB(esDB);
+    if (esDB && !conHerrajes) setConHerrajes(true);
+  }
   const tipo = tipos.find((t) => t.id === tipoId);
   const prefProyecto = (t: Tipo | undefined) => sistemaMedida === 'metrico'
     ? (t?.pref_metrico || t?.pref || '')
@@ -180,6 +190,19 @@ export default function AddLineForm({
 
   function handleTipoChange(id: string) {
     setTipoId(id);
+    // El formulario "Agregar mueble" no se remonta entre módulos (sigue abierto
+    // después de guardar), así que un override de un tipo anterior (ej.
+    // n_cajones=3 al agregar un DB-1S) seguía viajando si el usuario cambiaba
+    // de Tipo sin vaciarlo a mano — terminaba cobrando herraje de cajón en un
+    // módulo sin gavetas. Cambiar de Tipo arranca limpio.
+    setNpuertas('');
+    setNcajones('');
+    setNentrepanos('');
+    setZocalo('');
+    setNbarras('');
+    setDbTipo('');
+    setRielCodigo('RIELTANDEM');
+    setPcfdConfig('');
     // Los muebles superiores de pared (W) siempre parten de 12 de fondo por defecto.
     const nuevoPref = prefProyecto(tipos.find((t) => t.id === id));
     if (nuevoPref === 'W') setProf('12');
@@ -240,7 +263,7 @@ export default function AddLineForm({
       prof: parseMedida(prof),
       unidad,
       preset,
-      conHerrajes,
+      conHerrajes: esDB ? true : conHerrajes,
       trm,
       // recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
       cantidad,
@@ -453,11 +476,18 @@ export default function AddLineForm({
 
         <div className="flex items-center gap-4 py-2">
           <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={conHerrajes} onChange={(e) => setConHerrajes(e.target.checked)} /> Con herrajes
+            <input
+              type="checkbox"
+              checked={esDB ? true : conHerrajes}
+              disabled={esDB}
+              onChange={(e) => setConHerrajes(e.target.checked)}
+              title={esDB ? 'Los muebles DB siempre incluyen herrajes: sin esto, el riel y las barras no entrarían en el precio.' : undefined}
+            /> Con herrajes
           </label>
+          {esDB && <span className="text-xs text-slate-400">Obligatorio en DB (riel y barras)</span>}
         </div>
 
-        {conHerrajes && herrajesTipo.length > 0 && (
+        {(esDB || conHerrajes) && herrajesTipo.length > 0 && (
           <div className="col-span-full rounded-lg border border-slate-200 p-2.5">
             <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes incluidos (destilda para excluir)</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">
