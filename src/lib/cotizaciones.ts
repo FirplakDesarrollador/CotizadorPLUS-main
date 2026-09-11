@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { cotizar, cotizarGrupo, type CotizarInput, type CotizarResult } from '@/lib/cotizar';
 import {
   codigoGrupo, codigoModulo, anchoCodigo, indiceALetras, letrasAIndice, normalizarEtiquetaGrupo,
-  distribuirResiduoMoneda, redondearMoneda,
+  distribuirResiduoMoneda, redondearMoneda, precioUnitario,
   type SistemaMedida,
 } from '@/lib/module-groups';
 
@@ -153,11 +153,10 @@ export type AgregarLineaInput = CotizarInput & {
 // Lo comparten agregarLinea y editarLinea para garantizar el mismo cálculo.
 function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
   const cantidad = input.cantidad || 1;
-  // Si hay margenOverride, usamos la lógica unificada de Andrés (precioCop ya consolidado).
-  // Si no, la lógica local de márgenes independientes.
-  const usarUnificado = input.margenOverride !== undefined;
-  const precioUnitCop = (input.conHerrajes && !usarUnificado) ? res.precioConHerrajesCop /* res.precioConHerrajesCopConRecargo */ : res.precioCop /* res.precioCopConRecargo */;
-  const precioUnitUsd = (input.conHerrajes && !usarUnificado) ? res.precioConHerrajesUsd : res.precioUsd;
+  // Ver precioUnitario() en module-groups.ts: antes, con margenOverride activo
+  // ("lógica unificada"), se guardaba precioCop a secas sin importar conHerrajes
+  // — un módulo con herrajes y uno sin herrajes quedaban costando lo mismo.
+  const { cop: precioUnitCop, usd: precioUnitUsd } = precioUnitario(input.conHerrajes, res);
   const desc = `${input.prefLabel ?? ''} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim()
     + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '')
     + (res.vars.n_cajones ? ` · ${res.vars.n_cajones} gaveta(s)` : '')

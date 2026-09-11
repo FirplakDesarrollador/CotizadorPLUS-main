@@ -103,15 +103,37 @@ export function derivarVars(
   const out: Record<string, number> = {};
   const byVar: Record<string, Regla[]> = {};
   for (const r of reglas) (byVar[r.variable] ||= []).push(r);
-  for (const [variable, rs] of Object.entries(byVar)) {
-    rs.sort((a, b) => a.prioridad - b.prioridad);
-    for (const r of rs) {
+  for (const rs of Object.values(byVar)) rs.sort((a, b) => a.prioridad - b.prioridad);
+
+  // Una regla puede depender de otra variable derivada en la misma tanda (ej.
+  // alto_frente_pequeno depende de alto_frente_pequeno_base) y el orden de
+  // llegada de `reglas` no está garantizado — la consulta de cotizar.ts no
+  // lleva ORDER BY. Se resuelve en varias pasadas, reintentando lo que quede
+  // bloqueado por un ReferenceError de dependencia, hasta que no haya más
+  // progreso (dependencia circular o variable inexistente: error explícito).
+  let pendientes = Object.keys(byVar);
+  while (pendientes.length > 0) {
+    const siguientes: string[] = [];
+    for (const variable of pendientes) {
       const ctx = { ...dims, ...extra, ...out, ...overrides };
-      if (evalExpr(r.condicion, ctx) === true) {
-        out[variable] = Number(evalExpr(r.valor, ctx));
-        break;
+      let bloqueada = false;
+      for (const r of byVar[variable]) {
+        try {
+          if (evalExpr(r.condicion, ctx) === true) {
+            out[variable] = Number(evalExpr(r.valor, ctx));
+            break;
+          }
+        } catch {
+          bloqueada = true;
+          break;
+        }
       }
+      if (bloqueada) siguientes.push(variable);
     }
+    if (siguientes.length === pendientes.length) {
+      throw new Error(`No se pudieron resolver las reglas de: ${siguientes.join(', ')} (¿dependencia circular o variable inexistente?)`);
+    }
+    pendientes = siguientes;
   }
   return { ...out, ...overrides };
 }
@@ -244,7 +266,10 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   // Consumibles
   const pc = (sel: string) => Number(inp.consumiblesBySelector[sel] || 0);
   const dimsArr = [dims.L, dims.A, dims.P].sort((a, b) => b - a);
-  const cartonUnd = (inp.usaCarton === false) ? 0 : Math.round((((dimsArr[0] * 2 * IN2CM) / 200) * ((dimsArr[1] * 2 * IN2CM) / 130)) * 10) / 10;
+  // Carcasa "abierta" (O*, modo sin_frentes): en el Excel CEMA el costo de cartón (columna Z)
+  // es 0 en las 36 filas O*/sin_frentes revisadas — sin puertas que proteger no se empaca en cartón.
+  const cartonUnd = (inp.usaCarton === false || modo === 'sin_frentes') ? 0
+    : Math.round((((dimsArr[0] * 2 * IN2CM) / 200) * ((dimsArr[1] * 2 * IN2CM) / 130)) * 10) / 10;
   const consumibles = {
     tarugos: tarugos * pc('tarugo'),
     soportes: soportes * pc('soporte'),

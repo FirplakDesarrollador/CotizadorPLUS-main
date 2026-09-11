@@ -165,6 +165,12 @@ def termino_a_formula(src, kind, val, esp_caja, esp_fondo, n_puertas):
         return 'P-0.70866-TB'
     if abs(off - REVEAL) < 0.15:
         return '%s-RV' % src
+    # Un offset negativo (la pieza es MAYOR que la dimension nominal) no puede
+    # emitirse como '%s-%.5f': daria 'A--0.62402', que Python evalua bien pero
+    # el motor de la app rechaza — en JavaScript '--' es el operador decremento
+    # y lanza SyntaxError. Se emite el signo por separado.
+    if off < 0:
+        return '%s+%.5f' % (src, -off / IN)
     return '%s-%.5f' % (src, off / IN)
 
 

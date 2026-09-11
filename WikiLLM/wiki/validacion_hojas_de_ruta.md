@@ -338,22 +338,46 @@ paramétrico del cotizador.
 
 ---
 
-## 10. Estado de implementación (2026-08-24)
+## 10. Estado de implementación (2026-09-08)
 
 | Hallazgo | Estado | Dónde |
 | --- | --- | --- |
-| Constante interior `L − 2×espesor` | Corregido | `0028`, `engine.geoVars()` |
-| Ancho de base según fondo | Corregido | `0028` |
-| Reveal de ancho de puerta | Corregido (universal) | `0028` |
-| Reveal de alto de puerta | Corregido en W/BFD/SBFD/SVFD | `0028` |
-| Reparto de frentes DB-2S | Corregido | `0028` |
-| Reparto de frentes DB-2/3/4 | Corregido (faltaba el reveal) | `0028` |
-| Modificador `gola` | Implementado | `0028`, UI |
-| Modificador `removible` | Implementado en 5 familias | `0030`, UI |
+| Constante interior `L − 2×espesor` | Corregido y **aplicado** | `0028`, `engine.geoVars()` |
+| Ancho de base según fondo | Corregido y **aplicado** | `0028` |
+| Reveal de ancho de puerta | Corregido (universal) y **aplicado** | `0028` |
+| Reveal de alto de puerta | Corregido en W/BFD/SBFD/SVFD y **aplicado** | `0028` |
+| Reparto de frentes DB-2S | Corregido y **aplicado** | `0028` |
+| Reparto de frentes DB-2/3/4 | Corregido (faltaba el reveal) y **aplicado** | `0028` |
+| Modificador `gola` | Implementado y **aplicado** | `0028`, UI |
+| Modificador `removible` | Implementado en 5 familias y **aplicado** | `0030`, UI |
 | Modificador `abierto` | Ya existía (`modoFrentes`) | — |
-| Variante `-F9` (fondo 9mm) | Absorbida por `TB` | `0028` |
-| Alias métricos `I…` | `pref_metrico` | `0029` |
-| 29 tipologías nuevas | Generadas y validadas | `0029` |
+| Variante `-F9` (fondo 9mm) | Absorbida por `TB` y **aplicado** | `0028` |
+| Alias métricos `I…` | `pref_metrico` y **aplicado** | `0029` |
+| 29 tipologías nuevas | Generadas, validadas y **aplicadas** | `0029` |
+| Rieles DB (`refuerzo_trasero`/`_delantero`) a 82,55mm en vez de 80mm | Corregido en el tipo `DB` preexistente y **aplicado** (0028/0029 no lo tocaban: las nuevas tipologías ya nacieron en 80mm, pero el `DB` original nunca se re-apuntó) | `0031` |
+| `refuerzo_horizontal` sin renombrar a `refuerzo_delantero` (perdía el ajuste 3→2 con gola) | Renombrado y con el ajuste de gola aplicado | `0031` |
+| `trasero_gaveta` de tipologías parejas (DB-2/3/4) en 68mm en vez de 183mm | Corregido y **aplicado** — confirmado contra `DB24-2` (L=24): `L-4.607`=492,58mm, `183/25.4`=183mm, exacto | `0031` |
+| **Bug de motor**: `derivarVars()` resolvía reglas en una sola pasada, dependiente del orden de llegada; `alto_frente_pequeno` depende de `alto_frente_pequeno_base` y `cotizar.ts` consulta `cot_reglas_config` **sin `ORDER BY`** — cualquier cotización DB-1S/DB-2S podía tronar con `ReferenceError` si Supabase devolvía las filas en otro orden | Corregido: `derivarVars()` ahora resuelve en varias pasadas, reintentando lo bloqueado por dependencia, sin importar el orden de entrada | `src/lib/engine.ts` |
+| Ancho de riel/refuerzo a 82,55mm (3.25 in) en ~23 tipos (B, BBL, BBLFD, BFD, BOMH, DV, DVE, OVPC, PC, PCFD, SBFD, SV, SVFD, TW, UB, UBFD, UDV, UW, V, VFD, VPC, W, WBL) | Corregido a 80mm (3.14961 in) en **todo el catálogo**, no solo DB — confirmado universal contra `gola_perfil`, las 29 tipologías generadas desde hojas reales y la regla §3.3 del protocolo Firplak, y **aplicado** | `0032` |
+| Largo de `trasero_gaveta` (`L-3.427`) sin corregir en B, DV, DVE, PCFD, UB, UDV, V (mismo defecto que tenía DB antes de 0031) | Corregido a `L-4.607` y **aplicado** — coincide con lo que ya traen de forma independiente los tipos generados desde hojas reales (POD, UV, BMW, UDB: `L-4.6063`). No se tocó BBL (`L-30.427`, esquinero ciego) ni KD (`L-2.4311`, kit de cajones): geometría distinta | `0032` |
+| Reveal de alto de puerta en UBFD/VFD/WBL (mismo patrón exacto que W/BFD/SBFD/SVFD, solo que 0028 no las incluyó en su lista) | Corregido (`A`→`A-RV`) y **aplicado** | `0032` |
+| `BFD.refuerzo_delantero` seguía en 82,55mm para módulos ≥12" — tenía una fórmula condicional (`L<12 ? 5 : 3.25`) que `0032` no detectó por buscar coincidencia exacta con `'3.25'`, no una subcadena. Único caso así en todo el catálogo (confirmado con `LIKE '%3.25%'`) | Corregido a `L<12 ? 5 : 3.14961` y **aplicado**; la rama `L<12 ? 5` (módulos angostos) no se tocó — valor distinto, sin relación con este defecto | `0033` |
+| **Bug de precio**: con `margenOverride` activo (proyecto o línea con margen manual), `construirFilaLinea` guardaba `res.precioCop` a secas sin importar `conHerrajes` — un módulo con herrajes y uno sin herrajes quedaban costando exactamente lo mismo, porque `precioCop` del motor nunca incluye herraje (solo `precioConHerrajesCop` los suma) | Corregido: la selección de precio (`precioUnitario()`, ahora en `module-groups.ts`) usa siempre `conHerrajes ? precioConHerrajesCop : precioCop`, sin la rama "unificada" | `src/lib/cotizaciones.ts`, `src/lib/module-groups.ts` |
+| `n_cajones`/`dbTipo`/`nbarras`/etc. de un módulo DB se quedaban pegados al cambiar de Tipo sin cerrar "Agregar mueble" (el formulario no se remonta entre módulos, a propósito, para heredar configuración) — un módulo sin gavetas agregado justo después de un DB-1S heredaba `n_cajones=3`, inflando fantasma el costo de riel/barras una vez arreglado el punto anterior | Corregido: `handleTipoChange` limpia `npuertas/ncajones/nentrepanos/zocalo/nbarras/dbTipo/rielCodigo/pcfdConfig` cada vez que cambia el Tipo (no en cada módulo agregado, solo al cambiar de tipo) | `AddLineForm.tsx`, `CotizadorForm.tsx` |
+| Verificación pedida: ¿los herrajes de DB (ej. `DB18-S`) coinciden con el Excel en cantidad y costo? | **Confirmado exacto, sin cambios de código.** Reproduciendo `prepararCotizacion()`+`calcularMueble()` contra la fila real de `'Costos Muebles'` del Excel CEMA para `DB18-1s` (L=18,A=30,P=24, `n_cajones=3,n_cajones_pequenos=1,n_barras=2`): pata×4=$7.948, tornillo×16=$368, manija×3=$22.350, riel×3=$149.120,40, barra×2=$19.600 → total $199.386,40, **igual al centavo** a la columna J del Excel. Para `DB18-2s` (`n_cajones_pequenos=2,n_barras=1`): total $189.586,40, también exacto. Los dos bugs de arriba (margen y fuga de `n_cajones`) eran justamente lo que rompía esta cuenta — ya resueltos, no queda nada pendiente en las cantidades/costos de herraje de DB cuando se usa el selector "Tipología DB" (que fija `n_cajones`+`n_cajones_pequenos`+`n_barras` juntos, en `AddLineForm.tsx` y `CotizadorForm.tsx`) | — (verificación, sin migración) |
+| Cartón de empaque (`consumibles.carton`) cobrado en variantes "abiertas" (`O*`, `modoFrentes='sin_frentes'`) que en el Excel traen `Costo Carton=0` | El resto del catálogo ya cerraba 99.3% exacto contra el Excel; corregido `cartonUnd=0` también con `modo==='sin_frentes'`, no solo con `usaCarton=false` | `src/lib/engine.ts` (sin migración, no depende de datos) |
+| Desperdicio de tablero (15%) uniforme en toda tipología | **Confirmado ya correcto** por arquitectura (un único loop sin rama por tipo) y empíricamente contra 8 tipologías reales | — (verificación, sin cambios) |
+| `BACKING` de DB (`fondo`: `largo=A`/`ancho=L-TC`, daba 762×442.2mm) vs. hoja real `DB18-1S` (760×441.2mm) | Corregido a `largo=A-0.07874`/`ancho=L-0.62992` (A−2mm / L−16mm), confirmado contra `UDB`/`USVFD`/`UVFD` que ya usaban esa fórmula. Con esto las 18 piezas de esa hoja cierran exactas | `0034` |
+
+Validación end-to-end (piezas y reglas reales leídas de Supabase, corridas por `calcularMueble()`) contra los ejemplos de la conversación:
+
+- `DB24-2` (L=24, A=30, P=24): `trasero_gaveta` da 492,58 × 183,01mm (real: 492,6 × 183mm), rieles a 80,01mm, `frente` a 377,80mm ×2 — todo dentro de 0,02mm.
+- `DB15-1S` (L=15, A=30, P=24): total de piezas activas (Σcant) = **18**, igual al conteo físico de Firplak.
+- `SBFD30` (L=30, A=30, P=24, tras `0032`): `refuerzo_trasero` a 80,01mm (antes 82,55mm), `frente` 2×(377,80×758,80mm) con reveal correcto en ambos lados.
+
+### Pendiente tras `0032`: ancho de `trasero_gaveta` en familias legado
+
+`0032` corrigió el **largo** de `trasero_gaveta` en B/DV/DVE/PCFD/UB/UDV/V, pero dejó su **ancho** (alto de la pieza, hoy `2.6875 in` = 68mm) sin tocar. A diferencia del largo — que es un offset geométrico universal —, si esa altura debe ser 68mm (cajón corto, como en los tipos generados `POD`/`UV`/`BMW`) o 183mm (cajón estándar, como `trasero_gaveta_grande` de DB) es específico de cada familia y no hay una hoja de ruta puntual por tipo para confirmarlo. Tampoco se tocó el alto de frente (`A` sin reveal) de `B`, `UB` ni `V`: las tres tienen 1 cajón + puertas como estructura, y la wiki ya documentaba que `B` necesita una fórmula de alto propia (`~A-158.8mm`) en vez de simplemente `A-RV` — aplicar el mismo supuesto a `UB`/`V` sin dato real sería arriesgado por la misma razón. Requiere hojas de ruta reales por tipo (`scripts/validar_hojas_ruta.py`) antes de tocarlas.
 
 ### Variables geométricas del motor
 
@@ -384,9 +408,13 @@ python scripts/generar_tipologias.py "Hojas de ruta 2.xlsx" --out db/migrations/
 
 ### Pendientes
 
-- Las migraciones `0028`/`0029`/`0030` **no están aplicadas**.
+- Las migraciones `0028`/`0029`/`0030`/`0031` **ya están aplicadas** en Supabase
+  I+D (2026-09-08).
 - Las plantillas generadas no traen herrajes, tarugos ni soportes: las hojas de
   ruta no los modelan como pieza y hay que completarlos por familia.
 - La puerta **embutida** (`A − 2×TC`) de BFD/SBFD sigue sin modelar; conviene
   tratarla como variante de frente junto a `gola`.
 - `PL` (35 SKUs) y `SC` (9) no generaron plantilla: sus piezas no traen fórmula.
+- `BACKING` de **DB**: **resuelto** con la hoja de ruta real de `DB18-1S` (`0034_db_backing_real.sql`). El `rol_tablero='fondo'` ya era correcto (el preset de DB ya apunta ese rol a un tablero de 6mm, coincide con el "Espesor" de la hoja) — lo que estaba mal eran las fórmulas: `largo=A` (daba 762mm) y `ancho=L-TC` (daba 442.2mm) vs. la hoja real, 760mm y 441.2mm. Corregido a `largo=A-0.07874` (A−2mm) y `ancho=L-0.62992` (L−16mm) — confirmado independiente contra `UDB`/`USVFD`/`UVFD` (tipologías generadas por `scripts/generar_tipologias.py` directo de hojas reales de familias de cajones emparentadas), que ya traían exactamente esa misma fórmula. Con este fix las **18 piezas** de la hoja `DB18-1S` cierran contra el motor (17 ya cerraban antes; BACKING era la única con 1-2mm de más). Regresión: `tests/db-backing.test.ts`. Pendiente: confirmar si `A-2mm`/`L-16mm` sigue firme en otro tamaño de DB (solo se tiene un dato real, L=18"); y si el mismo patrón aplica a `BACKING` fuera de la familia DB (B/W/BFD/etc. no se auditaron en esta ronda).
+- Ancho de `refuerzo_trasero`/`refuerzo_delantero` para familias **fuera de
+  DB** (W, BFD, etc.) no se auditó en esta ronda — solo se corrigió DB.

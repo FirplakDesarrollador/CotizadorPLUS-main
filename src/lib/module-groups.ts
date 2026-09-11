@@ -64,6 +64,22 @@ export function parseMedida(raw: string | number): number {
   return NaN;
 }
 
+// Selecciona el precio de una línea según incluya o no herrajes. `res.precioCop`
+// (del motor) NUNCA incluye herrajes, tenga o no la línea un margenOverride —
+// solo `precioConHerrajesCop` (= precioCop + precioHerrajesCop) los suma. Antes
+// de este fix, `cotizaciones.ts` tenía una rama "unificada" que, cuando había
+// margenOverride, guardaba precioCop a secas sin importar conHerrajes: un
+// módulo con herrajes y uno sin herrajes quedaban costando exactamente lo
+// mismo en cualquier proyecto/línea con margen manual. Ver tests/precio-herrajes.test.ts.
+export function precioUnitario(
+  conHerrajes: boolean,
+  res: { precioCop: number; precioUsd: number; precioConHerrajesCop: number; precioConHerrajesUsd: number },
+): { cop: number; usd: number } {
+  return conHerrajes
+    ? { cop: res.precioConHerrajesCop, usd: res.precioConHerrajesUsd }
+    : { cop: res.precioCop, usd: res.precioUsd };
+}
+
 export function anchoCodigo(value: number, unidad: UnidadDim, sistema: SistemaMedida): string {
   const target: UnidadDim = sistema === 'imperial' ? 'in' : 'cm';
   const converted = convertirExacto(value, unidad, target);
