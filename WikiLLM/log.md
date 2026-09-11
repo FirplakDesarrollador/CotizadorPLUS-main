@@ -282,3 +282,159 @@ El usuario pidió, dos veces seguidas, volver a poner el logo "exactamente igual
 El usuario pidió que la exportación a PDF se ajustara correctamente a tamaño carta. Antes (`src/app/hdr/pdfExport.ts`) la página del PDF se armaba a la medida exacta del contenido capturado (`format: [anchoContenidoMm, altoContenidoMm]`) — correcto para no cortar nada, pero no es un tamaño de papel real que alguien pueda imprimir tal cual.
 
 Se cambió a `format: 'letter'` (215.9×279.4mm — verificado directo contra una instancia real de `jsPDF`, `doc.internal.pageSize` da exactamente eso), eligiendo orientación horizontal o vertical según si el contenido capturado es más ancho que alto (una tabla HDR de 11 columnas casi siempre da horizontal). La imagen capturada se escala para llenar la página con 10mm de margen a cada lado (`Math.min` del ancho y alto disponibles contra el ancho y alto del contenido, para no deformar la proporción ni recortar), y queda centrada. 99/99 tests, typecheck y lint limpios. Ver [arquitectura_frontend.md](wiki/arquitectura_frontend.md) §5.3.
+
+## [2026-09-10] fix | Revisión general: ráfaga de rate-limit en Auth, y limpieza de código muerto
+
+Pedido explícito: "revisa si tengo algún error y corrige". Barrido completo: `tsc --noEmit`, `eslint .`, los 99 tests, el log del dev server real del usuario (`.next/dev/logs/next-development.log`, buscando entradas `"level":"ERROR"`), y una corrida de `calcularMueble()` contra Supabase real para los 57 tipos de mueble activos del catálogo (L=30,A=30,P=24 cada uno).
+
+**Encontrado y corregido — ráfaga de `AuthApiError: Request rate limit reached`:** 52 ocurrencias en ~3 segundos en el log del dev server. `getUserAndRole()` (`src/lib/auth.ts`) llama `sb.auth.getUser()` sin ninguna deduplicación, y lo invocan por separado cada `page.tsx` y cada archivo de Server Actions (admin/, hdr/, cotizaciones/) — una sola carga de página puede disparar varias llamadas paralelas al endpoint de Auth de Supabase. Se envolvió `getUserAndRole` en `cache()` de React (patrón estándar de Next.js App Router para deduplicar llamadas dentro de la misma request); no elimina llamadas de Server Actions verdaderamente separadas (son invocaciones distintas por diseño), pero sí evita duplicados dentro de un mismo render. No se pudo confirmar la causa exacta de la ráfaga puntual (el dev server estuvo ~5h inactivo justo antes, consistente con que el navegador reanudara varias peticiones pendientes de golpe al reconectar) ni reproducirla de nuevo — los logs más recientes no muestran errores.
+
+**Encontrado y descartado como falso positivo — `Uncaught Error: espesorDe is not defined`:** una sola vez, con timestamp de un momento intermedio de esta misma sesión (mientras se construía y luego revertía la funcionalidad de desglose de tablero por rol en el Simulador, ya documentada). No es un error actual.
+
+**Limpieza de código muerto genuino** (deja 13 warnings de `eslint .`, antes 18 — los 13 restantes son de archivos `-isazaale.*` sin usar en ninguna ruta viva, o de `recargo_extra`/`cot_recargos_cliente` deliberadamente comentado — el recargo de cliente está desactivado a propósito en todo el proyecto, no se tocó):
+- `src/lib/engine.ts`: comentario `eslint-disable` sin efecto (la regla no se disparaba ahí).
+- `src/app/cotizaciones/[id]/AddLineForm.tsx`: función `convertir`/`TO_MM` nunca llamada, variable `initialUnit` calculada y nunca leída (diverge de la lógica que sí se usa), y `setUnidad` desestructurado sin uso — la unidad del proyecto es de solo lectura en este formulario (`<select disabled>`, ya documentado), así que no hace falta el setter.
+- `src/app/admin/diseno/DisenoEditor.tsx`: prop `tableros` de `Preview` nunca usada dentro del componente — se quitó de la firma y del único lugar que la pasaba.
+
+99/99 tests, typecheck y lint limpios tras cada cambio. Nada de esto se commiteó — pendiente de que el usuario lo pida.
+
+## [2026-09-11] ingest | Tipo nuevo `B-FE` (1 cajón + 1 puerta, riel full extension) desde la hoja real B12-FE
+
+El usuario pidió crear el tipo `B-FE` copiando la estructura de piezas y operaciones de la hoja de ruta real "B12-FE MBLE INF COC 1 GAVETA 1 PUERTA 1/2 ENTREPAÑO" (L=12", A=30", P=24"). Aplicado en `0037_tipo_b_fe.sql`.
+
+**Lo que distingue `B-FE` de `B`:** la gaveta no es una caja metálica con riel Tandem, sino una **caja de madera** armada con piezas propias — `lateral_gaveta_der`/`lateral_gaveta_izq` (100×500mm), `contraparche` (L−111,4 × 100mm) y `fondo_gaveta` (L−72 × 492mm, 6mm) — dimensionada al riel `RIELFE500` del catálogo (full extension, 500mm), que es exactamente el largo de los laterales de gaveta de la hoja. El herraje de riel cambia de `RIELTANDEM` a `RIELFE500`; el resto (pata, tornillo, bisagra, manija) es igual a `B`.
+
+**Fórmulas deducidas** (las 15 medidas de la hoja se reproducen con 0,00mm de diferencia, verificado corriendo `calcularMueble()` contra Supabase real): base `L-2*TC` × `P-0.70866-TB`; laterales `A`×`P`; rieles `L-2*TC`×80mm; entrepaño `L-2*TC-1mm` × 300mm (media profundidad — eso es el "1/2" del título, no media cantidad); trasero de gaveta `L-86mm`×80mm; laterales de gaveta 100×500mm; contraparche `L-111,4mm`×100mm; fondo de gaveta `L-72mm`×492mm; frente de gaveta `L-RV` × 6" fijos; puerta `L-RV` × `A - n_cajones*alto_frente_gaveta - (n_cajones+1)*RV`; BACKING `A-2mm` × `L-16mm` (misma fórmula que quedó en DB con `0034` — tercera confirmación independiente). Se agregó la regla de tipo `alto_frente_gaveta = 6`.
+
+`HdrTabla.tsx`: se agregaron los nombres de producción de las piezas nuevas (`LAT DER GAV`, `LAT IZQ GAV`, `CONTRAPARCHE`, `FONDO GAV`) y se extendió la inferencia de canto Color/Blanco para tratar la caja de gaveta de madera como pieza oculta (`lateral_gaveta`, `contraparche` → Blanco), que es lo que muestra la hoja. El `orden` de las piezas sigue el orden de filas de la hoja para que el HDR salga letreado A–P igual que el original. Verificado: las 16 filas coinciden en pieza, cantidad, largo, ancho, espesor, las 4 columnas de canto y el espesor de canto.
+
+**Decisiones y diferencias conocidas:** (1) `permite_agrupacion=false` y todas las piezas `local` — la agrupación (laterales compartidos, piezas continuas) no se puede validar con una sola hoja, y el `fondo` tiene los ejes invertidos respecto a `formula_largo_grupo`, así que habilitarla a ciegas daría math incorrecto; queda para cuando haya evidencia. (2) El código de módulo saldrá `B-FE12`, no `B12-FE` como el SKU real — `codigoModulo()` concatena prefijo+ancho y no soporta sufijo. (3) Los frentes se imprimen ancho-primero (301,6 | 603,2) y la hoja los imprime alto-primero; es la convención de ejes que ya usa todo el catálogo y es neutra en costo porque el canto es simétrico 2/2.
+
+**Hallazgo grave de paso:** esta hoja desmiente la migración `0036` de ayer — ver la entrada siguiente.
+
+## [2026-09-11] fix pendiente | `0036` dejó mal el alto de puerta de B/UB/V (cajón + puerta)
+
+Ayer el usuario dio la regla "todos los muebles de puertas como los SBFD, los BFD: la altura es la altura del mueble − 3.2mm" y se aplicó `A-RV` a `B`, `UB` y `V` (`0036`). La hoja `B12-FE` lo desmiente: su `DOOR` mide **603,2mm**, no 758,8mm.
+
+La causa es que los tres tipos tienen `n_cajones = 1` (confirmado en `cot_reglas_config`) — son muebles de **cajón + puerta**, no Full Door, así que el alto se reparte: `603,2 (puerta) + 3,2 (reveal) + 152,4 (frente gaveta) + 3,2 (reveal) = 762 = A`. La regla de −3,2mm sí es correcta para BFD/SBFD/SVFD/UBFD/VFD/W/WBL (Full Door, sin cajón), que no se tocan.
+
+La fórmula correcta es la que quedó en `B-FE`: `A - n_cajones*alto_frente_gaveta - (n_cajones+1)*RV`, y requiere además definir `alto_frente_gaveta` como regla en `B`/`UB`/`V` (hoy no existe en esos tipos). Nota: el valor previo a `0036` (`A` pelado) tampoco era correcto — ignoraba tanto el frente de gaveta como los reveals. **No se corrigió todavía: se le reportó al usuario para confirmar el alto de frente de gaveta de cada uno de los tres tipos antes de tocarlos** (en `B-FE` son 6" por la hoja, pero no hay hoja real de `B`/`UB`/`V` que lo confirme). Se dejó anotado en [validacion_hojas_de_ruta.md](wiki/validacion_hojas_de_ruta.md) §10.
+
+## [2026-09-11] ingest | Tipos nuevos `UB-FE` y `V-FE` (hermanas de `B-FE`)
+
+El usuario aclaró que `B-FE`, `UB-FE` y `V-FE` son **tipologías nuevas y separadas**, no reemplazos de `B`/`UB`/`V`. Aplicado en `0038_tipos_ub_fe_v_fe.sql`.
+
+Las tres comparten la estructura de la hoja `B12-FE` (13 filas de plantilla → 16 piezas físicas, caja de gaveta en madera dimensionada al `RIELFE500`), verificada contra la hoja en las tres. Lo propio de cada familia:
+
+- **`UB-FE`** hereda de `UB` la variante `removible`: la base pasa de `P-0.70866-TB` a `removible ? P-TC : (P-0.70866-TB)` (585,6mm → 594,6mm al activarla) y aparecen `refuerzo_delantero_removible` (140mm) y `refuerzo_trasero_removible` (120,75mm), ambos con `formula_cantidad='removible'`. Se agregó `'UB-FE'` a `PREFS_CON_REMOVIBLE` (`src/lib/muebles.ts`) — sin eso la casilla "Removible" no sale en la UI y esas dos piezas nunca se activarían. Verificado con `overrides={removible:1}`.
+- **`V-FE`** hereda de `V` la categoría `vanity`.
+- Las tres quedan en `permite_agrupacion=false` y todas sus piezas en `local`, igual que `B-FE`: no hay hoja de ruta de un módulo agrupado que valide la geometría de laterales compartidos, y el `fondo` tiene los ejes invertidos respecto a `formula_largo_grupo`.
+
+**Confirmado que los originales no se tocaron:** `B` sigue con 10 piezas, `UB` con 12 y `V` con 10, sin cambios. Barrido de todo el catálogo: **60 tipos activos, 0 fallas** (los 57 de antes más las 3 nuevas). 99/99 tests, typecheck y lint limpios.
+
+**Alto de frentes por tipo (dato del usuario, no de la hoja):** el frente de gaveta es de 6" (152,4mm) en `B-FE` y `V-FE`, pero de **5,5" (139,7mm) en `UB-FE`**. Los números que dio para `UB-FE` (puerta 584,15mm) solo cierran si la línea U trabaja con un alto de mueble de **28¾" (730,25mm)** en vez de 30" — lo que concuerda con los SKU de esa línea que ya aparecían en el Excel (`UDB1828 3/4`, `USVR3328 3/4`). Verificado: `B-FE`/`V-FE` a A=30" dan 152,4 + 603,2, y `UB-FE` a A=28¾" da 139,7 + 584,15; en los tres la pila cierra exacta contra `A`. La fórmula de la puerta es la misma en las tres (`A - n_cajones*alto_frente_gaveta - (n_cajones+1)*RV`); lo único que cambia es la regla `alto_frente_gaveta`.
+
+## [2026-09-11] fix | Piezas que no cobraban tablero, en todo el catálogo (`0039`)
+
+Al comparar `B` contra `B-FE` salió que el `frente_cajon` de `B` estaba con `formula_ancho='0'` y `rol_tablero=NULL`: área cero, o sea que el tablero del frente de gaveta nunca se cobraba, solo su canto. El usuario pidió resolverlo con el criterio de que **toda pieza dentro de un mueble debe considerar tablero**, así que se auditó el catálogo completo en vez de parchar solo `B`.
+
+`engine.ts` solo suma área cuando la pieza tiene rol (`if (pz.rol_tablero) areaPorRol[...] += area`), así que una pieza con rol NULL sale en el despiece pero no cuesta madera. Aparecieron **12 piezas con rol NULL**, de las cuales **7 eran error real** y 5 son de solo-canto a propósito:
+
+**Corregidas (7):**
+- `frente_cajon` de `B`, `UB`, `V` y `BBL` — pasan a `rol='frente'`, alto real vía la regla nueva `alto_frente_gaveta`, ancho `L-RV` (la convención de reveal del resto del catálogo; `BBL` conserva su `L-27.75` de esquinero ciego) y canto en los 4 lados en vez de 2 (la hoja real muestra el FRENTE GAVETA con canto en largo Y ancho, igual que la puerta).
+- `refuerzo_vert_bisagras` de `BBL` y `BBLFD`, y `refuerzo_profundidad` de `BBL` — tenían medidas reales (80mm de ancho, como todo refuerzo) pero sin rol **y sin canto**, o sea costo cero absoluto. Solo les faltaba el rol (`refuerzo`).
+
+**No se tocaron (5), son solo-canto por diseño:** `PCFD.frente_canto_puertas_op` y `frente_canto_gavetas_op` (el área de los frentes ya la carga entera `frente_area_op` con su factor ×1.25; darles rol duplicaría el costo del frente), `PCFD.frente_delgado_informativo_op` (fila documental, sin canto ni área), y `SV.canto_lavamanos` / `UW.gola_canto`, que codifican una LONGITUD de canto en el largo y llevan ancho 0 a propósito.
+
+**Efecto encadenado que cierra la regresión de `0036`:** al darle alto real al frente de gaveta, la puerta ya no podía ser del alto completo o la fachada se pasaba de `A`. Así que la misma migración corrige la puerta de `B`/`UB`/`V`/`BBL` a `A - n_cajones*alto_frente_gaveta - (n_cajones+1)*RV` — la misma fórmula de las FE. Verificado: en los cuatro la fachada cierra exacta (`puerta + RV + frente_gaveta + RV = A`). Reglas `alto_frente_gaveta`: 6" en `B`/`V`/`BBL`, 5.5" en `UB` (línea U). El 6" de `BBL` es inferencia por consistencia de familia, no dato de hoja — queda anotado.
+
+**Impacto en precio** (L=30", preset por defecto, margen 57%): `B`/`V` −$989, `UB` −$936, `BBL` −$5.904, `BBLFD` +$4.833. En los tres primeros baja porque la corrección de la puerta (que estaba 155,6mm más alta de lo debido) pesa más que el tablero del frente de gaveta que se suma; `BBLFD` sube porque ahí solo se agregó el refuerzo que faltaba.
+
+Barrido final: **60 tipos activos, 0 fallas, 0 piezas con área 0 inesperada**. 99/99 tests, typecheck y lint limpios.
+
+## [2026-09-11] fix | Precio del riel full extension, y conciliación de B-FE contra el Excel
+
+El usuario preguntó si ya podía confiar en el precio de las tipologías FE. La geometría estaba validada contra la hoja de ruta, pero **el precio nunca se había cruzado contra el Excel** — así que se hizo.
+
+Apareció un Excel más reciente en la raíz del repo: `Simulación muebles CEMA (10-09-2026).xlsx` (reemplaza a los `(1)` y `(2)` de antes). Tiene **298 SKU con sufijo `-FE`**, incluido `B12-FE` (fila 1369, observación literal: *"1 gaveta 1 puerta 1/2 entrepaño, para riel full extension (Cajón madera)"*) — o sea que la tipología existe en el maestro de costos y se pudo conciliar de verdad.
+
+**Resultado del cruce inicial** (B12-FE, 12×30×24, preset por defecto): herrajes $56.121 vs $60.080 del Excel. Toda la diferencia era el riel: patas (7.948), bisagra (5.800), manija (14.900) y tornillos (368) coincidían al peso, y la columna AG del Excel ("Costo PAR rieles cajon FULL EXTENSION") trae **31.064** contra los **27.105** del catálogo. Los 27.105 venían de `materiales.xlsx` cuando se sembró el riel en `0021`; el maestro CEMA es más reciente y es la fuente con la que se cotiza. Corregido en `0040_precio_riel_fe.sql`, y también en `DB_RIELES` de `src/lib/muebles.ts`, donde el precio estaba duplicado (no se usa en la UI —solo código y nombre— pero dejarlo desactualizado ya había causado un bug silencioso antes con los códigos de riel).
+
+**Con el riel corregido, el costo de herrajes de B12-FE queda en $60.080, idéntico al Excel.** Consumibles también idénticos y canto a −0,4%.
+
+**Tres divergencias hoja de ruta vs Excel, resueltas por el usuario a favor de la hoja:**
+- Laterales de gaveta: la hoja dice 100×500mm (50cm² c/u); el área del Excel implica ~175mm de alto (875cm² c/u). **Manda la hoja** — el Excel sobrecostea ahí.
+- Fondo de gaveta: la hoja lo pone en 6mm; el Excel lo costea como Polar 15mm. **Manda la hoja (6mm)**.
+- Rieles/refuerzos a 80mm: el Excel sigue en 82,55mm; el catálogo ya está en 80mm por las hojas de ruta (fix anterior de esta wiki). Sin cambio.
+
+**Lo que queda de diferencia es selección de material, no plantilla.** Madera: $78.901 vs $68.575 (+15,1%), y **$7.452 de esos $10.326 (72%) son solo el tablero de fondo**: nuestro `preset_default` usa `PRICARB6CANDELARIA` a $28.858/m² mientras el Excel costea el backing con un tablero de **$9.600/m²**. El resto se reparte entre precios de tablero distintos por m² (Balance 15mm: Excel $32.489 vs catálogo $35.610; Color 18mm: Excel $39.380 vs catálogo $48.529) y el sobrecosteo del Excel en los laterales de gaveta, que se compensan parcialmente. Es el mismo patrón ya documentado en [auditoria_precio_sbfd30.md](wiki/auditoria_precio_sbfd30.md): el grueso de la brecha contra el Excel es el preset de materiales, no el motor.
+
+Total B12-FE: $158.652 vs $148.362 del Excel (+6,9%), enteramente atribuible al preset. 99/99 tests, typecheck y lint limpios.
+
+## [2026-09-11] update | Código de módulo: la medida va después de la letra base (`B12-FE`, no `B-FE12`)
+
+Las tres tipologías nuevas rendían su código como `B-FE12` porque `codigoModulo()` concatenaba la medida al final del prefijo completo. La convención comercial es la contraria: **la medida va siempre inmediatamente después de la letra base**, y el sufijo de familia queda al final.
+
+`codigoModulo()` (`src/lib/module-groups.ts`) ahora parte el prefijo en el primer `-` e inserta la medida ahí: `B-FE` + 12" → `B12-FE`, `UB-FE` → `UB12-FE`, `V-FE` → `V30-FE`.
+
+El cambio es seguro porque **ningún tipo del catálogo salvo esos tres tiene guion en `pref`/`pref_imperial`/`pref_metrico`** (verificado por consulta antes de tocar nada), así que la rama sin guion —que es la que usan todos los demás— queda idéntica: `B12`, `SBFD30`, y los sufijos que `cotizaciones.ts` concatena después siguen cayendo al final (`W3614`, `DB18-1S`). Cubierto con test nuevo en `tests/module-groups.test.ts`, incluyendo los casos de no-regresión.
+
+`0041_codigo_modulo_medida_antes_del_sufijo.sql` normaliza las líneas ya guardadas (había una, `B-FE12` → `B12-FE`). El filtro exige guion en `pref` y `codigo_modulo <> pref`, lo que deja fuera a las cajoneras `DB`: ahí el guion pertenece al sufijo de tipología, y existe al menos una línea con `pref = 'DB25-1S'` que el guard protegió de ser reescrita como `DB25-1S25-1S`. Sin la migración el arreglo llegaría igual, pero solo al volver a guardar la cotización (`recalcularGrupo()` reescribe `codigo_modulo` en cada recálculo).
+
+100/100 tests, typecheck y lint limpios.
+
+## [2026-09-11] update | Auditoría del catálogo activo: dimensiones negativas, herrajes en cero y duplicados en UW
+
+Barrido de los 60 tipos `activo=true` corriendo `calcularMueble()` real contra el `preset_default`. **39 limpios, 21 con anomalía, 0 errores duros.** Detalle completo en [auditoria_catalogo_activo.md](wiki/auditoria_catalogo_activo.md).
+
+**Corregido — dimensiones negativas restaban costo.** `BBL` escribe su gaveta como `L-30.70` / `L-30.427` / `L-27.75`, válido solo por encima de ~31″. Por debajo, `area = cant * lIn * aIn` salía negativa y **restaba** tablero y canto: a L=24″ eran −152, −837, −111 y −145 cm². Acotadas ambas dimensiones a cero en `engine.ts` en vez de parchear fórmula por fórmula — una dimensión negativa nunca es física y la pieza debe aportar cero, no descontar. Test nuevo `tests/dimension-negativa.test.ts`. El frente negativo de `WPC` sí era falso positivo: su `A-36.87598` implica alacena alta y la medida de prueba la evaluaba a 14″.
+
+**Corregido — `UW` cobraba bisagras y manijas por duplicado.** Dos filas `bisagra` idénticas y dos `manija` (`n_puertas + n_cajones` y `n_puertas`); el motor suma todas las filas sin deduplicar por rol, así que un UW de 2 puertas cotizaba 4 pares y 4 manijas. `0042_uw_herrajes_duplicados.sql` deja una por rol, conservando la fórmula de `W`/`WBL`. Estaba `activo=false`, sin cotizaciones afectadas. Único tipo del catálogo con duplicados.
+
+**Abierto, deliberadamente no inferido — 20 tipos activos cotizan con $0 de herrajes.** `engine.ts` no tiene fallback (`for (const hp of (inp.herrajesPlantilla || []))`), y esos 20 tienen piezas de puerta/gaveta con cero filas en `cot_herrajes_plantilla`. Son seleccionables hoy porque la UI filtra por `activo=true`, aunque **ninguno se ha usado en una cotización real** (las únicas líneas sin herrajes son `PN`, `F`, `TK`, que correctamente no llevan). No se arregló en bloque porque la plantilla del catálogo se escribe contra `n_puertas`/`n_cajones` mientras estos tipos —generados por `generar_tipologias.py`— codifican las cantidades en la pieza: `UDB` tiene 3 frentes de gaveta pero `n_cajones` global es 0, así que `riel = n_cajones` daría cero rieles; `WPC` tiene 5 piezas de frente contra `n_puertas`=2. Además `SBAS` (basculante) necesita pistón y `BLS` su mecanismo giratorio, que no están en el catálogo de herrajes. Requiere criterio de producto, no deducción del esquema.
+
+**Verificado sin drift**: 0034, 0039, 0040 y 0041 están todas aplicadas y coinciden con el archivo. `VDF` sin piezas y las 5 piezas con `rol_tablero` nulo siguen siendo correctas (tipo inerte y piezas solo-canto).
+
+También: botón in/mm en el despiece del simulador (`CotizadorForm.tsx`). El cálculo sigue en pulgadas —el catálogo es imperial—; el toggle solo cambia presentación, para leer el despiece en las unidades de producción. `Card` gana un slot opcional `action` para alojarlo en la cabecera.
+
+102/102 tests, typecheck y lint limpios.
+
+## [2026-09-11] update | Herrajes de 7 tipos derivados del Excel CEMA; el catálogo baja de 21 a 13 anomalías
+
+Segunda pasada sobre el hueco de herrajes que quedó abierto en la entrada anterior. La clave fue la columna **"Costo hardware"** de la hoja `Costos Muebles` del Excel CEMA, que da el costo de herrajes por SKU real y, con los precios unitarios del catálogo, **descompone de forma única**:
+
+- base carcasa de piso = `4×PATA10AJUST(1.987) + 16×TORNILLO858(23)` = **8.316**
+- puerta completa = `BISAGRAPAR(5.800) + MANIJA415(7.450)` = **13.250**
+- rieles 31.064 (FE) / 49.706,8 (Tandem), barra 9.800
+
+Control: `BFD9` del Excel = 21.566 = 8.316 + 13.250, exacto. Con eso, siete tipos quedaron determinados sin interpretación y se aplicaron en `0043_herrajes_tipos_sin_plantilla.sql`, copiando la plantilla del hermano ya validado en cada caso: `UVFD`←`VFD`, `USVFD`←`SVFD`, `UV`←`V`, `UDB`←`DB`, `WER`←`W`, y `POD`/`DD` con solo riel (el Excel les da 31.064/49.707, un riel y nada más).
+
+El hallazgo que cerró `UDB`: su reparto de barras en el Excel —1 gaveta→1 barra, 3 iguales→0, `-1s`→2, `-2s`→1— **coincide exactamente con `DB_TIPOLOGIAS` de `src/lib/muebles.ts`**, o sea que UDB es la cajonera DB de la línea U y comparte su fórmula de barra. Eso convierte la copia desde DB en evidencia, no analogía.
+
+Las reglas nuevas (`n_cajones` en UV/POD/DD, `n_cajones`+`n_puertas` en UDB) son **geometría-neutra**: se verificó por consulta que ninguna pieza de esos tipos referencia esas variables, así que cambian el conteo de herrajes sin mover una medida de corte. A `USVFD`/`UVFD` no se les tocó ninguna regla justamente porque sí usan `n_puertas` en el ancho del frente, y la global por `L` es la que reproduce sus dos valores del Excel.
+
+**`DF` resultó no ser defecto**: el Excel le asigna 0 de hardware, su plantilla vacía es correcta.
+
+Validado con el motor real contra 8 montos del Excel (UVFD 1 y 2 puertas, USVFD, UV 1 y 2 puertas, UDB 3 gavetas, POD, WER): **los 8 coinciden al peso**.
+
+**El catálogo pasa de 21 a 13 anomalías sobre 60 tipos activos.** Efecto colateral visible del clamp de la entrada anterior: `WPC` sube de 128.094 a 151.481 en madera, porque su frente negativo ya no le resta área.
+
+Quedan 12 pendientes por criterio de producto: `SLOC`, `WLD`, `SBAS`, `WPC`, `KF`, `KD`, `CLV`, `DFE`, `CC`, `BLS`, `BMW`, `SDB` — ausentes del Excel o presentes solo en variantes gola/push/con accesorio que no descomponen contra una base estable.
+
+102/102 tests, typecheck y lint limpios.
+
+## [2026-09-11] update | Precio real del push (8.032) y herrajes de SLOC/WLD/KF; el catálogo baja de 13 a 10 anomalías
+
+Tercera pasada. La hoja **`costos unitarios`** del Excel CEMA resultó ser el maestro de herrajes del simulador, y contrastarla contra `cot_herrajes` dejó ver que **todos los precios coinciden salvo el dispositivo PUSH: el Excel lo tiene en 8.032 y el catálogo en 5.600**. Es el mismo código HBM237-02 ya sembrado, o sea el mismo herraje con precio viejo — el mismo patrón del riel full extension en `0040`.
+
+Confirmado con cuatro filas que cierran al peso solo con 8.032: `WPC24 3/44924-PUSH-2S` (19.632 = 2 bis + 1 push), `WPC2461 1/2-18MM` (55.328 = 4 bis + 4 push), `PCFD219525 1/2-4OP-PUSH` (234.807) y `PCFD34 1/28416 1/2-2OP` (146.994). **Las dos de PCFD las reproduce exacto la plantilla que ya existía, sin tocarla**: el único dato equivocado era el precio. Corregido en `0044_push_real_y_herrajes_superiores.sql`. Verificado que el 5.600 no estuviera duplicado en código (a diferencia de los rieles, no lo estaba).
+
+La misma migración resuelve tres tipos más copiando la plantilla de `W` (bisagra `n_puertas`, manija `n_puertas + n_cajones`, sin patas): **`SLOC`** y **`WLD`**, que tienen el mismo juego de piezas que `W` y cuyo ancho de frente ya se escribe `(L-n_puertas*RV)/n_puertas` —la geometría del propio tipo ya asume `n_puertas` puertas, igual que `WER` en 0043—, y **`KF`**, que sí está en el Excel con muchas filas: 13.250 con 1 puerta, 26.500 con 2. Los `KF-*` en 0 son huecos de la fuente, no regla: `KF-SBFD30` está en 0 y `KF-SBFD36` en 26.500.
+
+Validado con el motor real: **10 de 10 casos al peso**, incluidas las 4 regresiones de 0043.
+
+**El catálogo pasa de 13 a 10 anomalías.** De esas 10, `DF` está confirmado como correcto (el Excel le da 0 de hardware), así que quedan **9 pendientes**: `SBAS`, `WPC`, `SDB`, `KD`, `BLS`, `BMW`, `CC`, `CLV`, `DFE`. Para cada uno queda anotado en [auditoria_catalogo_activo.md](wiki/auditoria_catalogo_activo.md) exactamente qué dato falta. El más cercano es `SBAS`: el Excel fija el brazo basculante en 63.000 (confirmado 3 veces), pero la plantilla declara 3 piezas `frente` y `n_puertas` daría 2, y además conviven dos variantes de basculante (las filas `TW-WLM` llevan solo bisagras).
+
+**Anotado sin corregir**: el `TW` del Excel es un mueble de puerta basculante en todas sus filas, mientras que el `TW` del catálogo es "Mueble superior esquinero". O el nombre está mal o son dos cosas con el mismo prefijo; cambiar la semántica de un tipo que ya se usa es decisión de producto.
+
+102/102 tests, typecheck y lint limpios.

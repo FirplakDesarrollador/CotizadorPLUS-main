@@ -62,11 +62,6 @@ export type LineaInicial = {
 
 const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
 
-// Conversión exacta entre unidades vía milímetros.
-const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
-const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
-  (v * TO_MM[de]) / TO_MM[a];
-
 const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ??
   cantos.find((c) => c.replace(',', '.').toLowerCase() === target.replace(',', '.').toLowerCase()) ??
@@ -98,11 +93,11 @@ export default function AddLineForm({
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
   const ov = initial?.overrides ?? null;
   const projectUnit: 'in' | 'cm' = sistemaMedida === 'metrico' ? 'cm' : 'in';
-  const initialUnit = initial?.unidad ?? projectUnit;
 
   // Estados — si viene de NuevoCotizacionForm (projectDefaults), usar esos valores como defaults
   const [tipoId, setTipoId] = useState(initial?.tipoId ?? projectDefaults?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '');
-  const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>(initial?.unidad ?? projectDefaults?.unidad ?? 'in');
+  // La unidad se fija al crear el proyecto (ver el <select disabled> más abajo) — no hay setter.
+  const [unidad] = useState<'in' | 'cm' | 'mm'>(initial?.unidad ?? projectDefaults?.unidad ?? 'in');
   const [largo, setLargo] = useState(initial?.largo != null ? String(initial.largo) : (projectDefaults?.largo ?? '33'));
   const [alto, setAlto] = useState(initial?.alto != null ? String(initial.alto) : (projectDefaults?.alto ?? '30'));
   const [prof, setProf] = useState(initial?.prof != null ? String(initial.prof) : (projectDefaults?.prof ?? '24'));

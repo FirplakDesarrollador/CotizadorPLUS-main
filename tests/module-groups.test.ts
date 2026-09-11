@@ -48,6 +48,18 @@ test('convierte dimensiones y construye códigos sin redondear a anchos de catá
   assert.equal(codigoGrupo(['B12', 'DB10', 'BFD20']), 'B12.DB10.BFD20');
 });
 
+test('en prefijos con sufijo (FE) la medida va después de la letra base, no al final', () => {
+  assert.equal(codigoModulo('B-FE', 12, 'in', 'imperial'), 'B12-FE');
+  assert.equal(codigoModulo('UB-FE', 12, 'in', 'imperial'), 'UB12-FE');
+  assert.equal(codigoModulo('V-FE', 30, 'in', 'imperial'), 'V30-FE');
+  assert.equal(codigoModulo('B-FE', 30.48, 'cm', 'metrico'), 'B30.48-FE');
+  // Los prefijos sin guion conservan la medida al final: cotizaciones.ts les
+  // concatena después el alto (W/PN) o la tipología (DB).
+  assert.equal(codigoModulo('SBFD', 30, 'in', 'imperial'), 'SBFD30');
+  assert.equal(codigoModulo('W', 36, 'in', 'imperial') + anchoCodigo(14, 'in', 'imperial'), 'W3614');
+  assert.equal(codigoModulo('DB', 18, 'in', 'imperial') + '-1S', 'DB18-1S');
+});
+
 test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {
   assert.equal(parseMedida('24 7/8'), 24.875);
   assert.equal(parseMedida('24-7/8'), 24.875);

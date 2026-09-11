@@ -46,6 +46,8 @@ La tabla de grupos tiene RLS vinculada al propietario de la cotización o al rol
 
 Para los muebles `W` (superior de pared / Wall cabinet) y `PN` (Panel), `recalcularGrupo()` también anexa el alto justo después del largo (`W3614` = 36 de largo, 14 de alto), porque a diferencia de los demás tipos su alto sí es variable y no queda implícito en el resto de la descripción. El orden final del código es `prefijo + largo + alto(solo W/PN) + sufijo DB(solo DB)`.
 
+Cuando el prefijo lleva su propio sufijo separado por guion — hoy solo las tres tipologías FE (`B-FE`, `UB-FE`, `V-FE`) — la medida se inserta **antes** del guion, no al final: `B-FE` + 12" da `B12-FE`. La regla comercial es que la medida va siempre inmediatamente después de la letra base. Lo resuelve `codigoModulo()` en `src/lib/module-groups.ts` partiendo el prefijo en el primer `-`; los prefijos sin guion no cambian, de modo que el alto de `W`/`PN` y el sufijo de tipología de `DB` se siguen concatenando al final como antes. La migración `0041_codigo_modulo_medida_antes_del_sufijo.sql` normalizó las líneas ya guardadas con el formato viejo; excluye a `DB` porque ahí el guion pertenece al sufijo de tipología (`DB25-1S`), no al prefijo.
+
 En el formulario (`AddLineForm.tsx`), al seleccionar un tipo `W` en el combo "Tipo", el campo "Prof" se fuerza a `12` por defecto (`handleTipoChange`), porque el fondo estándar de un mueble superior de pared es 12" y rara vez cambia.
 
 La migración 0020 fue aplicada y verificada en Supabase **I+D** el 2026-07-15. El backfill produjo un grupo por cada una de las ocho líneas históricas existentes, sin líneas huérfanas, y dejó activas las cuatro políticas RLS del nuevo modelo.

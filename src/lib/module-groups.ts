@@ -87,13 +87,21 @@ export function anchoCodigo(value: number, unidad: UnidadDim, sistema: SistemaMe
   return String(converted);
 }
 
+// La medida va inmediatamente después de la letra base, no al final del código.
+// En los prefijos con sufijo separado por guion (B-FE, UB-FE, V-FE) eso significa
+// insertarla antes del guion: B-FE + 12" -> `B12-FE`, no `B-FE12`.
+// Los prefijos sin guion (B, SBFD, W, DB...) no cambian: la medida sigue al final,
+// donde `cotizaciones.ts` le concatena después el alto (W/PN) o la tipología (DB).
 export function codigoModulo(
   pref: string,
   ancho: number,
   unidad: UnidadDim,
   sistema: SistemaMedida,
 ): string {
-  return `${pref}${anchoCodigo(ancho, unidad, sistema)}`;
+  const medida = anchoCodigo(ancho, unidad, sistema);
+  const guion = pref.indexOf('-');
+  if (guion === -1) return `${pref}${medida}`;
+  return `${pref.slice(0, guion)}${medida}${pref.slice(guion)}`;
 }
 
 export function codigoGrupo(codigos: string[]): string {

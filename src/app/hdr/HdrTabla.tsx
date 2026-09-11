@@ -22,6 +22,11 @@ const NOMBRE_PRODUCCION: [RegExp, string][] = [
   [/refuerzo_(delantero|horizontal)/, 'RAIL DELANTERO'],
   [/entrepano/, 'SHELF'],
   [/base_gaveta/, 'PIEZA CAJON'],
+  // Caja de gaveta en madera (tipos con riel full extension, ej. B-FE).
+  [/lateral_gaveta_der/, 'LAT DER GAV'],
+  [/lateral_gaveta_izq/, 'LAT IZQ GAV'],
+  [/^contraparche$/, 'CONTRAPARCHE'],
+  [/^fondo_gaveta$/, 'FONDO GAV'],
   [/frente_gaveta/, 'FRENTE GAVETA'],
   [/frente_cajon/, 'FRENTE GAVETA'],
   [/gola_perfil/, 'GOLA'],
@@ -39,7 +44,7 @@ function nombreProduccion(nombre: string, tienePuertas: boolean): string {
 // visibles desde afuera van en Color, las ocultas dentro de la carcasa van en Blanco.
 // Es una inferencia por nombre, no un dato confirmado pieza por pieza en todo el catálogo.
 function esVisible(nombre: string): boolean {
-  return !/trasero|entrepano|base_gaveta/.test(nombre);
+  return !/trasero|entrepano|base_gaveta|lateral_gaveta|contraparche/.test(nombre);
 }
 
 function espesorCantoLabel(calibre: string | null): string {

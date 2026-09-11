@@ -20,7 +20,6 @@ export function evalExpr(expr: string | number | null | undefined, vars: Record<
   const s = String(expr).replace(/--(?=\d|\.)/g, '- -');
   if (!ALLOWED.test(s)) throw new Error(`Expresión no permitida: ${s}`);
   const keys = Object.keys(vars);
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
   const fn = new Function(...keys, `"use strict"; return (${s});`);
   const v = fn(...keys.map((k) => vars[k]));
   return typeof v === 'boolean' ? v : Number(v);
@@ -212,8 +211,12 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     if (modo === 'sin_frentes' && esFrente) continue;       // open: caja sin puertas/frentes
     if (modo === 'solo_frentes' && !esFrente) continue;     // kit de frentes: solo puertas/frentes
     const cant = num(pz.formula_cantidad);
-    const lIn = num(pz.formula_largo) - (pz.resta_largo || 0);
-    const aIn = num(pz.formula_ancho) - (pz.resta_ancho || 0);
+    // Una dimensión negativa no es física: significa que la geometría de esa pieza no
+    // aplica a esta medida (ej. la gaveta de BBL, cuyo `L-30.70` solo tiene sentido por
+    // encima de 30.7"). Sin acotar, el área sale negativa y RESTA tablero y canto al
+    // mueble, abaratándolo. Se acota a 0: la pieza no aporta, en vez de descontar.
+    const lIn = Math.max(0, num(pz.formula_largo) - (pz.resta_largo || 0));
+    const aIn = Math.max(0, num(pz.formula_ancho) - (pz.resta_ancho || 0));
     const area = cant * lIn * aIn * IN2CM * IN2CM;
     // Solo suma área si la pieza tiene rol de tablero; piezas "canto-only" (sin rol) aportan únicamente canto.
     if (pz.rol_tablero) areaPorRol[pz.rol_tablero] = (areaPorRol[pz.rol_tablero] || 0) + area;

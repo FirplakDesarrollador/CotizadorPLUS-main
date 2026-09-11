@@ -745,6 +745,12 @@ function ResultadoView({ result, moneda, setMoneda }:
   const precioCon = result.precioConHerrajesCop;
   const precioPrincipal = precioCon;
   const money = (cop: number) => (moneda === 'COP' ? fmtCOP(cop) : fmtUSD(cop / result.trm));
+  // El despiece se calcula en pulgadas (el catálogo es imperial), pero producción
+  // trabaja en milímetros: el toggle solo cambia la presentación, no el cálculo.
+  const [unidadPiezas, setUnidadPiezas] = useState<'in' | 'mm'>('in');
+  const dim = (valorIn: number) => (unidadPiezas === 'in'
+    ? valorIn.toLocaleString('es-CO', { maximumFractionDigits: 3 })
+    : (valorIn * 25.4).toLocaleString('es-CO', { maximumFractionDigits: 1 }));
   return (
     <>
       <div className="bg-white rounded-2xl border border-slate-200 p-5">
@@ -821,17 +827,35 @@ function ResultadoView({ result, moneda, setMoneda }:
 
       <MuebleVisualizer scene={result.visualizacion} />
 
-      <Card title="Piezas (despiece)">
+      <Card
+        title="Piezas (despiece)"
+        action={(
+          <div className="flex rounded-lg border border-slate-300 overflow-hidden text-sm">
+            {([['in', 'Pulgadas'], ['mm', 'Milímetros']] as const).map(([u, etiqueta]) => (
+              <button
+                key={u}
+                type="button"
+                onClick={() => setUnidadPiezas(u)}
+                aria-pressed={unidadPiezas === u}
+                title={`Mostrar el despiece en ${etiqueta.toLowerCase()}`}
+                className={`px-3 py-1 ${unidadPiezas === u ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}
+              >
+                {u === 'in' ? 'in' : 'mm'}
+              </button>
+            ))}
+          </div>
+        )}
+      >
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-slate-400"><th className="py-1">Pieza</th><th>Rol</th><th className="text-right">Cant</th><th className="text-right">Largo&quot;</th><th className="text-right">Ancho&quot;</th><th className="text-right">m²</th></tr></thead>
+          <thead><tr className="text-left text-slate-400"><th className="py-1">Pieza</th><th>Rol</th><th className="text-right">Cant</th><th className="text-right">Largo {unidadPiezas === 'in' ? '″' : 'mm'}</th><th className="text-right">Ancho {unidadPiezas === 'in' ? '″' : 'mm'}</th><th className="text-right">m²</th></tr></thead>
           <tbody>
             {/* Piezas con cantidad 0 no se producen (ej. "frente" uniforme queda en 0 cuando
                 la tipología DB es mixta y usa frente_gaveta_pequena/grande en su lugar). */}
             {result.piezas.filter((p) => p.cant > 0).map((p, i) => (
               <tr key={i} className="border-t border-slate-100">
                 <td className="py-1">{p.pieza}</td><td className="text-slate-500">{p.rol}</td>
-                <td className="text-right">{p.cant}</td><td className="text-right">{p.largoIn}</td>
-                <td className="text-right">{p.anchoIn}</td><td className="text-right">{(p.areaCm2 / 10000).toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+                <td className="text-right">{p.cant}</td><td className="text-right">{dim(p.largoIn)}</td>
+                <td className="text-right">{dim(p.anchoIn)}</td><td className="text-right">{(p.areaCm2 / 10000).toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
               </tr>
             ))}
             <tr className="border-t-2 border-slate-300 font-semibold text-slate-900">
@@ -864,10 +888,13 @@ function ResultadoView({ result, moneda, setMoneda }:
   );
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5">
-      <h3 className="font-medium text-slate-900 mb-2">{title}</h3>
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <h3 className="font-medium text-slate-900">{title}</h3>
+        {action}
+      </div>
       <div className="space-y-1">{children}</div>
     </div>
   );
