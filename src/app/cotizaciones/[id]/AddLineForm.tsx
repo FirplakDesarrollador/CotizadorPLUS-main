@@ -6,7 +6,7 @@ import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, type SistemaFrente } from '@/lib/muebles';
-import { parseMedida } from '@/lib/module-groups';
+import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
@@ -262,7 +262,18 @@ export default function AddLineForm({
       trm,
       // recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
       cantidad,
-      prefLabel: prefProyecto(tipo) ? `${prefProyecto(tipo)}${parseMedida(largo)}${esDB && dbTipo ? `-${dbTipo.split('-').slice(1).join('-')}` : ''}${esPCFD && Number(ncajones) > 0 ? `-${Number(ncajones)}OP-PUSH` : ''}` : undefined,
+      prefLabel: prefProyecto(tipo)
+        ? codigoComercial({
+            pref: prefProyecto(tipo),
+            largo: parseMedida(largo),
+            alto: parseMedida(alto),
+            unidad,
+            sistema: sistemaMedida,
+            sistemaFrente,
+            dbTipo: esDB ? dbTipo : null,
+            pcfdCajones: esPCFD ? Number(ncajones) : null,
+          })
+        : undefined,
       modoFrentes,
       sistemaFrente,
       removible: permiteRemovible(prefTipo) ? removible : undefined,

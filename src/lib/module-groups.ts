@@ -91,7 +91,7 @@ export function anchoCodigo(value: number, unidad: UnidadDim, sistema: SistemaMe
 // En los prefijos con sufijo separado por guion (B-FE, UB-FE, V-FE) eso significa
 // insertarla antes del guion: B-FE + 12" -> `B12-FE`, no `B-FE12`.
 // Los prefijos sin guion (B, SBFD, W, DB...) no cambian: la medida sigue al final,
-// donde `cotizaciones.ts` le concatena después el alto (W/PN) o la tipología (DB).
+// donde `codigoComercial()` le concatena después el alto o la tipología.
 export function codigoModulo(
   pref: string,
   ancho: number,
@@ -102,6 +102,46 @@ export function codigoModulo(
   const guion = pref.indexOf('-');
   if (guion === -1) return `${pref}${medida}`;
   return `${pref.slice(0, guion)}${medida}${pref.slice(guion)}`;
+}
+
+export function sufijoSistemaFrente(sistemaFrente: string | null | undefined): string {
+  return sistemaFrente === 'gola' ? '-SM' : '';
+}
+
+// Los superiores de la familia W y los paneles PN incluyen el alto en el código
+// (W2936 = 29 de largo, 36 de alto): a diferencia de los demás tipos su alto sí
+// varía y no es un dato implícito del tipo. WCC queda fuera a propósito — es un
+// módulo de clóset (categoria='closet'), no un superior de pared.
+const PREFS_ALTO_EN_CODIGO = ['W', 'WBL', 'WER', 'WLD', 'WPC', 'PN'] as const;
+
+export function incluyeAltoEnCodigo(pref: string | null | undefined): boolean {
+  const base = String(pref ?? '').toUpperCase().split('-')[0];
+  return (PREFS_ALTO_EN_CODIGO as readonly string[]).includes(base);
+}
+
+export type CodigoComercialInput = {
+  pref: string;
+  largo: number;
+  alto: number;
+  unidad: UnidadDim;
+  sistema: SistemaMedida;
+  sistemaFrente?: string | null;
+  dbTipo?: string | null;
+  pcfdCajones?: number | null;
+};
+
+// Código comercial completo de un módulo. Es la única fuente de verdad del orden
+// de los segmentos: el Simulador, el formulario de cotizaciones, el recálculo que
+// persiste `codigo_modulo` y el buscador de HDR deben producir exactamente la misma
+// cadena para el mismo módulo. Antes cada uno lo armaba por su cuenta y divergían
+// (el formulario omitía el alto: `W29-SM` en vez de `W2936-SM`).
+export function codigoComercial(input: CodigoComercialInput): string {
+  const { pref, largo, alto, unidad, sistema } = input;
+  const base = codigoModulo(pref, largo, unidad, sistema);
+  const altoSufijo = incluyeAltoEnCodigo(pref) ? anchoCodigo(alto, unidad, sistema) : '';
+  const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
+  const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
+  return base + altoSufijo + dbSufijo + pcfdSufijo + sufijoSistemaFrente(input.sistemaFrente);
 }
 
 export function codigoGrupo(codigos: string[]): string {

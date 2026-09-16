@@ -187,6 +187,27 @@ grupo para reducir desperdicio real.
 5. Añadir pruebas de regresión para cantidades de refuerzo, ausencia de
    manijas, sufijo comercial y costo.
 
+## Implementacion confirmada: `W2936-SM`
+
+El 2026-09-15 se integro una hoja real `W2936-SM MBLE SUP COC 2 PUERTAS 2
+ENTREPANOS`. La solucion conserva el tipo base `W` y usa `gola=1`; no crea un
+tipo duplicado `W-SM`.
+
+La evidencia de esta hoja confirma que, para `W` con `SM`, no se cargan manijas
+pero si se conservan las bisagras. Tambien confirma tres ajustes geometricos
+condicionales: el entrepano resta 1 mm adicional en largo, las puertas suben a
+`A+15.85mm` y el backing se corta como `A-16mm` por `L-16mm`. Con `gola=0`, `W`
+mantiene sus formulas previas.
+
+Ver [w_sm_hoja_real.md](w_sm_hoja_real.md) para la trazabilidad completa,
+migracion `0045_w_sm_hoja_real.sql`, cruce contra Excel CEMA, verificacion en
+Supabase y cambios de Simulador/Cotizaciones/HDR.
+
+En la UI la opcion se etiqueta `SM` (no "Gola"), que es el codigo que usa
+comercial; la clave interna sigue siendo `gola`. El sufijo `-SM` y su posicion
+dentro del codigo los arma `codigoComercial()`: ver
+[codificacion_comercial_modulos.md](codificacion_comercial_modulos.md).
+
 ## Conclusión
 
 La mejor representación es una variante de frente con reglas por familia,

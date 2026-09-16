@@ -15,7 +15,7 @@
 export type SistemaFrente = 'manija' | 'gola';
 export const SISTEMAS_FRENTE: { key: SistemaFrente; label: string; desc: string }[] = [
   { key: 'manija', label: 'Manija', desc: 'Frente con manija (estándar)' },
-  { key: 'gola', label: 'Gola', desc: 'Gola en melamina; sin manijas. Sufijo comercial SM' },
+  { key: 'gola', label: 'SM', desc: 'Gola en melamina; sin manijas. Añade el sufijo -SM al código (W2936-SM)' },
 ];
 
 // Familias con pares base/removible verificados en las hojas de ruta. Fuera de

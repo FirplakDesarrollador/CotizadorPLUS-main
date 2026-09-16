@@ -399,6 +399,41 @@ También: botón in/mm en el despiece del simulador (`CotizadorForm.tsx`). El c�
 
 102/102 tests, typecheck y lint limpios.
 
+## [2026-09-15] update | W2936-SM integrado como variante Gola/SM de `W`
+
+Se analizo la hoja real adjunta `W2936-SM MBLE SUP COC 2 PUERTAS 2 ENTREPANOS`
+y se implemento como `W` con `gola=1`, no como copia de `B-FE` ni como tipo
+duplicado `W-SM`. La migracion `0045_w_sm_hoja_real.sql` fue aplicada y
+verificada en Supabase: entrepanos `L-2*TC-1mm`, puertas `A+15.85mm`, backing
+`A-16mm` por `L-16mm`, y orden HDR igual a la hoja real. El motor ahora excluye
+herrajes con rol `manija` cuando `gola=1`, conservando bisagras; el cruce contra
+el Excel CEMA vigente confirma COP 11.600 de herrajes para `W2936-SM` (2
+bisagras, 0 manijas).
+
+Tambien se actualizaron Simulador, Cotizaciones y HDR: `W` inicializa Prof en
+12", Cotizaciones genera el codigo comercial `W2936-SM` al elegir Gola/SM, y
+HDR permite seleccionar sistema de frente y muestra puertas alto x ancho para
+coincidir con la hoja. Se agregaron `tests/w-sm.test.ts` y una prueba de sufijo
+`-SM`; `npx tsc --noEmit` y ESLint focal pasaron. El runner `tsx --test` quedo
+bloqueado por un error del entorno Windows (`uv_os_get_passwd ENOMEM`), no por
+fallas de las aserciones.
+
+## [2026-09-15] ingest | Patron permanente para integrar nuevas tipologias como `B-FE`
+
+El usuario pidio recordar la ultima integracion de la tipologia `B-FE` para repetirla "exactamente igual" con proximas referencias nuevas. Se creo [patron_integracion_tipologias.md](wiki/patron_integracion_tipologias.md) como protocolo explicito: toda nueva tipologia debe nacer como tipo independiente, desde hoja de ruta/referencia primaria, con migracion SQL re-ejecutable, validacion geometrica en mm, revision de herrajes/precio contra Excel CEMA cuando exista, ajustes de UI/HDR/codigo comercial, tests y documentacion. Tambien queda fijado que no se activa agrupacion ni se muta el tipo base por analogia sin evidencia.
+
+## [2026-09-15] update | Aclaracion: `B-FE` es metodo de integracion, no molde estructural
+
+El usuario aclaro que cuando pida incluir una nueva tipologia NO se debe reemplazar la estructura del mueble adjunto por la estructura de `B-FE`. Se actualizo [patron_integracion_tipologias.md](wiki/patron_integracion_tipologias.md): `B-FE` queda como referencia de rigor metodologico (tipo independiente, fuente primaria, validacion, migracion, herrajes/precio y documentacion), pero cada nueva tipologia debe analizarse desde su propia referencia y modelarse con sus propias piezas, medidas, reglas y herrajes.
+
+## [2026-09-15] update | "Incluir nueva tipologia" exige Simulador, Cotizaciones y HDR
+
+Se amplio [patron_integracion_tipologias.md](wiki/patron_integracion_tipologias.md) para que la frase del usuario "incluir nueva tipologia" active el flujo end-to-end completo: analisis de la referencia adjunta, migracion/datos, disponibilidad en Simulador/Diseño, alta y edicion en Cotizaciones, interpretacion y tabla en HDR, codigo comercial correcto, validacion con motor real y cruce contra Excel CEMA cuando exista. Queda explicito que no se debe cerrar una tipologia si solo existe en base de datos pero no es usable en esas tres superficies.
+
+## [2026-09-15] update | Nuevas tipologias deben cargarse y verificarse en Supabase
+
+El usuario agrego que al incluir nuevas tipologias tambien se deben actualizar, analizar y cargar a la base de datos de Supabase. Se actualizo [patron_integracion_tipologias.md](wiki/patron_integracion_tipologias.md): el flujo ahora exige aplicar/cargar la migracion en Supabase, consultar la base real para confirmar `cot_tipos_mueble`, `cot_piezas_plantilla`, `cot_reglas_config`, `cot_herrajes_plantilla` y tablas relacionadas, y validar el motor con datos leidos desde Supabase. No se debe cerrar la tarea si la tipologia queda solo como SQL local; si no hay acceso a Supabase, debe reportarse como bloqueo/pendiente concreto.
+
 ## [2026-09-11] update | Herrajes de 7 tipos derivados del Excel CEMA; el catálogo baja de 21 a 13 anomalías
 
 Segunda pasada sobre el hueco de herrajes que quedó abierto en la entrada anterior. La clave fue la columna **"Costo hardware"** de la hoja `Costos Muebles` del Excel CEMA, que da el costo de herrajes por SKU real y, con los precios unitarios del catálogo, **descompone de forma única**:
@@ -438,3 +473,100 @@ Validado con el motor real: **10 de 10 casos al peso**, incluidas las 4 regresio
 **Anotado sin corregir**: el `TW` del Excel es un mueble de puerta basculante en todas sus filas, mientras que el `TW` del catálogo es "Mueble superior esquinero". O el nombre está mal o son dos cosas con el mismo prefijo; cambiar la semántica de un tipo que ya se usa es decisión de producto.
 
 102/102 tests, typecheck y lint limpios.
+
+## [2026-09-15] update | Codificación comercial unificada: el alto de la familia W y el sufijo -SM en las 4 superficies
+
+La regla del código de módulo estaba replicada en cuatro superficies y producía cadenas distintas para el mismo mueble. Para un `W` 29×36 con frente `SM`: `recalcularGrupo()` daba `W2936-SM`, el `HdrBuscador` daba `W2936-SM`, pero **`AddLineForm` daba `W29-SM`** (omitía el alto) y el **Simulador daba `W29`** (sin alto, sin tipología DB y sin sufijo). El valor persistido en `codigo_modulo` siempre salió de `recalcularGrupo()`, así que el dato guardado nunca estuvo mal; lo que divergía era lo que el usuario veía antes de guardar.
+
+Se centralizó en **`codigoComercial()`** (`src/lib/module-groups.ts`), que fija el orden de los segmentos: `pref + largo [+ alto] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM]`. Las cuatro superficies ahora la llaman.
+
+**Qué tipos llevan el alto**: `PREFS_ALTO_EN_CODIGO = ['W','WBL','WER','WLD','WPC','PN']` — la familia `W` de superiores de pared más los paneles. `WCC` queda fuera a propósito: pese al prefijo, es un módulo de clóset (`categoria='closet'`), no un superior de pared. Los superiores de la línea `S` (`S`, `SA`, `SBAS`, `SLOC`, `SMO`) y `UW`/`TW` tampoco lo llevan: no hay hoja real que lo respalde y ampliarlo reescribiría códigos ya guardados en el próximo recálculo. Decisión de producto tomada con el usuario.
+
+**Etiqueta**: la opción del desplegable pasa de "Gola" a **`SM`**, que es el código que usa comercial. La clave interna sigue siendo `gola` y el override `gola=0/1` no cambia.
+
+**Simulador**: ahora muestra el código comercial como badge bajo el precio estimado (antes no se veía en ninguna parte) y las tarjetas de módulo combinado muestran el código completo en vez de `W29`. Como el Simulador no tiene sistema de medida de proyecto, se deriva de la unidad activa (`in` → imperial, resto → métrico).
+
+Complementa la integración de geometría `W-SM` de [w_sm_hoja_real.md](wiki/w_sm_hoja_real.md), que ya había añadido el sufijo en tres de las cuatro superficies. Documentado en [codificacion_comercial_modulos.md](wiki/codificacion_comercial_modulos.md), que también deja anotada una deuda: `descripcion_es` cambia de `W2936-SM 29x36x12 in` a `W 29x36x12 in` tras el primer recálculo, porque `construirFilaLinea()` recibe el prefijo base en vez del código.
+
+108/108 tests, typecheck y lint limpios.
+
+## [2026-09-15] update | La puerta con gola cuelga por debajo de la base, no sobre la tapa
+
+Reportado desde la vista lateral del Simulador: en un `W` con `SM` el frente se dibujaba asomando **por encima** del mueble. La puerta con gola se corta más alta que la carcasa (`gola ? A+0.62402 : A-RV`, migración 0045: `A+15.85mm`), pero `construirVisualizacion()` apilaba las puertas desde la base hacia arriba sin distinguir gola, así que todo el sobrante quedaba arriba.
+
+Está al revés de cómo se fabrica: ese excedente **es el agarre**, y en un superior la puerta se toma por debajo. Para `W2936-SM` la puerta pasa de `z=0 … 930.2` (sobresaliendo 15.8mm sobre la tapa de 914.4) a `z=-15.8 … 914.4`, es decir colgando bajo la base y a ras por arriba. Con `gola=0` la geometría no cambia.
+
+De paso desaparece un aviso falso: la escena disparaba *"la fachada necesita distribución específica por niveles"* porque el apilado superaba `A+4` por el voladizo mal orientado.
+
+**Límite anotado, no resuelto**: la dirección hacia abajo corresponde a la gola de un mueble **superior**. En un mueble base la gola va arriba (la puerta se toma por debajo del mesón), así que el excedente debería subir. Hoy solo `W` tiene fórmula de puerta condicional a gola, así que es el único tipo con voladizo y la regla no se puede equivocar; si se añade una a un tipo base (`B`, `BFD`, `SBFD`…) habrá que hacerla dependiente de la familia. Documentado en [visualizacion_gola_voladizo.md](wiki/visualizacion_gola_voladizo.md).
+
+Los frentes de gaveta siguen otro camino (`drawerSlots` ya reserva 53.6mm repartiendo desde la tapa) y no se tocaron. 110/110 tests, typecheck y lint limpios.
+
+## [2026-09-15] update | Normalizados en Supabase los códigos de módulo de la familia W/PN sin alto
+
+Auditoría de la base real antes de tocar nada: **las migraciones 0037–0045 ya estaban todas aplicadas**, verificado contra la base y no contra el repo (3 tipos FE, precio PUSH 8032, 6 plantillas SLOC/WLD/KF, `UW` sin herrajes duplicados, 0 líneas con el formato de código viejo de 0041, y las 4 fórmulas condicionales de gola en `W`). La 0045 la había aplicado la sesión de esta mañana.
+
+Al ampliar `PREFS_ALTO_EN_CODIGO` a la familia W completa quedaba la duda de si había códigos guardados desactualizados. Los cuatro tipos añadidos (`WBL`, `WER`, `WLD`, `WPC`) **no tienen ninguna línea guardada**, así que la ampliación no reescribió nada. De las 16 líneas W/PN existentes, 15 ya coincidían y **1 estaba desfasada: `PN14` debía ser `PN1422`** — desfase anterior a este cambio, porque `PN` ya estaba en la regla.
+
+`0046_codigo_modulo_alto_familia_w.sql` la normaliza, siguiendo el precedente de 0041. La condición es estricta a propósito: solo toca filas cuyo código es exactamente `pref || largo`, así que un código con sufijo (`-SM`, `-1S`, `-2OP-PUSH`) no coincide y queda intacto; y solo normaliza líneas cuya unidad ya es la del sistema del proyecto (imperial→in, métrico→cm), porque las demás exigirían replicar la conversión de unidades en SQL y el recálculo ya las corrige con el motor real.
+
+Aplicada y verificada: 16 líneas, 0 desactualizadas. Idempotente — re-ejecutarla toca 0 filas.
+
+## [2026-09-15] fix | El backing de W con gola estaba girado 90°: la hoja ordena por tamaño, el motor por eje
+
+Al revisar el fondo salió el defecto de raíz. La hoja de ruta ordena sus columnas **por tamaño** (la medida mayor primero, sin importar el eje: `BASE 706.6x304.8` es horizontal y `SIDE 914.4x304.8` es vertical). El motor usa `formula_largo`/`formula_ancho` como **ejes geométricos**, y cuál es cuál lo fija `visualizacion.intercambiar` de la pieza.
+
+`0045_w_sm_hoja_real.sql` copió el backing tal como lo lista la hoja (`898.4 x 720.6`) y lo escribió como largo/ancho. Pero el fondo de `W` tiene `intercambiar=false`, y su rama **sin** gola (`L-TC`/`A-0.59`) ya seguía esa convención: la rama **con** gola quedó con la contraria. Como una pieza solo tiene un `intercambiar`, una de las dos ramas tenía que estar mal.
+
+En `W2936-SM` (carcasa 736.6 x 914.4mm) el backing se construía **898.4mm de ancho horizontal — sobresaliendo 161.8mm por los lados** — y solo 720.6mm de alto. Era también la causa de que la vista frontal del Simulador reportara `Largo 898,4 mm` en un mueble de 736.6: el bounding box lo fijaba el fondo girado, no la carcasa. `0047_w_fondo_ejes_gola.sql` deja ambas ramas en la convención de `intercambiar=false`.
+
+**El costo nunca estuvo afectado**: misma área (`720.6 × 898.4 = 0.6474 m²`) y el fondo no lleva canto. Solo cambia qué medida es el largo y cuál el ancho.
+
+**Auditoría de los 44 tipos con respaldo**: `W` era la única incoherencia real entre fórmulas e `intercambiar`. `BMW` y `SDB` aparecieron como sospechosos pero son falsos positivos (backing de medidas constantes). Cuatro tipos (`B-FE`, `UB-FE`, `V-FE`, `UW`) no tienen `visualizacion` cargada y caen en `inferirMontaje()`.
+
+El orden de columnas de la hoja es presentación, no geometría, así que vive en `HdrTabla.tsx`: el frente va con el alto primero y el fondo se ordena por tamaño, de modo que el HDR sigue leyendo `898.4 x 720.6` como la hoja real. Documentado en [ejes_fondo_backing.md](wiki/ejes_fondo_backing.md). 110/110 tests, typecheck y lint limpios.
+
+## [2026-09-15] lint | Auditoría empírica del fondo en los 60 tipos: sin más hallazgos; el fixture de tests queda desactualizado
+
+Cierre de la revisión del backing. La auditoría anterior era estática (cruzar fórmulas contra `intercambiar`) y dejaba fuera cuatro tipos sin `visualizacion` cargada. Se completó con una pasada **empírica** sobre el catálogo real de Supabase (60 tipos, 446 piezas): construir la escena de cada tipo con tres juegos de medidas y `gola` 0/1, y verificar que el respaldo quepa en la carcasa. **Ningún fondo excede su carcasa en ningún caso** tras 0047.
+
+`SDB` apareció en la primera corrida, pero por medidas de prueba irreales: es "Cajonera con panel removible", modelada con despiece de medidas **constantes** (backing fijo de 422.4 x 441.0 mm), así que solo se fabrica al ancho para el que se tomó ese despiece. A su ancho nominal cabe. Mismo caso que `BMW` en la pasada estática.
+
+**Los 4 tipos sin `visualizacion` (`B-FE`, `UB-FE`, `V-FE`, `UW`) no son un problema**: para el plano `XZ`, `inferirMontaje()` deriva el flag de las propias fórmulas (`intercambiar = /\bL\b/.test(ancho) && !/\bL\b/.test(largo)`), que es justo la definición de la convención B. Los cuatro quedan correctos. Esto confirma de paso por qué el defecto de `W` había que arreglarlo en las fórmulas y no en el flag: sus dos ramas usaban convenciones opuestas y una pieza solo tiene un `intercambiar`.
+
+18 tipos no tienen respaldo, como corresponde: no son cajas (`F`, `PN`, `TK`, `BOV`, `BT`, `CC`, `CLV`, `DD`, `DF`, `DFE`, `E`, `FL`, `KD`, `KF`, `POD`, `D`, `R`, `WCC`).
+
+Añadido test de regresión: el fondo de `W` debe caber en la carcasa y su eje vertical ser el mayor, con gola 0 y 1. Verificado que **falla** con las fórmulas de 0045 y pasa con las de 0047 — no es un test decorativo.
+
+**Deuda anotada**: `tests/fixtures/catalogo-visualizacion.json` está desactualizado (57 tipos, le faltan `B-FE`/`UB-FE`/`V-FE`, y su `W` no tiene las ramas de gola). Por eso los tests de gola parchean las fórmulas en el test en vez de leerlas del fixture. Refrescarlo cambiaría las entradas de los 57 tipos de golpe, así que se deja para una tarea propia. 112/112 tests, typecheck y lint limpios.
+
+## [2026-09-15] fix | El lateral de W-SM se corta 1" menos que el alto nominal; el backing lo sigue
+
+Corrección de producción reportada por el usuario: **en un `W` con `SM` el lateral no mide el alto nominal, sino 1" menos** — esa pulgada la ocupa la gola. Para `W2936-SM` (A=36") el lateral es 35" = 889mm.
+
+Esto contradecía la transcripción de la hoja real hecha en 0045, que registraba `SIDE = 914.4mm` (36"), es decir el alto nominal tomado como si fuera el corte del lateral. Se consultó antes de aplicar: **gobierna 35"**, y solo en la rama con gola (un `W` con manija conserva `lateral = A`, que no tiene evidencia en contra).
+
+**El efecto en cadena que obligó a preguntar**: con el lateral en 889mm, el backing de `A-0.62992` (898.4mm) quedaba **9.4mm más alto que el lateral** — imposible de armar, y rompía el test de regresión añadido en la revisión del fondo. Decidido que el backing sigue al lateral conservando su misma holgura de 16mm: `A-1.62992` = 873.0mm.
+
+`0048_w_sm_lateral_una_pulgada_menos.sql` aplica ambos cambios. Despiece resultante de `W2936-SM`: lateral 889.0, backing 720.6 x 873.0. La rama con manija queda intacta (lateral 914.4, backing 721.6 x 899.4).
+
+Verificado en la escena: el backing (33.4..906.4) queda dentro del lateral (25.4..914.4); la puerta va de -15.8 a 914.4, a ras del lateral por arriba y colgando **41.2mm** por debajo, que es el agarre de la gola — coherente con los 53.6mm de holgura de gola que documenta el motor. Sin avisos.
+
+Corregidas en [w_sm_hoja_real.md](wiki/w_sm_hoja_real.md) las dos tablas que arrastraban la transcripción vieja (despiece confirmado y validación). Tests: lateral 889 con gola / 914.4 con manija, y el fondo ahora se valida contra el lateral y no contra el alto nominal. 113/113 tests, typecheck y lint limpios.
+
+## [2026-09-15] fix | La holgura de 1mm del entrepaño y el fondo es estructural, no de gola: aplicada a 22 tipos
+
+Reportado desde el despiece de un `W` **con manija**: entrepaño 706.6mm y fondo 721.6 x 899.4mm, cuando deben ser 705.6 y 720.6 x 898.4. Las piezas que entran *dentro* de la carcasa se cortan 1mm más pequeñas; sin esa holgura no entran.
+
+La auditoría mostró que **no era un caso aislado de `W`**: la holgura ya existía en los tipos validados más recientemente contra hojas reales, y `W` era el inconsistente. El entrepaño de `B-FE`/`UB-FE`/`V-FE` ya usaba `L-2*TC-0.03937` incondicional, y el fondo de `S`/`SA`/`SBAS`/`SLOC`/`SMO` ya usaba 16mm (`A-0.62992`/`L-0.62992`). `0045` había introducido el 1mm del entrepaño **condicionado a `gola`** porque lo dedujo de una hoja de `W2936-SM` — pero la holgura no depende del sistema de frente.
+
+`0049_holgura_1mm_entrepano_y_fondo.sql`, con el alcance decidido por el usuario tras presentarle el impacto de cada opción:
+
+- **Entrepaño**: los 22 tipos que usaban `L-2*TC` pasan a `L-2*TC-0.03937` (`AL`, `B`, `BBL`, `BBLFD`, `BFD`, `BMW`, `CC`, `CLV`, `OVPC`, `PC`, `PCFD`, `SBAS`, `UB`, `UBFD`, `UW`, `V`, `VFD`, `VPC`, `W`, `WBL`, `WCC`, `WPC`). En `W` además deja de depender de gola.
+- **Fondo**: los 4 superiores de pared con 15mm (`W`, `TW`, `UW`, `WBL`) pasan a 16mm, alineados con la familia `S`. En `W` el ancho conserva su rama de gola (`gola ? A-1.62992 : A-0.62992`) porque con SM el fondo sigue al lateral, que se corta 1" más corto.
+
+**Quedaron fuera a propósito** los tipos que modelan estas piezas con medidas constantes, donde la holgura ya está en el número: `BLS`, `WER`, `SDB`, `BMW` (fondo). Aparecen como falsos positivos en cualquier auditoría que los pruebe a anchos que no fabrican.
+
+Confirmado además que **solo hay una base de datos**: `run-sql-isazaale.mjs` usa las mismas credenciales que `run-sql.mjs`; esos archivos son un duplicado histórico, no un segundo entorno.
+
+Auditoría posterior: 60 tipos, 348 escenas, fondos y entrepaños dentro de la carcasa, sin dimensiones inválidas. Migración idempotente, sin notas duplicadas. 114/114 tests, typecheck y lint limpios. Documentado en [holgura_1mm_estructura.md](wiki/holgura_1mm_estructura.md).

@@ -17,6 +17,7 @@ import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, type SistemaFrente } from '@/lib/muebles';
+import { codigoComercial, codigoGrupo, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -191,6 +192,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setDbTipo('');
     setRielCodigo('RIELTANDEM');
     setPcfdConfig('');
+    if ((tipos.find((t) => t.id === v)?.pref ?? '') === 'W') setProf(convertir(12, 'in', unidad));
     if ((tipos.find((t) => t.id === v)?.pref ?? '').startsWith('DB')) setConHerrajes(true);
   }
   function aplicarDbTipo(k: string) {
@@ -440,10 +442,30 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setDraggedId(null);
   }
 
-  const moduleTitle = (modulo: SimuladorModulo) => {
-    const tipo = tipos.find((item) => item.id === modulo.tipoId);
-    return `${tipo?.pref ?? 'M'}${modulo.largo}`;
+  // El Simulador no tiene sistema de medida de proyecto como las cotizaciones:
+  // el código sigue la unidad con la que se está simulando.
+  const sistemaCodigo: SistemaMedida = unidad === 'in' ? 'imperial' : 'metrico';
+
+  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'sistemaFrente' | 'dbTipo' | 'ncajones'>) => {
+    const pref = tipos.find((item) => item.id === valores.tipoId)?.pref ?? '';
+    if (!pref) return '';
+    return codigoComercial({
+      pref,
+      largo: valores.largo,
+      alto: valores.alto,
+      unidad,
+      sistema: sistemaCodigo,
+      sistemaFrente: valores.sistemaFrente,
+      dbTipo: pref.startsWith('DB') ? valores.dbTipo : null,
+      pcfdCajones: pref === 'PCFD' ? Number(valores.ncajones) : null,
+    });
   };
+
+  const moduleTitle = (modulo: SimuladorModulo) => codigoDeValores(modulo) || 'M';
+
+  const codigoResultado = store.modulos.length > 0
+    ? codigoGrupo(store.modulos.map(codigoDeValores).filter(Boolean))
+    : codigoDeValores({ tipoId, largo, alto, sistemaFrente, dbTipo, ncajones });
 
   const editingPosition = store.editingId
     ? store.modulos.findIndex((modulo) => modulo.id === store.editingId) + 1
@@ -725,7 +747,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       {/* ---- Resultado ---- */}
       <div data-tour="resultado" className="space-y-4">
         {!result && <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400">Ingresa los datos y calcula para ver el precio y el desglose.</div>}
-        {result && <ResultadoView result={result} moneda={moneda} setMoneda={setMoneda} />}
+        {result && <ResultadoView result={result} codigo={codigoResultado} moneda={moneda} setMoneda={setMoneda} />}
       </div>
 
       <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.4rem .6rem;font-size:.875rem}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}`}</style>
@@ -738,8 +760,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <Campo label={label} info={TIPS_COTIZADOR[label]}>{children}</Campo>;
 }
 
-function ResultadoView({ result, moneda, setMoneda }:
-  { result: CotizarGrupoResult; moneda: 'COP' | 'USD'; setMoneda: (m: 'COP' | 'USD') => void }) {
+function ResultadoView({ result, codigo, moneda, setMoneda }:
+  { result: CotizarGrupoResult; codigo: string; moneda: 'COP' | 'USD'; setMoneda: (m: 'COP' | 'USD') => void }) {
   const precioSin = result.precioCop;
   const precioHerr = result.precioHerrajesCop;
   const precioCon = result.precioConHerrajesCop;
@@ -763,6 +785,13 @@ function ResultadoView({ result, moneda, setMoneda }:
           </div>
         </div>
         <div className="text-4xl font-bold text-slate-900">{money(precioPrincipal)}</div>
+        {codigo && (
+          <div className="mt-2">
+            <span className="inline-block rounded-md border border-slate-300 bg-slate-50 px-2 py-0.5 font-mono text-sm font-semibold tracking-wide text-slate-700" title="Código comercial del módulo">
+              {codigo}
+            </span>
+          </div>
+        )}
         <p className="text-sm text-slate-500 mt-1">
           {result.modulos > 1 ? `Conjunto de ${result.modulos} módulos` : 'Módulo individual'} · Margen mueble {(result.margen * 100).toFixed(0)}% · Margen herraje {(result.margenHerraje * 100).toFixed(0)}% · TRM {result.trm.toLocaleString('es-CO')}
           {moneda === 'COP' ? '' : ` · ${fmtCOP(precioPrincipal)}`}

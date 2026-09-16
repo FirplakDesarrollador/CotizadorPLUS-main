@@ -2,10 +2,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { previewAction } from '../admin/diseno/actions';
 import { modulosDeCotizacionAction, type ModuloHDR } from './actions';
-import { DB_TIPOLOGIAS } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, SISTEMAS_FRENTE, type SistemaFrente } from '@/lib/muebles';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
-import { codigoModulo } from '@/lib/module-groups';
+import { codigoComercial } from '@/lib/module-groups';
 import type { CotizarResult } from '@/lib/cotizar';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
@@ -20,6 +20,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [prof, setProf] = useState(24);
   const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>('in');
   const [dbTipo, setDbTipo] = useState('');
+  const [sistemaFrente, setSistemaFrente] = useState<SistemaFrente>('manija');
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,7 +50,9 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
   function handleTipoChange(v: string) {
     setTipoId(v);
-    if (!(tipos.find((t) => t.id === v)?.pref ?? '').startsWith('DB')) setDbTipo('');
+    const pref = tipos.find((t) => t.id === v)?.pref ?? '';
+    if (!pref.startsWith('DB')) setDbTipo('');
+    if (pref === 'W') setProf(unidad === 'in' ? 12 : unidad === 'cm' ? 30.48 : 304.8);
   }
 
   async function buscar(e: React.FormEvent) {
@@ -57,12 +60,14 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     if (!tipoId) { setError('Elige un tipo de mueble.'); return; }
     setError(null);
     setLoading(true);
-    const overrides = esDB && dbTipo
-      ? (() => {
-          const t = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
-          return t ? { n_cajones: t.nc, n_cajones_pequenos: t.npeq } : undefined;
-        })()
-      : undefined;
+    const overrides: Record<string, number> = { gola: sistemaFrente === 'gola' ? 1 : 0 };
+    if (esDB && dbTipo) {
+      const t = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
+      if (t) {
+        overrides.n_cajones = t.nc;
+        overrides.n_cajones_pequenos = t.npeq;
+      }
+    }
     const r = await previewAction({ tipoId, largo, alto, prof, unidad, preset: presetDefault, conHerrajes: false, overrides });
     setLoading(false);
     if (!r.ok) { setError(r.error); setRes(null); return; }
@@ -102,7 +107,9 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     setExportandoTodas(null);
   }
 
-  const codigo = tipoSel ? `${codigoModulo(tipoSel.pref, largo, unidad, 'imperial')}` : '';
+  const codigo = tipoSel
+    ? codigoComercial({ pref: tipoSel.pref, largo, alto, unidad, sistema: 'imperial', sistemaFrente })
+    : '';
 
   return (
     <div className="space-y-6">
@@ -182,6 +189,12 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
               </select>
             </Campo>
           )}
+
+          <Campo label="Sistema de frente">
+            <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
+              {SISTEMAS_FRENTE.map((s) => <option key={s.key} value={s.key} title={s.desc}>{s.label}</option>)}
+            </select>
+          </Campo>
 
           <button className="rounded-lg bg-slate-900 text-white px-5 py-2 text-sm font-medium hover:bg-slate-800">Buscar</button>
 

@@ -88,12 +88,28 @@ function construirFilas(res: CotizarResult, tableros: Tablero[]): FilaHDR[] {
     const n = Math.round(p.cant);
     for (let i = 0; i < n; i++) {
       const esLateralPar = p.pieza === 'lateral' && n === 2;
-      const nombre = esLateralPar ? `SIDE ${i === 0 ? 'L' : 'R'}` : nombreBase;
+      const esBaseTapa = p.pieza === 'base_tapa' && n === 2;
+      const esPuertaPar = p.pieza === 'frente' && tienePuertas && n === 2;
+      const esEntrepanoPar = p.pieza === 'entrepano' && n > 1;
+      const nombre = esLateralPar
+        ? `SIDE ${i === 0 ? 'R' : 'L'}`
+        : esBaseTapa
+        ? (i === 0 ? 'BASE' : 'TAPA')
+        : esPuertaPar
+        ? `DOOR ${i === 0 ? 'R' : 'L'}`
+        : esEntrepanoPar
+        ? `SHELF ${i + 1}`
+        : nombreBase;
+      // La hoja de ruta lista cada panel con su medida mayor primero (SIDE 914.4x304.8,
+      // BASE 706.6x304.8), mientras que el motor guarda largo/ancho como ejes
+      // geométricos. El frente siempre va con el alto primero; el fondo se ordena por
+      // tamaño porque su eje depende de `intercambiar` del tipo (ver migración 0047).
+      const invertir = p.rol === 'frente' || (p.rol === 'fondo' && p.anchoIn > p.largoIn);
       filas.push({
         letra: siguienteLetra(),
         pieza: sufijo ? `${nombre} ${sufijo}` : nombre,
-        largoMm: p.largoIn * 25.4,
-        anchoMm: p.anchoIn * 25.4,
+        largoMm: (invertir ? p.anchoIn : p.largoIn) * 25.4,
+        anchoMm: (invertir ? p.largoIn : p.anchoIn) * 25.4,
         espesorMm: rolToEspesor[p.rol] ?? null,
         cantoLargoColor: visible ? p.cantoLargos : 0,
         cantoAnchoColor: visible ? p.cantoAnchos : 0,

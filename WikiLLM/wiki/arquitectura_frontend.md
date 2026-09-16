@@ -47,6 +47,13 @@ Esto reemplazó un `Number(largo)` directo: `Number("24 7/8")` da `NaN`, que al 
 
 El cálculo lo hace `previewAction()` (`src/app/admin/diseno/actions.ts`, ya usada por el panel de Diseño), extendida con un parámetro `overrides` opcional para poder forzar la tipología DB elegida. Solo admin — misma restricción que `/admin/diseno`, porque reutiliza la misma acción con `assertAdmin()`.
 
+Desde `W2936-SM` (2026-09-15), el modo manual de HDR tambien expone el selector
+"Sistema de frente". Si se elige Gola/SM, el buscador envia `gola=1`, agrega el
+sufijo comercial `-SM` al titulo (`W2936-SM`) y usa las mismas formulas que
+Simulador/Cotizaciones. En la tabla HDR, las piezas de rol `frente` se muestran
+como alto x ancho para coincidir con la hoja de ruta real, aunque el motor
+internamente conserve largo horizontal x alto vertical.
+
 ### 5.1 Formato de hoja de ruta real (2026-09-10)
 
 El resultado se muestra en el mismo formato que la hoja de ruta real de producción (pedido con captura de una hoja `B12`), no como una tabla genérica de piezas:

@@ -302,6 +302,8 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   for (const hp of (inp.herrajesPlantilla || [])) {
     // "Sin frentes": la carcasa conserva sus herrajes (queda lista para frentes). Kit de frentes: solo herraje de puerta.
     if (modo === 'solo_frentes' && ESTRUCTURAL.has(hp.rol)) continue;
+    // Sistema de frente gola/SM: conserva bisagras y herrajes funcionales, pero no lleva manijas.
+    if (vars.gola === 1 && String(hp.rol).toLowerCase() === 'manija') continue;
     if (excluidos.has(String(hp.rol).toLowerCase())) continue;
     const cant = num(hp.formula_cantidad);
     const precio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
