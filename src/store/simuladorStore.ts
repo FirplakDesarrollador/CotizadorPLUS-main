@@ -202,7 +202,10 @@ export const useSimuladorStore = create<SimuladorState>()(
     }),
     {
       name: 'simulador-storage',
-      version: 2,
+      // v3: el Breakdown ganó `m2`, `metros` y `desperdicio`. Un `result` guardado con
+      // la forma anterior no los trae, así que `migrate` lo descarta (pone `result: null`)
+      // y el Simulador pide recalcular en vez de renderizar campos ausentes.
+      version: 3,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {

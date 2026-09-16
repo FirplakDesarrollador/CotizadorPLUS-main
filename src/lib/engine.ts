@@ -145,8 +145,15 @@ export function derivarVars(
 export type Breakdown = {
   vars: Record<string, number>;
   piezas: { pieza: string; rol: string; cant: number; largoIn: number; anchoIn: number; areaCm2: number; cantoLargos: number; cantoAnchos: number; cantoCalibre: string | null }[];
-  maderaPorRol: { rol: string; codigo: string; cm2: number; costo: number }[];
-  cantoPorCalibre: { calibre: string; longCm: number; precio: number; costo: number }[];
+  // `cm2`/`longCm` son la medida NETA que sale del despiece; `m2`/`metros` son el
+  // consumo facturable, ya con la merma. `m2 * precio_m2` y `metros * precio`
+  // reproducen el costo salvo redondeo, así que la cantidad explica lo que se cobra.
+  // Se guardan con más decimales de los que se muestran para no arrastrar ese error.
+  maderaPorRol: { rol: string; codigo: string; cm2: number; m2: number; costo: number }[];
+  cantoPorCalibre: { calibre: string; longCm: number; metros: number; precio: number; costo: number }[];
+  // Merma de madera aplicada (0.10 = 10%). El canto no usa este factor: su merma son
+  // 5 cm por arista, ya sumados dentro de `longCm`.
+  desperdicio: number;
   consumibles: Record<string, number>;
   herrajes: { rol: string; codigo: string | null; cant: number; precio: number; costo: number }[];
   costoMadera: number;
@@ -236,7 +243,11 @@ export function calcularMueble(inp: CalcInput): Breakdown {
       if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
       const largos = c.largos || 0, anchos = c.anchos || 0;
       cantoLargos = largos; cantoAnchos = anchos; cantoCalibreResuelto = cal;
-      const e = (cantoPorCal[cal] ||= { lenIn: 0, edges: 0 });
+      // Se agrupa por la clave NORMALIZADA, no por el texto tal cual. El calibre puede
+      // llegar de tres sitios con grafías distintas (la plantilla de la pieza, el valor
+      // derivado del espesor, o el override del formulario que viene de `cot_cantos`);
+      // agrupar por el texto crudo partía un mismo canto en dos filas del listado.
+      const e = (cantoPorCal[norm(cal)] ||= { lenIn: 0, edges: 0 });
       e.lenIn += cant * (largos * lIn + anchos * aIn);
       if (/refuerzo/i.test(pz.nombre)) {
         // el refuerzo posterior siempre suma 8 cm de espesor
@@ -260,20 +271,23 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   for (const [rol, cm2] of Object.entries(areaPorRol)) {
     const tab = inp.tablerosByCode[inp.preset[rol]];
     if (!tab) throw new Error(`Falta tablero para rol "${rol}": ${inp.preset[rol]}`);
-    const costo = (cm2 * (1 + inp.desperdicio) / 10000) * Number(tab.precio_m2);
+    const m2 = cm2 * (1 + inp.desperdicio) / 10000;
+    const costo = m2 * Number(tab.precio_m2);
     costoMadera += costo;
-    maderaPorRol.push({ rol, codigo: inp.preset[rol], cm2: +cm2.toFixed(2), costo: +costo.toFixed(2) });
+    maderaPorRol.push({ rol, codigo: inp.preset[rol], cm2: +cm2.toFixed(2), m2: +m2.toFixed(6), costo: +costo.toFixed(2) });
   }
 
   // Canto
   let costoCanto = 0; const cantoPorCalibre: Breakdown['cantoPorCalibre'] = [];
   for (const [cal, e] of Object.entries(cantoPorCal)) {
-    const cz = inp.cantosByCalibre[norm(cal)];
+    const cz = inp.cantosByCalibre[cal];
     if (!cz) throw new Error(`Falta canto calibre "${cal}"`);
     const longCm = e.lenIn * IN2CM + e.edges * 5;
-    const costo = (longCm / 100) * Number(cz.precio);
+    const metros = longCm / 100;
+    const costo = metros * Number(cz.precio);
     costoCanto += costo;
-    cantoPorCalibre.push({ calibre: cal, longCm: +longCm.toFixed(2), precio: Number(cz.precio), costo: +costo.toFixed(2) });
+    // Se reporta la grafía del catálogo, que es la que ve el usuario al elegirlo.
+    cantoPorCalibre.push({ calibre: cz.calibre, longCm: +longCm.toFixed(2), metros: +metros.toFixed(4), precio: Number(cz.precio), costo: +costo.toFixed(2) });
   }
 
   // Consumibles
@@ -334,6 +348,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
 
   return {
     vars, piezas: piezasDet, maderaPorRol, cantoPorCalibre, consumibles, herrajes: herrajesDet,
+    desperdicio: inp.desperdicio,
     costoMadera, costoCanto, costoConsumibles, costoSinHerrajes, costoHerrajes, costoConHerrajes,
     precioCop, /* precioCopConRecargo, */ precioUsd,
     precioHerrajesCop, /* precioHerrajesCopConRecargo, */ precioHerrajesUsd,

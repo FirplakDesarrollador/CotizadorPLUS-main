@@ -9,6 +9,7 @@ function breakdown(patch: Partial<Breakdown> = {}): Breakdown {
     piezas: [],
     maderaPorRol: [],
     cantoPorCalibre: [],
+    desperdicio: 0,
     consumibles: {},
     herrajes: [],
     costoMadera: 0,
@@ -34,8 +35,8 @@ test('consolida las asignaciones internas en un único resultado físico y comer
       { pieza: 'base', rol: 'caja', cant: 0.3, largoIn: 40, anchoIn: 23, areaCm2: 1000, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null },
       { pieza: 'entrepaño', rol: 'caja', cant: 1, largoIn: 12, anchoIn: 22, areaCm2: 500, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null },
     ],
-    maderaPorRol: [{ rol: 'caja', codigo: 'M15', cm2: 1500, costo: 15000 }],
-    cantoPorCalibre: [{ calibre: '22x1', longCm: 100, precio: 20, costo: 2000 }],
+    maderaPorRol: [{ rol: 'caja', codigo: 'M15', cm2: 1500, m2: 0.15, costo: 15000 }],
+    cantoPorCalibre: [{ calibre: '22x1', longCm: 100, metros: 1, precio: 20, costo: 2000 }],
     consumibles: { tarugos: 500 },
     herrajes: [{ rol: 'bisagra', codigo: 'B1', cant: 2, precio: 1000, costo: 2000 }],
     costoMadera: 15000,
@@ -53,8 +54,8 @@ test('consolida las asignaciones internas en un único resultado físico y comer
       { pieza: 'base', rol: 'caja', cant: 0.7, largoIn: 40, anchoIn: 23, areaCm2: 2000, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null },
       { pieza: 'entrepaño', rol: 'caja', cant: 1, largoIn: 28, anchoIn: 22, areaCm2: 900, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null },
     ],
-    maderaPorRol: [{ rol: 'caja', codigo: 'M15', cm2: 2900, costo: 29000 }],
-    cantoPorCalibre: [{ calibre: '22x1', longCm: 180, precio: 20, costo: 3600 }],
+    maderaPorRol: [{ rol: 'caja', codigo: 'M15', cm2: 2900, m2: 0.29, costo: 29000 }],
+    cantoPorCalibre: [{ calibre: '22x1', longCm: 180, metros: 1.8, precio: 20, costo: 3600 }],
     consumibles: { tarugos: 700, soportes: 100 },
     costoMadera: 29000,
     costoCanto: 3600,
@@ -77,7 +78,8 @@ test('consolida las asignaciones internas en un único resultado físico y comer
   assert.equal(result.largoTotalIn, 40);
   assert.equal(result.piezas.find((row) => row.pieza === 'base')?.cant, 1);
   assert.equal(result.piezas.filter((row) => row.pieza === 'entrepaño').length, 2);
-  assert.deepEqual(result.maderaPorRol, [{ rol: 'caja', codigo: 'M15', cm2: 4400, costo: 44000 }]);
+  // El consumo facturable se consolida igual que el área neta y el costo.
+  assert.deepEqual(result.maderaPorRol, [{ rol: 'caja', codigo: 'M15', cm2: 4400, m2: 0.44, costo: 44000 }]);
   assert.deepEqual(result.consumibles, { tarugos: 1200, soportes: 100 });
   assert.equal(result.precioCop, 110000);
   assert.equal(result.precioHerrajesCop, 3000);

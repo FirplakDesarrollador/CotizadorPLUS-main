@@ -16,7 +16,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, orientarPieza, nombrePieza, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
@@ -770,6 +770,17 @@ function ResultadoView({ result, codigo, moneda, setMoneda }:
   // El despiece se calcula en pulgadas (el catálogo es imperial), pero producción
   // trabaja en milímetros: el toggle solo cambia la presentación, no el cálculo.
   const [unidadPiezas, setUnidadPiezas] = useState<'in' | 'mm'>('in');
+  const tienePuertas = Number(result.vars?.n_puertas ?? 0) > 0;
+  // Producción compra tablero por m² y canto por metro lineal: el consumo se muestra
+  // en esas unidades y ya con la merma, así que cantidad x precio = costo.
+  const superficie = (m2: number) => m2.toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  const longitud = (m: number) => m.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Un resultado calculado antes de que el motor expusiera `m2`/`metros`/`desperdicio`
+  // puede seguir vivo en el store persistido. Se deriva de la medida neta en vez de
+  // romper el render.
+  const desperdicio = result.desperdicio ?? 0;
+  const m2De = (m: { m2?: number; cm2: number }) => m.m2 ?? (m.cm2 * (1 + desperdicio)) / 10000;
+  const metrosDe = (c: { metros?: number; longCm: number }) => c.metros ?? c.longCm / 100;
   const dim = (valorIn: number) => (unidadPiezas === 'in'
     ? valorIn.toLocaleString('es-CO', { maximumFractionDigits: 3 })
     : (valorIn * 25.4).toLocaleString('es-CO', { maximumFractionDigits: 1 }));
@@ -832,7 +843,9 @@ function ResultadoView({ result, codigo, moneda, setMoneda }:
               <tr key={`m${i}`} className="border-t border-slate-100">
                 <td className="py-1">Tablero · <span className="capitalize">{m.rol}</span></td>
                 <td className="text-slate-500">{m.codigo}</td>
-                <td className="text-right">{m.cm2.toLocaleString('es-CO')} cm²</td>
+                <td className="text-right" title={`${superficie(m.cm2 / 10000)} m² de piezas + ${(desperdicio * 100).toFixed(0)}% de desperdicio`}>
+                  {superficie(m2De(m))} m²
+                </td>
                 <td className="text-right font-medium">{money(m.costo)}</td>
               </tr>
             ))}
@@ -840,7 +853,9 @@ function ResultadoView({ result, codigo, moneda, setMoneda }:
               <tr key={`c${i}`} className="border-t border-slate-100">
                 <td className="py-1">Canto</td>
                 <td className="text-slate-500">calibre {c.calibre}</td>
-                <td className="text-right">{c.longCm.toLocaleString('es-CO')} cm</td>
+                <td className="text-right" title="Incluye 5 cm de desperdicio por arista">
+                  {longitud(metrosDe(c))} m
+                </td>
                 <td className="text-right font-medium">{money(c.costo)}</td>
               </tr>
             ))}
@@ -880,13 +895,16 @@ function ResultadoView({ result, codigo, moneda, setMoneda }:
           <tbody>
             {/* Piezas con cantidad 0 no se producen (ej. "frente" uniforme queda en 0 cuando
                 la tipología DB es mixta y usa frente_gaveta_pequena/grande en su lugar). */}
-            {result.piezas.filter((p) => p.cant > 0).map((p, i) => (
+            {result.piezas.filter((p) => p.cant > 0).map((p, i) => {
+              const { largoIn, anchoIn } = orientarPieza(p);
+              return (
               <tr key={i} className="border-t border-slate-100">
-                <td className="py-1">{p.pieza}</td><td className="text-slate-500">{p.rol}</td>
-                <td className="text-right">{p.cant}</td><td className="text-right">{dim(p.largoIn)}</td>
-                <td className="text-right">{dim(p.anchoIn)}</td><td className="text-right">{(p.areaCm2 / 10000).toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+                <td className="py-1">{nombrePieza(p.pieza, tienePuertas)}</td><td className="text-slate-500">{p.rol}</td>
+                <td className="text-right">{p.cant}</td><td className="text-right">{dim(largoIn)}</td>
+                <td className="text-right">{dim(anchoIn)}</td><td className="text-right">{(p.areaCm2 / 10000).toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
               </tr>
-            ))}
+              );
+            })}
             <tr className="border-t-2 border-slate-300 font-semibold text-slate-900">
               <td className="py-1">TOTAL</td><td></td>
               <td className="text-right">{result.piezas.filter((p) => p.cant > 0).reduce((sum, p) => sum + p.cant, 0)}</td>

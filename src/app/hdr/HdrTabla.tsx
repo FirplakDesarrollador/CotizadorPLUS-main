@@ -3,6 +3,7 @@ import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState
 import Image from 'next/image';
 import type { CotizarResult } from '@/lib/cotizar';
 import { exportarNodoAPdf, nombreArchivoPdf } from './pdfExport';
+import { orientarPieza } from '@/lib/muebles';
 
 export type Tablero = { codigo: string; espesor_mm: number | null };
 export type HdrTablaHandle = { exportarPdf: () => Promise<void> };
@@ -49,7 +50,10 @@ function esVisible(nombre: string): boolean {
 
 function espesorCantoLabel(calibre: string | null): string {
   if (!calibre) return '';
-  return calibre.split('x')[1] ?? '';
+  // Insensible a mayúsculas: el calibre puede llegar como `19x0,45` o `19X0,45`
+  // según venga de la plantilla de la pieza o del override del formulario. Con el
+  // split sensible a `x` minúscula, la columna salía vacía en el segundo caso.
+  return calibre.split(/x/i)[1] ?? '';
 }
 
 type FilaHDR = {
@@ -100,16 +104,13 @@ function construirFilas(res: CotizarResult, tableros: Tablero[]): FilaHDR[] {
         : esEntrepanoPar
         ? `SHELF ${i + 1}`
         : nombreBase;
-      // La hoja de ruta lista cada panel con su medida mayor primero (SIDE 914.4x304.8,
-      // BASE 706.6x304.8), mientras que el motor guarda largo/ancho como ejes
-      // geométricos. El frente siempre va con el alto primero; el fondo se ordena por
-      // tamaño porque su eje depende de `intercambiar` del tipo (ver migración 0047).
-      const invertir = p.rol === 'frente' || (p.rol === 'fondo' && p.anchoIn > p.largoIn);
+      // Orientación de presentación compartida con el despiece del Simulador.
+      const orientada = orientarPieza(p);
       filas.push({
         letra: siguienteLetra(),
         pieza: sufijo ? `${nombre} ${sufijo}` : nombre,
-        largoMm: (invertir ? p.anchoIn : p.largoIn) * 25.4,
-        anchoMm: (invertir ? p.largoIn : p.anchoIn) * 25.4,
+        largoMm: orientada.largoIn * 25.4,
+        anchoMm: orientada.anchoIn * 25.4,
         espesorMm: rolToEspesor[p.rol] ?? null,
         cantoLargoColor: visible ? p.cantoLargos : 0,
         cantoAnchoColor: visible ? p.cantoAnchos : 0,

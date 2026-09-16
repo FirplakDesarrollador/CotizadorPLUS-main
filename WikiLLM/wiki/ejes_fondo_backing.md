@@ -108,26 +108,43 @@ Esto también confirma por qué el defecto de `W` había que arreglarlo en las
 fórmulas y no en el flag: sus dos ramas usaban convenciones opuestas, y una pieza
 solo tiene un `intercambiar`.
 
-## Orden de columnas en el HDR
+## Orden de columnas en las tablas de despiece
 
-El orden de la hoja es presentación, no geometría, así que vive en
-`HdrTabla.tsx`:
+El orden de la hoja es presentación, no geometría, así que no vive en las
+fórmulas sino en `orientarPieza()` (`src/lib/muebles.ts`):
 
 ```ts
-const invertir = p.rol === 'frente' || (p.rol === 'fondo' && p.anchoIn > p.largoIn);
+const invertir = pieza.rol === 'frente' || (pieza.rol === 'fondo' && pieza.anchoIn > pieza.largoIn);
 ```
 
 El frente siempre se muestra con el alto primero. El fondo se ordena **por
 tamaño**, porque su eje depende del `intercambiar` de cada tipo y la tabla no
 tiene acceso a esa configuración: en los tipos con `intercambiar=true` el largo ya
-es el mayor y la fila no cambia; en `W` se invierte y vuelve a leerse
-`898.4 x 720.6` como en la hoja.
+es el mayor y la fila no cambia; en `W` y `SBFD` se invierte y vuelve a leerse
+como en la hoja.
+
+La regla vive en `muebles.ts` y no en cada tabla porque **el Simulador y el HDR se
+contradecían**: el HDR ya la aplicaba y el despiece del Simulador mostraba los
+valores crudos del motor. En un `SBFD` 30x30x24 el Simulador listaba el frente
+como `377.8 x 758.8` y el fondo como `747 x 762`, cuando producción los lee
+`758.8 x 377.8` y `762 x 747`. Ahora ambas tablas llaman a la misma función.
+
+### Nombre de la pieza
+
+`nombrePieza()` traduce `frente` → `puerta` cuando la tipología declara
+`n_puertas`. El motor usa el mismo nombre para una puerta y para la cara de una
+gaveta; solo es puerta cuando hay puertas. `HdrTabla` aplica la misma distinción
+para elegir entre `DOOR` y `FRENTE`, con su propia nomenclatura de producción.
 
 ## Cobertura
 
 `tests/visualizacion.test.ts` verifica con `W2936-SM` que el fondo cabe en la
 carcasa y que el eje vertical es el mayor (que no quede acostado), con `gola` 0 y
 1. Comprobado que el test falla con las fórmulas de 0045 y pasa con las de 0047.
+
+`tests/despiece-presentacion.test.ts` cubre las dos convenciones de presentación:
+que el frente va con el alto primero pase lo que pase, que el fondo se ordena por
+tamaño, que la carcasa nunca se reordena y que solo `frente` se renombra.
 
 **Deuda**: `tests/fixtures/catalogo-visualizacion.json` está desactualizado —
 tiene 57 tipos (le faltan `B-FE`, `UB-FE`, `V-FE`) y su `W` no tiene las ramas de

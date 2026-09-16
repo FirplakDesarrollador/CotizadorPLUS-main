@@ -570,3 +570,74 @@ La auditoría mostró que **no era un caso aislado de `W`**: la holgura ya exist
 Confirmado además que **solo hay una base de datos**: `run-sql-isazaale.mjs` usa las mismas credenciales que `run-sql.mjs`; esos archivos son un duplicado histórico, no un segundo entorno.
 
 Auditoría posterior: 60 tipos, 348 escenas, fondos y entrepaños dentro de la carcasa, sin dimensiones inválidas. Migración idempotente, sin notas duplicadas. 114/114 tests, typecheck y lint limpios. Documentado en [holgura_1mm_estructura.md](wiki/holgura_1mm_estructura.md).
+
+## [2026-09-16] fix | El despiece del Simulador contradecía al del HDR: orientación y nombre de pieza unificados
+
+Reportado sobre un `SBFD` (Sink Base Full Door) 30x30x24: en el Simulador el frente salía `377.8 x 758.8` y el fondo `747 x 762`, cuando producción los lee `758.8 x 377.8` y `762 x 747`. Además la pieza se llamaba `frente` siendo una puerta.
+
+**La causa no era el motor sino una inconsistencia entre dos tablas**: `HdrTabla.tsx` ya aplicaba ambas convenciones —invertía frente y fondo, y renombraba `frente`→`DOOR` cuando el mueble tenía puertas— mientras el despiece del Simulador mostraba los valores crudos. Las dos tablas mostraban lo mismo de forma distinta.
+
+La regla se extrajo a `orientarPieza()` y `nombrePieza()` en `src/lib/muebles.ts`, y ahora ambas tablas la consumen. `HdrTabla` pierde su copia local.
+
+- `orientarPieza`: el frente siempre con el alto primero; el fondo ordenado por tamaño, porque su eje depende del `intercambiar` del tipo y la tabla no tiene acceso a esa configuración.
+- `nombrePieza`: `frente` → `puerta` solo cuando la tipología declara `n_puertas`. El motor usa el mismo nombre para una puerta y para la cara de una gaveta; en una cajonera sigue diciendo `frente`.
+
+**Alcance decidido con el usuario**: aplicar la convención del HDR en vez de codificar el caso SBFD. Cubre los 13 tipos con puertas; los 20 que usan el frente como cara de gaveta no cambian. Se descartó la variante "solo SBFD" justamente porque dejaba la contradicción viva en los otros 12 tipos con puertas.
+
+Añadido `tests/despiece-presentacion.test.ts` (4 casos). 118/118 tests, typecheck y lint limpios.
+
+## [2026-09-16] fix | Consumo de tablero en m² y de canto en metros lineales, con la merma incluida
+
+Pedido: producción compra tablero por m² y canto por metro lineal, y el Simulador los mostraba en `cm²` y `cm`. Al implementarlo apareció una asimetría de fondo en el motor: **la cantidad del tablero no explicaba su costo y la del canto sí.**
+
+- Tablero: se reportaba `cm2` **neto** mientras el costo era `cm2 × (1+desperdicio) / 10000 × precio_m2`.
+- Canto: se reportaba `longCm` que **ya incluía** su merma (5 cm por arista), y el costo era `longCm / 100 × precio`.
+
+El motor ahora expone ambas magnitudes en las dos formas: `maderaPorRol` con `cm2` (neto, del despiece) y `m2` (facturable, con merma); `cantoPorCalibre` con `longCm` y `metros`. También expone `desperdicio` en el `Breakdown`, que antes solo existía en la entrada, para que la UI pueda mostrar el porcentaje aplicado. `group-result.ts` consolida los campos nuevos.
+
+**Las dos mermas son distintas y conviene no confundirlas**: el tablero usa el porcentaje del proyecto; el canto no lo usa, su merma son 5 cm por arista más 8 cm por pieza de refuerzo. Cambiar el `desperdicio` mueve el consumo de tablero pero no el de canto.
+
+**Trazabilidad con la HDR**: `Σ piezas[rol].areaCm2 == maderaPorRol[rol].cm2`, y de ahí sale el m² aplicando la merma. En el `SBFD 30x30x24` del reporte el neto suma **2.710 m²**, exactamente el TOTAL de la tabla de despiece; con 15% de merma el facturable es 3.117 m². La celda lleva el desglose en su `title`.
+
+Dos defectos los encontró el propio test al escribirlo: la regla de los **8 cm de canto por pieza de refuerzo** no estaba documentada en ningún lado, y redondear `m2` a 4 decimales rompía la igualdad `cantidad × precio = costo` (se guardan 6 decimales y se muestran 3).
+
+Añadido `tests/consumo-materiales.test.ts` (4 casos). 122/122 tests, typecheck y lint limpios.
+
+## [2026-09-16] fix | El calibre de canto se agrupaba por texto crudo: una fila duplicada y la columna de espesor vacía en la HDR
+
+Al auditar las listas de materiales en Supabase apareció que `cot_cantos` era internamente inconsistente: `19X0,45`, `19X1` y `19X2` con X mayúscula, contra `22x0,45`, `22x1` y `22x1 High Gloss` con minúscula. Las plantillas de pieza usan siempre minúscula — 334 piezas con `19x0,45` y 74 con `22x1`, ni una mayúscula.
+
+El calibre llega al motor desde **tres sitios**: la plantilla de la pieza, el valor derivado del espesor del tablero, y el override del formulario (que toma el texto de `cot_cantos`). El motor normalizaba para **buscar** el precio pero agrupaba por el **texto crudo**, así que la discrepancia producía dos defectos de presentación:
+
+1. **El listado de materiales partía un mismo canto en dos filas** — visible en el reporte: `19X0,45` 909,44 cm y `19x0,45` 328,8 cm. Las piezas de caja reciben el override; las de refuerzo no.
+2. **La columna "Espesor canto" de la HDR salía vacía** en las piezas con override, porque `espesorCantoLabel()` partía por `x` minúscula y devolvía `''`. Afectaba a **44 de 47 líneas guardadas**, que llevan `cantoCaja: "19X0,45"`.
+
+El costo nunca estuvo mal; fallaba solo la presentación, y en las dos tablas a la vez — justo lo contrario de que los consumos "hablen con la HDR".
+
+Corregido en tres capas: `0050_normaliza_calibre_canto.sql` normaliza `cot_cantos` (3 filas), los overrides de 44 líneas y el `config_default` de 4 proyectos; el motor agrupa por `norm(calibre)` y reporta la grafía del catálogo; `espesorCantoLabel()` parte por `/x/i`. Las dos últimas impiden que reaparezca si entra otra grafía por cualquiera de los tres caminos.
+
+Verificado: 0 filas con mayúscula en catálogo, líneas y proyectos; sin duplicados al normalizar; migración idempotente. `calibre` no tiene FK y el `NA` con precio 0 no lo usa ninguna plantilla, así que se deja. 123/123 tests, typecheck y lint limpios.
+
+## [2026-09-16] fix | La ruta /cotizador quedó en blanco: el store persiste el resultado y no tenía los campos nuevos
+
+Regresión introducida por mí al añadir `m2`/`metros`/`desperdicio` al `Breakdown`. `simuladorStore` guarda el `result` completo en `localStorage`, así que un resultado calculado **antes** del cambio no trae esos campos. El render llamaba `m.m2.toLocaleString()` directo y lanzaba `TypeError: Cannot read properties of undefined (reading 'toLocaleString')` en `CotizadorForm.tsx:776`, dentro del `map` de `maderaPorRol` — la página entera en blanco.
+
+Confirmado en `.next/dev/logs/next-development.log`, con el stack apuntando exactamente a `superficie()`.
+
+El `migrate` del store ya ponía `result: null`, pero **solo corre si cambia la `version`**, y yo no la toqué. Corregido en dos capas: `version` de 2 a 3 para invalidar los resultados persistidos, y render tolerante que deriva `m2` de `cm2 × (1+desperdicio)` y `metros` de `longCm/100` cuando los campos faltan. Reproducido el crash con la forma vieja y verificado que el arreglo lo absorbe.
+
+**Regla anotada en [consumo_materiales.md](wiki/consumo_materiales.md)**: al añadir un campo al `Breakdown` y renderizarlo, hay que subir la `version` del store **y** dejar el render tolerante. Solo una de las dos no basta — la versión no ayuda a quien ya tiene la pestaña abierta, y la tolerancia sola deja datos viejos indefinidamente.
+
+123/123 tests, typecheck y lint limpios. Sin errores en el log tras recompilar.
+
+## [2026-09-16] update | El refuerzo delantero de SBFD mide 128mm de ancho, no 127
+
+La plantilla lo tenía en `5` pulgadas exactas = 127.0 mm; producción lo corta a **128 mm**. `0051_sbfd_refuerzo_delantero_128mm.sql` lo pasa a `5.03937` in = 128.0000 mm, con la misma convención de cinco decimales que ya usan otras piezas (`3.14961` = 80 mm, `11.81102` = 300 mm).
+
+**Solo cambia el ancho.** El rol de tablero sigue siendo `caja`: el espesor no entra en esta corrección.
+
+Nota sobre la lectura del pedido: llegó como "los refuerzos delanteros siempre son de 18mm", que interpreté como espesor. Al preguntar por el alcance el usuario aclaró que se refería al **ancho**, 128 mm en lugar de 127. Vale la pena preguntar cuando un número en milímetros puede ser espesor o dimensión — el espesor habría exigido un rol de tablero nuevo y un cambio de costo de varios miles de pesos por módulo, frente a este cambio de un milímetro.
+
+**Alcance confirmado: solo `SBFD`.** Los otros siete tipos cuyo refuerzo delantero también cuelga del rol `caja` (`BBLFD`, `BFD`, `BOMH`, `SV`, `SVFD`, `UBFD`, `VFD`) quedan como están, sin evidencia que los respalde.
+
+Despiece resultante de `SBFD 30x30x24`: lateral 762.0 x 609.6, base 732.0 x 585.6, **refuerzo_delantero 732.0 x 128.0**, refuerzo_trasero 732.0 x 80.0, frente 377.8 x 758.8, fondo 747.0 x 762.0. Migración idempotente. 123/123 tests, typecheck y lint limpios.
