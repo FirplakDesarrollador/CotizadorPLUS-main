@@ -641,3 +641,51 @@ Nota sobre la lectura del pedido: llegó como "los refuerzos delanteros siempre 
 **Alcance confirmado: solo `SBFD`.** Los otros siete tipos cuyo refuerzo delantero también cuelga del rol `caja` (`BBLFD`, `BFD`, `BOMH`, `SV`, `SVFD`, `UBFD`, `VFD`) quedan como están, sin evidencia que los respalde.
 
 Despiece resultante de `SBFD 30x30x24`: lateral 762.0 x 609.6, base 732.0 x 585.6, **refuerzo_delantero 732.0 x 128.0**, refuerzo_trasero 732.0 x 80.0, frente 377.8 x 758.8, fondo 747.0 x 762.0. Migración idempotente. 123/123 tests, typecheck y lint limpios.
+
+## [2026-09-17] fix | B contra hoja real: tres medidas corregidas que las variantes FE ya tenían bien
+
+Cruce de la hoja **"B12 · MUEBLE INF COC 1 GAVETA 1 PUERTA 1/2 ENTREPAÑO CARB2"** (L=12", A=30", P=24") contra el motor. **7 de 10 piezas ya coincidían al milímetro**; tres arrastraban aproximaciones antiguas:
+
+| Pieza | `B` antes | Hoja | Dif |
+| --- | ---: | ---: | ---: |
+| SHELF | `P*0.5` = 304.8 | 300 | 4.8 mm |
+| PIEZA CAJON | `L-2.95` = 229.9 | 199.8 | 30.1 mm |
+| BACKING | `L-TC`/`A` = 289.8×762 | 760 × 288.8 | 1 y 2 mm |
+
+**Lo relevante: en los tres casos la fórmula correcta ya existía en el catálogo.** El entrepaño de 300mm (`11.81102`) lo tienen `B-FE`/`UB-FE`/`V-FE`; la base de gaveta `L-4.13386` la tiene `UDB`; el fondo `A-0.07874`/`L-0.62992` lo tienen `B-FE`, `DB`, `UDB`, `UB-FE` y `V-FE`. Mismo patrón que la holgura de 1mm: los tipos validados recientemente traen la geometría buena y los tipos base se quedaron atrás. `0052_b_geometria_hoja_real.sql` alinea `B` con ellos.
+
+**Dos decisiones consultadas**: el entrepaño queda **constante en 300mm** y no como media profundidad (la hoja lo titula "1/2 ENTREPAÑO", que era el origen del `P*0.5`); y el alcance es **solo `B`** — `UB` y `V` arrastran exactamente las mismas tres fórmulas, y `DV` la del cajón, pero se dejan hasta tener una hoja suya.
+
+**El fondo cambió de eje**: al pasar el largo a base `A` hubo que voltear `intercambiar` a `true`, o la escena lo construiría girado 90°. Verificado en 12", 24" y 36" que el respaldo cabe en el lateral y queda vertical.
+
+Anotado sin corregir: `DB` usa `L-4.13` para la base de gaveta, 0.1mm largo frente al `L-4.13386` de `UDB`.
+
+Añadido `tests/b12-hoja-real.test.ts` (3 casos: las 10 piezas contra la hoja, las tres correcciones fijadas, y que la geometría escale con la medida). Migración idempotente. 126/126 tests, typecheck y lint limpios.
+
+## [2026-09-17] update | DB contra hoja real: la estructura ya era correcta, solo la base de gaveta estaba 0.1mm larga
+
+Cruce de la hoja **"HRJ DB18-1S · MUEBLE INF COC 3 GAVETAS 1 PEQUENA CARB2"** (L=18", A=30", P=24") contra el motor. A diferencia de `B`, aqui **la estructura de piezas ya era correcta**: las 18 filas de la hoja se agrupan en 10 piezas del motor y todas salieron con la cantidad y las medidas esperadas, incluido el reparto asimetrico entre la gaveta pequena y las dos grandes, y los tres rieles delanteros (uno por gaveta) contra dos traseros fijos.
+
+**Lo unico corregido**: `base_gaveta` usaba `L-4.13`, que da 352.298mm donde la hoja pide 352.2. `4.13386"` = 105mm exactos. `DB` era el **unico tipo del catalogo** que conservaba el valor truncado — `B` (corregido en 0052), `POD`, `UDB` y `UV` ya usaban `L-4.13386`. Lo alinea `0053_db_base_gaveta_precision.sql`.
+
+**Diferencia que no se persiguio**: `frente_gaveta_grande` da 300.00mm y la hoja dice 300.08. Para que diera 300.08 el reveal tendria que ser 3.1467mm en vez de 3.2, valor que no aparece en ninguna otra parte del catalogo y que la propia hoja contradice: el largo de los frentes es `454 = L - 3.2`. Son 80 micras, por debajo de cualquier tolerancia de corte, asi que se trata como redondeo de la hoja. Anotado por si aparece en mas hojas.
+
+**Falso positivo descartado**: al cruzar los datos aparece `n_barras = -1`. Es un centinela que significa "sin fijar" — la plantilla de herrajes lo guarda con `n_barras >= 0 ? n_barras : (n_cajones <= 2 ? n_cajones : 0)`, asi que nunca produce cantidad negativa.
+
+Anadido `tests/db18-hoja-real.test.ts` (3 casos: las 10 piezas contra la hoja, los 105mm exactos escalando con la medida, y que el reparto de frentes siga la tipologia — con `DB-3` los tres frentes se reparten el alto y no se corta frente ni trasero de gaveta pequena). Migracion idempotente. 129/129 tests, typecheck y lint limpios.
+
+## [2026-09-17] update | Auditoria de los tres grupos rezagados; UB y V se alinean con B
+
+Cruce de las tres formulas que la hoja de `B12` corrigio contra los 60 tipos del catalogo, para ver quien mas las arrastraba:
+
+| Formula antigua | Tipos que la usaban |
+| --- | --- |
+| entrepano `P*0.5` | `BBL`, `UB`, `V` |
+| base_gaveta `L-2.95` | `DV`, `DVE`, `PCFD`, `UB`, `UDV`, `V` |
+| fondo `L-TC`/`A` | 14 tipos, entre ellos `SBFD` y `BFD` |
+
+**`UB` y `V` son analogos exactos de `B`**: arrastran las tres formulas y sus propias variantes `UB-FE`/`V-FE` ya traen la geometria validada — la misma relacion que `B` tenia con `B-FE` antes de que la hoja dirimiera cual era buena. Ademas **no tienen ni una linea de cotizacion guardada**, asi que corregirlos no recostea nada. `0054_ub_v_geometria_como_b.sql` los alinea; `B`, `UB` y `V` quedan identicos en las tres piezas.
+
+**El resto se deja a proposito.** `BBL`, `DV`, `DVE`, `PCFD`, `UDV`, `BFD`, `SBFD`, `BOMH`, `SV`, `SVFD`, `UBFD` y `BBLFD` no tienen variante FE que respalde el cambio, y `SBFD`/`BFD` suman 15 lineas guardadas. `L-TC`/`A` no es necesariamente incorrecto: es la formula de 12 tipos y solo se sabe que estaba mal en `B` porque una hoja lo demostro. Propagarlo sin hoja convertiria una correccion en una suposicion.
+
+Auditoria posterior del catalogo completo (60 tipos, 348 escenas): fondos y entrepanos dentro de la carcasa, sin dimensiones invalidas ni excepciones — el giro de ejes del fondo de `UB`/`V` quedo correcto. Migracion idempotente. 129/129 tests, typecheck y lint limpios.
