@@ -2,7 +2,7 @@ import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { cotizar, cotizarGrupo, type CotizarInput, type CotizarResult } from '@/lib/cotizar';
 import {
-  codigoGrupo, codigoModulo, anchoCodigo, indiceALetras, letrasAIndice, normalizarEtiquetaGrupo,
+  codigoGrupo, codigoComercial, indiceALetras, letrasAIndice, normalizarEtiquetaGrupo,
   distribuirResiduoMoneda, redondearMoneda, precioUnitario,
   type SistemaMedida,
 } from '@/lib/module-groups';
@@ -194,7 +194,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
   };
 }
 
-type LineaPersistida = {
+export type LineaPersistida = {
   id: string;
   cotizacion_id: string;
   cocina_id: string;
@@ -208,9 +208,11 @@ type LineaPersistida = {
   unidad_dim: 'in' | 'cm' | 'mm';
   cantidad: number;
   config: Record<string, unknown> | null;
+  codigo_modulo?: string | null;
+  descripcion_es?: string | null;
 };
 
-function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
+export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
   const c = linea.config ?? {};
   return {
     tipoId: linea.tipo_mueble_id,
@@ -286,15 +288,18 @@ async function recalcularGrupo(grupoId: string) {
     const pref = sistema === 'metrico'
       ? (prepared?.prefMetrico ?? lineas[i].pref ?? '')
       : (prepared?.prefImperial ?? lineas[i].pref ?? '');
-    // Anexa el sufijo de tipología de cajonera DB (ej. "-1S") al código del módulo:
-    // el motor solo conoce el prefijo base del tipo (ej. "DB"), no la tipología elegida en el formulario.
-    const dbTipoLinea = inputs[i].dbTipo;
-    const dbSufijo = dbTipoLinea ? `-${dbTipoLinea.split('-').slice(1).join('-')}` : '';
-    // Los muebles superiores de pared (W) y los paneles (PN) incluyen el alto en el código
-    // (ej. W3614 = 36 de largo, 14 de alto), porque a diferencia de los demás tipos su alto
-    // sí varía y no es un dato implícito.
-    const altoSufijo = (pref === 'W' || pref === 'PN') ? anchoCodigo(inputs[i].alto, inputs[i].unidad, sistema) : '';
-    const code = codigoModulo(pref, inputs[i].largo, inputs[i].unidad, sistema) + altoSufijo + dbSufijo;
+    // El motor solo conoce el prefijo base del tipo (ej. "DB"), no la tipología
+    // elegida en el formulario ni el sistema de frente: `codigoComercial` arma el
+    // código completo a partir del input de la línea.
+    const code = codigoComercial({
+      pref,
+      largo: inputs[i].largo,
+      alto: inputs[i].alto,
+      unidad: inputs[i].unidad,
+      sistema,
+      sistemaFrente: inputs[i].sistemaFrente,
+      dbTipo: inputs[i].dbTipo,
+    });
     const baseResult = calculated.lineas[i] as CotizarResult;
     const result = {
       ...baseResult,

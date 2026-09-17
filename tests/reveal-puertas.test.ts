@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { calcularMueble, type CalcInput, type Pieza, type Regla } from '../src/lib/engine';
 
-// Plantilla de puertas tras 0028_geometria_espesor_reveal.sql.
+// Plantilla de puertas tras 0028_geometria_espesor_reveal.sql (extendida por
+// 0036_reveal_puerta_b_ub_v.sql).
 // Regla de ANCHO confirmada como universal en las hojas de ruta (W, UW, B, BFD,
 // SBFD, PC): las puertas reparten L menos un reveal por puerta.
-// Regla de ALTO verificada en W/BFD/SBFD/SVFD: A - 3.2mm (puerta sobrepuesta).
+// Regla de ALTO: A - 3.2mm (puerta sobrepuesta) — verificada en W/BFD/SBFD/SVFD/UBFD/
+// VFD/WBL (0028/0032) y confirmada por el usuario como regla general de "muebles de
+// puertas" en B/UB/V (0036, antes excluidas por falta de evidencia).
 const piezas: Pieza[] = [
   { nombre: 'lateral', rol_tablero: 'caja', formula_cantidad: '2', formula_largo: 'A', formula_ancho: 'P', cantos: {} },
   { nombre: 'base', rol_tablero: 'caja', formula_cantidad: '1', formula_largo: 'L-2*TC', formula_ancho: 'P-0.70866-TB', cantos: {} },

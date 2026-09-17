@@ -54,7 +54,7 @@ export default function DisenoEditor({ tipos, presetDefault }: { tipos: Tipo[]; 
           <PiezasEditor tipoId={tipoId} piezas={d.piezas} cantos={d.cantos} onChange={reload} />
           <ReglasEditor tipoId={tipoId} reglas={d.reglas} onChange={reload} />
           <HerrajesEditor tipoId={tipoId} herrajes={d.herrajes} herrajeCat={d.herrajeCat} onChange={reload} />
-          <Preview tipoId={tipoId} presetDefault={presetDefault} tableros={d.tableros} />
+          <Preview tipoId={tipoId} presetDefault={presetDefault} />
         </>
       )}
     </div>
@@ -237,7 +237,7 @@ function HerrajesEditor({ tipoId, herrajes, herrajeCat, onChange }: { tipoId: st
 }
 
 // ---------- Preview ----------
-function Preview({ tipoId, presetDefault, tableros }: { tipoId: string; presetDefault: Record<string, string>; tableros: string[] }) {
+function Preview({ tipoId, presetDefault }: { tipoId: string; presetDefault: Record<string, string> }) {
   const [L, setL] = useState(33); const [A, setA] = useState(30); const [P, setP] = useState(24);
   const [conH, setConH] = useState(false);
   const [res, setRes] = useState<CotizarResult | null>(null); const [err, setErr] = useState<string | null>(null);

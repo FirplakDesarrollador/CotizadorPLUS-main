@@ -59,3 +59,61 @@ test('montaje: coordenadas por instancia, giro y validación de expresiones',()=
   assert.throws(()=>validarMontaje({x:'process.exit()'}));assert.throws(()=>validarMontaje({x:'I=1'}));assert.throws(()=>validarMontaje({x:'I++'}));
   assert.throws(()=>validarMontaje({plano:'AB'}));assert.doesNotThrow(()=>validarMontaje({x:'I==0?TC:L-W',version:1}));
 });
+// La puerta de un superior con gola se corta más alta que la carcasa (migración
+// 0045 para W). Ese sobrante es el agarre inferior: debe colgar bajo la base, no
+// sobresalir sobre la tapa.
+function wGola(gola:number){
+  const m=member('W',{gola});
+  const frente=m.calc.piezas.find(p=>p.nombre==='frente')!;
+  frente.formula_ancho='gola ? A+0.62402 : A-RV';
+  return construirVisualizacion([m],calcularGrupoFisico([m]));
+}
+test('W con gola: el sobrante de la puerta cuelga por debajo, no por encima',()=>{
+  const alto=30*25.4;
+  const puertas=wGola(1).paneles.filter(p=>p.funcion==='frente');
+  assert.ok(puertas.length>0);
+  for(const p of puertas){
+    assert.ok(p.h>alto,`la puerta con gola debe ser más alta que la carcasa: ${p.h}`);
+    assert.ok(Math.abs(p.z+p.h-alto)<.1,`el canto superior debe quedar a ras de la tapa: ${p.z+p.h}`);
+    assert.ok(p.z<-1,`el sobrante debe quedar bajo la base: z=${p.z}`);
+  }
+});
+test('W sin gola: la puerta sigue apoyada en la base',()=>{
+  const alto=30*25.4;
+  for(const p of wGola(0).paneles.filter(p=>p.funcion==='frente')){
+    assert.equal(p.z,0);
+    assert.ok(p.h<=alto);
+  }
+});
+// El fondo se construía girado 90° cuando 0045 copió las medidas de la hoja real
+// (que ordena por tamaño) como largo/ancho (que son ejes atados a `intercambiar`).
+// En W2936-SM el backing salía 898.4mm de ancho en una carcasa de 736.6. Ver
+// migración 0047 y WikiLLM/wiki/ejes_fondo_backing.md.
+function wEscena(gola:number){
+  const m=member('W',{gola});
+  m.calc.dims={L:29,A:36,P:12};
+  // Fórmulas reales de W tras las migraciones 0045/0047/0048 (el fixture es anterior).
+  const lateral=m.calc.piezas.find(p=>p.nombre==='lateral')!;
+  lateral.formula_largo='gola ? A-1 : A';
+  const fondo=m.calc.piezas.find(p=>p.nombre==='fondo')!;
+  fondo.formula_largo='L-0.62992';
+  fondo.formula_ancho='gola ? A-1.62992 : A-0.62992';
+  const s=construirVisualizacion([m],calcularGrupoFisico([m]));
+  return {
+    fondo: s.paneles.find(p=>p.funcion==='respaldo')!,
+    lateral: s.paneles.find(p=>p.funcion==='lateral')!,
+  };
+}
+for(const gola of [0,1]) test(`W gola=${gola}: el fondo cabe dentro del lateral`,()=>{
+  const L=29*25.4, {fondo,lateral}=wEscena(gola);
+  assert.ok(fondo,'sin panel de respaldo');
+  assert.ok(fondo.w<=L+1.5,`el fondo mide ${fondo.w.toFixed(1)}mm de ancho en una carcasa de ${L.toFixed(1)}mm`);
+  assert.ok(fondo.z>=lateral.z-1.5 && fondo.z+fondo.h<=lateral.z+lateral.h+1.5,
+    `el fondo (${fondo.z.toFixed(1)}..${(fondo.z+fondo.h).toFixed(1)}) se sale del lateral (${lateral.z.toFixed(1)}..${(lateral.z+lateral.h).toFixed(1)})`);
+  // El eje vertical debe ser el mayor: es un panel vertical, no uno acostado.
+  assert.ok(fondo.h>fondo.w,`el fondo quedó acostado: ${fondo.w.toFixed(1)}x${fondo.h.toFixed(1)}`);
+});
+test('W-SM: el lateral se corta 1" menos que el alto nominal',()=>{
+  assert.ok(Math.abs(wEscena(1).lateral.h-889)<.1,'lateral con gola debe ser 889mm (35")');
+  assert.ok(Math.abs(wEscena(0).lateral.h-914.4)<.1,'lateral con manija sigue en 914.4mm (36")');
+});

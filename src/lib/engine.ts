@@ -20,7 +20,6 @@ export function evalExpr(expr: string | number | null | undefined, vars: Record<
   const s = String(expr).replace(/--(?=\d|\.)/g, '- -');
   if (!ALLOWED.test(s)) throw new Error(`Expresión no permitida: ${s}`);
   const keys = Object.keys(vars);
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
   const fn = new Function(...keys, `"use strict"; return (${s});`);
   const v = fn(...keys.map((k) => vars[k]));
   return typeof v === 'boolean' ? v : Number(v);
@@ -145,9 +144,16 @@ export function derivarVars(
 
 export type Breakdown = {
   vars: Record<string, number>;
-  piezas: { pieza: string; rol: string; cant: number; largoIn: number; anchoIn: number; areaCm2: number }[];
-  maderaPorRol: { rol: string; codigo: string; cm2: number; costo: number }[];
-  cantoPorCalibre: { calibre: string; longCm: number; precio: number; costo: number }[];
+  piezas: { pieza: string; rol: string; cant: number; largoIn: number; anchoIn: number; areaCm2: number; cantoLargos: number; cantoAnchos: number; cantoCalibre: string | null }[];
+  // `cm2`/`longCm` son la medida NETA que sale del despiece; `m2`/`metros` son el
+  // consumo facturable, ya con la merma. `m2 * precio_m2` y `metros * precio`
+  // reproducen el costo salvo redondeo, así que la cantidad explica lo que se cobra.
+  // Se guardan con más decimales de los que se muestran para no arrastrar ese error.
+  maderaPorRol: { rol: string; codigo: string; cm2: number; m2: number; costo: number }[];
+  cantoPorCalibre: { calibre: string; longCm: number; metros: number; precio: number; costo: number }[];
+  // Merma de madera aplicada (0.10 = 10%). El canto no usa este factor: su merma son
+  // 5 cm por arista, ya sumados dentro de `longCm`.
+  desperdicio: number;
   consumibles: Record<string, number>;
   herrajes: { rol: string; codigo: string | null; cant: number; precio: number; costo: number }[];
   costoMadera: number;
@@ -212,12 +218,17 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     if (modo === 'sin_frentes' && esFrente) continue;       // open: caja sin puertas/frentes
     if (modo === 'solo_frentes' && !esFrente) continue;     // kit de frentes: solo puertas/frentes
     const cant = num(pz.formula_cantidad);
-    const lIn = num(pz.formula_largo) - (pz.resta_largo || 0);
-    const aIn = num(pz.formula_ancho) - (pz.resta_ancho || 0);
+    // Una dimensión negativa no es física: significa que la geometría de esa pieza no
+    // aplica a esta medida (ej. la gaveta de BBL, cuyo `L-30.70` solo tiene sentido por
+    // encima de 30.7"). Sin acotar, el área sale negativa y RESTA tablero y canto al
+    // mueble, abaratándolo. Se acota a 0: la pieza no aporta, en vez de descontar.
+    const lIn = Math.max(0, num(pz.formula_largo) - (pz.resta_largo || 0));
+    const aIn = Math.max(0, num(pz.formula_ancho) - (pz.resta_ancho || 0));
     const area = cant * lIn * aIn * IN2CM * IN2CM;
     // Solo suma área si la pieza tiene rol de tablero; piezas "canto-only" (sin rol) aportan únicamente canto.
     if (pz.rol_tablero) areaPorRol[pz.rol_tablero] = (areaPorRol[pz.rol_tablero] || 0) + area;
     const c = pz.cantos || {};
+    let cantoLargos = 0, cantoAnchos = 0, cantoCalibreResuelto: string | null = null;
     if (c.calibre) {
       let cal = c.calibre;
       const tabCode = inp.preset[pz.rol_tablero];
@@ -231,7 +242,12 @@ export function calcularMueble(inp: CalcInput): Breakdown {
       if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
       if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
       const largos = c.largos || 0, anchos = c.anchos || 0;
-      const e = (cantoPorCal[cal] ||= { lenIn: 0, edges: 0 });
+      cantoLargos = largos; cantoAnchos = anchos; cantoCalibreResuelto = cal;
+      // Se agrupa por la clave NORMALIZADA, no por el texto tal cual. El calibre puede
+      // llegar de tres sitios con grafías distintas (la plantilla de la pieza, el valor
+      // derivado del espesor, o el override del formulario que viene de `cot_cantos`);
+      // agrupar por el texto crudo partía un mismo canto en dos filas del listado.
+      const e = (cantoPorCal[norm(cal)] ||= { lenIn: 0, edges: 0 });
       e.lenIn += cant * (largos * lIn + anchos * aIn);
       if (/refuerzo/i.test(pz.nombre)) {
         // el refuerzo posterior siempre suma 8 cm de espesor
@@ -243,7 +259,10 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     }
     tarugos += cant * Number(pz.tarugos || 0);
     soportes += cant * Number(pz.soportes || 0);
-    piezasDet.push({ pieza: pz.nombre, rol: pz.rol_tablero, cant, largoIn: +lIn.toFixed(3), anchoIn: +aIn.toFixed(3), areaCm2: +area.toFixed(2) });
+    piezasDet.push({
+      pieza: pz.nombre, rol: pz.rol_tablero, cant, largoIn: +lIn.toFixed(3), anchoIn: +aIn.toFixed(3), areaCm2: +area.toFixed(2),
+      cantoLargos, cantoAnchos, cantoCalibre: cantoCalibreResuelto,
+    });
   }
 
   // Madera. El desperdicio (tarifa madera) es el ÚNICO factor de merma; se fija por proyecto
@@ -252,20 +271,23 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   for (const [rol, cm2] of Object.entries(areaPorRol)) {
     const tab = inp.tablerosByCode[inp.preset[rol]];
     if (!tab) throw new Error(`Falta tablero para rol "${rol}": ${inp.preset[rol]}`);
-    const costo = (cm2 * (1 + inp.desperdicio) / 10000) * Number(tab.precio_m2);
+    const m2 = cm2 * (1 + inp.desperdicio) / 10000;
+    const costo = m2 * Number(tab.precio_m2);
     costoMadera += costo;
-    maderaPorRol.push({ rol, codigo: inp.preset[rol], cm2: +cm2.toFixed(2), costo: +costo.toFixed(2) });
+    maderaPorRol.push({ rol, codigo: inp.preset[rol], cm2: +cm2.toFixed(2), m2: +m2.toFixed(6), costo: +costo.toFixed(2) });
   }
 
   // Canto
   let costoCanto = 0; const cantoPorCalibre: Breakdown['cantoPorCalibre'] = [];
   for (const [cal, e] of Object.entries(cantoPorCal)) {
-    const cz = inp.cantosByCalibre[norm(cal)];
+    const cz = inp.cantosByCalibre[cal];
     if (!cz) throw new Error(`Falta canto calibre "${cal}"`);
     const longCm = e.lenIn * IN2CM + e.edges * 5;
-    const costo = (longCm / 100) * Number(cz.precio);
+    const metros = longCm / 100;
+    const costo = metros * Number(cz.precio);
     costoCanto += costo;
-    cantoPorCalibre.push({ calibre: cal, longCm: +longCm.toFixed(2), precio: Number(cz.precio), costo: +costo.toFixed(2) });
+    // Se reporta la grafía del catálogo, que es la que ve el usuario al elegirlo.
+    cantoPorCalibre.push({ calibre: cz.calibre, longCm: +longCm.toFixed(2), metros: +metros.toFixed(4), precio: Number(cz.precio), costo: +costo.toFixed(2) });
   }
 
   // Consumibles
@@ -294,6 +316,8 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   for (const hp of (inp.herrajesPlantilla || [])) {
     // "Sin frentes": la carcasa conserva sus herrajes (queda lista para frentes). Kit de frentes: solo herraje de puerta.
     if (modo === 'solo_frentes' && ESTRUCTURAL.has(hp.rol)) continue;
+    // Sistema de frente gola/SM: conserva bisagras y herrajes funcionales, pero no lleva manijas.
+    if (vars.gola === 1 && String(hp.rol).toLowerCase() === 'manija') continue;
     if (excluidos.has(String(hp.rol).toLowerCase())) continue;
     const cant = num(hp.formula_cantidad);
     const precio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
@@ -324,6 +348,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
 
   return {
     vars, piezas: piezasDet, maderaPorRol, cantoPorCalibre, consumibles, herrajes: herrajesDet,
+    desperdicio: inp.desperdicio,
     costoMadera, costoCanto, costoConsumibles, costoSinHerrajes, costoHerrajes, costoConHerrajes,
     precioCop, /* precioCopConRecargo, */ precioUsd,
     precioHerrajesCop, /* precioHerrajesCopConRecargo, */ precioHerrajesUsd,

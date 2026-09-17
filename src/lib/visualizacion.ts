@@ -125,7 +125,12 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       for(const e of row.entries) doorSlots.set(`${e.item.source}:${e.k}`,{x:left+pad+e.x,z:doorZ});
       doorZ+=row.height+3.2;
     }
-    if(doorZ>A+4 && doors.length) warn(`${pref}: la fachada necesita distribución específica por niveles; revisar parámetros de montaje.`);
+    // Con gola la puerta se corta más alta que la carcasa (en W, `A+0.62402`; ver
+    // migración 0045). Ese sobrante es el agarre: en un superior se toma la puerta
+    // por debajo, así que cuelga bajo la base en vez de sobresalir sobre la tapa.
+    const voladizoGola=vars.gola&&doorRows.length?Math.max(0,doorZ-3.2-foot-innerH):0;
+    if(voladizoGola) for(const [key,slot] of doorSlots) doorSlots.set(key,{...slot,z:slot.z-voladizoGola});
+    if(doorZ-voladizoGola>A+4 && doors.length) warn(`${pref}: la fachada necesita distribución específica por niveles; revisar parámetros de montaje.`);
     const baseDepth=items.find(i=>i.funcion==='base')?.d;
     for(const item of items) {
       const {p,config,w,d,h,count,funcion}=item;

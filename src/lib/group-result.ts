@@ -58,6 +58,7 @@ export function consolidarGrupo(
     (row) => ({ ...row }),
     (acc, row) => {
       acc.cm2 = clean(acc.cm2 + row.cm2);
+      acc.m2 = clean(acc.m2 + row.m2);
       acc.costo = clean(acc.costo + row.costo);
     },
   );
@@ -67,6 +68,7 @@ export function consolidarGrupo(
     (row) => ({ ...row }),
     (acc, row) => {
       acc.longCm = clean(acc.longCm + row.longCm);
+      acc.metros = clean(acc.metros + row.metros);
       acc.costo = clean(acc.costo + row.costo);
     },
   );
@@ -111,6 +113,8 @@ export function consolidarGrupo(
     precioConHerrajesCop: sum(lineas.map((linea) => linea.precioConHerrajesCop)),
     precioConHerrajesUsd: sum(lineas.map((linea) => linea.precioConHerrajesUsd)),
     margenHerraje: lineas[0]?.margenHerraje ?? 0,
+    // La merma de madera es del proyecto, así que todas las líneas del grupo comparten valor.
+    desperdicio: lineas[0]?.desperdicio ?? 0,
     trm: meta.trm,
     margen: meta.margen,
     modulos: lineas.length,

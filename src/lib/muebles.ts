@@ -15,13 +15,45 @@
 export type SistemaFrente = 'manija' | 'gola';
 export const SISTEMAS_FRENTE: { key: SistemaFrente; label: string; desc: string }[] = [
   { key: 'manija', label: 'Manija', desc: 'Frente con manija (estándar)' },
-  { key: 'gola', label: 'Gola', desc: 'Gola en melamina; sin manijas. Sufijo comercial SM' },
+  { key: 'gola', label: 'SM', desc: 'Gola en melamina; sin manijas. Añade el sufijo -SM al código (W2936-SM)' },
 ];
+
+// ---------------------------------------------------------------------------
+// Convenciones de presentación del despiece
+// ---------------------------------------------------------------------------
+// La hoja de ruta lista cada panel con su medida mayor primero (`SIDE 914.4x304.8`
+// es vertical, `BASE 706.6x304.8` es horizontal), mientras que el motor guarda
+// largo/ancho como ejes geométricos atados a `visualizacion.intercambiar` de cada
+// pieza (ver WikiLLM/wiki/ejes_fondo_backing.md).
+//
+// El frente siempre se presenta con el alto primero. El fondo se ordena por tamaño
+// porque su eje depende del `intercambiar` del tipo y la tabla no tiene acceso a
+// esa configuración: donde `intercambiar=true` el largo ya es el mayor y la fila no
+// cambia.
+//
+// Vive aquí y no en cada tabla para que el despiece del Simulador y el del HDR no
+// vuelvan a contradecirse.
+export function orientarPieza<T extends { rol: string; largoIn: number; anchoIn: number }>(
+  pieza: T,
+): { largoIn: number; anchoIn: number } {
+  const invertir = pieza.rol === 'frente' || (pieza.rol === 'fondo' && pieza.anchoIn > pieza.largoIn);
+  return invertir
+    ? { largoIn: pieza.anchoIn, anchoIn: pieza.largoIn }
+    : { largoIn: pieza.largoIn, anchoIn: pieza.anchoIn };
+}
+
+// El motor llama `frente` tanto a una puerta como a la cara de una gaveta. Solo es
+// puerta cuando la tipología declara `n_puertas`; en una cajonera el mismo nombre
+// designa el frente de gaveta. `HdrTabla` aplica la misma distinción para elegir
+// entre `DOOR` y `FRENTE`.
+export function nombrePieza(nombre: string, tienePuertas: boolean): string {
+  return nombre === 'frente' && tienePuertas ? 'puerta' : nombre;
+}
 
 // Familias con pares base/removible verificados en las hojas de ruta. Fuera de
 // esta lista la opción se bloquea: la regla estructural (rails más anchos, base
 // más profunda, fondo reorientado) no se extrapola sin datos.
-export const PREFS_CON_REMOVIBLE = ['USVFD', 'USBFD', 'UB', 'UDB', 'UBFD'] as const;
+export const PREFS_CON_REMOVIBLE = ['USVFD', 'USBFD', 'UB', 'UB-FE', 'UDB', 'UBFD'] as const;
 
 export function permiteRemovible(pref: string | null | undefined): boolean {
   const p = String(pref ?? '').toUpperCase();
@@ -64,7 +96,7 @@ export const PCFD_CONFIGURACIONES: PcfdConfiguracion[] = [
 export type DbRiel = { codigo: string; nombre: string; precio: number };
 export const DB_RIELES: DbRiel[] = [
   { codigo: 'RIELMETALBOX', nombre: 'Riel metal BOX',           precio: 28000 },
-  { codigo: 'RIELFE500',    nombre: 'Riel full extension 500mm', precio: 27105 },
+  { codigo: 'RIELFE500',    nombre: 'Riel full extension 500mm', precio: 31064 },
   { codigo: 'RIELTANDEM',   nombre: 'Riel Tandem china',         precio: 49706.8 },
   { codigo: 'RIELSLIMCHI',  nombre: 'Riel Slim China',           precio: 55671.62 },
   { codigo: 'SLIMBOXALTO',  nombre: 'Slim Box Alto Madecentro',  precio: 48250 },

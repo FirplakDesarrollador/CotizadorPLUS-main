@@ -16,7 +16,8 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, orientarPieza, nombrePieza, type SistemaFrente } from '@/lib/muebles';
+import { codigoComercial, codigoGrupo, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -191,6 +192,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setDbTipo('');
     setRielCodigo('RIELTANDEM');
     setPcfdConfig('');
+    if ((tipos.find((t) => t.id === v)?.pref ?? '') === 'W') setProf(convertir(12, 'in', unidad));
     if ((tipos.find((t) => t.id === v)?.pref ?? '').startsWith('DB')) setConHerrajes(true);
   }
   function aplicarDbTipo(k: string) {
@@ -444,10 +446,30 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setDraggedId(null);
   }
 
-  const moduleTitle = (modulo: SimuladorModulo) => {
-    const tipo = tipos.find((item) => item.id === modulo.tipoId);
-    return `${tipo?.pref ?? 'M'}${modulo.largo}`;
+  // El Simulador no tiene sistema de medida de proyecto como las cotizaciones:
+  // el código sigue la unidad con la que se está simulando.
+  const sistemaCodigo: SistemaMedida = unidad === 'in' ? 'imperial' : 'metrico';
+
+  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'sistemaFrente' | 'dbTipo' | 'ncajones'>) => {
+    const pref = tipos.find((item) => item.id === valores.tipoId)?.pref ?? '';
+    if (!pref) return '';
+    return codigoComercial({
+      pref,
+      largo: valores.largo,
+      alto: valores.alto,
+      unidad,
+      sistema: sistemaCodigo,
+      sistemaFrente: valores.sistemaFrente,
+      dbTipo: pref.startsWith('DB') ? valores.dbTipo : null,
+      pcfdCajones: pref === 'PCFD' ? Number(valores.ncajones) : null,
+    });
   };
+
+  const moduleTitle = (modulo: SimuladorModulo) => codigoDeValores(modulo) || 'M';
+
+  const codigoResultado = store.modulos.length > 0
+    ? codigoGrupo(store.modulos.map(codigoDeValores).filter(Boolean))
+    : codigoDeValores({ tipoId, largo, alto, sistemaFrente, dbTipo, ncajones });
 
   const editingPosition = store.editingId
     ? store.modulos.findIndex((modulo) => modulo.id === store.editingId) + 1
@@ -729,7 +751,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       {/* ---- Resultado ---- */}
       <div data-tour="resultado" className="space-y-4">
         {!result && <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400">Ingresa los datos y calcula para ver el precio y el desglose.</div>}
-        {result && <ResultadoView result={result} moneda={moneda} setMoneda={setMoneda} />}
+        {result && <ResultadoView result={result} codigo={codigoResultado} moneda={moneda} setMoneda={setMoneda} />}
       </div>
 
       <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.4rem .6rem;font-size:.875rem}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}`}</style>
@@ -742,13 +764,30 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <Campo label={label} info={TIPS_COTIZADOR[label]}>{children}</Campo>;
 }
 
-function ResultadoView({ result, moneda, setMoneda }:
-  { result: CotizarGrupoResult; moneda: 'COP' | 'USD'; setMoneda: (m: 'COP' | 'USD') => void }) {
+function ResultadoView({ result, codigo, moneda, setMoneda }:
+  { result: CotizarGrupoResult; codigo: string; moneda: 'COP' | 'USD'; setMoneda: (m: 'COP' | 'USD') => void }) {
   const precioSin = result.precioCop;
   const precioHerr = result.precioHerrajesCop;
   const precioCon = result.precioConHerrajesCop;
   const precioPrincipal = precioCon;
   const money = (cop: number) => (moneda === 'COP' ? fmtCOP(cop) : fmtUSD(cop / result.trm));
+  // El despiece se calcula en pulgadas (el catálogo es imperial), pero producción
+  // trabaja en milímetros: el toggle solo cambia la presentación, no el cálculo.
+  const [unidadPiezas, setUnidadPiezas] = useState<'in' | 'mm'>('in');
+  const tienePuertas = Number(result.vars?.n_puertas ?? 0) > 0;
+  // Producción compra tablero por m² y canto por metro lineal: el consumo se muestra
+  // en esas unidades y ya con la merma, así que cantidad x precio = costo.
+  const superficie = (m2: number) => m2.toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  const longitud = (m: number) => m.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Un resultado calculado antes de que el motor expusiera `m2`/`metros`/`desperdicio`
+  // puede seguir vivo en el store persistido. Se deriva de la medida neta en vez de
+  // romper el render.
+  const desperdicio = result.desperdicio ?? 0;
+  const m2De = (m: { m2?: number; cm2: number }) => m.m2 ?? (m.cm2 * (1 + desperdicio)) / 10000;
+  const metrosDe = (c: { metros?: number; longCm: number }) => c.metros ?? c.longCm / 100;
+  const dim = (valorIn: number) => (unidadPiezas === 'in'
+    ? valorIn.toLocaleString('es-CO', { maximumFractionDigits: 3 })
+    : (valorIn * 25.4).toLocaleString('es-CO', { maximumFractionDigits: 1 }));
   return (
     <>
       <div className="bg-white rounded-2xl border border-slate-200 p-5">
@@ -761,6 +800,13 @@ function ResultadoView({ result, moneda, setMoneda }:
           </div>
         </div>
         <div className="text-4xl font-bold text-slate-900">{money(precioPrincipal)}</div>
+        {codigo && (
+          <div className="mt-2">
+            <span className="inline-block rounded-md border border-slate-300 bg-slate-50 px-2 py-0.5 font-mono text-sm font-semibold tracking-wide text-slate-700" title="Código comercial del módulo">
+              {codigo}
+            </span>
+          </div>
+        )}
         <p className="text-sm text-slate-500 mt-1">
           {result.modulos > 1 ? `Conjunto de ${result.modulos} módulos` : 'Módulo individual'} · Margen mueble {(result.margen * 100).toFixed(0)}% · Margen herraje {(result.margenHerraje * 100).toFixed(0)}% · TRM {result.trm.toLocaleString('es-CO')}
           {moneda === 'COP' ? '' : ` · ${fmtCOP(precioPrincipal)}`}
@@ -801,7 +847,9 @@ function ResultadoView({ result, moneda, setMoneda }:
               <tr key={`m${i}`} className="border-t border-slate-100">
                 <td className="py-1">Tablero · <span className="capitalize">{m.rol}</span></td>
                 <td className="text-slate-500">{m.codigo}</td>
-                <td className="text-right">{m.cm2.toLocaleString('es-CO')} cm²</td>
+                <td className="text-right" title={`${superficie(m.cm2 / 10000)} m² de piezas + ${(desperdicio * 100).toFixed(0)}% de desperdicio`}>
+                  {superficie(m2De(m))} m²
+                </td>
                 <td className="text-right font-medium">{money(m.costo)}</td>
               </tr>
             ))}
@@ -809,7 +857,9 @@ function ResultadoView({ result, moneda, setMoneda }:
               <tr key={`c${i}`} className="border-t border-slate-100">
                 <td className="py-1">Canto</td>
                 <td className="text-slate-500">calibre {c.calibre}</td>
-                <td className="text-right">{c.longCm.toLocaleString('es-CO')} cm</td>
+                <td className="text-right" title="Incluye 5 cm de desperdicio por arista">
+                  {longitud(metrosDe(c))} m
+                </td>
                 <td className="text-right font-medium">{money(c.costo)}</td>
               </tr>
             ))}
@@ -825,19 +875,40 @@ function ResultadoView({ result, moneda, setMoneda }:
 
       <MuebleVisualizer scene={result.visualizacion} />
 
-      <Card title="Piezas (despiece)">
+      <Card
+        title="Piezas (despiece)"
+        action={(
+          <div className="flex rounded-lg border border-slate-300 overflow-hidden text-sm">
+            {([['in', 'Pulgadas'], ['mm', 'Milímetros']] as const).map(([u, etiqueta]) => (
+              <button
+                key={u}
+                type="button"
+                onClick={() => setUnidadPiezas(u)}
+                aria-pressed={unidadPiezas === u}
+                title={`Mostrar el despiece en ${etiqueta.toLowerCase()}`}
+                className={`px-3 py-1 ${unidadPiezas === u ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}
+              >
+                {u === 'in' ? 'in' : 'mm'}
+              </button>
+            ))}
+          </div>
+        )}
+      >
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-slate-400"><th className="py-1">Pieza</th><th>Rol</th><th className="text-right">Cant</th><th className="text-right">Largo&quot;</th><th className="text-right">Ancho&quot;</th><th className="text-right">m²</th></tr></thead>
+          <thead><tr className="text-left text-slate-400"><th className="py-1">Pieza</th><th>Rol</th><th className="text-right">Cant</th><th className="text-right">Largo {unidadPiezas === 'in' ? '″' : 'mm'}</th><th className="text-right">Ancho {unidadPiezas === 'in' ? '″' : 'mm'}</th><th className="text-right">m²</th></tr></thead>
           <tbody>
             {/* Piezas con cantidad 0 no se producen (ej. "frente" uniforme queda en 0 cuando
                 la tipología DB es mixta y usa frente_gaveta_pequena/grande en su lugar). */}
-            {result.piezas.filter((p) => p.cant > 0).map((p, i) => (
+            {result.piezas.filter((p) => p.cant > 0).map((p, i) => {
+              const { largoIn, anchoIn } = orientarPieza(p);
+              return (
               <tr key={i} className="border-t border-slate-100">
-                <td className="py-1">{p.pieza}</td><td className="text-slate-500">{p.rol}</td>
-                <td className="text-right">{p.cant}</td><td className="text-right">{p.largoIn}</td>
-                <td className="text-right">{p.anchoIn}</td><td className="text-right">{(p.areaCm2 / 10000).toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+                <td className="py-1">{nombrePieza(p.pieza, tienePuertas)}</td><td className="text-slate-500">{p.rol}</td>
+                <td className="text-right">{p.cant}</td><td className="text-right">{dim(largoIn)}</td>
+                <td className="text-right">{dim(anchoIn)}</td><td className="text-right">{(p.areaCm2 / 10000).toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
               </tr>
-            ))}
+              );
+            })}
             <tr className="border-t-2 border-slate-300 font-semibold text-slate-900">
               <td className="py-1">TOTAL</td><td></td>
               <td className="text-right">{result.piezas.filter((p) => p.cant > 0).reduce((sum, p) => sum + p.cant, 0)}</td>
@@ -868,10 +939,13 @@ function ResultadoView({ result, moneda, setMoneda }:
   );
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5">
-      <h3 className="font-medium text-slate-900 mb-2">{title}</h3>
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <h3 className="font-medium text-slate-900">{title}</h3>
+        {action}
+      </div>
       <div className="space-y-1">{children}</div>
     </div>
   );
