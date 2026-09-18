@@ -35,6 +35,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Cadena de precio: Excel CEMA vs. app](wiki/cadena_precio_excel_vs_app.md) - Correspondencia fórmula por fórmula de la hoja `Precio` contra `engine.ts`/`cotizar.ts`: parámetros de la columna T, recargo del 10% de CEMA, márgenes equivalentes y defectos de ambos lados.
 
 - [Patron para integrar nuevas tipologias](wiki/patron_integracion_tipologias.md) - Protocolo permanente basado en `B-FE`: crear tipos independientes desde hojas reales, validar geometria/precio, respetar codigos comerciales y documentar migraciones.
+- [Visualización y agrupación de familias FE](wiki/visualizacion_familias_fe.md) - Corrección geométrica 3D (fondo de gaveta, frentes mixtos y cajón superior) y homologación continua para B-FE, UB-FE y V-FE.
 
 ## Entorno de Desarrollo
 - [Dependencias del Proyecto](wiki/dependencias_proyecto.md) - Stack tecnológico (Next.js, React, Zustand, Supabase client).

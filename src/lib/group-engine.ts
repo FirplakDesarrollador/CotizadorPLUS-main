@@ -126,9 +126,14 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
     const refs = members.map(({ calc }) => calc.piezas.find((p) => p.modo_agrupacion === 'continua' && (p.clave_fusion || p.nombre) === key));
     if (refs.some((p) => !p)) throw new Error(`No se puede homologar la pieza continua “${key}”.`);
     const base = evaluated(refs[0]!, first);
+    const baseRotated = !/\bL\b/.test(refs[0]!.formula_largo ?? '') && /\bL\b/.test(refs[0]!.formula_ancho ?? '');
+    const baseSection = baseRotated ? base.largo : base.ancho;
+
     refs.slice(1).forEach((piece, i) => {
       const ev = evaluated(piece!, members[i + 1].calc);
-      if (!near(ev.ancho, base.ancho)) {
+      const isRotated = !/\bL\b/.test(piece!.formula_largo ?? '') && /\bL\b/.test(piece!.formula_ancho ?? '');
+      const evSection = isRotated ? ev.largo : ev.ancho;
+      if (!near(evSection, baseSection)) {
         throw new Error(`La pieza continua “${key}” cambia de sección entre módulos.`);
       }
       const baseCode = first.preset[refs[0]!.rol_tablero] ?? '';
@@ -201,10 +206,12 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
       const groupVars = { ...first.dims, ...geoVars(first), LG: totalL, TC: tc };
       const length = Number(evalExpr(representative.formula_largo_grupo, groupVars));
       if (!(length > 0)) throw new Error(`La fórmula agrupada de “${key}” produjo un largo inválido.`);
+      const isRotated = !/\bL\b/.test(piece.formula_largo ?? '') && /\bL\b/.test(piece.formula_ancho ?? '');
       return {
         ...piece,
         formula_cantidad: String(groupQuantity * share),
-        formula_largo: String(length),
+        formula_largo: isRotated ? piece.formula_largo : String(length),
+        formula_ancho: isRotated ? String(length) : piece.formula_ancho,
         resta_largo: 0,
         tarugos: Number(piece.tarugos || 0) * ((n + 1) / 2),
       };

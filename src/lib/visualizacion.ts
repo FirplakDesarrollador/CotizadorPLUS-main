@@ -77,15 +77,18 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const sideH=Math.max(0,...items.filter(i=>i.funcion==='lateral').map(i=>i.h));
     const foot=sideH>0?Math.max(0,A-sideH):0;
     const innerH=sideH||A;
+    const doors=items.filter(i=>i.funcion==='frente');
     const fronts=items.filter(i=>i.funcion==='frente_gaveta').flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
     fronts.sort((a,b)=>a.item.h-b.item.h||a.item.source-b.item.source);
-    const intFronts=items.filter(i=>i.funcion==='frente_interior').flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
+    const intFronts=items.filter(i=>i.funcion==='frente_interior' && (Boolean(vars.n_cajones_ocultos) || /ocult|interior/i.test(i.p.nombre))).flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
     const bodyCount=Math.max(0,...items.filter(i=>i.funcion==='base_gaveta').map(i=>i.count),fronts.length+intFronts.length);
     const drawerSlots: {z:number;h:number;key:string;interior?:boolean}[]=[];
     const gola=vars.gola?53.6:0;
     if(fronts.length) {
       const sum=fronts.reduce((s,f)=>s+f.item.h,0), gap=3.2;
-      let z=A-Math.max(0,(innerH-sum-(fronts.length-1)*gap-gola)/2);
+      let z = doors.length > 0
+        ? A - (gola ? gola : 0) - gap
+        : A - Math.max(0, (innerH - sum - (fronts.length - 1) * gap - gola) / 2);
       if(sum+(fronts.length-1)*gap+gola>innerH+1) warn(`${pref}: los frentes de gaveta exceden el alto disponible; se conservan sus cortes.`);
       fronts.forEach((f,j)=>{
         if(gola && (j===0||j===fronts.length-1)) z-=gola/2;
@@ -109,7 +112,6 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const totals=new Map<string,number>();
     items.forEach(i=>totals.set(i.funcion,(totals.get(i.funcion)||0)+i.count));
     // Place doors in horizontal rows; full-width doors naturally stack vertically.
-    const doors=items.filter(i=>i.funcion==='frente');
     const doorSlots=new Map<string,{x:number;z:number}>();
     const blind=items.find(i=>i.funcion==='frente_falso'&&i.h>innerH*.8);
     const left=blind?blind.w:0, doorW=L-left;
@@ -172,10 +174,10 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'frente': {const ds=doorSlots.get(`${item.source}:${k}`)!; x=ds.x; z=ds.z; y=-d; break;}
           case 'frente_falso': x=blind===item?0:(L-w)/2; z=blind===item?foot:A-h; y=-d; break;
           case 'frente_gaveta': z=slot?.z??foot; y=-d; break;
-          case 'base_gaveta': y=10; z=(slot?.z??foot)+30; break;
-          case 'trasero_gaveta': y=10+(items.find(v=>v.funcion==='base_gaveta')?.d??P-80)-d; z=(slot?.z??foot)+30+(items.find(v=>v.funcion==='base_gaveta')?.t??TC); break;
+          case 'base_gaveta': x=(L-w)/2; y=10; z=(slot?.z??foot)+30; break;
+          case 'trasero_gaveta': x=(L-w)/2; y=10+(items.find(v=>v.funcion==='base_gaveta')?.d??P-80)-d; z=(slot?.z??foot)+30+(items.find(v=>v.funcion==='base_gaveta')?.t??TC); break;
           case 'lateral_gaveta': x=i%2===0?TC+12:L-TC-12-w; y=10; z=(slot?.z??foot)+30; break;
-          case 'frente_interior': y=10; z=(slot?.z??foot)+30; break;
+          case 'frente_interior': x=(L-w)/2; y=10; z=(slot?.z??foot)+30; break;
           case 'gola': y=80; z=i===0?A-h:(drawerSlots.at(-1)?.z??foot)+ (drawerSlots.at(-1)?.h??innerH/2)-h; break;
           case 'zocalo': y=i%2===0?50:P-d; z=0; break;
           case 'panel': x=(L-w)/2; y=-d; z=foot; break;

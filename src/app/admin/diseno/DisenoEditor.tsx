@@ -25,6 +25,7 @@ const ROLES = ['caja', 'refuerzo', 'frente', 'fondo', 'fondo_shaker', 'zocalo', 
 const fmt = (n: number) => Number(n).toLocaleString('es-CO', { maximumFractionDigits: 0 });
 
 export default function DisenoEditor({ tipos, presetDefault }: { tipos: Tipo[]; presetDefault: Record<string, string> }) {
+  const [tiposList, setTiposList] = useState(tipos);
   const [tipoId, setTipoId] = useState('');
   const [d, setD] = useState<Diseno | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,7 +37,11 @@ export default function DisenoEditor({ tipos, presetDefault }: { tipos: Tipo[]; 
     setLoading(false);
   }
   const reload = () => tipoId && load(tipoId);
-  const tipoOptions = useMemo(() => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tipos]);
+  const tipoOptions = useMemo(() => tiposList.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tiposList]);
+
+  function handleTipoAgrupacionUpdated(updated: { pref_imperial: string; pref_metrico: string; permite_agrupacion: boolean }) {
+    setTiposList((prev) => prev.map((t) => t.id === tipoId ? { ...t, ...updated } : t));
+  }
 
   return (
     <div className="space-y-4">
@@ -50,7 +55,11 @@ export default function DisenoEditor({ tipos, presetDefault }: { tipos: Tipo[]; 
       {loading && <p className="text-slate-400 text-sm">Cargando…</p>}
       {d && tipoId && (
         <>
-          <TipoAgrupacionEditor tipo={tipos.find((t) => t.id === tipoId)!} />
+          <TipoAgrupacionEditor
+            key={tipoId}
+            tipo={tiposList.find((t) => t.id === tipoId)!}
+            onUpdated={handleTipoAgrupacionUpdated}
+          />
           <PiezasEditor tipoId={tipoId} piezas={d.piezas} cantos={d.cantos} onChange={reload} />
           <ReglasEditor tipoId={tipoId} reglas={d.reglas} onChange={reload} />
           <HerrajesEditor tipoId={tipoId} herrajes={d.herrajes} herrajeCat={d.herrajeCat} onChange={reload} />
@@ -61,14 +70,25 @@ export default function DisenoEditor({ tipos, presetDefault }: { tipos: Tipo[]; 
   );
 }
 
-function TipoAgrupacionEditor({ tipo }: { tipo: Tipo }) {
+function TipoAgrupacionEditor({
+  tipo,
+  onUpdated,
+}: {
+  tipo: Tipo;
+  onUpdated?: (updated: { pref_imperial: string; pref_metrico: string; permite_agrupacion: boolean }) => void;
+}) {
   const [imperial, setImperial] = useState(tipo.pref_imperial || tipo.pref);
   const [metrico, setMetrico] = useState(tipo.pref_metrico || tipo.pref);
   const [enabled, setEnabled] = useState(tipo.permite_agrupacion);
   const [message, setMessage] = useState('');
   async function save() {
     const result = await guardarTipoAgrupacionAction(tipo.id, { pref_imperial: imperial, pref_metrico: metrico, permite_agrupacion: enabled });
-    setMessage(result.ok ? 'Configuración guardada.' : (result.error ?? 'No se pudo guardar'));
+    if (result.ok) {
+      setMessage('Configuración guardada.');
+      onUpdated?.({ pref_imperial: imperial, pref_metrico: metrico, permite_agrupacion: enabled });
+    } else {
+      setMessage(result.error ?? 'No se pudo guardar');
+    }
   }
   return <Section title="Nomenclatura y agrupación" subtitle="Prefijos según el sistema del proyecto. Desactiva la agrupación para geometrías especiales o no homologadas.">
     <div className="grid gap-2 sm:grid-cols-3 items-end">

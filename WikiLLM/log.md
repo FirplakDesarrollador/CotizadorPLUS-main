@@ -692,3 +692,12 @@ Cruce de las tres formulas que la hoja de `B12` corrigio contra los 60 tipos del
 **El resto se deja a proposito.** `BBL`, `DV`, `DVE`, `PCFD`, `UDV`, `BFD`, `SBFD`, `BOMH`, `SV`, `SVFD`, `UBFD` y `BBLFD` no tienen variante FE que respalde el cambio, y `SBFD`/`BFD` suman 15 lineas guardadas. `L-TC`/`A` no es necesariamente incorrecto: es la formula de 12 tipos y solo se sabe que estaba mal en `B` porque una hoja lo demostro. Propagarlo sin hoja convertiria una correccion en una suposicion.
 
 Auditoria posterior del catalogo completo (60 tipos, 348 escenas): fondos y entrepanos dentro de la carcasa, sin dimensiones invalidas ni excepciones — el giro de ejes del fondo de `UB`/`V` quedo correcto. Migracion idempotente. 129/129 tests, typecheck y lint limpios.
+
+## [2026-09-17] update | Corrección de retención de estado en DisenoEditor (nomenclatura y agrupación)
+
+Se corrigió un defecto en `DisenoEditor.tsx` donde el subcomponente `TipoAgrupacionEditor` no se remontaba al cambiar de tipología en el selector por carecer de `key={tipoId}`, reteniendo en pantalla los valores del tipo anterior (`pref_imperial`, `pref_metrico`, `permite_agrupacion`). Se añadió `key={tipoId}` y sincronización del estado local `tiposList` para reflejar con precisión los valores de base de datos y las actualizaciones guardadas.
+
+## [2026-09-17] ingest | Visualización 3D y agrupación continua de familias FE (B-FE, UB-FE, V-FE)
+
+Se corrigieron los defectos del visor 3D en tipologías con gaveta de madera (`B-FE`, `UB-FE`, `V-FE`): reconocimiento de `fondo_gaveta` como base del cajón (evitando la proyección de paneles `suelto` fuera del mueble a $L+40\text{ mm}$), colocación de la gaveta en el tope superior en muebles con puerta inferior y omisión del falso desdoblamiento por `contraparche`. En `group-engine.ts` se habilitó soporte para piezas continuas con grano girado (cuyo largo corre a lo largo del ancho de fórmula), resolviendo el bloqueo de fondos entre módulos de distinto ancho. Se aplicó la migración `0055_visualizacion_agrupacion_fe.sql` en Supabase habilitando agrupación física continua (`lateral_compartido`, `base`, `refuerzo_delantero`, `refuerzo_trasero`, `fondo`) y metadatos de montaje 3D confirmados.
+
