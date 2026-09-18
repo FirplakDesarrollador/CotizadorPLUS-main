@@ -6,12 +6,14 @@ import AddCocina from './AddCocina';
 import GuideButton from '@/components/GuideButton';
 import TooltipToggle from '@/components/TooltipToggle';
 import ProjectConfigPanel, { type ProjectDefaults } from './ProjectConfigPanel';
-import { eliminarCotizacionAction } from '../actions';
+import { eliminarCotizacionAction, actualizarCotizacionAction } from '../actions';
+import VersionesCotizacion from './VersionesCotizacion';
+import type { CotizacionVersion } from '@/lib/cotizaciones';
 
 type LineaConfig = {
   preset?: Record<string, string>;
   conHerrajes?: boolean;
-  recargoPct?: number;
+  // recargoPct?: number;
   overrides?: Record<string, number> | null;
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
   herrajesExcluidos?: string[] | null;
@@ -34,21 +36,25 @@ type Linea = {
   prof: number;
   unidad_dim: string;
   config: LineaConfig | null;
+  grupo_id: string | null;
+  posicion_grupo: number;
+  codigo_modulo: string | null;
+  grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
 };
 
-type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
-type Tipo = { id: string; pref: string; nombre_es: string | null };
-type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
+type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
+type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number };
+type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
 
 const GUIA_PROYECTO = [
   { title: 'Proyecto / cotización', description: 'Un proyecto agrupa cocinas, y cada cocina agrupa módulos (muebles). Así se arma una cotización completa.' },
   { selector: '[data-tour="proyecto"]', title: 'Datos del proyecto', description: 'Nombre, cliente, moneda, TRM y estado. Usa "editar" para cambiarlos. A la derecha ves el total.' },
   { selector: '[data-tour="config"]', title: 'Configuración global', description: 'Define los tableros, cantos, recargo y margen que se pre-llenan en cada mueble nuevo. Puedes cambiarlos por mueble si es necesario.' },
   { selector: '[data-tour="export"]', title: 'Exportar', description: 'Descarga la cotización en Excel, o ábrela como PDF para imprimir/guardar.' },
+  { selector: '[data-tour="versiones"]', title: 'Versiones', description: 'Guarda puntos de retorno del proyecto y restaura una versión anterior cuando lo necesites.' },
   { selector: '[data-tour="cocinas"]', title: 'Cocinas y módulos', description: 'Cada tarjeta es una cocina. Dentro agregas módulos con "+ Agregar módulo"; el subtotal por cocina se calcula solo.' },
   { selector: '[data-tour="add-cocina"]', title: 'Agregar cocina', description: 'Añade tantas cocinas como necesite el proyecto. El total del proyecto suma todas.' },
 ];
@@ -58,7 +64,6 @@ interface Props {
   cocinas: Cocina[];
   cotizacionId: string;
   tipos: Tipo[];
-  recargos: Recargo[];
   tableros: Tablero[];
   cantos: string[];
   presetDefault: Record<string, string>;
@@ -67,10 +72,11 @@ interface Props {
   perfiles: Perfil[];
   perfilDefaultId: string;
   herrajesByTipo: Record<string, HerrajeTipo[]>;
+  versiones: CotizacionVersion[];
 }
 
 export default function CotizacionDetalleClient({
-  cabecera, cocinas, cotizacionId, tipos, recargos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo
+  cabecera, cocinas, cotizacionId, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo, versiones
 }: Props) {
   // Estado global del proyecto: si viene initialConfig del query param ?cfg, úsalo;
   // si no, inicializar con el presetDefault del sistema.
@@ -85,8 +91,20 @@ export default function CotizacionDetalleClient({
         preset: initialConfig.preset ?? { ...presetDefault },
         cantoFrentes: initialConfig.cantoFrentes ?? '',
         cantoCaja: initialConfig.cantoCaja ?? '',
-        recargoId: initialConfig.recargoId ?? '',
+        // recargoId: initialConfig.recargoId ?? '',
         margen: initialConfig.margen ?? '',
+        tipoId: initialConfig.tipoId,
+        largo: initialConfig.largo,
+        alto: initialConfig.alto,
+        prof: initialConfig.prof,
+        unidad: initialConfig.unidad,
+        perfilId: initialConfig.perfilId,
+        modoFrentes: initialConfig.modoFrentes,
+        conHerrajes: initialConfig.conHerrajes,
+        herrajesExcl: initialConfig.herrajesExcl,
+        npuertas: initialConfig.npuertas,
+        ncajones: initialConfig.ncajones,
+        nentrepanos: initialConfig.nentrepanos,
       };
     }
 
@@ -97,12 +115,23 @@ export default function CotizacionDetalleClient({
       preset: { ...presetDefault },
       cantoFrentes: frenteBoard?.espesor_mm === 18 ? getCantoMatch('22x1') : '',
       cantoCaja: cajaBoard?.espesor_mm === 15 ? getCantoMatch('19x0,45') : '',
-      recargoId: '',
+      // recargoId: '',
       margen: '',
     };
   });
 
   const [showConfig, setShowConfig] = useState(false);
+
+  function handleProjectDefaultsChange(next: ProjectDefaults) {
+    setProjectDefaults(next);
+    actualizarCotizacionAction(cotizacionId, { configDefault: next }).catch(() => {});
+  }
+
+  // Al agregar un mueble, sus materiales y cantos quedan como default del proyecto
+  // para que el próximo mueble (incluso en otra pestaña o al día siguiente) arranque con los mismos valores.
+  function handleMaterialesUsados(materiales: { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string }) {
+    handleProjectDefaultsChange({ ...projectDefaults, ...materiales });
+  }
 
   return (
     <>
@@ -131,19 +160,19 @@ export default function CotizacionDetalleClient({
           <div className="mt-2">
             <ProjectConfigPanel
               tableros={tableros}
-              recargos={recargos}
               cantos={cantos}
               perfiles={perfiles}
               defaults={projectDefaults}
-              onChange={setProjectDefaults}
+              onChange={handleProjectDefaultsChange}
             />
           </div>
         )}
       </div>
 
-      <div className="flex gap-2" data-tour="export">
+      <div className="flex flex-wrap gap-2" data-tour="export">
         <a href={`/cotizaciones/${cotizacionId}/export`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">⬇ Exportar Excel</a>
         <a href={`/cotizaciones/${cotizacionId}/imprimir`} target="_blank" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">🖨 Imprimir / PDF</a>
+        <VersionesCotizacion cotizacionId={cotizacionId} versiones={versiones} />
       </div>
 
       <div className="space-y-4" data-tour="cocinas">
@@ -154,7 +183,6 @@ export default function CotizacionDetalleClient({
             cocina={c}
             allCocinas={cocinas}
             tipos={tipos}
-            recargos={recargos}
             tableros={tableros}
             cantos={cantos}
             presetDefault={presetDefault}
@@ -163,7 +191,9 @@ export default function CotizacionDetalleClient({
             perfilDefaultId={perfilDefaultId}
             herrajesByTipo={herrajesByTipo}
             trm={Number(cabecera.trm)}
+            sistemaMedida={cabecera.sistema_medida ?? 'imperial'}
             projectDefaults={projectDefaults}
+            onMaterialesUsados={handleMaterialesUsados}
           />
         ))}
         <div data-tour="add-cocina"><AddCocina cotizacionId={cotizacionId} /></div>

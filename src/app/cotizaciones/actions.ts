@@ -3,9 +3,22 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
   crearCotizacion, agregarLinea, editarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
-  crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina,
+  crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
+  reordenarGruposCocina,
+  guardarVersionCotizacion, restaurarVersionCotizacion,
   type AgregarLineaInput,
 } from '@/lib/cotizaciones';
+
+export async function reordenarGruposCocinaAction(cocinaId: string, nuevosGrupoIds: string[]): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const cotizacionId = await reordenarGruposCocina(cocinaId, nuevosGrupoIds);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo reordenar los muebles' };
+  }
+}
+
 
 export async function crearCotizacionAction(
   _prev: unknown,
@@ -16,11 +29,37 @@ export async function crearCotizacionAction(
     const cliente_nombre = String(formData.get('cliente_nombre') || '');
     const moneda = (String(formData.get('moneda') || 'USD') as 'COP' | 'USD');
     const trm = Number(formData.get('trm') || 4200);
-    const id = await crearCotizacion({ nombre, cliente_nombre, moneda, trm });
+    const sistema_medida = String(formData.get('sistema_medida') || 'imperial') === 'metrico' ? 'metrico' : 'imperial';
+    let configDefault: Record<string, unknown> | null = null;
+    const configRaw = formData.get('config_default');
+    if (typeof configRaw === 'string' && configRaw) {
+      try { configDefault = JSON.parse(configRaw); } catch { configDefault = null; }
+    }
+    const id = await crearCotizacion({ nombre, cliente_nombre, moneda, trm, sistema_medida, configDefault });
     revalidatePath('/cotizaciones');
     return { ok: true, id };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error al crear' };
+  }
+}
+
+export async function cambiarGrupoLineaAction(lineaId: string, etiqueta: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const cotizacionId = await cambiarGrupoLinea(lineaId, etiqueta);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo reagrupar el módulo' };
+  }
+}
+
+export async function desagruparGrupoAction(grupoId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const cotizacionId = await desagruparGrupo(grupoId);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo desagrupar el grupo' };
   }
 }
 
@@ -44,9 +83,9 @@ export async function crearCocinaAction(cotizacionId: string, nombre: string): P
   }
 }
 
-export async function actualizarCocinaAction(cotizacionId: string, cocinaId: string, nombre: string): Promise<{ ok: boolean; error?: string }> {
+export async function actualizarCocinaAction(cotizacionId: string, cocinaId: string, data: { nombre?: string; cantidad?: number } | string): Promise<{ ok: boolean; error?: string }> {
   try {
-    await actualizarCocina(cocinaId, nombre);
+    await actualizarCocina(cocinaId, data);
     revalidatePath(`/cotizaciones/${cotizacionId}`);
     return { ok: true };
   } catch (e) {
@@ -59,7 +98,7 @@ export async function eliminarCocinaAction(cotizacionId: string, cocinaId: strin
   revalidatePath(`/cotizaciones/${cotizacionId}`);
 }
 
-export async function actualizarCotizacionAction(id: string, patch: { nombre?: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string }): Promise<{ ok: boolean; error?: string }> {
+export async function actualizarCotizacionAction(id: string, patch: { nombre?: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }): Promise<{ ok: boolean; error?: string }> {
   try {
     await actualizarCotizacion(id, patch);
     revalidatePath(`/cotizaciones/${id}`);
@@ -119,5 +158,26 @@ export async function renombrarCotizacionAction(id: string, nombre: string): Pro
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };
+  }
+}
+
+export async function guardarVersionCotizacionAction(cotizacionId: string, nombre?: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await guardarVersionCotizacion(cotizacionId, nombre);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo guardar la versión' };
+  }
+}
+
+export async function restaurarVersionCotizacionAction(cotizacionId: string, versionId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await restaurarVersionCotizacion(cotizacionId, versionId);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    revalidatePath('/cotizaciones');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo restaurar la versión' };
   }
 }
