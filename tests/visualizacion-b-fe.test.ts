@@ -3,6 +3,7 @@ import test from 'node:test';
 import { construirVisualizacion } from '../src/lib/visualizacion';
 import { inferirMontaje } from '../src/lib/visualizacion-config';
 import { calcularGrupoFisico, type PreparedGroupMember } from '../src/lib/group-engine';
+import { type Pieza, type Tablero } from '../src/lib/engine';
 
 test('B-FE: visualización monta gaveta arriba, puerta abajo y fondo_gaveta adentro sin piezas sueltas', () => {
   const piezas = [
@@ -44,10 +45,10 @@ test('B-FE: visualización monta gaveta arriba, puerta abajo y fondo_gaveta aden
     permiteAgrupacion: true,
     calc: {
       dims: { L: 12, A: 30, P: 24 },
-      piezas: piezas as any,
+      piezas: piezas as unknown as Pieza[],
       reglas: [{ tipo_mueble_id: null, variable: 'alto_frente_gaveta', condicion: 'true', valor: '6', prioridad: 5 }],
       preset: { caja: 'caja', refuerzo: 'refuerzo', frente: 'frente', fondo: 'fondo' },
-      tablerosByCode: boards as any,
+      tablerosByCode: boards as Record<string, Tablero>,
       cantosByCalibre: {},
       herrajesByCode: {},
       consumiblesBySelector: {},
@@ -126,10 +127,10 @@ test('B-FE y B combinan correctamente compartiendo laterales y bases/fondos cont
     permiteAgrupacion: true,
     calc: {
       dims: { L: 12, A: 30, P: 24 },
-      piezas: piezasFE as any,
+      piezas: piezasFE as unknown as Pieza[],
       reglas: [{ tipo_mueble_id: null, variable: 'alto_frente_gaveta', condicion: 'true', valor: '6', prioridad: 5 }],
       preset: { caja: 'caja', refuerzo: 'refuerzo', frente: 'frente', fondo: 'fondo' },
-      tablerosByCode: boards as any,
+      tablerosByCode: boards as Record<string, Tablero>,
       cantosByCalibre: {},
       herrajesByCode: {},
       consumiblesBySelector: {},
@@ -147,10 +148,10 @@ test('B-FE y B combinan correctamente compartiendo laterales y bases/fondos cont
     permiteAgrupacion: true,
     calc: {
       dims: { L: 11, A: 30, P: 24 },
-      piezas: piezasB as any,
+      piezas: piezasB as unknown as Pieza[],
       reglas: [{ tipo_mueble_id: null, variable: 'alto_frente_gaveta', condicion: 'true', valor: '6', prioridad: 5 }],
       preset: { caja: 'caja', refuerzo: 'refuerzo', frente: 'frente', fondo: 'fondo' },
-      tablerosByCode: boards as any,
+      tablerosByCode: boards as Record<string, Tablero>,
       cantosByCalibre: {},
       herrajesByCode: {},
       consumiblesBySelector: {},

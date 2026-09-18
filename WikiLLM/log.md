@@ -701,3 +701,7 @@ Se corrigió un defecto en `DisenoEditor.tsx` donde el subcomponente `TipoAgrupa
 
 Se corrigieron los defectos del visor 3D en tipologías con gaveta de madera (`B-FE`, `UB-FE`, `V-FE`): reconocimiento de `fondo_gaveta` como base del cajón (evitando la proyección de paneles `suelto` fuera del mueble a $L+40\text{ mm}$), colocación de la gaveta en el tope superior en muebles con puerta inferior y omisión del falso desdoblamiento por `contraparche`. En `group-engine.ts` se habilitó soporte para piezas continuas con grano girado (cuyo largo corre a lo largo del ancho de fórmula), resolviendo el bloqueo de fondos entre módulos de distinto ancho. Se aplicó la migración `0055_visualizacion_agrupacion_fe.sql` en Supabase habilitando agrupación física continua (`lateral_compartido`, `base`, `refuerzo_delantero`, `refuerzo_trasero`, `fondo`) y metadatos de montaje 3D confirmados.
 
+## [2026-09-18] update | Sincronización de rama Liz desde DEV y corrección de tipos en tests
+
+Se integraron en la rama `LIz` los últimos cambios de `origin/DEV` (41 commits: soporte de familias FE, correcciones 3D, agrupación continua, ajustes de geometría real, migraciones 0020-0055). Se actualizaron dependencias mediante `npm install`, se corrigieron 6 errores de tipado `@typescript-eslint/no-explicit-any` en `tests/visualizacion-b-fe.test.ts` (reemplazando `as any` por `as unknown as Pieza[]` y `Record<string, Tablero>`) dejando `npm run lint` en 0 errores, y se verificó que la suite completa de 133 pruebas y el build de producción (`npm run build`) pasen al 100%.
+
