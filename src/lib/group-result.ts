@@ -82,9 +82,13 @@ export function consolidarGrupo(
     },
   );
   const consumibles: Record<string, number> = {};
+  const cantidadesConsumibles: Record<string, number> = {};
   for (const linea of lineas) {
     for (const [key, value] of Object.entries(linea.consumibles)) {
       consumibles[key] = clean((consumibles[key] ?? 0) + value);
+    }
+    for (const [key, value] of Object.entries(linea.cantidadesConsumibles)) {
+      cantidadesConsumibles[key] = clean((cantidadesConsumibles[key] ?? 0) + value);
     }
   }
 
@@ -99,6 +103,7 @@ export function consolidarGrupo(
     maderaPorRol,
     cantoPorCalibre,
     consumibles,
+    cantidadesConsumibles,
     herrajes,
     costoMadera: sum(lineas.map((linea) => linea.costoMadera)),
     costoCanto: sum(lineas.map((linea) => linea.costoCanto)),

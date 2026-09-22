@@ -20,18 +20,18 @@ test('el frente siempre se presenta con el alto primero', () => {
   assert.deepEqual(enMm(orientarPieza(pieza('frente', 758.8, 377.8))), [377.8, 758.8]);
 });
 
-test('el fondo se ordena por tamaño, porque su eje depende del tipo', () => {
-  // SBFD: intercambiar=false, el vertical (762) va en ancho -> se invierte.
-  assert.deepEqual(enMm(orientarPieza(pieza('fondo', 747, 762))), [762, 747]);
-  // Tipos con intercambiar=true ya traen el mayor en largo -> la fila no cambia.
-  assert.deepEqual(enMm(orientarPieza(pieza('fondo', 874, 442))), [874, 442]);
+test('el fondo conserva los ejes de fabricación', () => {
+  // BACKING de SVFD: largo=A−2mm y ancho=L−16mm, aunque el ancho sea mayor.
+  assert.deepEqual(enMm(orientarPieza(pieza('fondo', 760, 898.4))), [760, 898.4]);
+  // Una orientación de respaldo heredada tampoco se reordena en la tabla.
+  assert.deepEqual(enMm(orientarPieza(pieza('fondo', 747, 762))), [747, 762]);
 });
 
 test('las piezas de carcasa no se reordenan', () => {
   for (const [rol, largo, ancho] of [['caja', 762, 609.6], ['caja', 732, 585.6], ['refuerzo', 732, 80]] as const) {
     assert.deepEqual(enMm(orientarPieza(pieza(rol, largo, ancho))), [largo, ancho], rol);
   }
-  // Tampoco cuando el ancho supera al largo: solo el fondo se ordena por tamaño.
+  // Tampoco cuando el ancho supera al largo.
   assert.deepEqual(enMm(orientarPieza(pieza('caja', 300, 900))), [300, 900]);
 });
 

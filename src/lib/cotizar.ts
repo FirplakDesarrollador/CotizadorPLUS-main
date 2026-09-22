@@ -57,7 +57,7 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
     sb.from('cot_reglas_config').select('*').or(`tipo_mueble_id.is.null,tipo_mueble_id.eq.${inp.tipoId}`).eq('activo', true),
     sb.from('cot_herrajes_plantilla').select('*').eq('tipo_mueble_id', inp.tipoId).order('orden'),
     sb.from('cot_cantos').select('calibre,precio'),
-    sb.from('cot_herrajes').select('codigo,precio,selector_key,categoria'),
+    sb.from('cot_herrajes').select('codigo,precio,selector_key,categoria').eq('activo', true),
   ]);
 
   // Preset final: el preset por defecto cubre cualquier rol que el formulario no envíe (p.ej. "refuerzo").
@@ -142,6 +142,7 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
     descuento: inp.descuento,
     cantoFrentes: inp.cantoFrentes,
     cantoCaja: inp.cantoCaja,
+    rielCodigo: inp.rielCodigo ?? 'RIELTANDEM',
   };
 
   return {
