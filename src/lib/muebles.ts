@@ -26,17 +26,16 @@ export const SISTEMAS_FRENTE: { key: SistemaFrente; label: string; desc: string 
 // largo/ancho como ejes geométricos atados a `visualizacion.intercambiar` de cada
 // pieza (ver WikiLLM/wiki/ejes_fondo_backing.md).
 //
-// El frente siempre se presenta con el alto primero. El fondo se ordena por tamaño
-// porque su eje depende del `intercambiar` del tipo y la tabla no tiene acceso a
-// esa configuración: donde `intercambiar=true` el largo ya es el mayor y la fila no
-// cambia.
+// El frente siempre se presenta con el alto primero. El fondo conserva sus ejes de
+// fabricación: largo = alto útil (A−2mm) y ancho = largo útil (L−16mm). Así el
+// despiece comunica la misma orientación que las fórmulas y el montaje.
 //
 // Vive aquí y no en cada tabla para que el despiece del Simulador y el del HDR no
 // vuelvan a contradecirse.
 export function orientarPieza<T extends { rol: string; largoIn: number; anchoIn: number }>(
   pieza: T,
 ): { largoIn: number; anchoIn: number } {
-  const invertir = pieza.rol === 'frente' || (pieza.rol === 'fondo' && pieza.anchoIn > pieza.largoIn);
+  const invertir = pieza.rol === 'frente';
   return invertir
     ? { largoIn: pieza.anchoIn, anchoIn: pieza.largoIn }
     : { largoIn: pieza.largoIn, anchoIn: pieza.anchoIn };
@@ -47,7 +46,29 @@ export function orientarPieza<T extends { rol: string; largoIn: number; anchoIn:
 // designa el frente de gaveta. `HdrTabla` aplica la misma distinción para elegir
 // entre `DOOR` y `FRENTE`.
 export function nombrePieza(nombre: string, tienePuertas: boolean): string {
+  if (nombre === 'shlef' || nombre === 'shelf') return 'entrepano';
   return nombre === 'frente' && tienePuertas ? 'puerta' : nombre;
+}
+
+// Orden fijo de produccion para la tabla de despiece del Simulador. Las piezas
+// no contempladas conservan su orden relativo despues de las piezas conocidas.
+function ordenPiezaDespiece(nombre: string): number {
+  if (nombre === 'base' || nombre.startsWith('base_')) return 10;
+  if (nombre === 'tapa' || nombre.startsWith('tapa_')) return 20;
+  if (nombre === 'lateral' || nombre.startsWith('lateral_')) return 30;
+  if (nombre === 'refuerzo_delantero' || nombre.startsWith('refuerzo_delantero_') || nombre === 'refuerzo_horizontal') return 40;
+  if (nombre === 'refuerzo_trasero' || nombre.startsWith('refuerzo_trasero_')) return 50;
+  if (nombre === 'entrepano' || nombre === 'shelf' || nombre === 'shlef') return 60;
+  if (nombre === 'frente' || nombre.startsWith('frente_') || nombre === 'puerta' || nombre.startsWith('puerta_')) return 70;
+  if (nombre === 'fondo' || nombre.startsWith('fondo_')) return 80;
+  return 999;
+}
+
+export function ordenarPiezasDespiece<T extends { pieza: string }>(piezas: readonly T[]): T[] {
+  return piezas
+    .map((pieza, index) => ({ pieza, index, orden: ordenPiezaDespiece(pieza.pieza) }))
+    .sort((a, b) => a.orden - b.orden || a.index - b.index)
+    .map(({ pieza }) => pieza);
 }
 
 // Familias con pares base/removible verificados en las hojas de ruta. Fuera de
@@ -73,6 +94,16 @@ export const DB_TIPOLOGIAS: DbTipologia[] = [
   { key: 'DB-4', nc: 4, nb: 0, npeq: 0, desc: '4 cajones iguales · sin barras' },
   { key: 'DB2-1OP', nc: 3, nb: 1, npeq: 0, noculto: 1, desc: '2 cajones + 1 oculto · 1 par de barra' },
 ];
+
+// Cajoneras que comparten el selector comercial de tipologias DB. Mantener
+// esta decision en una sola funcion evita que una ruta aplique el selector sin
+// incluir sus overrides, el riel o el sufijo del codigo.
+export const PREFS_CON_TIPOLOGIA_DB = ['DB', 'UDB', 'UDV'] as const;
+
+export function permiteTipologiaDb(pref: string | null | undefined): boolean {
+  const p = String(pref ?? '').toUpperCase();
+  return (PREFS_CON_TIPOLOGIA_DB as readonly string[]).includes(p);
+}
 
 // Configuraciones rápidas de torre PCFD. Son presets editables: después de
 // aplicarlos el usuario puede ajustar cajones, entrepaños, puertas y zócalo.

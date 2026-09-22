@@ -15,6 +15,7 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
+import { nombrePieza, ordenarPiezasDespiece, permiteTipologiaDb } from '@/lib/muebles';
 
 test('convierte índices de grupo en letras de Excel y permite el camino inverso', () => {
   const cases = new Map([
@@ -89,6 +90,8 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'B', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-SM');
   // Tipología DB y prefijo con guion (FE) conviven con el sufijo SM.
   assert.equal(codigoComercial({ ...base, pref: 'DB', largo: 18, alto: 34.5, dbTipo: 'DB-1S', sistemaFrente: 'gola' }), 'DB18-1S-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'UDB', largo: 18, alto: 28.75, dbTipo: 'DB-2S' }), 'UDB18-2S');
+  assert.equal(codigoComercial({ ...base, pref: 'UDV', largo: 24, alto: 28.75, dbTipo: 'DB-3' }), 'UDV24-3');
   assert.equal(codigoComercial({ ...base, pref: 'B-FE', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-FE-SM');
   // PCFD con gavetas ocultas.
   assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, pcfdCajones: 2 }), 'PCFD12-2OP-PUSH');
@@ -106,4 +109,20 @@ test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {
   assert.equal(parseMedida('24 7/8"'), 24.875);
   assert.ok(Number.isNaN(parseMedida('')));
   assert.ok(Number.isNaN(parseMedida('abc')));
+});
+
+test('habilita tipologia DB solo en las familias de cajoneras compatibles', () => {
+  for (const pref of ['DB', 'UDB', 'UDV', 'udb']) assert.equal(permiteTipologiaDb(pref), true, pref);
+  for (const pref of ['B', 'DV', 'DBL', 'PCFD', '', null]) assert.equal(permiteTipologiaDb(pref), false, String(pref));
+});
+
+test('ordena el despiece de produccion y normaliza el shelf mal escrito', () => {
+  const piezas = ['fondo', 'shlef', 'refuerzo_trasero', 'lateral', 'frente', 'tapa', 'base', 'refuerzo_delantero_removible']
+    .map((pieza) => ({ pieza }));
+  assert.deepEqual(
+    ordenarPiezasDespiece(piezas).map((p) => p.pieza),
+    ['base', 'tapa', 'lateral', 'refuerzo_delantero_removible', 'refuerzo_trasero', 'shlef', 'frente', 'fondo'],
+  );
+  assert.equal(nombrePieza('shlef', false), 'entrepano');
+  assert.equal(nombrePieza('shelf', false), 'entrepano');
 });

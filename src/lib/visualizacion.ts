@@ -71,7 +71,16 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       if(Math.abs(count-Math.round(count))>.001) { warn(`${pref} · ${p.nombre}: cantidad fraccionaria ${count.toFixed(3)} sin montaje físico definido.`); return; }
       if(![l,a,t,count].every(Number.isFinite)||l<=0||a<=0||count>500) { warn(`${pref} · ${p.nombre}: dimensiones o cantidad inválidas.`); return; }
       const u=config.intercambiar?a:l, v=config.intercambiar?l:a;
-      const [w,d,h]=config.plano==='XY'?[u,v,t]:config.plano==='YZ'?[t,v,u]:[u,t,v];
+      let [w,,h]=config.plano==='XY'?[u,v,t]:config.plano==='YZ'?[t,v,u]:[u,t,v];
+      const d=config.plano==='XY'?v:config.plano==='YZ'?v:t;
+      // Un respaldo no puede desbordar la carcasa. Las plantillas antiguas que
+      // guardaron los ejes al revés se corrigen al vuelo si la orientación opuesta
+      // es la única que cabe; el corte y su costo no se alteran.
+      if (funcion==='respaldo' && config.plano==='XZ' && (w>L+1 || h>A+1)) {
+        const alternateW=config.intercambiar?l:a;
+        const alternateH=config.intercambiar?a:l;
+        if (alternateW<=L+1 && alternateH<=A+1) [w,h]=[alternateW,alternateH];
+      }
       items.push({p,config,funcion,l,a,t,count:Math.round(count),source:pi,w,d,h});
     });
     const sideH=Math.max(0,...items.filter(i=>i.funcion==='lateral').map(i=>i.h));
@@ -165,10 +174,18 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'base': z=foot+i*(innerH-h)/Math.max(1,n-1); break;
           case 'tapa': z=A-h; break;
           case 'base_tapa': z=foot+i*(innerH-h)/Math.max(1,n-1); break;
-          case 'estante': z=foot+TC+(i+1)*(innerH-2*TC-h)/(n+1); break;
+          case 'estante': y=P-d; z=foot+TC+(i+1)*(innerH-2*TC-h)/(n+1); break;
           case 'division': x=(i+1)*L/(n+1)-w/2; z=foot+TC; break;
           case 'respaldo': y=baseDepth ?? P-d; z=foot+(innerH-h)/2; break;
-          case 'travesano_frontal': z=drawerSlots[i]?.z+drawerSlots[i]?.h-h; if(!Number.isFinite(z)) z=A-h-i*(innerH-h)/Math.max(1,n); break;
+          case 'travesano_frontal': {
+            const cajonSuperior=drawerSlots[0];
+            // En muebles con una gaveta superior y puertas, los dos refuerzos
+            // horizontales enmarcan la gaveta: uno arriba y otro abajo.
+            if (p.nombre==='refuerzo_horizontal' && doors.length && drawerSlots.length===1 && i===1) z=cajonSuperior.z-h;
+            else z=drawerSlots[i]?.z+drawerSlots[i]?.h-h;
+            if(!Number.isFinite(z)) z=A-h-i*(innerH-h)/Math.max(1,n);
+            break;
+          }
           case 'travesano_posterior': y=P-d; z=foot+i*(innerH-h)/Math.max(1,n-1); break;
           case 'travesano_lateral': x=TC; z=A-h; break;
           case 'frente': {const ds=doorSlots.get(`${item.source}:${k}`)!; x=ds.x; z=ds.z; y=-d; break;}

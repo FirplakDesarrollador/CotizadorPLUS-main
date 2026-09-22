@@ -11,6 +11,7 @@ function breakdown(patch: Partial<Breakdown> = {}): Breakdown {
     cantoPorCalibre: [],
     desperdicio: 0,
     consumibles: {},
+    cantidadesConsumibles: {},
     herrajes: [],
     costoMadera: 0,
     costoCanto: 0,
@@ -38,6 +39,7 @@ test('consolida las asignaciones internas en un único resultado físico y comer
     maderaPorRol: [{ rol: 'caja', codigo: 'M15', cm2: 1500, m2: 0.15, costo: 15000 }],
     cantoPorCalibre: [{ calibre: '22x1', longCm: 100, metros: 1, precio: 20, costo: 2000 }],
     consumibles: { tarugos: 500 },
+    cantidadesConsumibles: { tarugos: 10 },
     herrajes: [{ rol: 'bisagra', codigo: 'B1', cant: 2, precio: 1000, costo: 2000 }],
     costoMadera: 15000,
     costoCanto: 2000,
@@ -57,6 +59,7 @@ test('consolida las asignaciones internas en un único resultado físico y comer
     maderaPorRol: [{ rol: 'caja', codigo: 'M15', cm2: 2900, m2: 0.29, costo: 29000 }],
     cantoPorCalibre: [{ calibre: '22x1', longCm: 180, metros: 1.8, precio: 20, costo: 3600 }],
     consumibles: { tarugos: 700, soportes: 100 },
+    cantidadesConsumibles: { tarugos: 14, soportes: 2 },
     costoMadera: 29000,
     costoCanto: 3600,
     costoConsumibles: 800,
@@ -81,6 +84,7 @@ test('consolida las asignaciones internas en un único resultado físico y comer
   // El consumo facturable se consolida igual que el área neta y el costo.
   assert.deepEqual(result.maderaPorRol, [{ rol: 'caja', codigo: 'M15', cm2: 4400, m2: 0.44, costo: 44000 }]);
   assert.deepEqual(result.consumibles, { tarugos: 1200, soportes: 100 });
+  assert.deepEqual(result.cantidadesConsumibles, { tarugos: 24, soportes: 2 });
   assert.equal(result.precioCop, 110000);
   assert.equal(result.precioHerrajesCop, 3000);
   assert.equal(result.precioConHerrajesCop, 113000);
