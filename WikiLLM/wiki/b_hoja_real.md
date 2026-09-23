@@ -74,11 +74,50 @@ idénticos en las tres piezas.
 sabe que estaba mal en `B` porque una hoja lo demostró. Propagar el cambio sin
 hoja sería convertir una corrección en una suposición.
 
+## Segunda pasada: cantidades, orden y cantos
+
+El primer cruce solo miró medidas. Una revisión posterior verificó también las
+cantidades, el orden del listado y los cantos, y la HDR ahora reproduce la hoja
+**fila por fila**, las 13.
+
+**Ya estaba bien**: las cantidades (1 base, 2 laterales, 2 rieles delanteros, 2
+traseros, 1 entrepaño, 1 base de gaveta, 1 trasero, 1 puerta, 1 frente de gaveta,
+1 backing) y el reparto Color/Blanco. La inferencia por nombre de `HdrTabla`
+—`esVisible()`, que manda a Blanco lo que queda oculto dentro de la carcasa—
+coincide con la hoja en las 13 filas sin excepción.
+
+**Corregido en `0056`**:
+
+| | Antes | Hoja |
+| --- | --- | --- |
+| trasero de gaveta, ancho | `2.6875` = 68.26 mm | **68.00** (`2.67717`) |
+| trasero de gaveta, canto | 2 largos | **1** largo |
+| orden del listado | lateral, base, ref. trasero, ref. delantero | **base, lateral, ref. delantero, ref. trasero** |
+
+El ancho es el mismo caso que el `L-4.13` de `DB`: un valor truncado que sobrevivió
+en unos tipos mientras otros ya tenían el exacto. `BMW`, `POD`, `SDB`, `UDB` y `UV`
+ya usaban `2.67717`, y `DB` `68/25.4`.
+
+El canto de un solo largo tiene sentido físico: es la cara superior del trasero, y
+la inferior queda oculta contra la base de la gaveta.
+
+El orden solo afecta la letra que la HDR asigna a cada fila (A, B, C…), pero
+producción lee por esa letra.
+
+### Rezagados en el ancho del trasero
+
+`BBL`, `DV`, `DVE`, `PCFD`, `UB`, `UDV` y `V` siguen con `2.6875`. No se tocaron:
+la hoja es de `B`. Nótese que `UB` y `V` sí recibieron las tres correcciones de
+`0054` — esta es una cuarta diferencia que aquella migración no cubría porque
+todavía no se había mirado el canto.
+
 ## Cobertura
 
 `tests/b12-hoja-real.test.ts` fija las 10 piezas contra la hoja, comprueba que las
 tres medidas corregidas no vuelvan a su valor anterior, y verifica que la
 geometría escale con la medida del mueble — con el entrepaño como única constante.
+Tres casos más cubren la segunda pasada: el orden y las cantidades del listado
+(13 filas), los cantos de cada pieza, y los 68 mm exactos del trasero de gaveta.
 
 La comparación se hace sobre el par de medidas sin importar el orden, porque la
 hoja lista la mayor primero mientras el motor usa ejes geométricos; ver

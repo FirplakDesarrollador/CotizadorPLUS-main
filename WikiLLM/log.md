@@ -701,3 +701,23 @@ Se corrigió un defecto en `DisenoEditor.tsx` donde el subcomponente `TipoAgrupa
 
 Se corrigieron los defectos del visor 3D en tipologías con gaveta de madera (`B-FE`, `UB-FE`, `V-FE`): reconocimiento de `fondo_gaveta` como base del cajón (evitando la proyección de paneles `suelto` fuera del mueble a $L+40\text{ mm}$), colocación de la gaveta en el tope superior en muebles con puerta inferior y omisión del falso desdoblamiento por `contraparche`. En `group-engine.ts` se habilitó soporte para piezas continuas con grano girado (cuyo largo corre a lo largo del ancho de fórmula), resolviendo el bloqueo de fondos entre módulos de distinto ancho. Se aplicó la migración `0055_visualizacion_agrupacion_fe.sql` en Supabase habilitando agrupación física continua (`lateral_compartido`, `base`, `refuerzo_delantero`, `refuerzo_trasero`, `fondo`) y metadatos de montaje 3D confirmados.
 
+
+## [2026-09-18] fix | Segunda pasada sobre B: cantidades y cantos; corregido el trasero de gaveta y el orden del listado
+
+El cruce anterior con la hoja de `B12` solo habia mirado medidas. Esta revision verifico ademas **cantidades, orden del listado y cantos**, y ahora la HDR reproduce la hoja **fila por fila**, las 13.
+
+**Ya estaba bien**: las cantidades (1 base, 2 laterales, 2 rieles delanteros, 2 traseros, 1 entrepano, 1 base de gaveta, 1 trasero, 1 puerta, 1 frente de gaveta, 1 backing) y el reparto Color/Blanco — la inferencia por nombre de `esVisible()` en `HdrTabla` coincide con la hoja en las 13 filas sin excepcion.
+
+**Corregido en `0056_b_trasero_gaveta_y_orden.sql`**:
+
+| | Antes | Hoja |
+| --- | --- | --- |
+| trasero de gaveta, ancho | `2.6875` = 68.26 mm | **68.00** (`2.67717`) |
+| trasero de gaveta, canto | 2 largos | **1** largo |
+| orden del listado | lateral, base, ref. trasero, ref. delantero | **base, lateral, ref. delantero, ref. trasero** |
+
+El ancho es el mismo patron que el `L-4.13` de `DB`: un valor truncado que sobrevivio en unos tipos mientras otros ya tenian el exacto — `BMW`, `POD`, `SDB`, `UDB` y `UV` ya usaban `2.67717` y `DB` `68/25.4`. El canto de un solo largo tiene sentido fisico: es la cara superior del trasero, la inferior queda oculta contra la base de la gaveta. El orden solo afecta la letra que la HDR asigna a cada fila, pero produccion lee por esa letra.
+
+**Rezagados anotados**: `BBL`, `DV`, `DVE`, `PCFD`, `UB`, `UDV` y `V` siguen con `2.6875`. Nota util: `UB` y `V` si recibieron las tres correcciones de `0054`, asi que esta es una cuarta diferencia que aquella migracion no cubria porque el canto todavia no se habia mirado.
+
+Tres casos nuevos en `tests/b12-hoja-real.test.ts`: orden y cantidades del listado, cantos de cada pieza, y los 68mm exactos. Migracion idempotente. 136/136 tests y typecheck limpios.
