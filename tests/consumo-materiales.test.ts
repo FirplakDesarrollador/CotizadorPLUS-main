@@ -72,7 +72,10 @@ test('una puerta angosta sigue la regla global de una hoja hasta 21 pulgadas', (
   const puerta = r.piezas.find((p) => p.pieza === 'frente');
   assert.equal(r.vars.n_puertas, 1);
   assert.equal(puerta?.cant, 1);
-  assert.equal(puerta?.anchoIn, 28.75 - 3.2 / 25.4);
+  // El motor redondea `anchoIn` a 3 decimales (`+aIn.toFixed(3)`), así que se
+  // compara con tolerancia en vez de contra el valor sin redondear.
+  assert.ok(Math.abs((puerta?.anchoIn ?? 0) - (28.75 - 3.2 / 25.4)) < 0.001,
+    `alto de puerta ${puerta?.anchoIn}, esperaba ~${(28.75 - 3.2 / 25.4).toFixed(3)}`);
 });
 
 test('los metros de canto incluyen los 5 cm de merma por arista', () => {
