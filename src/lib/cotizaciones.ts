@@ -295,6 +295,7 @@ async function recalcularGrupo(grupoId: string) {
       pref,
       largo: inputs[i].largo,
       alto: inputs[i].alto,
+      prof: inputs[i].prof,
       unidad: inputs[i].unidad,
       sistema,
       sistemaFrente: inputs[i].sistemaFrente,

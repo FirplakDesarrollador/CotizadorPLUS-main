@@ -35,7 +35,7 @@ export type Pieza = {
   nombre: string; rol_tablero: string;
   formula_cantidad: string; formula_largo: string | null; formula_ancho: string | null;
   resta_largo?: number; resta_ancho?: number;
-  cantos?: { calibre?: string; largos?: number; anchos?: number; despEdges?: number } | null;
+  cantos?: { calibre?: string; largos?: number; anchos?: number; despEdges?: number; forceCalibre?: boolean } | null;
   tarugos?: number; soportes?: number;
   modo_agrupacion?: 'local' | 'continua' | 'lateral_compartido';
   clave_fusion?: string | null;
@@ -253,10 +253,15 @@ export function calcularMueble(inp: CalcInput): Breakdown {
       // la caja e interiores (refuerzo/fondo) usan 0.45mm. (Antes mapeaba TODO 18mm a 22x1,
       // sobre-cobrando el canto de la caja.)
       const esp = Number(tab?.espesor_mm);
-      if (esp === 18) cal = (pz.rol_tablero === 'frente') ? '22x1' : '22x0,45';
-      else if (esp === 15) cal = (pz.rol_tablero === 'frente') ? '19x1' : '19x0,45';
-      if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
-      if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
+      // Una hoja de ruta puede exigir un canto distinto al derivado por rol
+      // (p. ej. carcasa abierta de 18mm con canto visible de 1mm). En ese caso
+      // la plantilla lo declara explícitamente y conserva el calibre de corte.
+      if (!c.forceCalibre) {
+        if (esp === 18) cal = (pz.rol_tablero === 'frente') ? '22x1' : '22x0,45';
+        else if (esp === 15) cal = (pz.rol_tablero === 'frente') ? '19x1' : '19x0,45';
+        if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
+        if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
+      }
       const largos = c.largos || 0, anchos = c.anchos || 0;
       cantoLargos = largos; cantoAnchos = anchos; cantoCalibreResuelto = cal;
       // Se agrupa por la clave NORMALIZADA, no por el texto tal cual. El calibre puede

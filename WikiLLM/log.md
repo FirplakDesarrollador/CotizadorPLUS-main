@@ -817,3 +817,38 @@ La migración `0074` desplaza los entrepaños a la cara frontal del BACKING para
 
 La migración `0075` divide el ancho útil por puerta, por lo que las dos puertas se muestran juntas en la visualización UW.
 
+## [2026-09-23] update | Nueva tipología abierta OW3018
+
+La migración `0076` incorpora OW como superior abierto de 18mm, sin puertas, herrajes ni cartón, y reproduce las siete piezas de la hoja OW3018.
+
+## [2026-09-23] update | OW3018: medidas estables, visualización y cartón
+
+La migración `0077` fija los descuentos de 18mm de OW3018, alinea visualmente su BASE extendida y reactiva el cartón en materiales.
+
+## [2026-09-23] update | OW3018 según hoja con shelf
+
+La migración `0078` actualiza la BASE a 726×304,8mm y agrega el shelf móvil de 726×266,7mm con cuatro soportes.
+
+## [2026-09-23] update | Regla paramétrica de entrepaños en OW
+
+La migración `0079` vincula el shelf OW con `n_entrepanos`, conservando uno como valor predeterminado de OW3018.
+
+## [2026-09-23] update | DB sin herrajes opcional
+
+El Simulador y Cotizaciones dejan de forzar `conHerrajes=true` para tipologías DB; al desmarcarlo se excluyen todos los herrajes, incluido riel y barras.
+
+## [2026-09-23] update | Alto en código comercial de UW y OW
+
+`codigoComercial()` muestra el alto para las familias superiores UW y OW, por ejemplo `UW1236`.
+
+## [2026-09-23] update | Profundidad de 24 in en código W
+
+La familia W concatena la profundidad cuando equivale a 24 in, por ejemplo `W302024`, en Simulador, cotizaciones y HDR.
+
+## [2026-09-23] update | Normalización Supabase de códigos W a 24 in
+
+La migración `0080` actualiza de forma idempotente los códigos W previos sin profundidad y conserva el sufijo `-SM` cuando corresponda.
+
+
+## [2026-09-23] ingest | Comparación de consumos PRUEBA 1
+Se compararon 15 filas de madera y 15 de cantos/herrajes contra Supabase y el motor local. Se documentaron diferencias de madera, barras y consumibles UW, y el cruce inconsistente DB19-1s/DB12-1s. Sin cambios en la base de datos ni en el motor.

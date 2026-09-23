@@ -108,7 +108,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   }
 
   const codigo = tipoSel
-    ? codigoComercial({ pref: tipoSel.pref, largo, alto, unidad, sistema: 'imperial', sistemaFrente })
+    ? codigoComercial({ pref: tipoSel.pref, largo, alto, prof, unidad, sistema: 'imperial', sistemaFrente })
     : '';
 
   return (
