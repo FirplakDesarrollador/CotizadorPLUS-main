@@ -112,7 +112,7 @@ export function sufijoSistemaFrente(sistemaFrente: string | null | undefined): s
 // (W2936 = 29 de largo, 36 de alto): a diferencia de los demás tipos su alto sí
 // varía y no es un dato implícito del tipo. WCC queda fuera a propósito — es un
 // módulo de clóset (categoria='closet'), no un superior de pared.
-const PREFS_ALTO_EN_CODIGO = ['W', 'WBL', 'WER', 'WLD', 'WPC', 'PN'] as const;
+const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'PN'] as const;
 
 export function incluyeAltoEnCodigo(pref: string | null | undefined): boolean {
   const base = String(pref ?? '').toUpperCase().split('-')[0];
@@ -123,6 +123,7 @@ export type CodigoComercialInput = {
   pref: string;
   largo: number;
   alto: number;
+  prof?: number;
   unidad: UnidadDim;
   sistema: SistemaMedida;
   sistemaFrente?: string | null;
@@ -136,12 +137,18 @@ export type CodigoComercialInput = {
 // cadena para el mismo módulo. Antes cada uno lo armaba por su cuenta y divergían
 // (el formulario omitía el alto: `W29-SM` en vez de `W2936-SM`).
 export function codigoComercial(input: CodigoComercialInput): string {
-  const { pref, largo, alto, unidad, sistema } = input;
+  const { pref, largo, alto, prof, unidad, sistema } = input;
   const base = codigoModulo(pref, largo, unidad, sistema);
   const altoSufijo = incluyeAltoEnCodigo(pref) ? anchoCodigo(alto, unidad, sistema) : '';
+  // Los superiores W de 24 in identifican esa profundidad en su código. La
+  // comparación se hace en pulgadas para conservar la regla en cm o mm.
+  const esWProf24 = String(pref).toUpperCase().split('-')[0] === 'W'
+    && prof != null
+    && Math.abs(convertirExacto(prof, unidad, 'in') - 24) < 0.001;
+  const profSufijo = esWProf24 ? anchoCodigo(prof!, unidad, sistema) : '';
   const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
   const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
-  return base + altoSufijo + dbSufijo + pcfdSufijo + sufijoSistemaFrente(input.sistemaFrente);
+  return base + altoSufijo + profSufijo + dbSufijo + pcfdSufijo + sufijoSistemaFrente(input.sistemaFrente);
 }
 
 export function codigoGrupo(codigos: string[]): string {

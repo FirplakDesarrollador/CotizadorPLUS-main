@@ -21,22 +21,28 @@ lo que el usuario veía antes de guardar. Las cuatro superficies ahora llaman a
 ## Orden de los segmentos
 
 ```text
-pref + largo [+ alto] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM]
+pref + largo [+ alto] [+ profundidad-W24] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM]
 ```
 
 1. **`pref` + largo** — vía `codigoModulo()`. En prefijos con guion la medida se
    inserta antes del guion: `B-FE` + 12" → `B12-FE` (ver migración
    `0041_codigo_modulo_medida_antes_del_sufijo.sql`).
 2. **Alto** — solo en los tipos de `PREFS_ALTO_EN_CODIGO` (ver abajo).
-3. **Tipología DB** — `DB18` + `DB-1S` → `DB18-1S`. El motor solo conoce el
+3. **Profundidad W de 24 in** — se concatena solo en la familia `W` cuando la
+   profundidad equivale exactamente a 24 in. Por ejemplo, largo 30, alto 20 y
+   profundidad 24 producen `W302024`; una profundidad distinta conserva `W3020`.
+4. **Tipología DB** — `DB18` + `DB-1S` → `DB18-1S`. El motor solo conoce el
    prefijo base `DB`; la tipología vive en el formulario.
-4. **PCFD con gavetas ocultas** — `PCFD12-2OP-PUSH`.
-5. **Sistema de frente** — `-SM` cuando `sistemaFrente === 'gola'`, vía
+5. **PCFD con gavetas ocultas** — `PCFD12-2OP-PUSH`.
+6. **Sistema de frente** — `-SM` cuando `sistemaFrente === 'gola'`, vía
    `sufijoSistemaFrente()`. Ver [variantes_frente_gola_sm.md](variantes_frente_gola_sm.md).
 
 ## Qué tipos llevan el alto en el código
 
-`PREFS_ALTO_EN_CODIGO = ['W', 'WBL', 'WER', 'WLD', 'WPC', 'PN']`
+`PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'PN']`
+
+Las familias superiores `UW` y `OW` también codifican su alto: por ejemplo,
+`UW1236` corresponde a 12 de largo por 36 de alto.
 
 La familia `W` de superiores de pared y los paneles `PN` son los únicos cuyo
 alto varía de forma independiente del tipo; en el resto el alto es un dato
@@ -71,6 +77,11 @@ reescribiría códigos ya guardados en el próximo recálculo.
 - **HDR**: título del módulo en el buscador manual.
 
 ## Estado en Supabase
+
+La migración `0080_codigo_modulo_w_prof_24.sql` normaliza las líneas `W` de
+profundidad 24 in (o 60,96 cm en sistema métrico) que conservaron el formato
+anterior, incluyendo la variante con `-SM`. Solo actualiza el código construido
+sin la profundidad, por lo que es idempotente y no toca códigos ya normalizados.
 
 La regla está normalizada en la base real. `0046_codigo_modulo_alto_familia_w.sql`
 corrigió las líneas guardadas con el código corto (`PN14` → `PN1422`): 16 líneas

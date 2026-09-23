@@ -173,11 +173,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const tipoPref = tipos.find((t) => t.id === tipoId)?.pref ?? '';
   const usaTipologiaDb = permiteTipologiaDb(tipoPref);
   const esPCFD = tipoPref === 'PCFD';
-  const usaRiel = usaTipologiaDb || esPCFD;
-  // Un DB sin herrajes no lleva el costo real de riel/barras en el precio
-  // (herrajesPlantilla queda vacío cuando conHerrajes=false), así que se
-  // fuerza al elegir el tipo, no en un efecto (evita un hook nuevo después
-  // del `if (!isMounted) return null` de arriba).
+  const usaRiel = (usaTipologiaDb && conHerrajes) || esPCFD;
   function handleTipoChange(v: string) {
     setTipoId(v);
     // El simulador hereda la configuración del módulo anterior a propósito
@@ -193,11 +189,9 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setRielCodigo('RIELTANDEM');
     setPcfdConfig('');
     if ((tipos.find((t) => t.id === v)?.pref ?? '') === 'W') setProf(convertir(12, 'in', unidad));
-    if (permiteTipologiaDb(tipos.find((t) => t.id === v)?.pref)) setConHerrajes(true);
   }
   function aplicarDbTipo(k: string) {
     setDbTipo(k);
-    setConHerrajes(true);
     const t = DB_TIPOLOGIAS.find((x) => x.key === k);
     if (t) { setNcajones(String(t.nc)); setNbarras(String(t.nb)); }
   }
@@ -255,8 +249,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       prof: modulo.prof,
       unidad,
       preset: modulo.preset,
-      // Un DB sin herrajes no lleva el costo real de riel/barras en el precio.
-      conHerrajes: permiteTipologiaDb(pref) ? true : modulo.conHerrajes,
+      conHerrajes: modulo.conHerrajes,
       trm,
       modoFrentes: modulo.modoFrentes,
       overrides: Object.keys(overrides).length ? overrides : undefined,
@@ -450,13 +443,14 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   // el código sigue la unidad con la que se está simulando.
   const sistemaCodigo: SistemaMedida = unidad === 'in' ? 'imperial' : 'metrico';
 
-  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'sistemaFrente' | 'dbTipo' | 'ncajones'>) => {
+  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'sistemaFrente' | 'dbTipo' | 'ncajones'>) => {
     const pref = tipos.find((item) => item.id === valores.tipoId)?.pref ?? '';
     if (!pref) return '';
     return codigoComercial({
       pref,
       largo: valores.largo,
       alto: valores.alto,
+      prof: valores.prof,
       unidad,
       sistema: sistemaCodigo,
       sistemaFrente: valores.sistemaFrente,
@@ -469,7 +463,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   const codigoResultado = store.modulos.length > 0
     ? codigoGrupo(store.modulos.map(codigoDeValores).filter(Boolean))
-    : codigoDeValores({ tipoId, largo, alto, sistemaFrente, dbTipo, ncajones });
+    : codigoDeValores({ tipoId, largo, alto, prof, sistemaFrente, dbTipo, ncajones });
 
   const editingPosition = store.editingId
     ? store.modulos.findIndex((modulo) => modulo.id === store.editingId) + 1
@@ -705,14 +699,11 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input
             type="checkbox"
-            checked={usaTipologiaDb ? true : conHerrajes}
-            disabled={usaTipologiaDb}
+            checked={conHerrajes}
             onChange={(e) => setConHerrajes(e.target.checked)}
-            title={usaTipologiaDb ? 'Las cajoneras con tipología DB siempre incluyen herrajes: sin esto, el riel y las barras no entrarían en el precio.' : undefined}
           /> Incluir herrajes
-          {usaTipologiaDb && <span className="text-xs text-slate-400 ml-1">(obligatorio: riel y barras)</span>}
         </label>
-        {(usaTipologiaDb || conHerrajes) && herrajesTipo.length > 0 && (
+        {conHerrajes && herrajesTipo.length > 0 && (
           <div className="rounded-lg border border-slate-200 p-2.5">
             <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes incluidos (destilda para excluir)</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">

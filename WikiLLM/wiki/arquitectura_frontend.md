@@ -41,7 +41,15 @@ Esto reemplazó un `Number(largo)` directo: `Number("24 7/8")` da `NaN`, que al 
 2. El `checked` del checkbox se muestra como `esDB ? true : conHerrajes` (nunca aparece desmarcado en DB, incluso si el estado subyacente quedó en `false` por un módulo editado de antes de este fix).
 3. El valor que se envía al guardar/calcular también se fuerza (`esDB ? true : conHerrajes` en el payload de `AddLineForm.tsx`; `pref.startsWith('DB') ? true : modulo.conHerrajes` en `inputFromModule()` de `CotizadorForm.tsx`) — así el precio queda correcto aunque el estado de React no se haya sincronizado.
 
-### 4.1.1 Despiece UVFD y orden de producción (2026-09-21)
+### 4.1.1 Actualización: DB sin herrajes opcional (2026-09-23)
+
+La regla anterior queda reemplazada: `conHerrajes` ya no se fuerza para `DB`,
+`UDB` ni `UDV`. En Simulador y Cotizaciones el checkbox puede desmarcarse; el
+payload conserva `false`, `cotizar.ts` omite toda la plantilla de herrajes y se
+eliminan rieles, barras, manijas y cualquier otro herraje del costo. El selector
+de riel y el desglose de herrajes solo se muestran cuando están incluidos.
+
+### 4.1.2 Despiece UVFD y orden de producción (2026-09-21)
 
 La puerta de `UVFD` se calcula con la regla global `n_puertas`: una puerta hasta 21″ de largo y dos desde 24″. La migración `0056_uvfd_puertas_por_ancho.sql` sustituye la cantidad fija `2` que duplicaba la puerta de módulos angostos (por ejemplo, UVFD12). En el Simulador, la tabla **Piezas (despiece)** se ordena para presentación como Base, Tapa, Laterales, Refuerzo delantero, Refuerzo trasero, Entrepaño, Frente y Fondo; `shlef`/`shelf` se normalizan a `entrepano` solo al mostrarse.
 

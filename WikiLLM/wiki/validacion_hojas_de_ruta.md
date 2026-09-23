@@ -483,6 +483,22 @@ automática: la puerta se ancla arriba (`Z=A-H`), el shelf superior fijo queda a
 `TC+198,15mm` desde la base interna, y el BACKING se coloca delante de los rails
 traseros (`Y=P-TC-TB`).
 
+### OW3018 — superior abierto de 18 mm (2026-09-23)
+
+La hoja `OW3018 MBLE SUP COC SIN PUERTAS` agrega la tipología `OW`, activa y
+sin puertas ni herrajes. A 30×18×12in, `0076` reproduce siete piezas:
+base 726×304,8mm, tapa 726×304,8mm, dos laterales 457,2×304,8mm, dos rails
+traseros 726×80mm, un shelf 726×266,7mm y BACKING 435,2×740mm. La carcasa de
+18mm usa canto visible de 1mm cuando la hoja lo indica, mediante
+`forceCalibre`. `0077` fija los descuentos de 36mm y habilita nuevamente el
+cartón. `0078` sustituye la BASE profunda de una hoja anterior por la base de
+profundidad completa y añade el shelf móvil con cuatro soportes, delante del
+fondo en la visualización.
+
+`0079` conecta el shelf a la regla transversal `n_entrepanos`: OW3018 conserva
+un entrepaño por defecto, pero cualquier ajuste de la cantidad actualiza el
+despiece, los cuatro soportes por shelf y su distribución visual.
+
 `0073` reserva además una holgura de 40mm debajo del shelf 0 fijo y distribuye
 los entrepaños interiores en el espacio restante, para que no queden solapados
 ni visualmente pegados.
