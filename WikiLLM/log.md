@@ -873,3 +873,17 @@ La migración `0080` actualiza de forma idempotente los códigos W previos sin p
 
 ## [2026-09-23] ingest | Comparación de consumos PRUEBA 1
 Se compararon 15 filas de madera y 15 de cantos/herrajes contra Supabase y el motor local. Se documentaron diferencias de madera, barras y consumibles UW, y el cruce inconsistente DB19-1s/DB12-1s. Sin cambios en la base de datos ni en el motor.
+
+## [2026-09-23] fix | Suite en verde tras integrar DEV: fixture regenerado y dos asserts desactualizados
+
+`DEV` llego con **4 tests en rojo**. Verificados como preexistentes en `origin/DEV` (9b0c211) levantando un worktree limpio y corriendolos alli — no los introdujo el merge.
+
+**Los dos de montaje de cajon**: el fixture de visualizacion estaba 10 campos desfasado solo para `B`, y en `frente_cajon` tenia `rol_tablero: null` y `ancho: '0'` — un placeholder que dejaba la pieza de altura cero, asi que `construirVisualizacion` la omitia por "dimension nula" y los tests reventaban con `TypeError` al no encontrarla en la escena. **Regenerado desde el catalogo real**: 62 tipos (antes 57; entran `B-FE`, `OW`, `UB-FE`, `UW`, `V-FE`), 459 piezas, 84 reglas. Esto salda la deuda anotada en [ejes_fondo_backing.md](wiki/ejes_fondo_backing.md) y de paso sumo 5 tipos de cobertura al test generico.
+
+**`db-sin-herrajes`**: la logica nueva de barras estabilizadoras las **deriva del despiece** —un par por cada trasero de gaveta de 183mm— e ignora el `formula_cantidad` de la plantilla. El fixture de ese test no tenia piezas, asi que la fila de barra aportaba 0 y el total daba 300 en vez de 340. Se le anadio ese trasero: ahora el test ejercita la logica nueva en vez de sortearla, que es mejor que bajar la expectativa a 300.
+
+**`una puerta angosta`**: comparaba con `assert.equal` contra `28.75 - 3.2/25.4` sin redondear, pero el motor redondea `anchoIn` a 3 decimales (`+aIn.toFixed(3)`). Pasa a comparar con tolerancia.
+
+**Ademas**: la migracion local `0056` se renumero a `0081` porque DEV ya habia usado ese numero (llega a 0080); ya estaba aplicada en Supabase y es idempotente, y se alineo la referencia en sus `notas`. El conflicto del merge estuvo solo en este log, donde ambas ramas anadieron entradas al final: se conservan las dos.
+
+159/159 tests, typecheck, lint (0 errores) y build limpios.
