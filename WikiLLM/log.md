@@ -708,7 +708,7 @@ El cruce anterior con la hoja de `B12` solo habia mirado medidas. Esta revision 
 
 **Ya estaba bien**: las cantidades (1 base, 2 laterales, 2 rieles delanteros, 2 traseros, 1 entrepano, 1 base de gaveta, 1 trasero, 1 puerta, 1 frente de gaveta, 1 backing) y el reparto Color/Blanco — la inferencia por nombre de `esVisible()` en `HdrTabla` coincide con la hoja en las 13 filas sin excepcion.
 
-**Corregido en `0056_b_trasero_gaveta_y_orden.sql`**:
+**Corregido en `0081_b_trasero_gaveta_y_orden.sql`**:
 
 | | Antes | Hoja |
 | --- | --- | --- |
@@ -721,3 +721,155 @@ El ancho es el mismo patron que el `L-4.13` de `DB`: un valor truncado que sobre
 **Rezagados anotados**: `BBL`, `DV`, `DVE`, `PCFD`, `UB`, `UDV` y `V` siguen con `2.6875`. Nota util: `UB` y `V` si recibieron las tres correcciones de `0054`, asi que esta es una cuarta diferencia que aquella migracion no cubria porque el canto todavia no se habia mirado.
 
 Tres casos nuevos en `tests/b12-hoja-real.test.ts`: orden y cantidades del listado, cantos de cada pieza, y los 68mm exactos. Migracion idempotente. 136/136 tests y typecheck limpios.
+
+## [2026-09-18] update | Sincronización de rama Liz desde DEV y corrección de tipos en tests
+
+Se integraron en la rama `LIz` los últimos cambios de `origin/DEV` (41 commits: soporte de familias FE, correcciones 3D, agrupación continua, ajustes de geometría real, migraciones 0020-0055). Se actualizaron dependencias mediante `npm install`, se corrigieron 6 errores de tipado `@typescript-eslint/no-explicit-any` en `tests/visualizacion-b-fe.test.ts` (reemplazando `as any` por `as unknown as Pieza[]` y `Record<string, Tablero>`) dejando `npm run lint` en 0 errores, y se verificó que la suite completa de 133 pruebas y el build de producción (`npm run build`) pasen al 100%.
+
+## [2026-09-21] update | Tipología DB disponible para UDB y UDV en el Simulador
+
+El selector de tipología DB se habilitó también para las cajoneras `UDB` y `UDV`. La regla compartida aplica los overrides de cajones, barras y gavetas especiales, habilita el riel, obliga a incluir herrajes y preserva el sufijo comercial de la tipología en el código del mueble.
+
+## [2026-09-21] update | UVFD de una puerta en anchos estrechos y orden del despiece
+
+Se reemplazó la cantidad fija de 2 puertas de UVFD por `n_puertas`, que respeta la regla global de una puerta hasta 21″ y dos desde 24″. La tabla de despiece del Simulador quedó ordenada para producción y normaliza `shlef`/`shelf` como `entrepano` al mostrarlo.
+
+## [2026-09-21] update | SVFD36 alineado con hoja de ruta real
+
+Se comparó la plantilla de `SVFD36` con la hoja de ruta de dos puertas. Base, laterales, puertas y refuerzos traseros ya coincidían; se corrigieron el refuerzo delantero de 127mm a 96mm y el fondo a 760×898,4mm (`A−2mm` × `L−16mm`). Se agregó una prueba de regresión que cubre las nueve piezas físicas.
+
+## [2026-09-21] update | UDV1228¾-2S con gavetas pequeñas y grande reales
+
+La hoja de UDV de 12×28¾×21 confirmó que la tipología `-2S` lleva dos gavetas pequeñas de 139,7mm y una grande de 441,25mm, con traseros de 68/68/183mm. Se convirtió UDV a plantilla mixta por `n_cajones_pequenos`, se corrigieron bases de gaveta a 199,8×441mm y BACKING a 728,25×288,8mm. Regresión incluida para las 18 piezas.
+
+## [2026-09-22] update | Migraciones UVFD, SVFD y UDV aplicadas y verificadas en Supabase
+
+Se corrigió `scripts/run-sql.mjs` para leer `.env` como respaldo de `.env.local`, donde este proyecto guarda las credenciales de administración. Se aplicaron `0056`, `0057` y `0058` en Supabase (HTTP 201 cada una) y una consulta posterior confirmó las fórmulas y piezas nuevas. Typecheck limpio; lint sin errores (13 advertencias preexistentes); enlaces de WikiLLM: 29 válidos, sin huérfanos.
+
+## [2026-09-22] update | Eje visual del fondo SVFD corregido
+
+La migración `0059_svfd_fondo_visualizacion_ejes.sql` configura `intercambiar=true` para representar L−16mm sobre X y A−2mm sobre Z. Se añadió una regresión geométrica para un SVFD de 36×30×21.
+
+## [2026-09-22] update | Patrón estándar de BACKING propagado
+
+La hoja 760×746mm para una carcasa 762×762mm confirmó `A−2mm` × `L−16mm`. La migración `0060` actualiza las familias estándar rezagadas y UDV; la visualización protege respaldos XZ heredados contra desbordes.
+
+## [2026-09-22] update | Ejes de BACKING visibles en el despiece
+
+La tabla del Simulador y el HDR dejan de ordenar los fondos por tamaño: conservan largo=`A−2mm` y ancho=`L−16mm`, por ejemplo 760×898,4mm.
+
+## [2026-09-22] update | Tarugos estándar de base y tapa
+
+La migración `0061` asigna 8 tarugos a cada base o tapa estructural y excluye las bases de gaveta; se añadió regresión de consumo.
+
+## [2026-09-22] update | Cantidad de consumibles en Materiales
+
+El resultado incluye unidades por consumible y la tabla Materiales presenta la cantidad de tarugos junto con su costo calculado.
+
+## [2026-09-22] update | Lint de visualización corregido
+
+Se eliminó la mutabilidad innecesaria de la profundidad del panel en la construcción de la escena, dejando el lint sin errores.
+
+## [2026-09-22] update | Compatibilidad de resultados de consumibles
+
+La tabla Materiales tolera resultados guardados antes de `cantidadesConsumibles`, evitando un error de render mientras los cálculos nuevos muestran las unidades.
+
+## [2026-09-22] update | Barras por trasero de gaveta alto
+
+El motor agrega un par BARRAEST por cada `trasero_gaveta*` de 183mm y cubre plantillas heredadas sin fila de barra; se añadieron regresiones para traseros de 183 y 68mm.
+
+## [2026-09-22] update | Traseros bajos para DB-4
+
+La migración `0062` configura los cuatro traseros de DB-4 a 68mm; se añadieron regresiones de corte y visualización por gaveta.
+
+## [2026-09-22] update | Hoja real DB33-4
+
+Validada la referencia DB33-4: se corrigió el frente DB-4 a 187,7mm mediante `0063`; base, rieles, fondos de gaveta, traseros de 68mm y BACKING coinciden.
+
+## [2026-09-22] update | Refuerzo delantero vertical en SBFD/SVFD
+
+La migración `0064` cambia el plano de montaje de `refuerzo_delantero` a XZ para ambas tipologías; se añadió regresión de visualización.
+
+## [2026-09-22] update | Entrepaños al fondo y cajones superiores
+
+Los estantes se montan contra el respaldo; `0065` convierte los frentes de cajón heredados en ranuras de gaveta para ubicar frente, base y trasero en la parte superior.
+
+## [2026-09-22] update | Refuerzos alrededor de gaveta superior
+
+La visualización sitúa el segundo `refuerzo_horizontal` bajo la gaveta superior en muebles con puertas, eliminando su posición intermedia sobre la puerta.
+
+## [2026-09-22] update | Soporte de entrepaño metálico 5mm
+
+La migración `0066` registra el soporte solicitado a $45,7/und, desactiva la referencia anterior del selector y el cálculo consulta solo herrajes activos.
+
+## [2026-09-22] update | Hoja real UW1336
+
+La migración `0067` corrige base/tapa, rails, tres entrepaños, puerta y BACKING de UW contra la hoja UW1336, sin activar la tipología.
+
+## [2026-09-22] update | UW1336 sin filas heredadas de gola
+
+La migración `0068` anula los perfiles de gola no presentes en la hoja, dejando el despiece UW1336 en las 11 piezas reales.
+
+## [2026-09-22] update | Activación de UW1336
+
+La migración `0069` habilita la tipología UW validada para que pueda revisarse desde el Simulador.
+
+## [2026-09-22] update | UW1336: shelf superior fijo y ejes del fondo
+
+La migración `0070` sustituye los soportes del shelf superior por 8 tarugos y corrige el orden Largo×Ancho del BACKING F según la hoja UW1336.
+
+## [2026-09-22] update | UW1336: descuentos para ancho exterior de 13in
+
+La migración `0071` corrige las fórmulas de las piezas señaladas para reproducir la hoja UW1336 a 13×36×12in.
+
+## [2026-09-22] update | Montaje visual validado para UW1336
+
+La migración `0072` fija la puerta arriba, el shelf superior a 198,15mm de la base interna y el BACKING delante de los rails traseros.
+
+## [2026-09-22] update | Separación de entrepaños interiores UW1336
+
+La migración `0073` deja 40mm de holgura desde el shelf superior fijo y redistribuye los entrepaños interiores.
+
+## [2026-09-22] update | Entrepaños UW1336 delante del fondo
+
+La migración `0074` desplaza los entrepaños a la cara frontal del BACKING para evitar superposición visual.
+
+## [2026-09-22] update | Puertas UW lado a lado
+
+La migración `0075` divide el ancho útil por puerta, por lo que las dos puertas se muestran juntas en la visualización UW.
+
+## [2026-09-23] update | Nueva tipología abierta OW3018
+
+La migración `0076` incorpora OW como superior abierto de 18mm, sin puertas, herrajes ni cartón, y reproduce las siete piezas de la hoja OW3018.
+
+## [2026-09-23] update | OW3018: medidas estables, visualización y cartón
+
+La migración `0077` fija los descuentos de 18mm de OW3018, alinea visualmente su BASE extendida y reactiva el cartón en materiales.
+
+## [2026-09-23] update | OW3018 según hoja con shelf
+
+La migración `0078` actualiza la BASE a 726×304,8mm y agrega el shelf móvil de 726×266,7mm con cuatro soportes.
+
+## [2026-09-23] update | Regla paramétrica de entrepaños en OW
+
+La migración `0079` vincula el shelf OW con `n_entrepanos`, conservando uno como valor predeterminado de OW3018.
+
+## [2026-09-23] update | DB sin herrajes opcional
+
+El Simulador y Cotizaciones dejan de forzar `conHerrajes=true` para tipologías DB; al desmarcarlo se excluyen todos los herrajes, incluido riel y barras.
+
+## [2026-09-23] update | Alto en código comercial de UW y OW
+
+`codigoComercial()` muestra el alto para las familias superiores UW y OW, por ejemplo `UW1236`.
+
+## [2026-09-23] update | Profundidad de 24 in en código W
+
+La familia W concatena la profundidad cuando equivale a 24 in, por ejemplo `W302024`, en Simulador, cotizaciones y HDR.
+
+## [2026-09-23] update | Normalización Supabase de códigos W a 24 in
+
+La migración `0080` actualiza de forma idempotente los códigos W previos sin profundidad y conserva el sufijo `-SM` cuando corresponda.
+
+
+## [2026-09-23] ingest | Comparación de consumos PRUEBA 1
+Se compararon 15 filas de madera y 15 de cantos/herrajes contra Supabase y el motor local. Se documentaron diferencias de madera, barras y consumibles UW, y el cruce inconsistente DB19-1s/DB12-1s. Sin cambios en la base de datos ni en el motor.

@@ -386,6 +386,23 @@ Validación end-to-end (piezas y reglas reales leídas de Supabase, corridas por
 - `DB15-1S` (L=15, A=30, P=24): total de piezas activas (Σcant) = **18**, igual al conteo físico de Firplak.
 - `SBFD30` (L=30, A=30, P=24, tras `0032`): `refuerzo_trasero` a 80,01mm (antes 82,55mm), `frente` 2×(377,80×758,80mm) con reveal correcto en ambos lados.
 
+### UDV1228¾-2S — tres gavetas mixtas de línea U (2026-09-21)
+
+La hoja `UDV1228 3/4-2S MBLE INF BAÑO 3 GAVETAS PEQUEÑA CARB2` confirma 18
+piezas físicas a `L=12″`, `A=28¾″`, `P=21″`: base 274,8×509,4mm, laterales
+730,25×533,4mm, tres rails delanteros y dos traseros de 274,8×80mm, tres
+bases de gaveta de 199,8×441mm, dos traseros de 187,8×68mm, uno de
+187,8×183mm, dos frentes de 139,7×301,6mm, uno de 441,25×301,6mm y BACKING
+728,25×288,8mm. `0058_udv_gavetas_mixtas_hoja_real.sql` convierte la
+tipología UDV en paramétrica por `n_cajones_pequenos`, corrige la base de
+gaveta y el fondo. Regresión: `tests/udv1228-2s-hoja-real.test.ts`.
+
+**Aplicación:** `0056_uvfd_puertas_por_ancho.sql`,
+`0057_svfd36_hoja_real.sql` y `0058_udv_gavetas_mixtas_hoja_real.sql` fueron
+aplicadas en Supabase el 2026-09-22. Una consulta posterior confirmó la regla
+`n_cajones_pequenos=0` de UDV y todas las fórmulas esperadas de UVFD, SVFD y
+UDV.
+
 ### Pendiente tras `0032`: ancho de `trasero_gaveta` en familias legado
 
 `0032` corrigió el **largo** de `trasero_gaveta` en B/DV/DVE/PCFD/UB/UDV/V, pero dejó su **ancho** (alto de la pieza, hoy `2.6875 in` = 68mm) sin tocar. A diferencia del largo — que es un offset geométrico universal —, si esa altura debe ser 68mm (cajón corto, como en los tipos generados `POD`/`UV`/`BMW`) o 183mm (cajón estándar, como `trasero_gaveta_grande` de DB) es específico de cada familia y no hay una hoja de ruta puntual por tipo para confirmarlo. ~~Tampoco se tocó el alto de frente (`A` sin reveal) de `B`, `UB` ni `V`~~ — **resuelto en `0036`** (2026-09-10): el usuario confirmó la regla general "todos los muebles de puertas... la altura es la altura del mueble - 3.2mm", aplicable también a `B`/`UB`/`V` (mismo patrón de pieza `frente` que BFD/SBFD/etc., solo con `formula_ancho='A'` en vez de `'A-RV'`). La sospecha anterior de que `B` necesitaba una fórmula propia (`~A-158.8mm`) resultó ser un caso distinto: esa cifra viene de un `B` **híbrido** con cajón + puerta compartiendo el alto (ej. `B12`, ver §5.3 de `arquitectura_frontend.md` — el `frente` de la puerta ahí mide 301,6mm de 758,8mm totales, porque una gaveta se lleva el resto), no del `B` de solo puertas. Ese caso híbrido **sigue sin resolver** — la plantilla actual de `B` no reparte el alto entre puerta(s) y gaveta(s) cuando conviven; `formula_ancho='A-RV'` solo es correcto cuando `B` no tiene cajones.
@@ -416,6 +433,82 @@ Regenerar con:
 ```bash
 python scripts/generar_tipologias.py "Hojas de ruta 2.xlsx" --out db/migrations/0029_tipologias_nuevas.sql
 ```
+
+### SVFD36 — mueble inferior lavamanos de dos puertas (2026-09-21)
+
+La hoja de ruta compartida (`SVFD36 MBLE INF LVM 2 PUERTAS CARB2`) confirma
+la plantilla para `L=36″`, `A=30″`, `P=21″`: base 884,4×509,4mm, dos laterales
+762×533,4mm, un refuerzo delantero 884,4×96mm, dos refuerzos traseros
+884,4×80mm, dos puertas 758,8×454mm y fondo 760×898,4mm. La plantilla previa
+solo difería en el refuerzo delantero (127mm) y el fondo (899,4×762mm).
+`0057_svfd36_hoja_real.sql` los corrige a 96mm y a `A−2mm` × `L−16mm`,
+respectivamente. Regresión: `tests/svfd36-hoja-real.test.ts` cubre las nueve
+piezas físicas de la hoja.
+
+La visualización usa esos ejes en sentido inverso (`ancho` sobre X y `largo`
+sobre Z). La migración `0059_svfd_fondo_visualizacion_ejes.sql` marca
+`intercambiar=true` para el fondo SVFD, con regresión en
+`tests/visualizacion.test.ts` para comprobar 898,4mm de ancho y 760mm de alto.
+
+### DB33-4 — cajonera de cuatro gavetas (2026-09-22)
+
+La hoja `DB33-4 MBLE INF COC 4 GAVETAS CARB2` confirma: base 808,2×585,6mm,
+cuatro rieles delanteros y dos traseros de 808,2×80mm, cuatro fondos de gaveta
+733,2×492mm, cuatro traseros de 721,2×68mm, frentes 187,7×835mm y BACKING
+760×822,2mm. La migración `0063_db4_frente_hoja_real.sql` corrige el alto de
+frente DB-4 de 187,3 a 187,7mm; `0062` ya había corregido sus traseros a 68mm.
+
+### UW1336 — superior de una puerta y tres entrepaños (2026-09-22)
+
+La hoja `UW1336 MBLE SUP COC 1 PUERTA 3 ENTREPAÑOS OPEN SHELF CARB2` confirma
+base/tapa 300,2×304,8mm, laterales 914,4×304,8mm, dos rails traseros
+300,2×80mm, un estante superior 300,2×281,8mm, dos estantes interiores
+299,2×266,7mm, puerta 715,22×327mm y BACKING 898,4×314,2mm. `0067` reemplaza
+la geometría heredada de UW y añade las piezas que faltaban. `0068` excluye las
+dos filas de gola heredadas que no existen en la hoja. La migración `0069` activa
+UW después de esta validación, por solicitud del usuario, para poder revisarla en
+el Simulador. `0070` corrige los ejes del BACKING para conservar el largo de
+898,4mm y el ancho de 314,2mm, y configura el estante superior como fijo: 8
+tarugos y ningún soporte.
+
+La referencia usa un largo exterior de 13in (330,2mm), aunque base, tapa, rails
+y shelf 0 terminan en 300,2mm por el descuento de 30mm de los laterales. `0071`
+resta esos 30mm y corrige los ejes restantes: shelves interiores 299,2mm,
+puerta 715,22×327mm y BACKING 898,4×314,2mm.
+
+### Montaje visual UW1336
+
+La migración `0072` guarda coordenadas explícitas para evitar la distribución
+automática: la puerta se ancla arriba (`Z=A-H`), el shelf superior fijo queda a
+`TC+198,15mm` desde la base interna, y el BACKING se coloca delante de los rails
+traseros (`Y=P-TC-TB`).
+
+### OW3018 — superior abierto de 18 mm (2026-09-23)
+
+La hoja `OW3018 MBLE SUP COC SIN PUERTAS` agrega la tipología `OW`, activa y
+sin puertas ni herrajes. A 30×18×12in, `0076` reproduce siete piezas:
+base 726×304,8mm, tapa 726×304,8mm, dos laterales 457,2×304,8mm, dos rails
+traseros 726×80mm, un shelf 726×266,7mm y BACKING 435,2×740mm. La carcasa de
+18mm usa canto visible de 1mm cuando la hoja lo indica, mediante
+`forceCalibre`. `0077` fija los descuentos de 36mm y habilita nuevamente el
+cartón. `0078` sustituye la BASE profunda de una hoja anterior por la base de
+profundidad completa y añade el shelf móvil con cuatro soportes, delante del
+fondo en la visualización.
+
+`0079` conecta el shelf a la regla transversal `n_entrepanos`: OW3018 conserva
+un entrepaño por defecto, pero cualquier ajuste de la cantidad actualiza el
+despiece, los cuatro soportes por shelf y su distribución visual.
+
+`0073` reserva además una holgura de 40mm debajo del shelf 0 fijo y distribuye
+los entrepaños interiores en el espacio restante, para que no queden solapados
+ni visualmente pegados.
+
+`0074` ubica ambos entrepaños por delante del BACKING (`Y=P-TC-TB-D`), de modo
+que su borde trasero llega a la cara frontal del fondo sin atravesarlo.
+
+Para configuraciones UW de dos puertas, `0075` calcula el ancho de cada frente
+como `(L-n_puertas×3,2mm)/n_puertas`. Esto conserva la puerta única de UW1336
+(327mm) y monta dos puertas lado a lado cuando la regla define `n_puertas=2`.
 
 ### Pendientes
 

@@ -67,6 +67,14 @@ test('la cantidad mostrada explica el costo, en tablero y en canto', () => {
   assert.ok(Math.abs(sumaCanto - r.costoCanto) < 0.05);
 });
 
+test('una puerta angosta sigue la regla global de una hoja hasta 21 pulgadas', () => {
+  const r = calcularMueble({ ...input(0), dims: { L: 12, A: 28.75, P: 21 } });
+  const puerta = r.piezas.find((p) => p.pieza === 'frente');
+  assert.equal(r.vars.n_puertas, 1);
+  assert.equal(puerta?.cant, 1);
+  assert.equal(puerta?.anchoIn, 28.75 - 3.2 / 25.4);
+});
+
 test('los metros de canto incluyen los 5 cm de merma por arista', () => {
   const r = calcularMueble(input(0));
   const IN2CM = 2.54;

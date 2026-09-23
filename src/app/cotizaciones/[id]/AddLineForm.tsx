@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, permiteTipologiaDb, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
@@ -161,20 +161,11 @@ export default function AddLineForm({
   // Mapeos y opciones
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const prefTipo = tipos.find((t) => t.id === tipoId)?.pref ?? '';
-  const esDB = prefTipo.startsWith('DB');
+  const esDB = permiteTipologiaDb(prefTipo);
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
-  const usaRiel = esDB || esPCFD;
+  const usaRiel = (esDB && conHerrajes) || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
 
-  // Un DB sin herrajes no lleva el costo real de riel/barras en el precio
-  // (herrajesPlantilla queda vacío cuando conHerrajes=false). Se fuerza a
-  // incluido al entrar a una tipología DB, ajustando el estado durante el
-  // render en vez de en un efecto.
-  const [prevEsDB, setPrevEsDB] = useState(esDB);
-  if (esDB !== prevEsDB) {
-    setPrevEsDB(esDB);
-    if (esDB && !conHerrajes) setConHerrajes(true);
-  }
   const tipo = tipos.find((t) => t.id === tipoId);
   const prefProyecto = (t: Tipo | undefined) => sistemaMedida === 'metrico'
     ? (t?.pref_metrico || t?.pref || '')
@@ -262,7 +253,7 @@ export default function AddLineForm({
       prof: parseMedida(prof),
       unidad,
       preset,
-      conHerrajes: esDB ? true : conHerrajes,
+      conHerrajes,
       trm,
       // recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
       cantidad,
@@ -271,6 +262,7 @@ export default function AddLineForm({
             pref: prefProyecto(tipo),
             largo: parseMedida(largo),
             alto: parseMedida(alto),
+            prof: parseMedida(prof),
             unidad,
             sistema: sistemaMedida,
             sistemaFrente,
@@ -488,16 +480,13 @@ export default function AddLineForm({
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input
               type="checkbox"
-              checked={esDB ? true : conHerrajes}
-              disabled={esDB}
+              checked={conHerrajes}
               onChange={(e) => setConHerrajes(e.target.checked)}
-              title={esDB ? 'Los muebles DB siempre incluyen herrajes: sin esto, el riel y las barras no entrarían en el precio.' : undefined}
             /> Con herrajes
           </label>
-          {esDB && <span className="text-xs text-slate-400">Obligatorio en DB (riel y barras)</span>}
         </div>
 
-        {(esDB || conHerrajes) && herrajesTipo.length > 0 && (
+        {conHerrajes && herrajesTipo.length > 0 && (
           <div className="col-span-full rounded-lg border border-slate-200 p-2.5">
             <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes incluidos (destilda para excluir)</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">

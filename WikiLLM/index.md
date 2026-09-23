@@ -42,3 +42,5 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 
 ## Fuentes (Raw)
 *(Aún no hay fuentes raw)*
+
+- [Comparación PRUEBA 1](wiki/comparacion_prueba1.md) - Consumos del listado frente a plantillas vigentes, diferencias e inconsistencia DB19-1s/DB12-1s.

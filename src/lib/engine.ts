@@ -35,7 +35,7 @@ export type Pieza = {
   nombre: string; rol_tablero: string;
   formula_cantidad: string; formula_largo: string | null; formula_ancho: string | null;
   resta_largo?: number; resta_ancho?: number;
-  cantos?: { calibre?: string; largos?: number; anchos?: number; despEdges?: number } | null;
+  cantos?: { calibre?: string; largos?: number; anchos?: number; despEdges?: number; forceCalibre?: boolean } | null;
   tarugos?: number; soportes?: number;
   modo_agrupacion?: 'local' | 'continua' | 'lateral_compartido';
   clave_fusion?: string | null;
@@ -78,6 +78,7 @@ export type CalcInput = {
   descuento?: number;           // descuento final (ej. 0.10). Se aplica al precio.
   cantoFrentes?: string;        // override de calibre de canto para piezas de frente (por proyecto)
   cantoCaja?: string;           // override de calibre de canto para piezas de caja (por proyecto)
+  rielCodigo?: string;          // código de riel ('RIELTANDEM', etc.)
 };
 
 // Convierte dimensiones de la unidad de entrada a pulgadas (el motor trabaja en pulgadas).
@@ -155,6 +156,7 @@ export type Breakdown = {
   // 5 cm por arista, ya sumados dentro de `longCm`.
   desperdicio: number;
   consumibles: Record<string, number>;
+  cantidadesConsumibles: Record<string, number>;
   herrajes: { rol: string; codigo: string | null; cant: number; precio: number; costo: number }[];
   costoMadera: number;
   costoCanto: number;
@@ -222,8 +224,22 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     // aplica a esta medida (ej. la gaveta de BBL, cuyo `L-30.70` solo tiene sentido por
     // encima de 30.7"). Sin acotar, el área sale negativa y RESTA tablero y canto al
     // mueble, abaratándolo. Se acota a 0: la pieza no aporta, en vez de descontar.
-    const lIn = Math.max(0, num(pz.formula_largo) - (pz.resta_largo || 0));
-    const aIn = Math.max(0, num(pz.formula_ancho) - (pz.resta_ancho || 0));
+    let lIn = Math.max(0, num(pz.formula_largo) - (pz.resta_largo || 0));
+    let aIn = Math.max(0, num(pz.formula_ancho) - (pz.resta_ancho || 0));
+
+    // Regla: Si el mueble usa RIELTANDEM, si alguna medida es ~68.3 mm o variación (ej. 2.6875 in = 68.26 mm),
+    // se estandariza a exactamente 68 mm (68 / 25.4 in).
+    const rielEsTandem = (!inp.rielCodigo || inp.rielCodigo === 'RIELTANDEM') &&
+      (!inp.herrajesPlantilla || inp.herrajesPlantilla.length === 0 || inp.herrajesPlantilla.some((h) => h.herraje_codigo === 'RIELTANDEM'));
+    if (rielEsTandem) {
+      if (Math.abs(lIn * 25.4 - 68.2625) < 0.35 || Math.abs(lIn * 25.4 - 68.3) < 0.35) {
+        lIn = 68 / 25.4;
+      }
+      if (Math.abs(aIn * 25.4 - 68.2625) < 0.35 || Math.abs(aIn * 25.4 - 68.3) < 0.35) {
+        aIn = 68 / 25.4;
+      }
+    }
+
     const area = cant * lIn * aIn * IN2CM * IN2CM;
     // Solo suma área si la pieza tiene rol de tablero; piezas "canto-only" (sin rol) aportan únicamente canto.
     if (pz.rol_tablero) areaPorRol[pz.rol_tablero] = (areaPorRol[pz.rol_tablero] || 0) + area;
@@ -237,10 +253,15 @@ export function calcularMueble(inp: CalcInput): Breakdown {
       // la caja e interiores (refuerzo/fondo) usan 0.45mm. (Antes mapeaba TODO 18mm a 22x1,
       // sobre-cobrando el canto de la caja.)
       const esp = Number(tab?.espesor_mm);
-      if (esp === 18) cal = (pz.rol_tablero === 'frente') ? '22x1' : '22x0,45';
-      else if (esp === 15) cal = (pz.rol_tablero === 'frente') ? '19x1' : '19x0,45';
-      if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
-      if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
+      // Una hoja de ruta puede exigir un canto distinto al derivado por rol
+      // (p. ej. carcasa abierta de 18mm con canto visible de 1mm). En ese caso
+      // la plantilla lo declara explícitamente y conserva el calibre de corte.
+      if (!c.forceCalibre) {
+        if (esp === 18) cal = (pz.rol_tablero === 'frente') ? '22x1' : '22x0,45';
+        else if (esp === 15) cal = (pz.rol_tablero === 'frente') ? '19x1' : '19x0,45';
+        if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
+        if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
+      }
       const largos = c.largos || 0, anchos = c.anchos || 0;
       cantoLargos = largos; cantoAnchos = anchos; cantoCalibreResuelto = cal;
       // Se agrupa por la clave NORMALIZADA, no por el texto tal cual. El calibre puede
@@ -303,6 +324,12 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     carton: cartonUnd * pc('carton'),
     etiquetas: inp.etiquetasUnd * pc('etiqueta'),
   };
+  const cantidadesConsumibles = {
+    tarugos,
+    soportes,
+    carton: cartonUnd,
+    etiquetas: inp.etiquetasUnd,
+  };
   const costoConsumibles = Object.values(consumibles).reduce((a, b) => a + b, 0);
 
   const costoSinHerrajes = costoMadera + costoCanto + costoConsumibles;
@@ -310,20 +337,38 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   // Herrajes
   let costoHerrajes = 0; const herrajesDet: Breakdown['herrajes'] = [];
   const ESTRUCTURAL = new Set(['pata', 'tornillo', 'riel', 'barra']);
+  // Cada trasero alto de gaveta (183mm) requiere un par de barras
+  // estabilizadoras. Se deriva del despiece real, no de una tipología manual.
+  const paresBarras = piezasDet.reduce((total, pieza) => (
+    /^trasero_gaveta/.test(pieza.pieza) && Math.abs(pieza.anchoIn * 25.4 - 183) < 1
+      ? total + pieza.cant
+      : total
+  ), 0);
   // Herrajes excluidos manualmente por la línea (por rol). Permite Open con/sin bisagras,
   // KF sin hardware, o casos donde el cliente compra ciertos herrajes aparte (Omar/Infinitum).
   const excluidos = new Set((inp.herrajesExcluidos || []).map((r) => String(r).toLowerCase()));
+  let tieneBarraPlantilla = false;
   for (const hp of (inp.herrajesPlantilla || [])) {
     // "Sin frentes": la carcasa conserva sus herrajes (queda lista para frentes). Kit de frentes: solo herraje de puerta.
     if (modo === 'solo_frentes' && ESTRUCTURAL.has(hp.rol)) continue;
     // Sistema de frente gola/SM: conserva bisagras y herrajes funcionales, pero no lleva manijas.
     if (vars.gola === 1 && String(hp.rol).toLowerCase() === 'manija') continue;
     if (excluidos.has(String(hp.rol).toLowerCase())) continue;
-    const cant = num(hp.formula_cantidad);
+    const esBarra = String(hp.rol).toLowerCase() === 'barra';
+    if (esBarra) tieneBarraPlantilla = true;
+    const cant = esBarra ? paresBarras : num(hp.formula_cantidad);
     const precio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
     const costo = cant * precio;
     costoHerrajes += costo;
     herrajesDet.push({ rol: hp.rol, codigo: hp.herraje_codigo, cant, precio, costo: +costo.toFixed(2) });
+  }
+  // Algunas plantillas heredadas no incluyen la fila de barra. Si el cálculo
+  // lleva herrajes y existen traseros de 183mm, se agrega el par estándar.
+  if (paresBarras > 0 && !tieneBarraPlantilla && inp.herrajesPlantilla?.length && modo !== 'solo_frentes' && !excluidos.has('barra')) {
+    const precio = Number(inp.herrajesByCode.BARRAEST?.precio || 0);
+    const costo = paresBarras * precio;
+    costoHerrajes += costo;
+    herrajesDet.push({ rol: 'barra', codigo: 'BARRAEST', cant: paresBarras, precio, costo: +costo.toFixed(2) });
   }
 
   const costoConHerrajes = costoSinHerrajes + costoHerrajes;
@@ -347,7 +392,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   const precioConHerrajesUsd = ((precioCop * descF) + (precioHerrajesCop * descF)) / inp.trm; // Se remueve precioConHerrajesCopConRecargo
 
   return {
-    vars, piezas: piezasDet, maderaPorRol, cantoPorCalibre, consumibles, herrajes: herrajesDet,
+    vars, piezas: piezasDet, maderaPorRol, cantoPorCalibre, consumibles, cantidadesConsumibles, herrajes: herrajesDet,
     desperdicio: inp.desperdicio,
     costoMadera, costoCanto, costoConsumibles, costoSinHerrajes, costoHerrajes, costoConHerrajes,
     precioCop, /* precioCopConRecargo, */ precioUsd,

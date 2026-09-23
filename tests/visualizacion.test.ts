@@ -117,3 +117,87 @@ test('W-SM: el lateral se corta 1" menos que el alto nominal',()=>{
   assert.ok(Math.abs(wEscena(1).lateral.h-889)<.1,'lateral con gola debe ser 889mm (35")');
   assert.ok(Math.abs(wEscena(0).lateral.h-914.4)<.1,'lateral con manija sigue en 914.4mm (36")');
 });
+
+test('SVFD: el fondo conserva ancho L-16mm y alto A-2mm en el dibujo',()=>{
+  const m=member('SVFD');
+  m.calc.dims={L:36,A:30,P:21};
+  const fondo=m.calc.piezas.find(p=>p.nombre==='fondo')!;
+  fondo.formula_largo='A-0.07874';
+  fondo.formula_ancho='L-0.62992';
+  fondo.visualizacion={version:1,funcion:'respaldo',plano:'XZ',intercambiar:true,confirmado:false};
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const respaldo=scene.paneles.find(p=>p.funcion==='respaldo')!;
+  assert.ok(respaldo,'SVFD debe incluir el fondo');
+  assert.ok(Math.abs(respaldo.w-898.4)<.1,`ancho mostrado ${respaldo.w}mm debe ser L-16mm`);
+  assert.ok(Math.abs(respaldo.h-760)<.1,`alto mostrado ${respaldo.h}mm debe ser A-2mm`);
+  assert.ok(respaldo.z>=-0.1 && respaldo.z+respaldo.h<=762.1,'el fondo debe caber dentro de los laterales');
+});
+
+test('respaldo con ejes heredados no se dibuja fuera de una carcasa no cuadrada',()=>{
+  const m=member('SVFD');
+  m.calc.dims={L:36,A:30,P:21};
+  const fondo=m.calc.piezas.find(p=>p.nombre==='fondo')!;
+  fondo.formula_largo='A-0.07874';
+  fondo.formula_ancho='L-0.62992';
+  // Simula una configuración persistida anterior a la corrección de ejes.
+  fondo.visualizacion={version:1,funcion:'respaldo',plano:'XZ',intercambiar:false,confirmado:false};
+  const respaldo=construirVisualizacion([m],calcularGrupoFisico([m])).paneles.find(p=>p.funcion==='respaldo')!;
+  assert.ok(respaldo.w<=36*25.4+1 && respaldo.h<=30*25.4+1,'el respaldo debe permanecer dentro de la carcasa');
+  assert.ok(Math.abs(respaldo.w-898.4)<.1 && Math.abs(respaldo.h-760)<.1,'se debe elegir la orientación que cabe');
+});
+
+test('DB-4 visualiza los cuatro traseros bajos en sus gavetas',()=>{
+  const m=member('DB',{n_cajones:4,n_cajones_pequenos:0});
+  const trasero=m.calc.piezas.find(p=>p.nombre==='trasero_gaveta')!;
+  trasero.formula_ancho='n_cajones == 4 ? 68/25.4 : 183/25.4';
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const traseros=scene.paneles.filter(p=>p.funcion==='trasero_gaveta');
+  assert.equal(traseros.length,4);
+  assert.ok(traseros.every(p=>Math.abs(p.h-68)<.1),'cada trasero DB-4 debe medir 68mm de alto');
+  assert.equal(new Set(traseros.map(p=>p.cajon)).size,4,'cada trasero debe quedar vinculado a su gaveta');
+});
+
+for (const pref of ['SBFD','SVFD']) test(`${pref}: el refuerzo delantero se monta vertical`,()=>{
+  const m=member(pref);
+  const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
+  const altoMm=pref==='SBFD'?128:96;
+  refuerzo.formula_ancho=String(altoMm/25.4);
+  refuerzo.visualizacion={version:1,funcion:'travesano_frontal',plano:'XZ',intercambiar:false,confirmado:false};
+  const panel=construirVisualizacion([m],calcularGrupoFisico([m])).paneles.find(p=>p.nombre==='refuerzo_delantero')!;
+  assert.ok(Math.abs(panel.h-altoMm)<.1,`${altoMm}mm deben estar sobre el eje vertical`);
+  assert.ok(panel.d<=16,'el refuerzo vertical debe tener solo el espesor en profundidad');
+});
+
+test('los entrepaños se apoyan contra el fondo del mueble',()=>{
+  const m=member('B');
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const estante=scene.paneles.find(p=>p.funcion==='estante')!;
+  assert.ok(estante,'B debe incluir el entrepaño');
+  assert.ok(Math.abs(estante.y+estante.d-24*25.4)<.1,'el borde posterior del entrepaño debe coincidir con el fondo');
+});
+
+test('el cajón se monta arriba junto a su frente de cajón',()=>{
+  const m=member('B');
+  const frente=m.calc.piezas.find(p=>p.nombre==='frente_cajon')!;
+  frente.visualizacion={version:1,funcion:'frente_gaveta',plano:'XZ',intercambiar:false,confirmado:false};
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const frenteCajon=scene.paneles.find(p=>p.nombre==='frente_cajon')!;
+  const base=scene.paneles.find(p=>p.funcion==='base_gaveta')!;
+  const trasero=scene.paneles.find(p=>p.funcion==='trasero_gaveta')!;
+  assert.ok(frenteCajon.z>24*25.4/2,'el frente de cajón debe estar en la mitad superior');
+  assert.equal(base.cajon,frenteCajon.cajon);
+  assert.equal(trasero.cajon,frenteCajon.cajon);
+  assert.ok(base.z>24*25.4/2 && trasero.z>24*25.4/2,'base y trasero deben seguir el cajón superior');
+});
+
+test('los refuerzos horizontales enmarcan la gaveta superior sobre las puertas',()=>{
+  const m=member('B');
+  const frente=m.calc.piezas.find(p=>p.nombre==='frente_cajon')!;
+  frente.visualizacion={version:1,funcion:'frente_gaveta',plano:'XZ',intercambiar:false,confirmado:false};
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const frenteCajon=scene.paneles.find(p=>p.nombre==='frente_cajon')!;
+  const refuerzos=scene.paneles.filter(p=>p.nombre==='refuerzo_horizontal').sort((a,b)=>b.z-a.z);
+  assert.equal(refuerzos.length,2);
+  assert.ok(Math.abs(refuerzos[0].z-(frenteCajon.z+frenteCajon.h-refuerzos[0].h))<.1,'primer refuerzo sobre el cajón');
+  assert.ok(Math.abs(refuerzos[1].z-(frenteCajon.z-refuerzos[1].h))<.1,'segundo refuerzo bajo el cajón');
+});

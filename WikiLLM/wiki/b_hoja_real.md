@@ -62,17 +62,25 @@ buena. Ninguno de los dos tiene líneas de cotización guardadas, así que
 `0054_ub_v_geometria_como_b.sql` no recosteó nada. `B`, `UB` y `V` quedan
 idénticos en las tres piezas.
 
-### Lo que sigue rezagado, a propósito
+### Fondos estándar confirmados después
+
+Una hoja posterior con carcasa de 762×762mm, base 732×585,6mm y BACKING
+760×746mm confirma el patrón estándar de respaldo: `A−2mm` × `L−16mm`. La
+migración `0060_backing_estandar_hoja_real.sql` lo propaga a `BBL`, `BBLFD`,
+`BFD`, `BOMH`, `DV`, `DVE`, `SBFD`, `SV`, `UBFD` y `VFD`, y fija
+`visualizacion.intercambiar=true`. `UDV` ya tenía el corte correcto; solo se
+normalizó su eje visual.
+
+### Tipologías con fondo especial
 
 | Fórmula antigua | Tipos | Por qué se dejan |
 | --- | --- | --- |
 | entrepaño `P*0.5` | `BBL` | Esquinero ciego, sin variante FE que lo respalde |
-| base_gaveta `L-2.95` | `DV`, `DVE`, `PCFD`, `UDV` | Sin variante FE; ninguno tiene hoja |
-| fondo `L-TC`/`A` | `BBL`, `BBLFD`, `BFD`, `BOMH`, `SBFD`, `SV`, `SVFD`, `UBFD`, `VFD`, `DV`, `DVE`, `UDV` | Sin variante FE. `SBFD` y `BFD` además suman 15 líneas guardadas |
+| base_gaveta `L-2.95` | `DV`, `DVE`, `PCFD` | Sin variante FE; ninguno tiene hoja |
+| fondo especial | Esquineros, superiores, muebles con zócalo o panel removible | Su respaldo tiene holguras o montaje propios y no se homogeniza sin una hoja específica |
 
-`L-TC`/`A` no es necesariamente incorrecto: es la fórmula de 12 tipos y solo se
-sabe que estaba mal en `B` porque una hoja lo demostró. Propagar el cambio sin
-hoja sería convertir una corrección en una suposición.
+La hoja de ruta posterior elimina la incertidumbre para las familias estándar
+listadas arriba. Las tipologías especiales conservan su fórmula propia.
 
 ## Segunda pasada: cantidades, orden y cantos
 
@@ -86,7 +94,7 @@ traseros, 1 entrepaño, 1 base de gaveta, 1 trasero, 1 puerta, 1 frente de gavet
 —`esVisible()`, que manda a Blanco lo que queda oculto dentro de la carcasa—
 coincide con la hoja en las 13 filas sin excepción.
 
-**Corregido en `0056`**:
+**Corregido en `0081`**:
 
 | | Antes | Hoja |
 | --- | --- | --- |

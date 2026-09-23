@@ -63,6 +63,11 @@ la carcasa.
 898.4 × 720.6 = 0.6474 m²`). El fondo tampoco lleva canto. Lo único equivocado
 era qué medida es el largo y cuál el ancho.
 
+Como protección adicional, `construirVisualizacion()` invierte solo un respaldo
+XZ heredado cuando su orientación guardada excede la carcasa y la orientación
+opuesta cabe. Así el dibujo no sale de los límites por una configuración antigua;
+no modifica el corte, el costo ni la configuración persistida.
+
 > Nota: `0048` cambió después la medida del backing con gola de `A-0.62992`
 > (898.4 mm) a `A-1.62992` (873.0 mm), porque el lateral de `W-SM` se corta 1"
 > más corto que el alto nominal y el fondo debe seguir al lateral. Eso no altera
@@ -110,18 +115,35 @@ solo tiene un `intercambiar`.
 
 ## Orden de columnas en las tablas de despiece
 
-El orden de la hoja es presentación, no geometría, así que no vive en las
-fórmulas sino en `orientarPieza()` (`src/lib/muebles.ts`):
+El orden de la tabla conserva los ejes de fabricación, salvo los frentes que se
+presentan por alto × ancho. Para el BACKING estándar se muestra explícitamente
+`Largo=A−2mm` y `Ancho=L−16mm`, aunque el ancho sea mayor. Esto permite leer,
+por ejemplo, `760 × 898,4mm` tal como se calcula y se monta.
 
 ```ts
-const invertir = pieza.rol === 'frente' || (pieza.rol === 'fondo' && pieza.anchoIn > pieza.largoIn);
+const invertir = pieza.rol === 'frente';
 ```
 
-El frente siempre se muestra con el alto primero. El fondo se ordena **por
-tamaño**, porque su eje depende del `intercambiar` de cada tipo y la tabla no
-tiene acceso a esa configuración: en los tipos con `intercambiar=true` el largo ya
-es el mayor y la fila no cambia; en `W` y `SBFD` se invierte y vuelve a leerse
-como en la hoja.
+El frente siempre se muestra con el alto primero. El fondo no se reordena: el
+largo y el ancho expresan los ejes de la fórmula y de su montaje visual.
+
+## Refuerzo delantero vertical de SBFD y SVFD
+
+El `refuerzo_delantero` de SBFD/SVFD se visualiza en plano `XZ`: recorre el
+largo del mueble y sus 96mm de ancho quedan verticales. La migración `0064`
+solo modifica el montaje visual, no el corte ni su costo.
+
+## Entrepaños y gavetas en el montaje
+
+Todo `estante` se ubica contra el fondo (`Y=P−D`) en lugar de la fachada. Los
+`frente_cajon` de producción se normalizan como `frente_gaveta`: crean su ranura
+superior y `base_gaveta`/`trasero_gaveta` quedan vinculados a ella. La migración
+`0065` actualiza las configuraciones heredadas; ninguna regla cambia medidas ni
+costos de corte.
+
+En un mueble con una gaveta superior y puertas, los dos
+`refuerzo_horizontal` enmarcan dicha gaveta: el primero se sitúa en su borde
+superior y el segundo justo bajo ella, no a mitad de la puerta.
 
 La regla vive en `muebles.ts` y no en cada tabla porque **el Simulador y el HDR se
 contradecían**: el HDR ya la aplicaba y el despiece del Simulador mostraba los
