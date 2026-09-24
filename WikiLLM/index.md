@@ -44,3 +44,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 *(Aún no hay fuentes raw)*
 
 - [Comparación PRUEBA 1](wiki/comparacion_prueba1.md) - Consumos del listado frente a plantillas vigentes, diferencias e inconsistencia DB19-1s/DB12-1s.
+
+- [Precios CEMA 23_09 frente a PLUS](wiki/precios_cema2309.md) - Comparación de tableros, cantos, herrajes y referencias sin equivalencia exacta.
+- [Sincronización Mat_2309](wiki/sincronizacion_mat_2309.md) - Catálogo de tableros sincronizado con Mat_2309 y verificación de precios.
+- [Tipologías Prueba Gola de madera](wiki/tipologias_prueba_gola_madera.md) - Cuatro tipologías paramétricas independientes y sus reglas exclusivas.

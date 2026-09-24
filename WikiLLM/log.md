@@ -852,3 +852,62 @@ La migración `0080` actualiza de forma idempotente los códigos W previos sin p
 
 ## [2026-09-23] ingest | Comparación de consumos PRUEBA 1
 Se compararon 15 filas de madera y 15 de cantos/herrajes contra Supabase y el motor local. Se documentaron diferencias de madera, barras y consumibles UW, y el cruce inconsistente DB19-1s/DB12-1s. Sin cambios en la base de datos ni en el motor.
+
+## [2026-09-23] ingest | Auditoría de precios Simulador CEMA 23_09
+Comparación de 48 tableros, 7 cantos y 20 registros de herrajes contra el archivo del proyecto. Tres diferencias relevantes en tableros; cantos y 16 equivalencias activas de herrajes coinciden. Documentado el cambio de soporte y los bloques alternativos de precios del Excel. Sin modificaciones a catálogos productivos.
+
+## [2026-09-23] update | Sincronización de tableros desde Mat_2309
+
+`sync-tableros.mjs` acepta el archivo maestro como argumento, omite referencias `NA` y desactiva —sin eliminar— las referencias ausentes para conservar trazabilidad.
+
+## [2026-09-24] update | Hidratación tolerante a extensiones del navegador
+
+El layout raíz suprime solo la advertencia de hidratación de `<body>` causada por atributos inyectados por extensiones como Grammarly.
+
+## [2026-09-24] update | Tipologías independientes de Prueba Tipologías
+
+La migración `0081` incorpora BFD-SM, OW-MO, W-SM y W-SM-PUSH, con reglas exclusivas, Gola de madera y Push solo en la variante W correspondiente.
+
+## [2026-09-24] update | Ajustes de puertas y piezas SM
+
+`0082` fija las puertas SM inferiores en alto menos 30 mm, retira manijas de las variantes SM y elimina la Gola adicional de las SM superiores.
+
+## [2026-09-24] update | Montaje de refuerzo y Gola en BFD-SM
+
+`0083` ubica el refuerzo delantero vertical 20 mm detrás de los frentes y la Gola de madera horizontal, en contacto con los frentes y bajo dicho refuerzo.
+
+## [2026-09-24] update | Tipología SBFD-SM sin entrepaño
+
+`0084` agrega la variante independiente SBFD-SM desde BFD-SM, con las mismas fórmulas, Gola, herrajes y montaje; excluye la pieza y regla de entrepaño.
+
+## [2026-09-24] update | Puerta y montaje de W-SM según hoja real
+
+`0085` restaura en W-SM el lateral reducido, la puerta de alto A + 15,85 mm y el fondo asociado; la visualización ancla la puerta arriba para que sobresalga debajo de los laterales.
+
+## [2026-09-24] update | Lateral W-SM al alto nominal
+
+`0086` corrige W-SM para que el largo del lateral sea exactamente A; el fondo queda a 16 mm de holgura y la puerta mantiene el excedente inferior de 15,85 mm.
+
+## [2026-09-24] update | Fondo y entrepaños de W-SM
+
+`0087` ubica el fondo delante de los refuerzos traseros y limita los entrepaños a la cara anterior del fondo en la visualización.
+
+## [2026-09-24] update | Tipología W-SM-LOC sin entrepaños
+
+`0088` agrega W-SM-LOC como copia independiente del W-SM vigente; no incluye pieza ni regla de entrepaño a ninguna altura.
+
+## [2026-09-24] ingest | Tipología SB-SM desde hoja de ruta
+
+`0089` incorpora SB-SM como inferior independiente con frente falso, puertas inferiores, Gola de madera, sin manijas ni entrepaños; sus fórmulas reproducen SB30-SM.
+
+## [2026-09-24] update | Posición de refuerzos y Gola SB-SM
+
+`0090` baja visualmente el refuerzo delantero 30 mm y el rail horizontal junto con la Gola 132,4 mm, sin cambiar el corte.
+
+## [2026-09-24] update | Orden de ensamble visual SB-SM
+
+`0091` ordena el lateral de SB-SM conforme a la referencia: refuerzo delantero superior, refuerzo horizontal vertical solapado y Gola horizontal bajo éste.
+
+## [2026-09-24] update | Contacto de refuerzo delantero SB-SM
+
+`0092` mueve el refuerzo delantero a la cara posterior de los frentes, sin sobrepasarlos.
