@@ -168,11 +168,11 @@ carcasa y que el eje vertical es el mayor (que no quede acostado), con `gola` 0 
 que el frente va con el alto primero pase lo que pase, que el fondo se ordena por
 tamaño, que la carcasa nunca se reordena y que solo `frente` se renombra.
 
-**Deuda**: `tests/fixtures/catalogo-visualizacion.json` está desactualizado —
-tiene 57 tipos (le faltan `B-FE`, `UB-FE`, `V-FE`) y su `W` no tiene las ramas de
-gola de 0045/0047. Por eso los tests de gola parchean las fórmulas en el propio
-test en vez de leerlas del fixture. Refrescarlo cambiaría las entradas de los 57
-tipos a la vez, así que se deja anotado.
+**Deuda saldada**: `tests/fixtures/catalogo-visualizacion.json` estaba
+desactualizado y se regeneró desde el catálogo real — 62 tipos (antes 57; entran
+`B-FE`, `OW`, `UB-FE`, `UW`, `V-FE`), 459 piezas, 84 reglas. Los tests de gola
+todavía parchean las fórmulas en el propio test; ahora podrían leerlas del
+fixture, pero se dejan como están hasta tener motivo para tocarlos.
 
 Ver también [w_sm_hoja_real.md](w_sm_hoja_real.md) y
 [visualizacion_gola_voladizo.md](visualizacion_gola_voladizo.md).

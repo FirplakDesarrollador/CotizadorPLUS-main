@@ -6,14 +6,15 @@ import { orientarPieza } from '../src/lib/muebles';
 // Hoja real "B12 · MUEBLE INF COC 1 GAVETA 1 PUERTA 1/2 ENTREPAÑO CARB2"
 // (L=12", A=30", P=24"). Fórmulas tal como quedaron tras la migración 0052.
 
+// En el orden de la hoja: BASE, SIDE, RAIL DELANTERO, RAIL TRASERO, ... (0056).
 const piezas: Pieza[] = [
-  { nombre: 'lateral', rol_tablero: 'caja', formula_cantidad: '2', formula_largo: 'A', formula_ancho: 'P', cantos: { calibre: '19x0,45', largos: 2, anchos: 2 } },
   { nombre: 'base', rol_tablero: 'caja', formula_cantidad: '1', formula_largo: 'L-2*TC', formula_ancho: 'P-0.70866-TB', cantos: { calibre: '19x0,45', largos: 2, anchos: 0 } },
-  { nombre: 'refuerzo_trasero', rol_tablero: 'refuerzo', formula_cantidad: '2', formula_largo: 'L-2*TC', formula_ancho: '3.14961', cantos: { calibre: '19x0,45', largos: 2, anchos: 0 } },
+  { nombre: 'lateral', rol_tablero: 'caja', formula_cantidad: '2', formula_largo: 'A', formula_ancho: 'P', cantos: { calibre: '19x0,45', largos: 2, anchos: 2 } },
   { nombre: 'refuerzo_horizontal', rol_tablero: 'refuerzo', formula_cantidad: '2', formula_largo: 'L-2*TC', formula_ancho: '3.14961', cantos: { calibre: '19x0,45', largos: 2, anchos: 0 } },
+  { nombre: 'refuerzo_trasero', rol_tablero: 'refuerzo', formula_cantidad: '2', formula_largo: 'L-2*TC', formula_ancho: '3.14961', cantos: { calibre: '19x0,45', largos: 2, anchos: 0 } },
   { nombre: 'entrepano', rol_tablero: 'refuerzo', formula_cantidad: '1', formula_largo: 'L-2*TC-0.03937', formula_ancho: '11.81102', cantos: { calibre: '19x0,45', largos: 2, anchos: 2 } },
   { nombre: 'base_gaveta', rol_tablero: 'refuerzo', formula_cantidad: '1', formula_largo: 'L-4.13386', formula_ancho: 'P-4.63', cantos: { calibre: '19x0,45', largos: 2, anchos: 0 } },
-  { nombre: 'trasero_gaveta', rol_tablero: 'refuerzo', formula_cantidad: '1', formula_largo: 'L-4.607', formula_ancho: '2.6875', cantos: { calibre: '19x0,45', largos: 2, anchos: 0 } },
+  { nombre: 'trasero_gaveta', rol_tablero: 'refuerzo', formula_cantidad: '1', formula_largo: 'L-4.607', formula_ancho: '2.67717', cantos: { calibre: '19x0,45', largos: 1, anchos: 0 } },
   { nombre: 'frente', rol_tablero: 'frente', formula_cantidad: 'n_puertas', formula_largo: '(L-n_puertas*RV)/n_puertas', formula_ancho: 'A-n_cajones*alto_frente_gaveta-(n_cajones+1)*RV', cantos: { calibre: '22x1', largos: 2, anchos: 2 } },
   { nombre: 'frente_cajon', rol_tablero: 'frente', formula_cantidad: '1', formula_largo: 'L-RV', formula_ancho: 'alto_frente_gaveta', cantos: { calibre: '22x1', largos: 2, anchos: 2 } },
   { nombre: 'fondo', rol_tablero: 'fondo', formula_cantidad: '1', formula_largo: 'A-0.07874', formula_ancho: 'L-0.62992', cantos: {} },
@@ -94,4 +95,45 @@ test('la geometría escala con la medida del mueble', () => {
   assert.ok(Math.abs(mm('base_gaveta', 'largoIn') - (609.6 - 105)) < 0.1);
   assert.ok(Math.abs(mm('fondo', 'anchoIn') - (609.6 - 16)) < 0.1);
   assert.ok(Math.abs(mm('entrepano', 'anchoIn') - 300) < 0.1, 'el entrepaño no depende de la profundidad');
+});
+
+test('el listado sale en el orden de la hoja y con sus cantidades', () => {
+  const r = calcularMueble(input());
+  // La HDR numera las filas (A, B, C…) siguiendo este orden, y producción lee por
+  // esa letra. La hoja va BASE, SIDE R/L, RAIL DELANTERO x2, RAIL TRASERO x2, ...
+  assert.deepEqual(
+    r.piezas.filter((p) => p.cant > 0).map((p) => [p.pieza, Math.round(p.cant)]),
+    [
+      ['base', 1], ['lateral', 2], ['refuerzo_horizontal', 2], ['refuerzo_trasero', 2],
+      ['entrepano', 1], ['base_gaveta', 1], ['trasero_gaveta', 1],
+      ['frente', 1], ['frente_cajon', 1], ['fondo', 1],
+    ],
+  );
+  // 13 filas en la HDR: las cantidades se expanden a una fila por unidad.
+  assert.equal(r.piezas.filter((p) => p.cant > 0).reduce((s, p) => s + Math.round(p.cant), 0), 13);
+});
+
+test('los cantos de cada pieza coinciden con la hoja', () => {
+  const r = calcularMueble(input());
+  const canto = (nombre: string) => {
+    const p = r.piezas.find((x) => x.pieza === nombre)!;
+    return [p.cantoLargos, p.cantoAnchos, p.cantoCalibre];
+  };
+  assert.deepEqual(canto('base'), [2, 0, '19x0,45']);
+  assert.deepEqual(canto('lateral'), [2, 2, '19x0,45']);
+  assert.deepEqual(canto('refuerzo_horizontal'), [2, 0, '19x0,45']);
+  assert.deepEqual(canto('refuerzo_trasero'), [2, 0, '19x0,45']);
+  assert.deepEqual(canto('entrepano'), [2, 2, '19x0,45']);
+  assert.deepEqual(canto('base_gaveta'), [2, 0, '19x0,45']);
+  // Un solo canto largo: la cara inferior queda oculta contra la base de la gaveta.
+  assert.deepEqual(canto('trasero_gaveta'), [1, 0, '19x0,45']);
+  assert.deepEqual(canto('frente'), [2, 2, '22x1']);
+  assert.deepEqual(canto('frente_cajon'), [2, 2, '22x1']);
+  assert.deepEqual(canto('fondo'), [0, 0, null]);
+});
+
+test('el trasero de gaveta mide 68 mm exactos', () => {
+  // `2.6875"` daba 68.26. Ver migración 0056.
+  const ancho = calcularMueble(input()).piezas.find((p) => p.pieza === 'trasero_gaveta')!.anchoIn * 25.4;
+  assert.ok(Math.abs(ancho - 68) < 0.01, `trasero_gaveta ${ancho.toFixed(2)} mm, esperaba 68.00`);
 });
