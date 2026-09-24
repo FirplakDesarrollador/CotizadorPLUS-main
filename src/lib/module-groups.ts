@@ -138,17 +138,26 @@ export type CodigoComercialInput = {
 // (el formulario omitía el alto: `W29-SM` en vez de `W2936-SM`).
 export function codigoComercial(input: CodigoComercialInput): string {
   const { pref, largo, alto, prof, unidad, sistema } = input;
-  const base = codigoModulo(pref, largo, unidad, sistema);
+  let codigo = codigoModulo(pref, largo, unidad, sistema);
+  // Las nuevas tipologías con sufijo propio (W-SM, OW-MO, W-SM-PUSH) conservan
+  // ese sufijo al final: sus medidas variables se insertan antes de él.
+  const agregarMedida = (medida: string) => {
+    const guion = codigo.indexOf('-');
+    codigo = guion === -1 ? codigo + medida : codigo.slice(0, guion) + medida + codigo.slice(guion);
+  };
   const altoSufijo = incluyeAltoEnCodigo(pref) ? anchoCodigo(alto, unidad, sistema) : '';
+  if (altoSufijo) agregarMedida(altoSufijo);
   // Los superiores W de 24 in identifican esa profundidad en su código. La
   // comparación se hace en pulgadas para conservar la regla en cm o mm.
   const esWProf24 = String(pref).toUpperCase().split('-')[0] === 'W'
     && prof != null
     && Math.abs(convertirExacto(prof, unidad, 'in') - 24) < 0.001;
   const profSufijo = esWProf24 ? anchoCodigo(prof!, unidad, sistema) : '';
+  if (profSufijo) agregarMedida(profSufijo);
   const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
   const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
-  return base + altoSufijo + profSufijo + dbSufijo + pcfdSufijo + sufijoSistemaFrente(input.sistemaFrente);
+  const llevaSmPropio = pref.toUpperCase().split('-').includes('SM');
+  return codigo + dbSufijo + pcfdSufijo + (llevaSmPropio ? '' : sufijoSistemaFrente(input.sistemaFrente));
 }
 
 export function codigoGrupo(codigos: string[]): string {

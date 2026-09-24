@@ -87,6 +87,13 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'W', largo: 29, alto: 36, sistemaFrente: 'manija' }), 'W2936');
   assert.equal(codigoComercial({ ...base, pref: 'W', largo: 30, alto: 20, prof: 24 }), 'W302024');
   assert.equal(codigoComercial({ ...base, pref: 'W', largo: 30, alto: 20, prof: 12 }), 'W3020');
+  assert.equal(codigoComercial({ ...base, pref: 'BFD-SM', largo: 16, alto: 30 }), 'BFD16-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'SBFD-SM', largo: 16, alto: 30 }), 'SBFD16-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'SB-SM', largo: 30, alto: 30 }), 'SB30-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'OW-MO', largo: 24, alto: 25, prof: 12 }), 'OW2425-MO');
+  assert.equal(codigoComercial({ ...base, pref: 'W-SM', largo: 34, alto: 36, prof: 12 }), 'W3436-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'W-SM-LOC', largo: 34, alto: 36, prof: 12 }), 'W3436-SM-LOC');
+  assert.equal(codigoComercial({ ...base, pref: 'W-SM-PUSH', largo: 33, alto: 21, prof: 24 }), 'W332124-SM-PUSH');
   assert.equal(codigoComercial({ ...base, pref: 'WER', largo: 24, alto: 36, sistemaFrente: 'gola' }), 'WER2436-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UW', largo: 12, alto: 36 }), 'UW1236');
   assert.equal(codigoComercial({ ...base, pref: 'OW', largo: 30, alto: 18 }), 'OW3018');
