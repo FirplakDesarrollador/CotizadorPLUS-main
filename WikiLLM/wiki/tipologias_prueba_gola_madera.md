@@ -14,6 +14,7 @@ y `W`. No las actualiza ni reutiliza sus plantillas.
 | `SBFD-SM` | `SBFD16-SM` | Variante independiente de BFD-SM, sin entrepaño. Conserva Gola de madera, puertas y herrajes funcionales. |
 | `SB-SM` | `SB30-SM` | Inferior con frente falso, puertas inferiores y Gola de madera, según la hoja SB30-SM. |
 | `DB-2S-SM` | `DB26-2S-SM` | Cajonera independiente 2S con dos gavetas pequeñas, una grande y Gola superior/inferior. |
+| `DB-2-SM` | `DB26-2-SM` | Variante con dos gavetas grandes iguales, Gola superior/intermedia y sin manijas. |
 
 ## Prioridad de reglas PLUS
 
@@ -75,6 +76,12 @@ Desde `0099_db_2s_sm_anclaje_base_gaveta.sql`, el segundo par no se ubica con
 una fórmula proporcional: queda anclado al borde inferior de la segunda
 `base_gaveta`; el refuerzo toca ese borde por debajo y la Gola toca el borde
 inferior del refuerzo, ambas sobre sus caras frontales respectivas.
+
+`0100_db_2_sm.sql` deriva `DB-2-SM` de esa tipología y conserva carcasa,
+herrajes, dos refuerzos y dos Golas. Cambia a `n_cajones=2` y
+`n_cajones_pequenos=0`, por lo que genera dos gavetas grandes con frentes de
+351 × 657,2 mm en `DB26-2-SM`; el segundo par refuerzo/Gola se ancla bajo la
+base de la gaveta superior para separar visualmente ambos niveles.
 
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la

@@ -102,6 +102,7 @@ test('codigoComercial arma el código final completo', () => {
   // Tipología DB y prefijo con guion (FE) conviven con el sufijo SM.
   assert.equal(codigoComercial({ ...base, pref: 'DB', largo: 18, alto: 34.5, dbTipo: 'DB-1S', sistemaFrente: 'gola' }), 'DB18-1S-SM');
   assert.equal(codigoComercial({ ...base, pref: 'DB-2S-SM', largo: 26, alto: 30 }), 'DB26-2S-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'DB-2-SM', largo: 26, alto: 30 }), 'DB26-2-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UDB', largo: 18, alto: 28.75, dbTipo: 'DB-2S' }), 'UDB18-2S');
   assert.equal(codigoComercial({ ...base, pref: 'UDV', largo: 24, alto: 28.75, dbTipo: 'DB-3' }), 'UDV24-3');
   assert.equal(codigoComercial({ ...base, pref: 'B-FE', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-FE-SM');

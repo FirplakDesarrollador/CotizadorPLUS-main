@@ -982,3 +982,7 @@ El generador fuerza los planos confirmados de DB-2S-SM para impedir que una conf
 ## [2026-09-25] fix | Segundo par DB-2S-SM anclado a base de gaveta
 
 `0099` y el generador de montaje sitúan el segundo refuerzo directamente bajo la segunda `base_gaveta`, con la Gola inmediatamente debajo y contra el frente.
+
+## [2026-09-25] ingest | Tipología DB-2-SM con dos gavetas grandes
+
+`0100` crea `DB-2-SM` a partir de `DB-2S-SM`: conserva carcasa, herrajes, dos refuerzos y dos Golas de madera, elimina las gavetas pequeñas y monta dos gavetas grandes iguales. La visualización ancla el segundo par refuerzo/Gola bajo la gaveta superior.

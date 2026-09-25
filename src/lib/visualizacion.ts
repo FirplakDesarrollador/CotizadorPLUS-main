@@ -30,6 +30,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
   };
   members.forEach((member, mi) => {
     const {calc,pref}=member, result=group.lineas[mi];
+    const esDbSmEspecial = pref === 'DB-2S-SM' || pref === 'DB-2-SM';
     const L=mm(calc.dims.L), A=mm(calc.dims.A), P=mm(calc.dims.P);
     const thickness=(rol: string) => Number(calc.tablerosByCode[calc.preset[rol]]?.espesor_mm ?? 0);
     const TC=thickness('caja') || 15, TF=thickness('frente') || 18, TB=thickness('fondo') || 6;
@@ -45,20 +46,20 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       let config: MontajeConfig;
       try { config={...inferirMontaje(p),...validarMontaje(p.visualizacion)}; }
       catch { warn(`${pref}: montaje inválido de ${p.nombre}; se usa inferencia.`); config=inferirMontaje(p); }
-      // DB-2S-SM tiene dos pares de Gola de madera propios. Esta geometría es
+      // Las variantes DB-SM tienen dos pares de Gola de madera propios. Esta geometría es
       // estructural: los rails delanteros son verticales a 20 mm del frente y
       // cada Gola es horizontal, contra el frente. Se fija aquí para que una
       // configuración heredada de DB no pueda volver a intercambiar planos.
-      if (pref === 'DB-2S-SM' && p.nombre === 'refuerzo_delantero') {
+      if (esDbSmEspecial && p.nombre === 'refuerzo_delantero') {
         config = {
           ...config,
           funcion: 'travesano_frontal', plano: 'XZ', intercambiar: false,
           y: '20', z: 'I===0 ? A-H : A-2*alto_frente_pequeno-RV-28.4-H',
           confirmado: true,
-          nota: 'Refuerzo vertical: superior y bajo la segunda gaveta.',
+          nota: 'Refuerzo vertical: superior y entre los niveles de gavetas.',
         };
       }
-      if (pref === 'DB-2S-SM' && p.nombre === 'gola_madera') {
+      if (esDbSmEspecial && p.nombre === 'gola_madera') {
         config = {
           ...config,
           funcion: 'gola', plano: 'XY', intercambiar: false,
@@ -243,14 +244,14 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           giro=Number(evalExpr(String(config.giro??0),ctx));
           if(![0,90,180,270].includes(giro)) throw new Error('Giro debe ser ortogonal');
         } catch { warn(`${pref} · ${p.nombre}: fórmula de ubicación inválida; se usa posición inferida.`); defaults.x=x;defaults.y=y;defaults.z=z;giro=0;confirmed=false; }
-        // Los dos pares de DB-2S-SM se relacionan con componentes físicos, no
-        // con una fracción del alto: el primero se apoya arriba y el segundo
-        // queda bajo la segunda base de gaveta. La Gola queda bajo su refuerzo
-        // y ambas golas siguen pegadas al frente (y=0).
-        if (pref === 'DB-2S-SM' && (p.nombre === 'refuerzo_delantero' || p.nombre === 'gola_madera')) {
-          const segundaBaseZ = (drawerSlots[1]?.z ?? foot) + 30;
+        // Los pares DB-SM se relacionan con componentes físicos: el primero se
+        // apoya arriba y el segundo queda bajo la última gaveta del bloque
+        // superior (dos pequeñas en DB-2S-SM, una grande en DB-2-SM).
+        if (esDbSmEspecial && (p.nombre === 'refuerzo_delantero' || p.nombre === 'gola_madera')) {
+          const indiceBaseSuperior = pref === 'DB-2-SM' ? 0 : 1;
+          const baseSuperiorZ = (drawerSlots[indiceBaseSuperior]?.z ?? foot) + 30;
           const altoRefuerzo = items.find((candidate) => candidate.p.nombre === 'refuerzo_delantero')?.h ?? 80;
-          const arriba = i === 0 ? A : segundaBaseZ;
+          const arriba = i === 0 ? A : baseSuperiorZ;
           if (p.nombre === 'refuerzo_delantero') {
             defaults.y = 20;
             defaults.z = arriba - h;
