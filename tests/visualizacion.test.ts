@@ -193,6 +193,7 @@ test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',(
   const m=member('DB',{n_cajones:2,n_cajones_pequenos:0,gola:1});
   m.pref='DB-2-SM';
   m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('frente_'));
+  m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('trasero_gaveta_'));
   const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
   refuerzo.formula_cantidad='2';
   const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
@@ -203,12 +204,15 @@ test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',(
   const bases=scene.paneles.filter(p=>p.funcion==='base_gaveta').sort((a,b)=>b.z-a.z);
   const refuerzos=scene.paneles.filter(p=>p.nombre==='refuerzo_delantero');
   const golas=scene.paneles.filter(p=>p.nombre==='gola_madera');
+  const traseros=scene.paneles.filter(p=>p.funcion==='trasero_gaveta');
   assert.equal(frentes.length,2);
   assert.ok(frentes.every(p=>p.nombre==='frente'),'el despiece debe usar únicamente el nombre frente');
   assert.ok(frentes.every(p=>Math.abs(p.h-351)<.1),'ambos frentes deben medir 351 mm de alto');
   assert.equal(bases.length,2);
   assert.equal(refuerzos.length,2);
   assert.equal(golas.length,2);
+  assert.equal(traseros.length,2);
+  assert.ok(traseros.every(p=>p.nombre==='trasero_gaveta'&&Math.abs(p.h-183)<.1),'debe haber solo dos traseros genéricos de 183 mm');
   assert.ok(Math.abs(refuerzos[1].z+refuerzos[1].h-bases[0].z)<.1,'el segundo refuerzo debe quedar bajo la base de la gaveta superior');
   assert.ok(Math.abs(golas[1].z-(refuerzos[1].z-golas[1].h))<1,'la Gola intermedia debe quedar debajo del segundo refuerzo');
 });

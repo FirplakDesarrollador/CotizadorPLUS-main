@@ -994,3 +994,7 @@ Se aplicó `0100_db_2_sm.sql` al proyecto Supabase conectado. Se verificó `DB-2
 ## [2026-09-25] fix | DB-2-SM usa una única fila frente
 
 `0101` elimina de `DB-2-SM` las plantillas `frente_*` heredadas y conserva solo `frente` con cantidad 2. Las dos gavetas iguales dejan de duplicarse como `frente` y `frente_gaveta_grande` en el despiece.
+
+## [2026-09-25] fix | DB-2-SM usa una única fila trasero_gaveta
+
+`0102` elimina de `DB-2-SM` las plantillas `trasero_gaveta_*` y conserva solo `trasero_gaveta`, cantidad 2 y 183 mm. La fila unificada mantiene el canto de producción de la pieza grande: 1 largo y 2 anchos.

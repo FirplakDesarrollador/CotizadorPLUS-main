@@ -87,6 +87,9 @@ está aplicada en el proyecto Supabase conectado desde el 25 de septiembre de
 `0101_db_2_sm_frente_unico.sql` elimina las plantillas especializadas
 `frente_*`: como ambas gavetas son iguales, el despiece muestra únicamente
 `frente`, con cantidad 2.
+`0102_db_2_sm_trasero_unico.sql` aplica el mismo criterio a los traseros: deja
+solo `trasero_gaveta`, cantidad 2 y 183 mm de alto, conservando el canto de la
+pieza grande (1 largo y 2 anchos).
 
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la
