@@ -93,7 +93,7 @@ constantes (su backing es fijo, 422.4 x 441.0 mm), así que solo se fabrica al
 ancho para el que se tomó ese despiece. A su ancho nominal cabe sin problema.
 
 18 tipos no tienen pieza de respaldo, como es de esperar: no son cajas
-(`F`, `PN`, `TK`, `BOV`, `BT`, `CC`, `CLV`, `DD`, `DF`, `DFE`, `E`, `FL`, `KD`,
+(`F`, `PN`, `TK`, `BOV`, `BT`, `CC`, `CLV`, `DD`, `DF`, `DFE`, `E`, `KD`,
 `KF`, `POD`, `D`, `R`, `WCC`).
 
 ### Los tipos sin `visualizacion` cargada

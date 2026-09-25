@@ -303,7 +303,7 @@ fuente: `BOMH`, `DVE`, `VDF`, `CARTON`, `NA`.
 
 ### Piezas sueltas y kits
 
-`PL` (35, panel), `FL` (16, filler), `KF` (11, kit de frentes), `SC` (9),
+`PL` (35, panel), ~~`FL` (16, filler)~~, `KF` (11, kit de frentes), `SC` (9),
 `BT` (5, base-tapa), `DF` (6, frente de gaveta), `LD`/`LI` (4, laterales),
 `E` (2, entrepaño), `Z` (2, zócalo), `KD` (2, kit de cajones), `WD`, `BK`.
 

@@ -1038,3 +1038,7 @@ Se aplicó y registró `0106_tw_nombre_puerta_basculante.sql`. Se verificó que 
 ## [2026-09-25] update | Código dimensional y Manija predeterminada para F
 
 La tipología `F` incorpora largo y alto en el código comercial (`F630` para 6 × 30 pulgadas). Al seleccionarla en Simulador, cotizaciones o HDR, el sistema de frente se restablece automáticamente a `manija`.
+
+## [2026-09-25] update | Eliminación de la tipología FL
+
+La auditoría previa encontró 0 líneas de cotización, 1 pieza, 0 reglas y 0 herrajes asociados a `FL`. `0107_eliminar_tipologia_fl.sql` elimina el tipo y su pieza por cascada; la migración se bloquea si detecta una referencia de cotización creada después de la auditoría.
