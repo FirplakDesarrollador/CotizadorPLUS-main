@@ -1018,3 +1018,7 @@ El selector de tipo presenta una sola familia `DB-SM` y ofrece `DB-2S-SM`, `DB-2
 ## [2026-09-25] update | Migración WSM aplicada en Supabase
 
 Se aplicó y registró `0104_wsm.sql` en el proyecto conectado. Se verificó `WSM` activa con 7 piezas, 10 reglas y 1 herraje; `W-SM` permanece activa y conserva sus propios registros. `DEV` no recibió cambios.
+
+## [2026-09-25] fix | WLD respeta la regla de cantidad de frentes
+
+`0105` cambia exclusivamente `frente.formula_cantidad` de `2` a `n_puertas` en WLD. Conserva el ancho paramétrico por cantidad y la altura `A-RV`; a 21×36 pulgadas produce una puerta de 530,2 × 911,2 mm.

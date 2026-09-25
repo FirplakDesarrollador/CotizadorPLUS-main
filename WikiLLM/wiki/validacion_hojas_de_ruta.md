@@ -510,6 +510,14 @@ Para configuraciones UW de dos puertas, `0075` calcula el ancho de cada frente
 como `(L-n_puertas×3,2mm)/n_puertas`. Esto conserva la puerta única de UW1336
 (327mm) y monta dos puertas lado a lado cuando la regla define `n_puertas=2`.
 
+### WLD — cantidad paramétrica de frentes
+
+La migración `0105_wld_cantidad_frentes.sql` sustituye la cantidad fija `2` de
+la pieza `frente` por `n_puertas`. Así WLD usa una puerta hasta 21 pulgadas y
+dos desde 24 pulgadas, conforme a la regla transversal vigente. La fórmula de
+altura propia `A-RV` no cambia: para 36 pulgadas conserva 911,2 mm exactos.
+El ancho sigue siendo `(L-n_puertas*RV)/n_puertas`.
+
 ### Pendientes
 
 - Las migraciones `0028`/`0029`/`0030`/`0031` **ya están aplicadas** en Supabase
