@@ -39,7 +39,12 @@ pref + largo [+ alto] [+ profundidad-W24] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM]
 
 ## Qué tipos llevan el alto en el código
 
-`PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'PN']`
+`PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F']`
+
+`F` incluye largo y alto en el código comercial: un filler de 6 × 30 pulgadas
+se identifica como `F630`. Al seleccionar esta tipología, Simulador,
+cotizaciones y HDR restablecen el sistema de frente a `manija`, evitando que
+herede Gola de un módulo configurado anteriormente.
 
 Las familias superiores `UW` y `OW` también codifican su alto: por ejemplo,
 `UW1236` corresponde a 12 de largo por 36 de alto.

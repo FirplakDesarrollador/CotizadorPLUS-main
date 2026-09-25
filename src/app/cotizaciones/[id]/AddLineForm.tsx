@@ -193,6 +193,7 @@ export default function AddLineForm({
     const nuevoPref = prefProyecto(tipos.find((t) => t.id === id));
     if (nuevoPref === 'W') setProf(unidad === 'in' ? '12' : unidad === 'cm' ? '30.48' : '304.8');
     if (nuevoPref === 'WSM') setProf(unidad === 'in' ? '14' : unidad === 'cm' ? '35.56' : '355.6');
+    if ((tipos.find((t) => t.id === id)?.pref ?? '') === 'F') setSistemaFrente('manija');
   }
 
   function aplicarPerfil(id: string) {

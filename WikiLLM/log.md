@@ -1034,3 +1034,7 @@ Se aplicó y registró `0105_wld_cantidad_frentes.sql`. Se verificó que WLD usa
 ## [2026-09-25] update | Nombre de TW aplicado en Supabase
 
 Se aplicó y registró `0106_tw_nombre_puerta_basculante.sql`. Se verificó que TW está activa y que `nombre_es` es exactamente `Mueble superior puerta basculante`. `DEV` no recibió cambios.
+
+## [2026-09-25] update | Código dimensional y Manija predeterminada para F
+
+La tipología `F` incorpora largo y alto en el código comercial (`F630` para 6 × 30 pulgadas). Al seleccionarla en Simulador, cotizaciones o HDR, el sistema de frente se restablece automáticamente a `manija`.

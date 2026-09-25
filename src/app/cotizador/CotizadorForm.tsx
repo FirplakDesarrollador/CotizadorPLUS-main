@@ -211,6 +211,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setPcfdConfig('');
     if (tipoSeleccionado.pref === 'W') setProf(convertir(12, 'in', unidad));
     if (tipoSeleccionado.pref === 'WSM') setProf(convertir(14, 'in', unidad));
+    if (tipoSeleccionado.pref === 'F') setSistemaFrente('manija');
   }
   function aplicarDbSmTipo(pref: string) {
     const tipo = tipos.find((item) => item.pref === pref);
