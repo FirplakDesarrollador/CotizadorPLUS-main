@@ -191,7 +191,8 @@ export default function AddLineForm({
     setPcfdConfig('');
     // Los muebles superiores de pared (W) siempre parten de 12 de fondo por defecto.
     const nuevoPref = prefProyecto(tipos.find((t) => t.id === id));
-    if (nuevoPref === 'W') setProf('12');
+    if (nuevoPref === 'W') setProf(unidad === 'in' ? '12' : unidad === 'cm' ? '30.48' : '304.8');
+    if (nuevoPref === 'WSM') setProf(unidad === 'in' ? '14' : unidad === 'cm' ? '35.56' : '355.6');
   }
 
   function aplicarPerfil(id: string) {

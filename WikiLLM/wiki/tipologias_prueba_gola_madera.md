@@ -11,6 +11,7 @@ y `W`. No las actualiza ni reutiliza sus plantillas.
 | `W-SM` | `W3436-SM` | Sin manijas; usa únicamente las piezas de la hoja WXXXX-SM y conserva bisagras W. |
 | `W-SM-PUSH` | `W332124-SM-PUSH` | Sin manijas; usa las piezas de su hoja y agrega un Push To Open por puerta. |
 | `W-SM-LOC` | `W3436-SM-LOC` | Variante independiente del W-SM vigente, sin entrepaños en ninguna altura. |
+| `WSM` | `WSM93614` | Superior independiente de 14 in: laterales `A-1`, puerta de alto nominal `A` y geometría propia de la hoja WSM93614. |
 | `SBFD-SM` | `SBFD16-SM` | Variante independiente de BFD-SM, sin entrepaño. Conserva Gola de madera, puertas y herrajes funcionales. |
 | `SB-SM` | `SB30-SM` | Inferior con frente falso, puertas inferiores y Gola de madera, según la hoja SB30-SM. |
 | `DB-2S-SM` | `DB26-2S-SM` | Cajonera independiente 2S con dos gavetas pequeñas, una grande y Gola superior/inferior. |
@@ -134,6 +135,14 @@ anterior del fondo y no lo atraviesa.
 
 Las reglas de configuración se guardan exclusivamente contra el ID de cada
 nuevo tipo, por lo que no afectan ninguna otra tipología.
+
+`0104_wsm.sql` crea `WSM` sin modificar `W-SM`. Para la referencia de 9 × 36
+× 14 pulgadas reproduce base/tapa 192,6 × 355,6 mm, laterales 889 ×
+355,6 mm, dos refuerzos traseros de 192,6 × 80 mm, dos entrepaños de 191,6
+× 311,5 mm, una puerta de 914,4 × 225,4 mm y fondo de 867 × 206,6 mm.
+Su código comercial incluye siempre ancho, alto y profundidad. Al seleccionarla
+en Simulador, cotizaciones o HDR, la profundidad se inicializa en 14 pulgadas
+(35,56 cm o 355,6 mm según la unidad activa).
 
 ## Montaje visual BFD-SM
 

@@ -1010,3 +1010,7 @@ Se aplicó `0103_db_3_sm.sql` al proyecto Supabase conectado. Se verificó `DB-3
 ## [2026-09-25] update | Variantes DB-SM agrupadas en el Simulador
 
 El selector de tipo presenta una sola familia `DB-SM` y ofrece `DB-2S-SM`, `DB-2-SM` y `DB-3-SM` en un selector secundario. Cada opción mantiene su tipo real y sus reglas; el selector existente de DB permanece sin cambios.
+
+## [2026-09-25] ingest | Tipología independiente WSM93614
+
+`0104` crea `WSM` con profundidad predeterminada de 14 pulgadas, laterales `A-1`, puerta de alto nominal y cortes propios de la hoja WSM93614. El código comercial es `WSM` + ancho + alto + profundidad. `W-SM` no se modifica.

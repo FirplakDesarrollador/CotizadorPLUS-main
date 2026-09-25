@@ -71,7 +71,7 @@ test('sistema de frente gola agrega sufijo comercial SM', () => {
 });
 
 test('los superiores de la familia W y los paneles PN llevan el alto en el código', () => {
-  for (const pref of ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'PN']) {
+  for (const pref of ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN']) {
     assert.equal(incluyeAltoEnCodigo(pref), true, pref);
   }
   // WCC es un módulo de clóset, no un superior de pared; B/DB/SBFD tienen alto implícito.
@@ -94,6 +94,7 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'W-SM', largo: 34, alto: 36, prof: 12 }), 'W3436-SM');
   assert.equal(codigoComercial({ ...base, pref: 'W-SM-LOC', largo: 34, alto: 36, prof: 12 }), 'W3436-SM-LOC');
   assert.equal(codigoComercial({ ...base, pref: 'W-SM-PUSH', largo: 33, alto: 21, prof: 24 }), 'W332124-SM-PUSH');
+  assert.equal(codigoComercial({ ...base, pref: 'WSM', largo: 9, alto: 36, prof: 14 }), 'WSM93614');
   assert.equal(codigoComercial({ ...base, pref: 'WER', largo: 24, alto: 36, sistemaFrente: 'gola' }), 'WER2436-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UW', largo: 12, alto: 36 }), 'UW1236');
   assert.equal(codigoComercial({ ...base, pref: 'OW', largo: 30, alto: 18 }), 'OW3018');

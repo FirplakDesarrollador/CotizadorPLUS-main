@@ -112,7 +112,7 @@ export function sufijoSistemaFrente(sistemaFrente: string | null | undefined): s
 // (W2936 = 29 de largo, 36 de alto): a diferencia de los demás tipos su alto sí
 // varía y no es un dato implícito del tipo. WCC queda fuera a propósito — es un
 // módulo de clóset (categoria='closet'), no un superior de pared.
-const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'PN'] as const;
+const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN'] as const;
 
 export function incluyeAltoEnCodigo(pref: string | null | undefined): boolean {
   const base = String(pref ?? '').toUpperCase().split('-')[0];
@@ -149,14 +149,16 @@ export function codigoComercial(input: CodigoComercialInput): string {
   if (altoSufijo) agregarMedida(altoSufijo);
   // Los superiores W de 24 in identifican esa profundidad en su código. La
   // comparación se hace en pulgadas para conservar la regla en cm o mm.
-  const esWProf24 = String(pref).toUpperCase().split('-')[0] === 'W'
+  const prefNormalizado = String(pref).toUpperCase();
+  const esWsm = prefNormalizado === 'WSM';
+  const esWProf24 = prefNormalizado.split('-')[0] === 'W'
     && prof != null
     && Math.abs(convertirExacto(prof, unidad, 'in') - 24) < 0.001;
-  const profSufijo = esWProf24 ? anchoCodigo(prof!, unidad, sistema) : '';
+  const profSufijo = (esWProf24 || (esWsm && prof != null)) ? anchoCodigo(prof!, unidad, sistema) : '';
   if (profSufijo) agregarMedida(profSufijo);
   const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
   const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
-  const llevaSmPropio = pref.toUpperCase().split('-').includes('SM');
+  const llevaSmPropio = prefNormalizado.split('-').includes('SM') || esWsm;
   return codigo + dbSufijo + pcfdSufijo + (llevaSmPropio ? '' : sufijoSistemaFrente(input.sistemaFrente));
 }
 

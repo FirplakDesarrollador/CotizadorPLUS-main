@@ -53,6 +53,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     const pref = tipos.find((t) => t.id === v)?.pref ?? '';
     if (!pref.startsWith('DB')) setDbTipo('');
     if (pref === 'W') setProf(unidad === 'in' ? 12 : unidad === 'cm' ? 30.48 : 304.8);
+    if (pref === 'WSM') setProf(unidad === 'in' ? 14 : unidad === 'cm' ? 35.56 : 355.6);
   }
 
   async function buscar(e: React.FormEvent) {
