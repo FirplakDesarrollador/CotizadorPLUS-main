@@ -143,7 +143,8 @@ En el Excel **todas** las filas `TW` son de puerta basculante ("1 puerta bascula
 "2 puerta basculante"…). El nombre anterior del catálogo, "Mueble superior esquinero
 (Transition Wall)", fue corregido por decisión de producto en `0106`: `TW` se presenta como
 **Mueble superior puerta basculante**. El cambio es solo descriptivo y no altera piezas,
-reglas ni herrajes.
+reglas ni herrajes. La migración está aplicada en el proyecto Supabase conectado
+desde el 25 de septiembre de 2026.
 
 ## 2-bis. Apartado original: por qué no se podía arreglar en bloque
 

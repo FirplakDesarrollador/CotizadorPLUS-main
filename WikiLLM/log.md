@@ -1030,3 +1030,7 @@ Se aplicó y registró `0105_wld_cantidad_frentes.sql`. Se verificó que WLD usa
 ## [2026-09-25] update | Nombre comercial de TW
 
 `0106` cambia exclusivamente `cot_tipos_mueble.nombre_es` de TW a `Mueble superior puerta basculante`, resolviendo la discrepancia documentada con sus referencias de puerta basculante. No modifica geometría, reglas ni herrajes.
+
+## [2026-09-25] update | Nombre de TW aplicado en Supabase
+
+Se aplicó y registró `0106_tw_nombre_puerta_basculante.sql`. Se verificó que TW está activa y que `nombre_es` es exactamente `Mueble superior puerta basculante`. `DEV` no recibió cambios.
