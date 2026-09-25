@@ -192,6 +192,7 @@ test('DB-SM: refuerzo delantero vertical y Gola de madera horizontal',()=>{
 test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',()=>{
   const m=member('DB',{n_cajones:2,n_cajones_pequenos:0,gola:1});
   m.pref='DB-2-SM';
+  m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('frente_'));
   const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
   refuerzo.formula_cantidad='2';
   const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
@@ -203,6 +204,7 @@ test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',(
   const refuerzos=scene.paneles.filter(p=>p.nombre==='refuerzo_delantero');
   const golas=scene.paneles.filter(p=>p.nombre==='gola_madera');
   assert.equal(frentes.length,2);
+  assert.ok(frentes.every(p=>p.nombre==='frente'),'el despiece debe usar únicamente el nombre frente');
   assert.ok(frentes.every(p=>Math.abs(p.h-351)<.1),'ambos frentes deben medir 351 mm de alto');
   assert.equal(bases.length,2);
   assert.equal(refuerzos.length,2);

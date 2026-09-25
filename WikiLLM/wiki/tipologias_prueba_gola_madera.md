@@ -84,6 +84,9 @@ herrajes, dos refuerzos y dos Golas. Cambia a `n_cajones=2` y
 base de la gaveta superior para separar visualmente ambos niveles. La migración
 está aplicada en el proyecto Supabase conectado desde el 25 de septiembre de
 2026; la tipología está activa y disponible para sesiones autenticadas.
+`0101_db_2_sm_frente_unico.sql` elimina las plantillas especializadas
+`frente_*`: como ambas gavetas son iguales, el despiece muestra únicamente
+`frente`, con cantidad 2.
 
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la

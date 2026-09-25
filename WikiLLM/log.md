@@ -990,3 +990,7 @@ El generador fuerza los planos confirmados de DB-2S-SM para impedir que una conf
 ## [2026-09-25] update | Migración DB-2-SM aplicada en Supabase
 
 Se aplicó `0100_db_2_sm.sql` al proyecto Supabase conectado. Se verificó `DB-2-SM` activa con 15 piezas, 12 reglas y 4 herrajes; los dos frentes grandes están habilitados, los pequeños desactivados y los dos pares refuerzo/Gola conservados. `DEV` no recibió cambios.
+
+## [2026-09-25] fix | DB-2-SM usa una única fila frente
+
+`0101` elimina de `DB-2-SM` las plantillas `frente_*` heredadas y conserva solo `frente` con cantidad 2. Las dos gavetas iguales dejan de duplicarse como `frente` y `frente_gaveta_grande` en el despiece.

@@ -33,18 +33,26 @@ from public.cot_piezas_plantilla p
 join public.cot_tipos_mueble origen on origen.id = p.tipo_mueble_id and origen.pref = 'DB-2S-SM'
 join public.cot_tipos_mueble destino on destino.pref = 'DB-2-SM';
 
+-- Esta variante no distingue frentes pequeños/grandes ni frentes ocultos:
+-- conserva únicamente la pieza genérica `frente`, que produce dos unidades.
+delete from public.cot_piezas_plantilla p
+using public.cot_tipos_mueble t
+where t.id = p.tipo_mueble_id
+  and t.pref = 'DB-2-SM'
+  and p.nombre like 'frente_%';
+
 -- Dos cuerpos y dos frentes grandes; ninguna pieza pequena. Se mantienen dos
 -- refuerzos y dos Golas para cerrar la parte superior y separar las gavetas.
 update public.cot_piezas_plantilla p
 set formula_cantidad = case
-      when p.nombre in ('base_gaveta','frente_gaveta_grande','trasero_gaveta_grande') then '2'
+      when p.nombre in ('base_gaveta','trasero_gaveta_grande') then '2'
       when p.nombre = 'lateral_gaveta' then '4'
-      when p.nombre in ('frente_gaveta_pequena','trasero_gaveta_pequena') then '0'
+      when p.nombre = 'trasero_gaveta_pequena' then '0'
       when p.nombre in ('refuerzo_delantero','gola_madera') then '2'
       else p.formula_cantidad
     end,
     notas = case
-      when p.nombre in ('frente_gaveta_grande','trasero_gaveta_grande') then 'DB-2-SM: dos gavetas grandes iguales.'
+      when p.nombre = 'trasero_gaveta_grande' then 'DB-2-SM: dos gavetas iguales.'
       when p.nombre in ('refuerzo_delantero','gola_madera') then 'DB-2-SM: par superior y par intermedio.'
       else p.notas
     end,
