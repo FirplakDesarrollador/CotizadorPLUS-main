@@ -30,7 +30,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
   };
   members.forEach((member, mi) => {
     const {calc,pref}=member, result=group.lineas[mi];
-    const esDbSmEspecial = pref === 'DB-2S-SM' || pref === 'DB-2-SM';
+    const esDbSmEspecial = ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM'].includes(pref);
     const L=mm(calc.dims.L), A=mm(calc.dims.A), P=mm(calc.dims.P);
     const thickness=(rol: string) => Number(calc.tablerosByCode[calc.preset[rol]]?.espesor_mm ?? 0);
     const TC=thickness('caja') || 15, TF=thickness('frente') || 18, TB=thickness('fondo') || 6;

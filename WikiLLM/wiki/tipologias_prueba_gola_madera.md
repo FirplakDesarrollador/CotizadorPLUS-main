@@ -15,6 +15,7 @@ y `W`. No las actualiza ni reutiliza sus plantillas.
 | `SB-SM` | `SB30-SM` | Inferior con frente falso, puertas inferiores y Gola de madera, según la hoja SB30-SM. |
 | `DB-2S-SM` | `DB26-2S-SM` | Cajonera independiente 2S con dos gavetas pequeñas, una grande y Gola superior/inferior. |
 | `DB-2-SM` | `DB26-2-SM` | Variante con dos gavetas grandes iguales, Gola superior/intermedia y sin manijas. |
+| `DB-3-SM` | `DB26-3-SM` | Variante con tres gavetas iguales; segundo par refuerzo/Gola entre la segunda y tercera. |
 
 ## Prioridad de reglas PLUS
 
@@ -90,6 +91,12 @@ está aplicada en el proyecto Supabase conectado desde el 25 de septiembre de
 `0102_db_2_sm_trasero_unico.sql` aplica el mismo criterio a los traseros: deja
 solo `trasero_gaveta`, cantidad 2 y 183 mm de alto, conservando el canto de la
 pieza grande (1 largo y 2 anchos).
+
+`0103_db_3_sm.sql` deriva `DB-3-SM` de la variante unificada: mantiene una
+sola fila `frente`, `base_gaveta` y `trasero_gaveta`, cada una con cantidad 3.
+Los tres frentes se reparten por igual y los traseros miden 183 mm. El segundo
+par refuerzo/Gola se ancla bajo la segunda base, entre la segunda y tercera
+gaveta.
 
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la

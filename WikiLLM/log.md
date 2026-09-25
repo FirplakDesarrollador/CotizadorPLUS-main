@@ -998,3 +998,7 @@ Se aplicó `0100_db_2_sm.sql` al proyecto Supabase conectado. Se verificó `DB-2
 ## [2026-09-25] fix | DB-2-SM usa una única fila trasero_gaveta
 
 `0102` elimina de `DB-2-SM` las plantillas `trasero_gaveta_*` y conserva solo `trasero_gaveta`, cantidad 2 y 183 mm. La fila unificada mantiene el canto de producción de la pieza grande: 1 largo y 2 anchos.
+
+## [2026-09-25] ingest | Tipología DB-3-SM con tres gavetas iguales
+
+`0103` crea `DB-3-SM` desde `DB-2-SM`: `frente`, `base_gaveta` y `trasero_gaveta` son filas únicas de cantidad 3. Mantiene dos pares refuerzo/Gola y sitúa el segundo entre la segunda y tercera gaveta.

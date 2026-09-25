@@ -242,7 +242,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     // fórmulas de pieza y las reglas puedan reaccionar (ver migración 0028).
     // Las variantes DB-SM tienen Gola integrada: un selector heredado en
     // "manija" no puede desactivar sus dos golas ni alterar sus frentes.
-    const esDbSm = ['DB-2S-SM', 'DB-2-SM'].includes(pref.toUpperCase());
+    const esDbSm = ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM'].includes(pref.toUpperCase());
     overrides.gola = esDbSm || modulo.sistemaFrente === 'gola' ? 1 : 0;
     if (permiteRemovible(pref)) overrides.removible = modulo.removible ? 1 : 0;
     return {
