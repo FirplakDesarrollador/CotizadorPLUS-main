@@ -1,0 +1,7150 @@
+[
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 2,
+    "sku": "BFD15",
+    "dims": {
+      "L": 15,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 1,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 13.819,
+          "anchoIn": 23.055,
+          "areaCm2": 2055.46,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 13.819,
+          "anchoIn": 3.15,
+          "areaCm2": 280.8,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 13.819,
+          "anchoIn": 3.15,
+          "areaCm2": 561.6,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 13.78,
+          "anchoIn": 22,
+          "areaCm2": 1955.8,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 14.874,
+          "anchoIn": 29.874,
+          "areaCm2": 2866.75,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 14.37,
+          "areaCm2": 2774,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 11626.56,
+          "m2": 1.337054,
+          "costo": 1.34
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 2517.4,
+          "m2": 0.289501,
+          "costo": 0.29
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2866.75,
+          "m2": 0.329676,
+          "costo": 0.33
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2774,
+          "m2": 0.31901,
+          "costo": 0.32
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1135.2,
+          "metros": 11.352,
+          "precio": 400,
+          "costo": 4540.8
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 247.32,
+          "metros": 2.4732,
+          "precio": 980,
+          "costo": 2423.74
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 20,
+        "soportes": 4,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 1,
+          "precio": 5800,
+          "costo": 5800
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 1,
+          "precio": 7450,
+          "costo": 7450
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 2.2752413952929404,
+      "costoCanto": 6964.5360015999995,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 6966.811242995293,
+      "costoHerrajes": 21566,
+      "costoConHerrajes": 28532.811242995293,
+      "precioCop": 6966.811242995293,
+      "precioUsd": 6966.811242995293,
+      "precioHerrajesCop": 33178.46153846154,
+      "precioHerrajesUsd": 33178.46153846154,
+      "precioConHerrajesCop": 40145.272781456835,
+      "precioConHerrajesUsd": 40145.272781456835,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 3,
+    "sku": "BFD36",
+    "dims": {
+      "L": 36,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 34.819,
+          "anchoIn": 23.055,
+          "areaCm2": 5179.05,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 34.819,
+          "anchoIn": 3.15,
+          "areaCm2": 707.52,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 34.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1415.04,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 34.78,
+          "anchoIn": 22,
+          "areaCm2": 4936.44,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 17.874,
+          "anchoIn": 29.874,
+          "areaCm2": 6889.9,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 35.37,
+          "areaCm2": 6827.84,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 15176.87,
+          "m2": 1.74534,
+          "costo": 1.75
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 6351.48,
+          "m2": 0.73042,
+          "costo": 0.73
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 6889.9,
+          "m2": 0.792339,
+          "costo": 0.79
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 6827.84,
+          "m2": 0.785202,
+          "costo": 0.79
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1668.6,
+          "metros": 16.686,
+          "precio": 400,
+          "costo": 6674.4
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 525.12,
+          "metros": 5.2512,
+          "precio": 980,
+          "costo": 5146.18
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 20,
+        "soportes": 4,
+        "carton": 1.1,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 4.05330112081096,
+      "costoCanto": 11820.576001599999,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 11824.62930272081,
+      "costoHerrajes": 34816,
+      "costoConHerrajes": 46640.62930272081,
+      "precioCop": 11824.62930272081,
+      "precioUsd": 11824.62930272081,
+      "precioHerrajesCop": 53563.07692307692,
+      "precioHerrajesUsd": 53563.07692307692,
+      "precioConHerrajesCop": 65387.70622579773,
+      "precioConHerrajesUsd": 65387.70622579773,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 4,
+    "sku": "SBFD30",
+    "dims": {
+      "L": 30,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 23.055,
+          "areaCm2": 4286.59,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 5.039,
+          "areaCm2": 936.96,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 14.874,
+          "anchoIn": 29.874,
+          "areaCm2": 5733.49,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 29.37,
+          "areaCm2": 5669.6,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 14513.86,
+          "m2": 1.669093,
+          "costo": 1.67
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 1171.2,
+          "m2": 0.134688,
+          "costo": 0.13
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 5733.49,
+          "m2": 0.659352,
+          "costo": 0.66
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 5669.6,
+          "m2": 0.652004,
+          "costo": 0.65
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1238.24,
+          "metros": 12.3824,
+          "precio": 400,
+          "costo": 4952.96
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 494.64,
+          "metros": 4.9464,
+          "precio": 980,
+          "costo": 4847.47
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 20,
+        "soportes": 0,
+        "carton": 0.9,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.1151373302792003,
+      "costoCanto": 9800.431999999999,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 9803.547137330279,
+      "costoHerrajes": 34816,
+      "costoConHerrajes": 44619.54713733028,
+      "precioCop": 9803.547137330279,
+      "precioUsd": 9803.547137330279,
+      "precioHerrajesCop": 53563.07692307692,
+      "precioHerrajesUsd": 53563.07692307692,
+      "precioConHerrajesCop": 63366.6240604072,
+      "precioConHerrajesUsd": 63366.6240604072,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 5,
+    "sku": "B12",
+    "dims": {
+      "L": 12,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 1,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 1,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0,
+        "alto_frente_gaveta": 6
+      },
+      "piezas": [
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 23.055,
+          "areaCm2": 1609.23,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_horizontal",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 10.78,
+          "anchoIn": 11.811,
+          "areaCm2": 821.4,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 7.866,
+          "anchoIn": 19.37,
+          "areaCm2": 983.01,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 7.393,
+          "anchoIn": 2.677,
+          "areaCm2": 127.69,
+          "cantoLargos": 1,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 11.874,
+          "anchoIn": 23.748,
+          "areaCm2": 1819.25,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_cajon",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 11.874,
+          "anchoIn": 6,
+          "areaCm2": 459.64,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 11.37,
+          "areaCm2": 2194.88,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 10899.53,
+          "m2": 1.253446,
+          "costo": 1.25
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 2811.46,
+          "m2": 0.323318,
+          "costo": 0.32
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2278.89,
+          "m2": 0.262072,
+          "costo": 0.26
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2194.88,
+          "m2": 0.252411,
+          "costo": 0.25
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1148.94,
+          "metros": 11.4894,
+          "precio": 400,
+          "costo": 4595.75
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 311.76,
+          "metros": 3.1176,
+          "precio": 980,
+          "costo": 3055.25
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 4,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 1,
+          "precio": 5800,
+          "costo": 5800
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 1,
+          "precio": 49706.8,
+          "costo": 49706.8
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 2.091248230823581,
+      "costoCanto": 7651.0007728,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 7653.092021030824,
+      "costoHerrajes": 78722.8,
+      "costoConHerrajes": 86375.89202103083,
+      "precioCop": 7653.092021030824,
+      "precioUsd": 7653.092021030824,
+      "precioHerrajesCop": 121112,
+      "precioHerrajesUsd": 121112,
+      "precioConHerrajesCop": 128765.09202103082,
+      "precioConHerrajesUsd": 128765.09202103082,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 6,
+    "sku": "B30",
+    "dims": {
+      "L": 30,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 1,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0,
+        "alto_frente_gaveta": 6
+      },
+      "piezas": [
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 23.055,
+          "areaCm2": 4286.59,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_horizontal",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 28.78,
+          "anchoIn": 11.811,
+          "areaCm2": 2193,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 25.866,
+          "anchoIn": 19.37,
+          "areaCm2": 3232.43,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 25.393,
+          "anchoIn": 2.677,
+          "areaCm2": 438.59,
+          "cantoLargos": 1,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 14.874,
+          "anchoIn": 23.748,
+          "areaCm2": 4557.78,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_cajon",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 29.874,
+          "anchoIn": 6,
+          "areaCm2": 1156.41,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 29.37,
+          "areaCm2": 5669.6,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 13576.9,
+          "m2": 1.561343,
+          "costo": 1.56
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 8206.42,
+          "m2": 0.943738,
+          "costo": 0.94
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 5714.19,
+          "m2": 0.657132,
+          "costo": 0.66
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 5669.6,
+          "m2": 0.652004,
+          "costo": 0.65
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1834.74,
+          "metros": 18.3474,
+          "precio": 400,
+          "costo": 7338.95
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 634.64,
+          "metros": 6.3464,
+          "precio": 980,
+          "costo": 6219.47
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 4,
+        "carton": 0.9,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 3,
+          "precio": 7450,
+          "costo": 22350
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 1,
+          "precio": 49706.8,
+          "costo": 49706.8
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.8142169096163006,
+      "costoCanto": 13558.4247728,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 13562.238989709615,
+      "costoHerrajes": 91972.8,
+      "costoConHerrajes": 105535.03898970962,
+      "precioCop": 13562.238989709615,
+      "precioUsd": 13562.238989709615,
+      "precioHerrajesCop": 141496.61538461538,
+      "precioHerrajesUsd": 141496.61538461538,
+      "precioConHerrajesCop": 155058.854374325,
+      "precioConHerrajesUsd": 155058.854374325,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 7,
+    "sku": "DB30-2",
+    "dims": {
+      "L": 30,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 0,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 2,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "n_cajones_pequenos": 0,
+        "gola": 0,
+        "alto_frente_pequeno_base": 0,
+        "alto_frente_pequeno": 0,
+        "removible": 0,
+        "n_cajones_ocultos": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 23.055,
+          "areaCm2": 4286.59,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente_gaveta_exterior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 29.874,
+          "anchoIn": 14.874,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente_gaveta_interior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 28.693,
+          "anchoIn": 3.937,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_perfil",
+          "rol": "caja",
+          "cant": 0,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 25.866,
+          "anchoIn": 19.37,
+          "areaCm2": 6464.85,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 25.393,
+          "anchoIn": 7.205,
+          "areaCm2": 2360.63,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_pequena",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 25.393,
+          "anchoIn": 2.677,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_grande",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 25.393,
+          "anchoIn": 7.205,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 29.874,
+          "anchoIn": 14.874,
+          "areaCm2": 5733.49,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_pequena",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 29.874,
+          "anchoIn": 0,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_grande",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 29.874,
+          "anchoIn": 14.874,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 29.37,
+          "areaCm2": 5669.6,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 13576.9,
+          "m2": 1.561343,
+          "costo": 1.56
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 11167.89,
+          "m2": 1.284307,
+          "costo": 1.28
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 5733.49,
+          "m2": 0.659352,
+          "costo": 0.66
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 5669.6,
+          "m2": 0.652004,
+          "costo": 0.65
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1943.43,
+          "metros": 19.4343,
+          "precio": 400,
+          "costo": 7773.73
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 494.64,
+          "metros": 4.9464,
+          "precio": 980,
+          "costo": 4847.47
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 0,
+        "carton": 0.9,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 2,
+          "precio": 49706.8,
+          "costo": 99413.6
+        },
+        {
+          "rol": "barra",
+          "codigo": "BARRAEST",
+          "cant": 2,
+          "precio": 9800,
+          "costo": 19600
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 4.157006226211003,
+      "costoCanto": 12621.2034496,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 12625.36045582621,
+      "costoHerrajes": 142229.6,
+      "costoConHerrajes": 154854.96045582622,
+      "precioCop": 12625.36045582621,
+      "precioUsd": 12625.36045582621,
+      "precioHerrajesCop": 218814.76923076922,
+      "precioHerrajesUsd": 218814.76923076922,
+      "precioConHerrajesCop": 231440.12968659544,
+      "precioConHerrajesUsd": 231440.12968659544,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 8,
+    "sku": "DB12-3",
+    "dims": {
+      "L": 12,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 0,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 3,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "n_cajones_pequenos": 0,
+        "gola": 0,
+        "alto_frente_pequeno_base": 0,
+        "alto_frente_pequeno": 0,
+        "removible": 0,
+        "n_cajones_ocultos": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 23.055,
+          "areaCm2": 1609.23,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 659.52,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente_gaveta_exterior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 11.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente_gaveta_interior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 10.693,
+          "anchoIn": 3.937,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_perfil",
+          "rol": "caja",
+          "cant": 0,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 7.866,
+          "anchoIn": 19.37,
+          "areaCm2": 2949.04,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 7.393,
+          "anchoIn": 7.205,
+          "areaCm2": 1030.92,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_pequena",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 7.393,
+          "anchoIn": 2.677,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_grande",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 7.393,
+          "anchoIn": 7.205,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 3,
+          "largoIn": 11.874,
+          "anchoIn": 9.874,
+          "areaCm2": 2269.24,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_pequena",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 11.874,
+          "anchoIn": 0,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_grande",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 11.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 11.37,
+          "areaCm2": 2194.88,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 10899.53,
+          "m2": 1.253446,
+          "costo": 1.25
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 5079.16,
+          "m2": 0.584104,
+          "costo": 0.58
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2269.24,
+          "m2": 0.260962,
+          "costo": 0.26
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2194.88,
+          "m2": 0.252411,
+          "costo": 0.25
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1280.95,
+          "metros": 12.8095,
+          "precio": 400,
+          "costo": 5123.8
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 391.44,
+          "metros": 3.9144,
+          "precio": 980,
+          "costo": 3836.11
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 28,
+        "soportes": 0,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 3,
+          "precio": 7450,
+          "costo": 22350
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 3,
+          "precio": 49706.8,
+          "costo": 149120.4
+        },
+        {
+          "rol": "barra",
+          "codigo": "BARRAEST",
+          "cant": 3,
+          "precio": 9800,
+          "costo": 29400
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 2.3509234358673035,
+      "costoCanto": 8959.9091744,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 8962.260097835868,
+      "costoHerrajes": 209186.40000000002,
+      "costoConHerrajes": 218148.66009783588,
+      "precioCop": 8962.260097835868,
+      "precioUsd": 8962.260097835868,
+      "precioHerrajesCop": 321825.2307692308,
+      "precioHerrajesUsd": 321825.2307692308,
+      "precioConHerrajesCop": 330787.49086706666,
+      "precioConHerrajesUsd": 330787.49086706666,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 9,
+    "sku": "DB20-4",
+    "dims": {
+      "L": 20,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 0,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 4,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "n_cajones_pequenos": 0,
+        "gola": 0,
+        "alto_frente_pequeno_base": 0,
+        "alto_frente_pequeno": 0,
+        "removible": 0,
+        "n_cajones_ocultos": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 18.819,
+          "anchoIn": 23.055,
+          "areaCm2": 2799.17,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 18.819,
+          "anchoIn": 3.15,
+          "areaCm2": 764.8,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "refuerzo",
+          "cant": 4,
+          "largoIn": 18.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1529.6,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente_gaveta_exterior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 19.874,
+          "anchoIn": 7.374,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente_gaveta_interior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 18.693,
+          "anchoIn": 3.937,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_perfil",
+          "rol": "caja",
+          "cant": 0,
+          "largoIn": 18.819,
+          "anchoIn": 3.15,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 4,
+          "largoIn": 15.866,
+          "anchoIn": 19.37,
+          "areaCm2": 7931.01,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 4,
+          "largoIn": 15.393,
+          "anchoIn": 2.677,
+          "areaCm2": 1063.47,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_pequena",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 15.393,
+          "anchoIn": 2.677,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_grande",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 15.393,
+          "anchoIn": 7.205,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 4,
+          "largoIn": 19.874,
+          "anchoIn": 7.39,
+          "areaCm2": 3790.04,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_pequena",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 19.874,
+          "anchoIn": 0,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_grande",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 19.874,
+          "anchoIn": 7.374,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 19.37,
+          "areaCm2": 3739.2,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 12089.47,
+          "m2": 1.390289,
+          "costo": 1.39
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 11288.88,
+          "m2": 1.298221,
+          "costo": 1.3
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 3790.04,
+          "m2": 0.435854,
+          "costo": 0.44
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 3739.2,
+          "m2": 0.430008,
+          "costo": 0.43
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 2051.03,
+          "metros": 20.5103,
+          "precio": 400,
+          "costo": 8204.1
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 634,
+          "metros": 6.34,
+          "precio": 980,
+          "costo": 6213.2
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 32,
+        "soportes": 0,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 4,
+          "precio": 7450,
+          "costo": 29800
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 4,
+          "precio": 49706.8,
+          "costo": 198827.2
+        },
+        {
+          "rol": "barra",
+          "codigo": "BARRAEST",
+          "cant": 0,
+          "precio": 9800,
+          "costo": 0
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.554373079289245,
+      "costoCanto": 14417.302893319998,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 14420.857266399287,
+      "costoHerrajes": 236943.2,
+      "costoConHerrajes": 251364.0572663993,
+      "precioCop": 14420.857266399287,
+      "precioUsd": 14420.857266399287,
+      "precioHerrajesCop": 364528,
+      "precioHerrajesUsd": 364528,
+      "precioConHerrajesCop": 378948.8572663993,
+      "precioConHerrajesUsd": 378948.8572663993,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 10,
+    "sku": "DB19-1s",
+    "dims": {
+      "L": 19,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 0,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 3,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "n_cajones_pequenos": 1,
+        "gola": 0,
+        "alto_frente_pequeno_base": 6,
+        "alto_frente_pequeno": 6,
+        "removible": 0,
+        "n_cajones_ocultos": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 17.819,
+          "anchoIn": 23.055,
+          "areaCm2": 2650.43,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 17.819,
+          "anchoIn": 3.15,
+          "areaCm2": 724.16,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 17.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1086.24,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente_gaveta_exterior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 18.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente_gaveta_interior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 17.693,
+          "anchoIn": 3.937,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_perfil",
+          "rol": "caja",
+          "cant": 0,
+          "largoIn": 17.819,
+          "anchoIn": 3.15,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 14.866,
+          "anchoIn": 19.37,
+          "areaCm2": 5573.35,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 14.393,
+          "anchoIn": 7.205,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_pequena",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 14.393,
+          "anchoIn": 2.677,
+          "areaCm2": 248.6,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_grande",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 14.393,
+          "anchoIn": 7.205,
+          "areaCm2": 1338.03,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 18.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_pequena",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 18.874,
+          "anchoIn": 6,
+          "areaCm2": 730.61,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_grande",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 18.874,
+          "anchoIn": 11.811,
+          "areaCm2": 2876.4,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 18.37,
+          "areaCm2": 3546.16,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 11940.73,
+          "m2": 1.373184,
+          "costo": 1.37
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 8970.38,
+          "m2": 1.031594,
+          "costo": 1.03
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 3607.01,
+          "m2": 0.414806,
+          "costo": 0.41
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 3546.16,
+          "m2": 0.407808,
+          "costo": 0.41
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1707.67,
+          "metros": 17.0767,
+          "precio": 400,
+          "costo": 6830.68
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 498.12,
+          "metros": 4.9812,
+          "precio": 980,
+          "costo": 4881.58
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 28,
+        "soportes": 0,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 3,
+          "precio": 7450,
+          "costo": 22350
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 3,
+          "precio": 49706.8,
+          "costo": 149120.4
+        },
+        {
+          "rol": "barra",
+          "codigo": "BARRAEST",
+          "cant": 2,
+          "precio": 9800,
+          "costo": 19600
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.2273918773770034,
+      "costoCanto": 11712.2531744,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 11715.480566277378,
+      "costoHerrajes": 199386.40000000002,
+      "costoConHerrajes": 211101.8805662774,
+      "precioCop": 11715.480566277378,
+      "precioUsd": 11715.480566277378,
+      "precioHerrajesCop": 306748.30769230775,
+      "precioHerrajesUsd": 306748.30769230775,
+      "precioConHerrajesCop": 318463.78825858515,
+      "precioConHerrajesUsd": 318463.78825858515,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 11,
+    "sku": "DB24-2s",
+    "dims": {
+      "L": 24,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 0,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 3,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "n_cajones_pequenos": 2,
+        "gola": 0,
+        "alto_frente_pequeno_base": 7.374015748031496,
+        "alto_frente_pequeno": 7.374015748031496,
+        "removible": 0,
+        "n_cajones_ocultos": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 22.819,
+          "anchoIn": 23.055,
+          "areaCm2": 3394.14,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 22.819,
+          "anchoIn": 3.15,
+          "areaCm2": 927.36,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 22.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1391.04,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente_gaveta_exterior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 23.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente_gaveta_interior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 22.693,
+          "anchoIn": 3.937,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_perfil",
+          "rol": "caja",
+          "cant": 0,
+          "largoIn": 22.819,
+          "anchoIn": 3.15,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 19.866,
+          "anchoIn": 19.37,
+          "areaCm2": 7447.87,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 19.393,
+          "anchoIn": 7.205,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_pequena",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 19.393,
+          "anchoIn": 2.677,
+          "areaCm2": 669.91,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_grande",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 19.393,
+          "anchoIn": 7.205,
+          "areaCm2": 901.43,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 23.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_pequena",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 23.874,
+          "anchoIn": 7.374,
+          "areaCm2": 2271.57,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_grande",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 23.874,
+          "anchoIn": 14.874,
+          "areaCm2": 2290.98,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 23.37,
+          "areaCm2": 4511.36,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 12684.44,
+          "m2": 1.458711,
+          "costo": 1.46
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 11337.61,
+          "m2": 1.303825,
+          "costo": 1.3
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 4562.55,
+          "m2": 0.524694,
+          "costo": 0.52
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 4511.36,
+          "m2": 0.518806,
+          "costo": 0.52
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 2012.47,
+          "metros": 20.1247,
+          "precio": 400,
+          "costo": 8049.88
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 574.32,
+          "metros": 5.7432,
+          "precio": 980,
+          "costo": 5628.34
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 28,
+        "soportes": 0,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 3,
+          "precio": 7450,
+          "costo": 22350
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 3,
+          "precio": 49706.8,
+          "costo": 149120.4
+        },
+        {
+          "rol": "barra",
+          "codigo": "BARRAEST",
+          "cant": 1,
+          "precio": 9800,
+          "costo": 9800
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.806035479612503,
+      "costoCanto": 13678.2131744,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 13682.019209879612,
+      "costoHerrajes": 189586.40000000002,
+      "costoConHerrajes": 203268.41920987965,
+      "precioCop": 13682.019209879612,
+      "precioUsd": 13682.019209879612,
+      "precioHerrajesCop": 291671.3846153846,
+      "precioHerrajesUsd": 291671.3846153846,
+      "precioConHerrajesCop": 305353.40382526425,
+      "precioConHerrajesUsd": 305353.40382526425,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 12,
+    "sku": "W1236",
+    "dims": {
+      "L": 12,
+      "A": 36,
+      "P": 12
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 1,
+        "n_entrepanos": 2,
+        "n_patas": 0,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "base_tapa",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 12,
+          "areaCm2": 1675.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 36,
+          "anchoIn": 12,
+          "areaCm2": 5574.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.78,
+          "anchoIn": 10.5,
+          "areaCm2": 1460.45,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 11.874,
+          "anchoIn": 35.874,
+          "areaCm2": 2748.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 11.37,
+          "anchoIn": 35.37,
+          "areaCm2": 2594.58,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 7249.36,
+          "m2": 0.833677,
+          "costo": 0.83
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 1900.13,
+          "m2": 0.218515,
+          "costo": 0.22
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2748.18,
+          "m2": 0.316041,
+          "costo": 0.32
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2594.58,
+          "m2": 0.298377,
+          "costo": 0.3
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1059.72,
+          "metros": 10.5972,
+          "precio": 400,
+          "costo": 4238.88
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 262.56,
+          "metros": 2.6256,
+          "precio": 980,
+          "costo": 2573.09
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 8,
+        "carton": 0.4,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 1,
+          "precio": 5800,
+          "costo": 5800
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 1,
+          "precio": 7450,
+          "costo": 7450
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 1.666608946327541,
+      "costoCanto": 6811.9680032,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 6813.6346121463275,
+      "costoHerrajes": 13250,
+      "costoConHerrajes": 20063.63461214633,
+      "precioCop": 6813.6346121463275,
+      "precioUsd": 6813.6346121463275,
+      "precioHerrajesCop": 20384.615384615383,
+      "precioHerrajesUsd": 20384.615384615383,
+      "precioConHerrajesCop": 27198.24999676171,
+      "precioConHerrajesUsd": 27198.24999676171,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 13,
+    "sku": "W3036",
+    "dims": {
+      "L": 30,
+      "A": 36,
+      "P": 12
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 2,
+        "n_patas": 0,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "base_tapa",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 12,
+          "areaCm2": 4462.27,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 36,
+          "anchoIn": 12,
+          "areaCm2": 5574.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.78,
+          "anchoIn": 10.5,
+          "areaCm2": 3899.15,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 14.874,
+          "anchoIn": 35.874,
+          "areaCm2": 6885.03,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.37,
+          "anchoIn": 35.37,
+          "areaCm2": 6702.06,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 10036.45,
+          "m2": 1.154192,
+          "costo": 1.15
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 5070.36,
+          "m2": 0.583091,
+          "costo": 0.58
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 6885.03,
+          "m2": 0.791778,
+          "costo": 0.79
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 6702.06,
+          "m2": 0.770737,
+          "costo": 0.77
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1608.36,
+          "metros": 16.0836,
+          "precio": 400,
+          "costo": 6433.44
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 555.6,
+          "metros": 5.556,
+          "precio": 980,
+          "costo": 5444.88
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 8,
+        "carton": 1.1,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.2997986739991405,
+      "costoCanto": 11878.320003199999,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 11881.619801873998,
+      "costoHerrajes": 26500,
+      "costoConHerrajes": 38381.619801873996,
+      "precioCop": 11881.619801873998,
+      "precioUsd": 11881.619801873998,
+      "precioHerrajesCop": 40769.230769230766,
+      "precioHerrajesUsd": 40769.230769230766,
+      "precioConHerrajesCop": 52650.85057110476,
+      "precioConHerrajesUsd": 52650.85057110476,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 14,
+    "sku": "W302024",
+    "dims": {
+      "L": 30,
+      "A": 20,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 1,
+        "n_patas": 0,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "base_tapa",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 24,
+          "areaCm2": 8924.54,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 20,
+          "anchoIn": 24,
+          "areaCm2": 6193.54,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 28.78,
+          "anchoIn": 22,
+          "areaCm2": 4084.83,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 14.874,
+          "anchoIn": 19.874,
+          "areaCm2": 3814.27,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.37,
+          "anchoIn": 19.37,
+          "areaCm2": 3670.32,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 15118.08,
+          "m2": 1.738579,
+          "costo": 1.74
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 5256.03,
+          "m2": 0.604443,
+          "costo": 0.6
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 3814.27,
+          "m2": 0.438641,
+          "costo": 0.44
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 3670.32,
+          "m2": 0.422087,
+          "costo": 0.42
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1406.6,
+          "metros": 14.066,
+          "precio": 400,
+          "costo": 5626.4
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 393.04,
+          "metros": 3.9304,
+          "precio": 980,
+          "costo": 3851.79
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 4,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.203750337102041,
+      "costoCanto": 9478.1920016,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 9481.395751937102,
+      "costoHerrajes": 26500,
+      "costoConHerrajes": 35981.3957519371,
+      "precioCop": 9481.395751937102,
+      "precioUsd": 9481.395751937102,
+      "precioHerrajesCop": 40769.230769230766,
+      "precioHerrajesUsd": 40769.230769230766,
+      "precioConHerrajesCop": 50250.62652116787,
+      "precioConHerrajesUsd": 50250.62652116787,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 15,
+    "sku": "UW1236",
+    "dims": {
+      "L": 12,
+      "A": 36,
+      "P": 12
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 1,
+        "n_entrepanos": 3,
+        "n_patas": 0,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 36,
+          "anchoIn": 12,
+          "areaCm2": 5574.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 12,
+          "areaCm2": 837.59,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "tapa",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 12,
+          "areaCm2": 837.59,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.78,
+          "anchoIn": 10.5,
+          "areaCm2": 1460.45,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano_superior",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 11.094,
+          "areaCm2": 774.39,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "gola_frame",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 160,
+          "anchoIn": 1,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_canto",
+          "rol": null,
+          "cant": 0,
+          "largoIn": 128,
+          "anchoIn": 0,
+          "areaCm2": 0,
+          "cantoLargos": 1,
+          "cantoAnchos": 0,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 35.37,
+          "anchoIn": 11.37,
+          "areaCm2": 2594.58,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 11.874,
+          "anchoIn": 28.158,
+          "areaCm2": 2157.1,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 7249.36,
+          "m2": 0.833677,
+          "costo": 0.83
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 2674.52,
+          "m2": 0.307569,
+          "costo": 0.31
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2157.1,
+          "m2": 0.248067,
+          "costo": 0.25
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2594.58,
+          "m2": 0.298377,
+          "costo": 0.3
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1124.68,
+          "metros": 11.2468,
+          "precio": 400,
+          "costo": 4498.72
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 223.36,
+          "metros": 2.2336,
+          "precio": 980,
+          "costo": 2188.97
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 32,
+        "soportes": 8,
+        "carton": 0.4,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 1,
+          "precio": 5800,
+          "costo": 5800
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 1,
+          "precio": 7450,
+          "costo": 7450
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 1.6876897021390982,
+      "costoCanto": 6687.687281376,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 6689.374971078139,
+      "costoHerrajes": 13250,
+      "costoConHerrajes": 19939.37497107814,
+      "precioCop": 6689.374971078139,
+      "precioUsd": 6689.374971078139,
+      "precioHerrajesCop": 20384.615384615383,
+      "precioHerrajesUsd": 20384.615384615383,
+      "precioConHerrajesCop": 27073.990355693524,
+      "precioConHerrajesUsd": 27073.990355693524,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "CANTOS Y OTROS",
+    "row": 16,
+    "sku": "UW3036",
+    "dims": {
+      "L": 30,
+      "A": 36,
+      "P": 12
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 3,
+        "n_patas": 0,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 36,
+          "anchoIn": 12,
+          "areaCm2": 5574.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 12,
+          "areaCm2": 2231.14,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "tapa",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 12,
+          "areaCm2": 2231.14,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.78,
+          "anchoIn": 10.5,
+          "areaCm2": 3899.15,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano_superior",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 11.094,
+          "areaCm2": 2062.78,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "gola_frame",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 344,
+          "anchoIn": 1,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_canto",
+          "rol": null,
+          "cant": 0,
+          "largoIn": 304,
+          "anchoIn": 0,
+          "areaCm2": 0,
+          "cantoLargos": 1,
+          "cantoAnchos": 0,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 35.37,
+          "anchoIn": 29.37,
+          "areaCm2": 6702.06,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 14.874,
+          "anchoIn": 28.158,
+          "areaCm2": 5404.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 10036.45,
+          "m2": 1.154192,
+          "costo": 1.15
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 7133.13,
+          "m2": 0.82031,
+          "costo": 0.82
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 5404.2,
+          "m2": 0.621483,
+          "costo": 0.62
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 6702.06,
+          "m2": 0.770737,
+          "costo": 0.77
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1764.76,
+          "metros": 17.6476,
+          "precio": 400,
+          "costo": 7059.04
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 477.21,
+          "metros": 4.7721,
+          "precio": 980,
+          "costo": 4676.64
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 32,
+        "soportes": 8,
+        "carton": 1.1,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.3667230823100933,
+      "costoCanto": 11735.678508031999,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 11739.045231114309,
+      "costoHerrajes": 26500,
+      "costoConHerrajes": 38239.04523111431,
+      "precioCop": 11739.045231114309,
+      "precioUsd": 11739.045231114309,
+      "precioHerrajesCop": 40769.230769230766,
+      "precioHerrajesUsd": 40769.230769230766,
+      "precioConHerrajesCop": 52508.276000345075,
+      "precioConHerrajesUsd": 52508.276000345075,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 3,
+    "sku": "BFD15",
+    "dims": {
+      "L": 15,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 1,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 13.819,
+          "anchoIn": 23.055,
+          "areaCm2": 2055.46,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 13.819,
+          "anchoIn": 3.15,
+          "areaCm2": 280.8,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 13.819,
+          "anchoIn": 3.15,
+          "areaCm2": 561.6,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 13.78,
+          "anchoIn": 22,
+          "areaCm2": 1955.8,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 14.874,
+          "anchoIn": 29.874,
+          "areaCm2": 2866.75,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 14.37,
+          "areaCm2": 2774,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 11626.56,
+          "m2": 1.337054,
+          "costo": 1.34
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 2517.4,
+          "m2": 0.289501,
+          "costo": 0.29
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2866.75,
+          "m2": 0.329676,
+          "costo": 0.33
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2774,
+          "m2": 0.31901,
+          "costo": 0.32
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1135.2,
+          "metros": 11.352,
+          "precio": 400,
+          "costo": 4540.8
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 247.32,
+          "metros": 2.4732,
+          "precio": 980,
+          "costo": 2423.74
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 20,
+        "soportes": 4,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 1,
+          "precio": 5800,
+          "costo": 5800
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 1,
+          "precio": 7450,
+          "costo": 7450
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 2.2752413952929404,
+      "costoCanto": 6964.5360015999995,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 6966.811242995293,
+      "costoHerrajes": 21566,
+      "costoConHerrajes": 28532.811242995293,
+      "precioCop": 6966.811242995293,
+      "precioUsd": 6966.811242995293,
+      "precioHerrajesCop": 33178.46153846154,
+      "precioHerrajesUsd": 33178.46153846154,
+      "precioConHerrajesCop": 40145.272781456835,
+      "precioConHerrajesUsd": 40145.272781456835,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 4,
+    "sku": "BFD36",
+    "dims": {
+      "L": 36,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 34.819,
+          "anchoIn": 23.055,
+          "areaCm2": 5179.05,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 34.819,
+          "anchoIn": 3.15,
+          "areaCm2": 707.52,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 34.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1415.04,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 34.78,
+          "anchoIn": 22,
+          "areaCm2": 4936.44,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 17.874,
+          "anchoIn": 29.874,
+          "areaCm2": 6889.9,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 35.37,
+          "areaCm2": 6827.84,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 15176.87,
+          "m2": 1.74534,
+          "costo": 1.75
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 6351.48,
+          "m2": 0.73042,
+          "costo": 0.73
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 6889.9,
+          "m2": 0.792339,
+          "costo": 0.79
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 6827.84,
+          "m2": 0.785202,
+          "costo": 0.79
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1668.6,
+          "metros": 16.686,
+          "precio": 400,
+          "costo": 6674.4
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 525.12,
+          "metros": 5.2512,
+          "precio": 980,
+          "costo": 5146.18
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 20,
+        "soportes": 4,
+        "carton": 1.1,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 4.05330112081096,
+      "costoCanto": 11820.576001599999,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 11824.62930272081,
+      "costoHerrajes": 34816,
+      "costoConHerrajes": 46640.62930272081,
+      "precioCop": 11824.62930272081,
+      "precioUsd": 11824.62930272081,
+      "precioHerrajesCop": 53563.07692307692,
+      "precioHerrajesUsd": 53563.07692307692,
+      "precioConHerrajesCop": 65387.70622579773,
+      "precioConHerrajesUsd": 65387.70622579773,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 5,
+    "sku": "SBFD30",
+    "dims": {
+      "L": 30,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 23.055,
+          "areaCm2": 4286.59,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 5.039,
+          "areaCm2": 936.96,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 14.874,
+          "anchoIn": 29.874,
+          "areaCm2": 5733.49,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 29.37,
+          "areaCm2": 5669.6,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 14513.86,
+          "m2": 1.669093,
+          "costo": 1.67
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 1171.2,
+          "m2": 0.134688,
+          "costo": 0.13
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 5733.49,
+          "m2": 0.659352,
+          "costo": 0.66
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 5669.6,
+          "m2": 0.652004,
+          "costo": 0.65
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1238.24,
+          "metros": 12.3824,
+          "precio": 400,
+          "costo": 4952.96
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 494.64,
+          "metros": 4.9464,
+          "precio": 980,
+          "costo": 4847.47
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 20,
+        "soportes": 0,
+        "carton": 0.9,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.1151373302792003,
+      "costoCanto": 9800.431999999999,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 9803.547137330279,
+      "costoHerrajes": 34816,
+      "costoConHerrajes": 44619.54713733028,
+      "precioCop": 9803.547137330279,
+      "precioUsd": 9803.547137330279,
+      "precioHerrajesCop": 53563.07692307692,
+      "precioHerrajesUsd": 53563.07692307692,
+      "precioConHerrajesCop": 63366.6240604072,
+      "precioConHerrajesUsd": 63366.6240604072,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 6,
+    "sku": "B12",
+    "dims": {
+      "L": 12,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 1,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 1,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0,
+        "alto_frente_gaveta": 6
+      },
+      "piezas": [
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 23.055,
+          "areaCm2": 1609.23,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_horizontal",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 10.78,
+          "anchoIn": 11.811,
+          "areaCm2": 821.4,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 7.866,
+          "anchoIn": 19.37,
+          "areaCm2": 983.01,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 7.393,
+          "anchoIn": 2.677,
+          "areaCm2": 127.69,
+          "cantoLargos": 1,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 11.874,
+          "anchoIn": 23.748,
+          "areaCm2": 1819.25,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_cajon",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 11.874,
+          "anchoIn": 6,
+          "areaCm2": 459.64,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 11.37,
+          "areaCm2": 2194.88,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 10899.53,
+          "m2": 1.253446,
+          "costo": 1.25
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 2811.46,
+          "m2": 0.323318,
+          "costo": 0.32
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2278.89,
+          "m2": 0.262072,
+          "costo": 0.26
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2194.88,
+          "m2": 0.252411,
+          "costo": 0.25
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1148.94,
+          "metros": 11.4894,
+          "precio": 400,
+          "costo": 4595.75
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 311.76,
+          "metros": 3.1176,
+          "precio": 980,
+          "costo": 3055.25
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 4,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 1,
+          "precio": 5800,
+          "costo": 5800
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 1,
+          "precio": 49706.8,
+          "costo": 49706.8
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 2.091248230823581,
+      "costoCanto": 7651.0007728,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 7653.092021030824,
+      "costoHerrajes": 78722.8,
+      "costoConHerrajes": 86375.89202103083,
+      "precioCop": 7653.092021030824,
+      "precioUsd": 7653.092021030824,
+      "precioHerrajesCop": 121112,
+      "precioHerrajesUsd": 121112,
+      "precioConHerrajesCop": 128765.09202103082,
+      "precioConHerrajesUsd": 128765.09202103082,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 7,
+    "sku": "B30",
+    "dims": {
+      "L": 30,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 1,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0,
+        "alto_frente_gaveta": 6
+      },
+      "piezas": [
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 23.055,
+          "areaCm2": 4286.59,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_horizontal",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 28.78,
+          "anchoIn": 11.811,
+          "areaCm2": 2193,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 25.866,
+          "anchoIn": 19.37,
+          "areaCm2": 3232.43,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 25.393,
+          "anchoIn": 2.677,
+          "areaCm2": 438.59,
+          "cantoLargos": 1,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 14.874,
+          "anchoIn": 23.748,
+          "areaCm2": 4557.78,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_cajon",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 29.874,
+          "anchoIn": 6,
+          "areaCm2": 1156.41,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 29.37,
+          "areaCm2": 5669.6,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 13576.9,
+          "m2": 1.561343,
+          "costo": 1.56
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 8206.42,
+          "m2": 0.943738,
+          "costo": 0.94
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 5714.19,
+          "m2": 0.657132,
+          "costo": 0.66
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 5669.6,
+          "m2": 0.652004,
+          "costo": 0.65
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1834.74,
+          "metros": 18.3474,
+          "precio": 400,
+          "costo": 7338.95
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 634.64,
+          "metros": 6.3464,
+          "precio": 980,
+          "costo": 6219.47
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 4,
+        "carton": 0.9,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 3,
+          "precio": 7450,
+          "costo": 22350
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 1,
+          "precio": 49706.8,
+          "costo": 49706.8
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.8142169096163006,
+      "costoCanto": 13558.4247728,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 13562.238989709615,
+      "costoHerrajes": 91972.8,
+      "costoConHerrajes": 105535.03898970962,
+      "precioCop": 13562.238989709615,
+      "precioUsd": 13562.238989709615,
+      "precioHerrajesCop": 141496.61538461538,
+      "precioHerrajesUsd": 141496.61538461538,
+      "precioConHerrajesCop": 155058.854374325,
+      "precioConHerrajesUsd": 155058.854374325,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 8,
+    "sku": "DB30-2",
+    "dims": {
+      "L": 30,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 0,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 2,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "n_cajones_pequenos": 0,
+        "gola": 0,
+        "alto_frente_pequeno_base": 0,
+        "alto_frente_pequeno": 0,
+        "removible": 0,
+        "n_cajones_ocultos": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 23.055,
+          "areaCm2": 4286.59,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente_gaveta_exterior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 29.874,
+          "anchoIn": 14.874,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente_gaveta_interior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 28.693,
+          "anchoIn": 3.937,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_perfil",
+          "rol": "caja",
+          "cant": 0,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 25.866,
+          "anchoIn": 19.37,
+          "areaCm2": 6464.85,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 25.393,
+          "anchoIn": 7.205,
+          "areaCm2": 2360.63,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_pequena",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 25.393,
+          "anchoIn": 2.677,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_grande",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 25.393,
+          "anchoIn": 7.205,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 29.874,
+          "anchoIn": 14.874,
+          "areaCm2": 5733.49,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_pequena",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 29.874,
+          "anchoIn": 0,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_grande",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 29.874,
+          "anchoIn": 14.874,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 29.37,
+          "areaCm2": 5669.6,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 13576.9,
+          "m2": 1.561343,
+          "costo": 1.56
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 11167.89,
+          "m2": 1.284307,
+          "costo": 1.28
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 5733.49,
+          "m2": 0.659352,
+          "costo": 0.66
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 5669.6,
+          "m2": 0.652004,
+          "costo": 0.65
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1943.43,
+          "metros": 19.4343,
+          "precio": 400,
+          "costo": 7773.73
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 494.64,
+          "metros": 4.9464,
+          "precio": 980,
+          "costo": 4847.47
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 0,
+        "carton": 0.9,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 2,
+          "precio": 49706.8,
+          "costo": 99413.6
+        },
+        {
+          "rol": "barra",
+          "codigo": "BARRAEST",
+          "cant": 2,
+          "precio": 9800,
+          "costo": 19600
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 4.157006226211003,
+      "costoCanto": 12621.2034496,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 12625.36045582621,
+      "costoHerrajes": 142229.6,
+      "costoConHerrajes": 154854.96045582622,
+      "precioCop": 12625.36045582621,
+      "precioUsd": 12625.36045582621,
+      "precioHerrajesCop": 218814.76923076922,
+      "precioHerrajesUsd": 218814.76923076922,
+      "precioConHerrajesCop": 231440.12968659544,
+      "precioConHerrajesUsd": 231440.12968659544,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 9,
+    "sku": "DB12-3",
+    "dims": {
+      "L": 12,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 0,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 3,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "n_cajones_pequenos": 0,
+        "gola": 0,
+        "alto_frente_pequeno_base": 0,
+        "alto_frente_pequeno": 0,
+        "removible": 0,
+        "n_cajones_ocultos": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 23.055,
+          "areaCm2": 1609.23,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 659.52,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente_gaveta_exterior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 11.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente_gaveta_interior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 10.693,
+          "anchoIn": 3.937,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_perfil",
+          "rol": "caja",
+          "cant": 0,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 7.866,
+          "anchoIn": 19.37,
+          "areaCm2": 2949.04,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 7.393,
+          "anchoIn": 7.205,
+          "areaCm2": 1030.92,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_pequena",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 7.393,
+          "anchoIn": 2.677,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_grande",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 7.393,
+          "anchoIn": 7.205,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 3,
+          "largoIn": 11.874,
+          "anchoIn": 9.874,
+          "areaCm2": 2269.24,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_pequena",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 11.874,
+          "anchoIn": 0,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_grande",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 11.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 11.37,
+          "areaCm2": 2194.88,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 10899.53,
+          "m2": 1.253446,
+          "costo": 1.25
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 5079.16,
+          "m2": 0.584104,
+          "costo": 0.58
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2269.24,
+          "m2": 0.260962,
+          "costo": 0.26
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2194.88,
+          "m2": 0.252411,
+          "costo": 0.25
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1280.95,
+          "metros": 12.8095,
+          "precio": 400,
+          "costo": 5123.8
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 391.44,
+          "metros": 3.9144,
+          "precio": 980,
+          "costo": 3836.11
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 28,
+        "soportes": 0,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 3,
+          "precio": 7450,
+          "costo": 22350
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 3,
+          "precio": 49706.8,
+          "costo": 149120.4
+        },
+        {
+          "rol": "barra",
+          "codigo": "BARRAEST",
+          "cant": 3,
+          "precio": 9800,
+          "costo": 29400
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 2.3509234358673035,
+      "costoCanto": 8959.9091744,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 8962.260097835868,
+      "costoHerrajes": 209186.40000000002,
+      "costoConHerrajes": 218148.66009783588,
+      "precioCop": 8962.260097835868,
+      "precioUsd": 8962.260097835868,
+      "precioHerrajesCop": 321825.2307692308,
+      "precioHerrajesUsd": 321825.2307692308,
+      "precioConHerrajesCop": 330787.49086706666,
+      "precioConHerrajesUsd": 330787.49086706666,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 10,
+    "sku": "DB20-4",
+    "dims": {
+      "L": 20,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 0,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 4,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "n_cajones_pequenos": 0,
+        "gola": 0,
+        "alto_frente_pequeno_base": 0,
+        "alto_frente_pequeno": 0,
+        "removible": 0,
+        "n_cajones_ocultos": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 18.819,
+          "anchoIn": 23.055,
+          "areaCm2": 2799.17,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 18.819,
+          "anchoIn": 3.15,
+          "areaCm2": 764.8,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "refuerzo",
+          "cant": 4,
+          "largoIn": 18.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1529.6,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente_gaveta_exterior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 19.874,
+          "anchoIn": 7.374,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente_gaveta_interior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 18.693,
+          "anchoIn": 3.937,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_perfil",
+          "rol": "caja",
+          "cant": 0,
+          "largoIn": 18.819,
+          "anchoIn": 3.15,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 4,
+          "largoIn": 15.866,
+          "anchoIn": 19.37,
+          "areaCm2": 7931.01,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 4,
+          "largoIn": 15.393,
+          "anchoIn": 2.677,
+          "areaCm2": 1063.47,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_pequena",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 15.393,
+          "anchoIn": 2.677,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_grande",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 15.393,
+          "anchoIn": 7.205,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 4,
+          "largoIn": 19.874,
+          "anchoIn": 7.39,
+          "areaCm2": 3790.04,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_pequena",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 19.874,
+          "anchoIn": 0,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_grande",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 19.874,
+          "anchoIn": 7.374,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 19.37,
+          "areaCm2": 3739.2,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 12089.47,
+          "m2": 1.390289,
+          "costo": 1.39
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 11288.88,
+          "m2": 1.298221,
+          "costo": 1.3
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 3790.04,
+          "m2": 0.435854,
+          "costo": 0.44
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 3739.2,
+          "m2": 0.430008,
+          "costo": 0.43
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 2051.03,
+          "metros": 20.5103,
+          "precio": 400,
+          "costo": 8204.1
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 634,
+          "metros": 6.34,
+          "precio": 980,
+          "costo": 6213.2
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 32,
+        "soportes": 0,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 4,
+          "precio": 7450,
+          "costo": 29800
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 4,
+          "precio": 49706.8,
+          "costo": 198827.2
+        },
+        {
+          "rol": "barra",
+          "codigo": "BARRAEST",
+          "cant": 0,
+          "precio": 9800,
+          "costo": 0
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.554373079289245,
+      "costoCanto": 14417.302893319998,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 14420.857266399287,
+      "costoHerrajes": 236943.2,
+      "costoConHerrajes": 251364.0572663993,
+      "precioCop": 14420.857266399287,
+      "precioUsd": 14420.857266399287,
+      "precioHerrajesCop": 364528,
+      "precioHerrajesUsd": 364528,
+      "precioConHerrajesCop": 378948.8572663993,
+      "precioConHerrajesUsd": 378948.8572663993,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 11,
+    "sku": "DB12-1s",
+    "dims": {
+      "L": 12,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 0,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 3,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "n_cajones_pequenos": 1,
+        "gola": 0,
+        "alto_frente_pequeno_base": 6,
+        "alto_frente_pequeno": 6,
+        "removible": 0,
+        "n_cajones_ocultos": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 23.055,
+          "areaCm2": 1609.23,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 659.52,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente_gaveta_exterior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 11.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente_gaveta_interior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 10.693,
+          "anchoIn": 3.937,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_perfil",
+          "rol": "caja",
+          "cant": 0,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 7.866,
+          "anchoIn": 19.37,
+          "areaCm2": 2949.04,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 7.393,
+          "anchoIn": 7.205,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_pequena",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 7.393,
+          "anchoIn": 2.677,
+          "areaCm2": 127.69,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_grande",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 7.393,
+          "anchoIn": 7.205,
+          "areaCm2": 687.28,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 11.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_pequena",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 11.874,
+          "anchoIn": 6,
+          "areaCm2": 459.64,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_grande",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 11.874,
+          "anchoIn": 11.811,
+          "areaCm2": 1809.6,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 11.37,
+          "areaCm2": 2194.88,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 10899.53,
+          "m2": 1.253446,
+          "costo": 1.25
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 4863.21,
+          "m2": 0.559269,
+          "costo": 0.56
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2269.24,
+          "m2": 0.260962,
+          "costo": 0.26
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2194.88,
+          "m2": 0.252411,
+          "costo": 0.25
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1280.95,
+          "metros": 12.8095,
+          "precio": 400,
+          "costo": 5123.8
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 391.44,
+          "metros": 3.9144,
+          "precio": 980,
+          "costo": 3836.11
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 28,
+        "soportes": 0,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 3,
+          "precio": 7450,
+          "costo": 22350
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 3,
+          "precio": 49706.8,
+          "costo": 149120.4
+        },
+        {
+          "rol": "barra",
+          "codigo": "BARRAEST",
+          "cant": 2,
+          "precio": 9800,
+          "costo": 19600
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 2.3260892399173034,
+      "costoCanto": 8959.9091744,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 8962.235263639917,
+      "costoHerrajes": 199386.40000000002,
+      "costoConHerrajes": 208348.63526363994,
+      "precioCop": 8962.235263639917,
+      "precioUsd": 8962.235263639917,
+      "precioHerrajesCop": 306748.30769230775,
+      "precioHerrajesUsd": 306748.30769230775,
+      "precioConHerrajesCop": 315710.5429559477,
+      "precioConHerrajesUsd": 315710.5429559477,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 12,
+    "sku": "DB24-2s",
+    "dims": {
+      "L": 24,
+      "A": 30,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 0,
+        "n_entrepanos": 2,
+        "n_patas": 4,
+        "n_cajones": 3,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "n_cajones_pequenos": 2,
+        "gola": 0,
+        "alto_frente_pequeno_base": 7.374015748031496,
+        "alto_frente_pequeno": 7.374015748031496,
+        "removible": 0,
+        "n_cajones_ocultos": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 30,
+          "anchoIn": 24,
+          "areaCm2": 9290.3,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 22.819,
+          "anchoIn": 23.055,
+          "areaCm2": 3394.14,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 22.819,
+          "anchoIn": 3.15,
+          "areaCm2": 927.36,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_delantero",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 22.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1391.04,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente_gaveta_exterior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 23.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente_gaveta_interior",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 22.693,
+          "anchoIn": 3.937,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_perfil",
+          "rol": "caja",
+          "cant": 0,
+          "largoIn": 22.819,
+          "anchoIn": 3.15,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base_gaveta",
+          "rol": "refuerzo",
+          "cant": 3,
+          "largoIn": 19.866,
+          "anchoIn": 19.37,
+          "areaCm2": 7447.87,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta",
+          "rol": "refuerzo",
+          "cant": 0,
+          "largoIn": 19.393,
+          "anchoIn": 7.205,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_pequena",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 19.393,
+          "anchoIn": 2.677,
+          "areaCm2": 669.91,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "trasero_gaveta_grande",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 19.393,
+          "anchoIn": 7.205,
+          "areaCm2": 901.43,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 23.874,
+          "anchoIn": 9.874,
+          "areaCm2": 0,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_pequena",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 23.874,
+          "anchoIn": 7.374,
+          "areaCm2": 2271.57,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "frente_gaveta_grande",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 23.874,
+          "anchoIn": 14.874,
+          "areaCm2": 2290.98,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.921,
+          "anchoIn": 23.37,
+          "areaCm2": 4511.36,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 12684.44,
+          "m2": 1.458711,
+          "costo": 1.46
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 11337.61,
+          "m2": 1.303825,
+          "costo": 1.3
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 4562.55,
+          "m2": 0.524694,
+          "costo": 0.52
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 4511.36,
+          "m2": 0.518806,
+          "costo": 0.52
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 2012.47,
+          "metros": 20.1247,
+          "precio": 400,
+          "costo": 8049.88
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 574.32,
+          "metros": 5.7432,
+          "precio": 980,
+          "costo": 5628.34
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 28,
+        "soportes": 0,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "pata",
+          "codigo": "PATA10AJUST",
+          "cant": 4,
+          "precio": 1987,
+          "costo": 7948
+        },
+        {
+          "rol": "tornillo",
+          "codigo": "TORNILLO858",
+          "cant": 16,
+          "precio": 23,
+          "costo": 368
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 3,
+          "precio": 7450,
+          "costo": 22350
+        },
+        {
+          "rol": "riel",
+          "codigo": "RIELTANDEM",
+          "cant": 3,
+          "precio": 49706.8,
+          "costo": 149120.4
+        },
+        {
+          "rol": "barra",
+          "codigo": "BARRAEST",
+          "cant": 1,
+          "precio": 9800,
+          "costo": 9800
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.806035479612503,
+      "costoCanto": 13678.2131744,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 13682.019209879612,
+      "costoHerrajes": 189586.40000000002,
+      "costoConHerrajes": 203268.41920987965,
+      "precioCop": 13682.019209879612,
+      "precioUsd": 13682.019209879612,
+      "precioHerrajesCop": 291671.3846153846,
+      "precioHerrajesUsd": 291671.3846153846,
+      "precioConHerrajesCop": 305353.40382526425,
+      "precioConHerrajesUsd": 305353.40382526425,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 13,
+    "sku": "W1236",
+    "dims": {
+      "L": 12,
+      "A": 36,
+      "P": 12
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 1,
+        "n_entrepanos": 2,
+        "n_patas": 0,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "base_tapa",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 12,
+          "areaCm2": 1675.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 36,
+          "anchoIn": 12,
+          "areaCm2": 5574.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.78,
+          "anchoIn": 10.5,
+          "areaCm2": 1460.45,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 11.874,
+          "anchoIn": 35.874,
+          "areaCm2": 2748.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 11.37,
+          "anchoIn": 35.37,
+          "areaCm2": 2594.58,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 7249.36,
+          "m2": 0.833677,
+          "costo": 0.83
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 1900.13,
+          "m2": 0.218515,
+          "costo": 0.22
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2748.18,
+          "m2": 0.316041,
+          "costo": 0.32
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2594.58,
+          "m2": 0.298377,
+          "costo": 0.3
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1059.72,
+          "metros": 10.5972,
+          "precio": 400,
+          "costo": 4238.88
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 262.56,
+          "metros": 2.6256,
+          "precio": 980,
+          "costo": 2573.09
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 8,
+        "carton": 0.4,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 1,
+          "precio": 5800,
+          "costo": 5800
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 1,
+          "precio": 7450,
+          "costo": 7450
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 1.666608946327541,
+      "costoCanto": 6811.9680032,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 6813.6346121463275,
+      "costoHerrajes": 13250,
+      "costoConHerrajes": 20063.63461214633,
+      "precioCop": 6813.6346121463275,
+      "precioUsd": 6813.6346121463275,
+      "precioHerrajesCop": 20384.615384615383,
+      "precioHerrajesUsd": 20384.615384615383,
+      "precioConHerrajesCop": 27198.24999676171,
+      "precioConHerrajesUsd": 27198.24999676171,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 14,
+    "sku": "W3036",
+    "dims": {
+      "L": 30,
+      "A": 36,
+      "P": 12
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 2,
+        "n_patas": 0,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "base_tapa",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 12,
+          "areaCm2": 4462.27,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 36,
+          "anchoIn": 12,
+          "areaCm2": 5574.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.78,
+          "anchoIn": 10.5,
+          "areaCm2": 3899.15,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 14.874,
+          "anchoIn": 35.874,
+          "areaCm2": 6885.03,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.37,
+          "anchoIn": 35.37,
+          "areaCm2": 6702.06,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 10036.45,
+          "m2": 1.154192,
+          "costo": 1.15
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 5070.36,
+          "m2": 0.583091,
+          "costo": 0.58
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 6885.03,
+          "m2": 0.791778,
+          "costo": 0.79
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 6702.06,
+          "m2": 0.770737,
+          "costo": 0.77
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1608.36,
+          "metros": 16.0836,
+          "precio": 400,
+          "costo": 6433.44
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 555.6,
+          "metros": 5.556,
+          "precio": 980,
+          "costo": 5444.88
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 8,
+        "carton": 1.1,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.2997986739991405,
+      "costoCanto": 11878.320003199999,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 11881.619801873998,
+      "costoHerrajes": 26500,
+      "costoConHerrajes": 38381.619801873996,
+      "precioCop": 11881.619801873998,
+      "precioUsd": 11881.619801873998,
+      "precioHerrajesCop": 40769.230769230766,
+      "precioHerrajesUsd": 40769.230769230766,
+      "precioConHerrajesCop": 52650.85057110476,
+      "precioConHerrajesUsd": 52650.85057110476,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 15,
+    "sku": "W302024",
+    "dims": {
+      "L": 30,
+      "A": 20,
+      "P": 24
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 1,
+        "n_patas": 0,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "base_tapa",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 24,
+          "areaCm2": 8924.54,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 20,
+          "anchoIn": 24,
+          "areaCm2": 6193.54,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 28.78,
+          "anchoIn": 22,
+          "areaCm2": 4084.83,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 14.874,
+          "anchoIn": 19.874,
+          "areaCm2": 3814.27,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 29.37,
+          "anchoIn": 19.37,
+          "areaCm2": 3670.32,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 15118.08,
+          "m2": 1.738579,
+          "costo": 1.74
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 5256.03,
+          "m2": 0.604443,
+          "costo": 0.6
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 3814.27,
+          "m2": 0.438641,
+          "costo": 0.44
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 3670.32,
+          "m2": 0.422087,
+          "costo": 0.42
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1406.6,
+          "metros": 14.066,
+          "precio": 400,
+          "costo": 5626.4
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 393.04,
+          "metros": 3.9304,
+          "precio": 980,
+          "costo": 3851.79
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 24,
+        "soportes": 4,
+        "carton": 0.7,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.203750337102041,
+      "costoCanto": 9478.1920016,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 9481.395751937102,
+      "costoHerrajes": 26500,
+      "costoConHerrajes": 35981.3957519371,
+      "precioCop": 9481.395751937102,
+      "precioUsd": 9481.395751937102,
+      "precioHerrajesCop": 40769.230769230766,
+      "precioHerrajesUsd": 40769.230769230766,
+      "precioConHerrajesCop": 50250.62652116787,
+      "precioConHerrajesUsd": 50250.62652116787,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 16,
+    "sku": "UW1236",
+    "dims": {
+      "L": 12,
+      "A": 36,
+      "P": 12
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 1,
+        "n_entrepanos": 3,
+        "n_patas": 0,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 36,
+          "anchoIn": 12,
+          "areaCm2": 5574.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 12,
+          "areaCm2": 837.59,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "tapa",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 12,
+          "areaCm2": 837.59,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.819,
+          "anchoIn": 3.15,
+          "areaCm2": 439.68,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 10.78,
+          "anchoIn": 10.5,
+          "areaCm2": 1460.45,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano_superior",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 10.819,
+          "anchoIn": 11.094,
+          "areaCm2": 774.39,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "gola_frame",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 160,
+          "anchoIn": 1,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_canto",
+          "rol": null,
+          "cant": 0,
+          "largoIn": 128,
+          "anchoIn": 0,
+          "areaCm2": 0,
+          "cantoLargos": 1,
+          "cantoAnchos": 0,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 35.37,
+          "anchoIn": 11.37,
+          "areaCm2": 2594.58,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 1,
+          "largoIn": 11.874,
+          "anchoIn": 28.158,
+          "areaCm2": 2157.1,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 7249.36,
+          "m2": 0.833677,
+          "costo": 0.83
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 2674.52,
+          "m2": 0.307569,
+          "costo": 0.31
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 2157.1,
+          "m2": 0.248067,
+          "costo": 0.25
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 2594.58,
+          "m2": 0.298377,
+          "costo": 0.3
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1124.68,
+          "metros": 11.2468,
+          "precio": 400,
+          "costo": 4498.72
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 223.36,
+          "metros": 2.2336,
+          "precio": 980,
+          "costo": 2188.97
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 32,
+        "soportes": 8,
+        "carton": 0.4,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 1,
+          "precio": 5800,
+          "costo": 5800
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 1,
+          "precio": 7450,
+          "costo": 7450
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 1.6876897021390982,
+      "costoCanto": 6687.687281376,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 6689.374971078139,
+      "costoHerrajes": 13250,
+      "costoConHerrajes": 19939.37497107814,
+      "precioCop": 6689.374971078139,
+      "precioUsd": 6689.374971078139,
+      "precioHerrajesCop": 20384.615384615383,
+      "precioHerrajesUsd": 20384.615384615383,
+      "precioConHerrajesCop": 27073.990355693524,
+      "precioConHerrajesUsd": 27073.990355693524,
+      "margenHerraje": 0.35
+    }
+  },
+  {
+    "sheet": "MADERA ",
+    "row": 17,
+    "sku": "UW3036",
+    "dims": {
+      "L": 30,
+      "A": 36,
+      "P": 12
+    },
+    "calc": {
+      "vars": {
+        "n_puertas": 2,
+        "n_entrepanos": 3,
+        "n_patas": 0,
+        "n_cajones": 0,
+        "zocalo": 5.25,
+        "n_barras": -1,
+        "gola": 0,
+        "removible": 0
+      },
+      "piezas": [
+        {
+          "pieza": "lateral",
+          "rol": "caja",
+          "cant": 2,
+          "largoIn": 36,
+          "anchoIn": 12,
+          "areaCm2": 5574.18,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "base",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 12,
+          "areaCm2": 2231.14,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "tapa",
+          "rol": "caja",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 12,
+          "areaCm2": 2231.14,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "refuerzo_trasero",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.819,
+          "anchoIn": 3.15,
+          "areaCm2": 1171.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano",
+          "rol": "refuerzo",
+          "cant": 2,
+          "largoIn": 28.78,
+          "anchoIn": 10.5,
+          "areaCm2": 3899.15,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "entrepano_superior",
+          "rol": "refuerzo",
+          "cant": 1,
+          "largoIn": 28.819,
+          "anchoIn": 11.094,
+          "areaCm2": 2062.78,
+          "cantoLargos": 2,
+          "cantoAnchos": 0,
+          "cantoCalibre": "19x0,45"
+        },
+        {
+          "pieza": "gola_frame",
+          "rol": "frente",
+          "cant": 0,
+          "largoIn": 344,
+          "anchoIn": 1,
+          "areaCm2": 0,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "gola_canto",
+          "rol": null,
+          "cant": 0,
+          "largoIn": 304,
+          "anchoIn": 0,
+          "areaCm2": 0,
+          "cantoLargos": 1,
+          "cantoAnchos": 0,
+          "cantoCalibre": "22x1"
+        },
+        {
+          "pieza": "fondo",
+          "rol": "fondo",
+          "cant": 1,
+          "largoIn": 35.37,
+          "anchoIn": 29.37,
+          "areaCm2": 6702.06,
+          "cantoLargos": 0,
+          "cantoAnchos": 0,
+          "cantoCalibre": null
+        },
+        {
+          "pieza": "frente",
+          "rol": "frente",
+          "cant": 2,
+          "largoIn": 14.874,
+          "anchoIn": 28.158,
+          "areaCm2": 5404.2,
+          "cantoLargos": 2,
+          "cantoAnchos": 2,
+          "cantoCalibre": "22x1"
+        }
+      ],
+      "maderaPorRol": [
+        {
+          "rol": "caja",
+          "codigo": "CAJA",
+          "cm2": 10036.45,
+          "m2": 1.154192,
+          "costo": 1.15
+        },
+        {
+          "rol": "refuerzo",
+          "codigo": "REF",
+          "cm2": 7133.13,
+          "m2": 0.82031,
+          "costo": 0.82
+        },
+        {
+          "rol": "frente",
+          "codigo": "FRENTE",
+          "cm2": 5404.2,
+          "m2": 0.621483,
+          "costo": 0.62
+        },
+        {
+          "rol": "fondo",
+          "codigo": "FONDO",
+          "cm2": 6702.06,
+          "m2": 0.770737,
+          "costo": 0.77
+        }
+      ],
+      "cantoPorCalibre": [
+        {
+          "calibre": "19x0,45",
+          "longCm": 1764.76,
+          "metros": 17.6476,
+          "precio": 400,
+          "costo": 7059.04
+        },
+        {
+          "calibre": "22x1",
+          "longCm": 477.21,
+          "metros": 4.7721,
+          "precio": 980,
+          "costo": 4676.64
+        }
+      ],
+      "consumibles": {
+        "tarugos": 0,
+        "soportes": 0,
+        "carton": 0,
+        "etiquetas": 0
+      },
+      "cantidadesConsumibles": {
+        "tarugos": 32,
+        "soportes": 8,
+        "carton": 1.1,
+        "etiquetas": 4
+      },
+      "herrajes": [
+        {
+          "rol": "bisagra",
+          "codigo": "BISAGRAPAR",
+          "cant": 2,
+          "precio": 5800,
+          "costo": 11600
+        },
+        {
+          "rol": "manija",
+          "codigo": "MANIJA415",
+          "cant": 2,
+          "precio": 7450,
+          "costo": 14900
+        }
+      ],
+      "desperdicio": 0.15,
+      "costoMadera": 3.3667230823100933,
+      "costoCanto": 11735.678508031999,
+      "costoConsumibles": 0,
+      "costoSinHerrajes": 11739.045231114309,
+      "costoHerrajes": 26500,
+      "costoConHerrajes": 38239.04523111431,
+      "precioCop": 11739.045231114309,
+      "precioUsd": 11739.045231114309,
+      "precioHerrajesCop": 40769.230769230766,
+      "precioHerrajesUsd": 40769.230769230766,
+      "precioConHerrajesCop": 52508.276000345075,
+      "precioConHerrajesUsd": 52508.276000345075,
+      "margenHerraje": 0.35
+    }
+  }
+]

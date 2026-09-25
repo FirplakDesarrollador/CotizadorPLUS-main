@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+.playwright-cli/
 
 # debug
 npm-debug.log*
@@ -48,3 +49,7 @@ next-env.d.ts
 /videos/
 *.mp4
 /Cotizaciones de muestra/
+
+# Python (scripts de análisis)
+__pycache__/
+*.pyc
