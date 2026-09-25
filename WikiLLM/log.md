@@ -1050,3 +1050,7 @@ Se aplicó y registró `0107_eliminar_tipologia_fl.sql`. La verificación poster
 ## [2026-09-25] update | Fracciones imperiales en códigos comerciales
 
 `anchoCodigo()` representa las partes decimales imperiales como fracciones reducidas al 1/16 más cercano. `12.75` pasa a `12 3/4` y el caso reportado `PN12.87536` pasa a `PN12 7/836`; las medidas de cálculo no se redondean y los códigos métricos conservan decimales.
+
+## [2026-09-25] update | Regresión fraccionaria también para el alto
+
+Se confirma y protege con prueba explícita que el alto usa la misma conversión fraccionaria que el largo: `PN` de 12,875 × 36,75 pulgadas genera `PN12 7/836 3/4`.

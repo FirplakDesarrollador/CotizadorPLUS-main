@@ -113,6 +113,7 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'B-FE', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-FE-SM');
   assert.equal(codigoComercial({ ...base, pref: 'F', largo: 6, alto: 30, sistemaFrente: 'manija' }), 'F630');
   assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36 }), 'PN12 7/836');
+  assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36.75 }), 'PN12 7/836 3/4');
   // PCFD con gavetas ocultas.
   assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, pcfdCajones: 2 }), 'PCFD12-2OP-PUSH');
   // Sistema métrico.
