@@ -15,7 +15,7 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
-import { nombrePieza, ordenarPiezasDespiece, permiteTipologiaDb } from '@/lib/muebles';
+import { nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb } from '@/lib/muebles';
 
 test('convierte índices de grupo en letras de Excel y permite el camino inverso', () => {
   const cases = new Map([
@@ -101,6 +101,7 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'B', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-SM');
   // Tipología DB y prefijo con guion (FE) conviven con el sufijo SM.
   assert.equal(codigoComercial({ ...base, pref: 'DB', largo: 18, alto: 34.5, dbTipo: 'DB-1S', sistemaFrente: 'gola' }), 'DB18-1S-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'DB-2S-SM', largo: 26, alto: 30 }), 'DB26-2S-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UDB', largo: 18, alto: 28.75, dbTipo: 'DB-2S' }), 'UDB18-2S');
   assert.equal(codigoComercial({ ...base, pref: 'UDV', largo: 24, alto: 28.75, dbTipo: 'DB-3' }), 'UDV24-3');
   assert.equal(codigoComercial({ ...base, pref: 'B-FE', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-FE-SM');
@@ -136,4 +137,13 @@ test('ordena el despiece de produccion y normaliza el shelf mal escrito', () => 
   );
   assert.equal(nombrePieza('shlef', false), 'entrepano');
   assert.equal(nombrePieza('shelf', false), 'entrepano');
+});
+
+test('presenta los frentes de gaveta como alto por ancho una sola vez', () => {
+  // DB26-2S-SM: el motor conserva ancho del módulo × alto del frente y la
+  // tabla es la única que lo orienta para reproducir la hoja de ruta.
+  assert.deepEqual(
+    orientarPieza({ rol: 'frente', largoIn: 657.2 / 25.4, anchoIn: 173.9 / 25.4 }),
+    { largoIn: 173.9 / 25.4, anchoIn: 657.2 / 25.4 },
+  );
 });

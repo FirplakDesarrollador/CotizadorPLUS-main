@@ -932,6 +932,15 @@ La migración `0081` incorpora BFD-SM, OW-MO, W-SM y W-SM-PUSH, con reglas exclu
 ## [2026-09-24] update | Contacto de refuerzo delantero SB-SM
 
 `0092` mueve el refuerzo delantero a la cara posterior de los frentes, sin sobrepasarlos.
+
+## [2026-09-25] ingest | Tipología DB-2S-SM desde hoja de ruta
+
+`0093` agrega DB-2S-SM como cajonera independiente: dos gavetas pequeñas, una grande, perfiles de Gola superior/inferior y sin manijas; reproduce DB26-2S-SM sin modificar DB.
+
+## [2026-09-25] update | Cantos de traseros DB-2S-SM
+
+`0094` ajusta los cantos de traseros de gaveta a la hoja DB26-2S-SM: 1 largo en pequeños y 1 largo + 2 anchos en el grande.
+
 ## [2026-09-23] fix | Suite en verde tras integrar DEV: fixture regenerado y dos asserts desactualizados
 
 `DEV` llego con **4 tests en rojo**. Verificados como preexistentes en `origin/DEV` (9b0c211) levantando un worktree limpio y corriendolos alli — no los introdujo el merge.
@@ -945,3 +954,31 @@ La migración `0081` incorpora BFD-SM, OW-MO, W-SM y W-SM-PUSH, con reglas exclu
 **Ademas**: la migracion local `0056` se renumero a `0081` porque DEV ya habia usado ese numero (llega a 0080); ya estaba aplicada en Supabase y es idempotente, y se alineo la referencia en sus `notas`. El conflicto del merge estuvo solo en este log, donde ambas ramas anadieron entradas al final: se conservan las dos.
 
 159/159 tests, typecheck, lint (0 errores) y build limpios.
+
+## [2026-09-25] fix | DB-2S-SM conserva Gola propia en el Simulador
+
+El Simulador ya no permite que el selector global de sistema de frente desactive la Gola integrada de `DB-2S-SM`. La tipología calcula siempre sus dos perfiles Gola, dos refuerzos delanteros y los frentes 173,9/173,9/351 × 657,2 mm para la referencia DB26.
+
+## [2026-09-25] fix | Orden de frentes DB-2S-SM
+
+`0095` elimina la doble inversión de ejes de los frentes DB-2S-SM: el despiece presenta 173,9/173,9/351 × 657,2 mm, igual que la hoja DB26-2S-SM.
+
+## [2026-09-25] fix | Gola y frentes exactos DB-2S-SM
+
+`0096` renombra `gola_perfil` a `gola_madera` y ajusta el reparto de alturas de DB26-2S-SM a 173,9/173,9/351 mm exactos.
+
+## [2026-09-25] update | Montaje DB-2S-SM de refuerzos y Gola
+
+`0097` define los refuerzos delanteros DB-2S-SM verticales (plano XZ) y las dos golas de madera horizontales (plano XY), según la guía lateral.
+
+## [2026-09-25] update | Posición por niveles de refuerzos y Golas DB-2S-SM
+
+`0098` coloca un par refuerzo/Gola arriba y el segundo inmediatamente debajo de la segunda gaveta, conservando las orientaciones de montaje.
+
+## [2026-09-25] fix | Protección de geometría DB-2S-SM en el montaje
+
+El generador fuerza los planos confirmados de DB-2S-SM para impedir que una configuración heredada represente el refuerzo horizontal o la Gola vertical.
+
+## [2026-09-25] fix | Segundo par DB-2S-SM anclado a base de gaveta
+
+`0099` y el generador de montaje sitúan el segundo refuerzo directamente bajo la segunda `base_gaveta`, con la Gola inmediatamente debajo y contra el frente.

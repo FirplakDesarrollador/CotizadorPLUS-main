@@ -168,6 +168,27 @@ for (const pref of ['SBFD','SVFD']) test(`${pref}: el refuerzo delantero se mont
   assert.ok(panel.d<=16,'el refuerzo vertical debe tener solo el espesor en profundidad');
 });
 
+test('DB-SM: refuerzo delantero vertical y Gola de madera horizontal',()=>{
+  const m=member('DB',{n_cajones:3,n_cajones_pequenos:2,gola:1});
+  m.pref='DB-2S-SM';
+  const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
+  gola.nombre='gola_madera';
+  const group=calcularGrupoFisico([m]);
+  const scene=construirVisualizacion([m],group);
+  const refuerzos=scene.paneles.filter(p=>p.nombre==='refuerzo_delantero');
+  const golas=scene.paneles.filter(p=>p.nombre==='gola_madera');
+  assert.equal(refuerzos.length,2);
+  assert.ok(refuerzos.every(p=>Math.abs(p.h-80)<.1&&p.d<=16),'los refuerzos deben verse verticales');
+  assert.equal(golas.length,2);
+  assert.ok(golas.every(p=>p.h<=16&&Math.abs(p.d-80)<.1&&p.y===0),'las golas deben verse horizontales contra los frentes');
+  const bases=scene.paneles.filter(p=>p.funcion==='base_gaveta');
+  assert.equal(bases.length,3);
+  assert.ok(Math.abs(refuerzos[0].z+refuerzos[0].h-30*25.4)<.1,'el primer refuerzo debe quedar arriba');
+  assert.ok(Math.abs(refuerzos[1].z+refuerzos[1].h-bases[1].z)<.1,'el segundo refuerzo debe quedar bajo la segunda base de gaveta');
+  assert.ok(Math.abs(golas[0].z-(refuerzos[0].z-golas[0].h))<.1,'la Gola superior debe quedar debajo de su refuerzo');
+  assert.ok(Math.abs(golas[1].z-(refuerzos[1].z-golas[1].h))<1,'la Gola inferior debe quedar debajo de su refuerzo');
+});
+
 test('los entrepaños se apoyan contra el fondo del mueble',()=>{
   const m=member('B');
   const scene=construirVisualizacion([m],calcularGrupoFisico([m]));

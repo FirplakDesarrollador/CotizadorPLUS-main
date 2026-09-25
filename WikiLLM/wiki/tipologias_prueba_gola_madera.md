@@ -13,6 +13,7 @@ y `W`. No las actualiza ni reutiliza sus plantillas.
 | `W-SM-LOC` | `W3436-SM-LOC` | Variante independiente del W-SM vigente, sin entrepaños en ninguna altura. |
 | `SBFD-SM` | `SBFD16-SM` | Variante independiente de BFD-SM, sin entrepaño. Conserva Gola de madera, puertas y herrajes funcionales. |
 | `SB-SM` | `SB30-SM` | Inferior con frente falso, puertas inferiores y Gola de madera, según la hoja SB30-SM. |
+| `DB-2S-SM` | `DB26-2S-SM` | Cajonera independiente 2S con dos gavetas pequeñas, una grande y Gola superior/inferior. |
 
 ## Prioridad de reglas PLUS
 
@@ -40,6 +41,40 @@ superior, las puertas quedan debajo y no hay entrepaños. Para una referencia de
 30 × 30 × 24 pulgadas, reproduce base 732 × 585,6 mm, laterales 762 × 609,6 mm,
 puertas 579,6 × 377,8 mm, frente falso 122,4 × 758,8 mm y fondo 760 × 746 mm.
 Como las demás SM inferiores, no tiene manijas y usa Gola de madera explícita.
+
+`DB-2S-SM` reutiliza las fórmulas DB para dos gavetas pequeñas y una grande,
+con `gola = 1` y sin manijas. Para `DB26-2S-SM` reproduce la guía: base
+630,4 × 585,6 mm; laterales 762 × 609,6 mm; fondos de gaveta 555,4 × 492 mm;
+traseros 543,4 × 68/68/183 mm; frentes 173,9/173,9/351 × 657,2 mm y fondo
+760 × 644,4 mm. Mantiene un par de barras para el trasero de 183 mm.
+Los traseros pequeños llevan un canto largo blanco; el trasero grande, un
+canto largo y dos anchos blancos, según `0094_db_2s_sm_cantos_traseros.sql`.
+En el Simulador, esta tipología fuerza `gola = 1` aunque el selector global
+conserve el valor de un módulo anterior. Así siempre salen dos
+`refuerzo_delantero`, dos perfiles Gola y los frentes en el orden de corte de
+la hoja (alto × ancho), sin depender de una selección manual adicional.
+La migración `0095_db_2s_sm_frentes_orden_hoja.sql` conserva internamente los
+ejes de los frentes como ancho del módulo × alto del frente, porque el
+despiece ya los presenta como alto × ancho. Evita así una doble inversión en
+la tabla y en el montaje.
+`0096_db_2s_sm_gola_y_frentes_exactos.sql` nombra estas piezas
+`gola_madera`, igual que los demás SM, y fija el reparto de los 53,6 mm de
+las dos golas: 13,4 mm por cada frente pequeño y el saldo en el grande. Para
+DB26 muestra exactamente 173,9 / 173,9 / 351 mm.
+El montaje específico `0097_db_2s_sm_montaje_refuerzos_gola.sql` representa
+los dos `refuerzo_delantero` en plano XZ, verticales y a 20 mm detrás de los
+frentes. Las dos `gola_madera` usan el plano XY, horizontales y con `y = 0`;
+por tanto tocan los frentes sin modificar su corte.
+`0098_db_2s_sm_posicion_pares_gola.sql` separa los dos pares por niveles:
+uno arriba del mueble y otro debajo de la segunda gaveta desde arriba. Cada
+Gola queda inmediatamente bajo su refuerzo correspondiente.
+El generador de montaje también refuerza esta geometría para `DB-2S-SM`: no
+permite que una configuración heredada de DB vuelva a intercambiar los planos
+de `refuerzo_delantero` y `gola_madera`.
+Desde `0099_db_2s_sm_anclaje_base_gaveta.sql`, el segundo par no se ubica con
+una fórmula proporcional: queda anclado al borde inferior de la segunda
+`base_gaveta`; el refuerzo toca ese borde por debajo y la Gola toca el borde
+inferior del refuerzo, ambas sobre sus caras frontales respectivas.
 
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la

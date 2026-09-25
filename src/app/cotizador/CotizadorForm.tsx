@@ -240,7 +240,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     }
     // Variantes transversales: viajan como override numérico 0/1 para que las
     // fórmulas de pieza y las reglas puedan reaccionar (ver migración 0028).
-    overrides.gola = modulo.sistemaFrente === 'gola' ? 1 : 0;
+    // DB-2S-SM tiene Gola integrada: un selector heredado en "manija" no
+    // puede desactivar sus dos golas, ni alterar sus frentes/refuerzos.
+    const esDb2sSm = pref.toUpperCase() === 'DB-2S-SM';
+    overrides.gola = esDb2sSm || modulo.sistemaFrente === 'gola' ? 1 : 0;
     if (permiteRemovible(pref)) overrides.removible = modulo.removible ? 1 : 0;
     return {
       tipoId: modulo.tipoId,
