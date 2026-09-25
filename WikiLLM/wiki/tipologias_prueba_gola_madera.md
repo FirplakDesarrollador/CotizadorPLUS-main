@@ -81,7 +81,9 @@ inferior del refuerzo, ambas sobre sus caras frontales respectivas.
 herrajes, dos refuerzos y dos Golas. Cambia a `n_cajones=2` y
 `n_cajones_pequenos=0`, por lo que genera dos gavetas grandes con frentes de
 351 × 657,2 mm en `DB26-2-SM`; el segundo par refuerzo/Gola se ancla bajo la
-base de la gaveta superior para separar visualmente ambos niveles.
+base de la gaveta superior para separar visualmente ambos niveles. La migración
+está aplicada en el proyecto Supabase conectado desde el 25 de septiembre de
+2026; la tipología está activa y disponible para sesiones autenticadas.
 
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la

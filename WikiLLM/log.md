@@ -986,3 +986,7 @@ El generador fuerza los planos confirmados de DB-2S-SM para impedir que una conf
 ## [2026-09-25] ingest | Tipología DB-2-SM con dos gavetas grandes
 
 `0100` crea `DB-2-SM` a partir de `DB-2S-SM`: conserva carcasa, herrajes, dos refuerzos y dos Golas de madera, elimina las gavetas pequeñas y monta dos gavetas grandes iguales. La visualización ancla el segundo par refuerzo/Gola bajo la gaveta superior.
+
+## [2026-09-25] update | Migración DB-2-SM aplicada en Supabase
+
+Se aplicó `0100_db_2_sm.sql` al proyecto Supabase conectado. Se verificó `DB-2-SM` activa con 15 piezas, 12 reglas y 4 herrajes; los dos frentes grandes están habilitados, los pequeños desactivados y los dos pares refuerzo/Gola conservados. `DEV` no recibió cambios.
