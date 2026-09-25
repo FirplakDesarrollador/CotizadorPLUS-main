@@ -96,7 +96,8 @@ pieza grande (1 largo y 2 anchos).
 sola fila `frente`, `base_gaveta` y `trasero_gaveta`, cada una con cantidad 3.
 Los tres frentes se reparten por igual y los traseros miden 183 mm. El segundo
 par refuerzo/Gola se ancla bajo la segunda base, entre la segunda y tercera
-gaveta.
+gaveta. La migración está aplicada en el proyecto Supabase conectado desde el
+25 de septiembre de 2026.
 
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la

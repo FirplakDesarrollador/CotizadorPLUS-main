@@ -1002,3 +1002,7 @@ Se aplicó `0100_db_2_sm.sql` al proyecto Supabase conectado. Se verificó `DB-2
 ## [2026-09-25] ingest | Tipología DB-3-SM con tres gavetas iguales
 
 `0103` crea `DB-3-SM` desde `DB-2-SM`: `frente`, `base_gaveta` y `trasero_gaveta` son filas únicas de cantidad 3. Mantiene dos pares refuerzo/Gola y sitúa el segundo entre la segunda y tercera gaveta.
+
+## [2026-09-25] update | Migración DB-3-SM aplicada en Supabase
+
+Se aplicó `0103_db_3_sm.sql` al proyecto Supabase conectado. Se verificó `DB-3-SM` activa con 9 plantillas sin duplicados, 12 reglas y 4 herrajes: tres frentes, tres bases, tres traseros de 183 mm, dos refuerzos y dos Golas. `DEV` no recibió cambios.
