@@ -99,6 +99,13 @@ par refuerzo/Gola se ancla bajo la segunda base, entre la segunda y tercera
 gaveta. La migración está aplicada en el proyecto Supabase conectado desde el
 25 de septiembre de 2026.
 
+En el Simulador, `DB-2S-SM`, `DB-2-SM` y `DB-3-SM` aparecen agrupadas bajo
+`DB-SM — Cajoneras con Gola de madera`. El selector `Tipología DB-SM` cambia
+entre los tres tipos reales, por lo que cada variante conserva sus propias
+plantillas, reglas, herrajes, código comercial y montaje. Este selector es
+independiente del selector histórico `Tipología DB`; no modifica las familias
+`DB`, `UDB` ni `UDV`.
+
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la
 Gola de madera, manteniendo esta última en contacto con los frentes.

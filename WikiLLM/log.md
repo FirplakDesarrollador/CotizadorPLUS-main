@@ -1006,3 +1006,7 @@ Se aplicó `0100_db_2_sm.sql` al proyecto Supabase conectado. Se verificó `DB-2
 ## [2026-09-25] update | Migración DB-3-SM aplicada en Supabase
 
 Se aplicó `0103_db_3_sm.sql` al proyecto Supabase conectado. Se verificó `DB-3-SM` activa con 9 plantillas sin duplicados, 12 reglas y 4 herrajes: tres frentes, tres bases, tres traseros de 183 mm, dos refuerzos y dos Golas. `DEV` no recibió cambios.
+
+## [2026-09-25] update | Variantes DB-SM agrupadas en el Simulador
+
+El selector de tipo presenta una sola familia `DB-SM` y ofrece `DB-2S-SM`, `DB-2-SM` y `DB-3-SM` en un selector secundario. Cada opción mantiene su tipo real y sus reglas; el selector existente de DB permanece sin cambios.

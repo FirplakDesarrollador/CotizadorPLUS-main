@@ -16,7 +16,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, permiteTipologiaDb, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, permiteRemovible, permiteTipologiaDb, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
@@ -33,6 +33,7 @@ const fmtCOP = (n: number) => n.toLocaleString('es-CO', { style: 'currency', cur
 const fmtUSD = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', fondo: 'fondo' }
+const DB_SM_GROUP_VALUE = '__DB_SM__';
 
 const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ??
@@ -164,7 +165,21 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const tableroLabel = (t: Tablero) => `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}`;
 
   const sortedTableros = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)), [tableros]);
-  const tipoOptions = useMemo(() => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tipos]);
+  const tipoOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    let dbSmAgregado = false;
+    for (const tipo of tipos) {
+      if (esTipologiaDbSm(tipo.pref)) {
+        if (!dbSmAgregado) {
+          options.push({ value: DB_SM_GROUP_VALUE, label: 'DB-SM — Cajoneras con Gola de madera' });
+          dbSmAgregado = true;
+        }
+        continue;
+      }
+      options.push({ value: tipo.id, label: `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
+    }
+    return options;
+  }, [tipos]);
   const tableroOptions = useMemo(() => sortedTableros.map((t) => ({ value: t.codigo, label: tableroLabel(t) })), [sortedTableros]);
 
   if (!isMounted) return null;
@@ -172,10 +187,16 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const tipoPref = tipos.find((t) => t.id === tipoId)?.pref ?? '';
   const usaTipologiaDb = permiteTipologiaDb(tipoPref);
+  const usaTipologiaDbSm = esTipologiaDbSm(tipoPref);
+  const tipoSelectorValue = usaTipologiaDbSm ? DB_SM_GROUP_VALUE : tipoId;
   const esPCFD = tipoPref === 'PCFD';
   const usaRiel = (usaTipologiaDb && conHerrajes) || esPCFD;
   function handleTipoChange(v: string) {
-    setTipoId(v);
+    const tipoSeleccionado = v === DB_SM_GROUP_VALUE
+      ? tipos.find((tipo) => tipo.pref === DB_SM_TIPOLOGIAS[0].pref)
+      : tipos.find((tipo) => tipo.id === v);
+    if (!tipoSeleccionado) return;
+    setTipoId(tipoSeleccionado.id);
     // El simulador hereda la configuración del módulo anterior a propósito
     // (ver arquitectura_frontend.md §3), pero un override numérico de un tipo
     // distinto (ej. n_cajones=3 de un DB-1S) no debe sobrevivir a un cambio de
@@ -188,7 +209,11 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setDbTipo('');
     setRielCodigo('RIELTANDEM');
     setPcfdConfig('');
-    if ((tipos.find((t) => t.id === v)?.pref ?? '') === 'W') setProf(convertir(12, 'in', unidad));
+    if (tipoSeleccionado.pref === 'W') setProf(convertir(12, 'in', unidad));
+  }
+  function aplicarDbSmTipo(pref: string) {
+    const tipo = tipos.find((item) => item.pref === pref);
+    if (tipo) handleTipoChange(tipo.id);
   }
   function aplicarDbTipo(k: string) {
     setDbTipo(k);
@@ -573,7 +598,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
         <div data-tour="tipo">
           <Field label="Tipo de mueble">
-            <Combobox value={tipoId} options={tipoOptions} onChange={handleTipoChange} placeholder="Buscar tipo…" />
+            <Combobox value={tipoSelectorValue} options={tipoOptions} onChange={handleTipoChange} placeholder="Buscar tipo…" />
           </Field>
         </div>
 
@@ -653,6 +678,17 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
                 <option value="">— manual —</option>
                 {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{t.key} · {t.desc}</option>)}
+              </select>
+            </Field>
+          )}
+          {usaTipologiaDbSm && (
+            <Field label="Tipología DB-SM">
+              <select value={tipoPref} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {DB_SM_TIPOLOGIAS.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>
+                    {tipologia.pref} · {tipologia.desc}
+                  </option>
+                ))}
               </select>
             </Field>
           )}

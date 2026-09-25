@@ -105,6 +105,25 @@ export function permiteTipologiaDb(pref: string | null | undefined): boolean {
   return (PREFS_CON_TIPOLOGIA_DB as readonly string[]).includes(p);
 }
 
+// Las tipologias DB con Gola de madera son tipos independientes en base de
+// datos porque cada una tiene plantillas y montaje propios. En el formulario
+// se presentan como una sola familia para evitar tres entradas casi iguales.
+export type DbSmTipologia = {
+  pref: 'DB-2S-SM' | 'DB-2-SM' | 'DB-3-SM';
+  desc: string;
+};
+
+export const DB_SM_TIPOLOGIAS: DbSmTipologia[] = [
+  { pref: 'DB-2S-SM', desc: '2 gavetas pequeñas + 1 grande' },
+  { pref: 'DB-2-SM', desc: '2 gavetas iguales' },
+  { pref: 'DB-3-SM', desc: '3 gavetas iguales' },
+];
+
+export function esTipologiaDbSm(pref: string | null | undefined): boolean {
+  const p = String(pref ?? '').toUpperCase();
+  return DB_SM_TIPOLOGIAS.some((tipologia) => tipologia.pref === p);
+}
+
 // Configuraciones rápidas de torre PCFD. Son presets editables: después de
 // aplicarlos el usuario puede ajustar cajones, entrepaños, puertas y zócalo.
 export type PcfdConfiguracion = {

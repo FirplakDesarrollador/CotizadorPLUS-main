@@ -15,7 +15,7 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
-import { nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb } from '@/lib/muebles';
+import { DB_SM_TIPOLOGIAS, esTipologiaDbSm, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb } from '@/lib/muebles';
 
 test('convierte índices de grupo en letras de Excel y permite el camino inverso', () => {
   const cases = new Map([
@@ -128,6 +128,13 @@ test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {
 test('habilita tipologia DB solo en las familias de cajoneras compatibles', () => {
   for (const pref of ['DB', 'UDB', 'UDV', 'udb']) assert.equal(permiteTipologiaDb(pref), true, pref);
   for (const pref of ['B', 'DV', 'DBL', 'PCFD', '', null]) assert.equal(permiteTipologiaDb(pref), false, String(pref));
+});
+
+test('agrupa solo las tres tipologias DB-SM sin ampliar la familia DB existente', () => {
+  assert.deepEqual(DB_SM_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM']);
+  for (const pref of ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM', 'db-3-sm']) assert.equal(esTipologiaDbSm(pref), true, pref);
+  for (const pref of ['DB', 'UDB', 'UDV', 'DB-2S', '', null]) assert.equal(esTipologiaDbSm(pref), false, String(pref));
+  assert.equal(permiteTipologiaDb('DB-2S-SM'), false);
 });
 
 test('ordena el despiece de produccion y normaliza el shelf mal escrito', () => {
