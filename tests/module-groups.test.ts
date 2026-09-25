@@ -73,8 +73,8 @@ test('sistema de frente gola agrega sufijo comercial SM', () => {
   assert.equal(codigoModulo('W', 29, 'in', 'imperial') + anchoCodigo(36, 'in', 'imperial') + sufijoSistemaFrente('gola'), 'W2936-SM');
 });
 
-test('los superiores W, paneles PN y fillers F llevan el alto en el código', () => {
-  for (const pref of ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F']) {
+test('los superiores W, paneles PN, fillers F y zocalos TK llevan el alto en el código', () => {
+  for (const pref of ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK']) {
     assert.equal(incluyeAltoEnCodigo(pref), true, pref);
   }
   // WCC es un módulo de clóset, no un superior de pared; B/DB/SBFD tienen alto implícito.
@@ -114,6 +114,7 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'F', largo: 6, alto: 30, sistemaFrente: 'manija' }), 'F630');
   assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36 }), 'PN12 7/836');
   assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36.75 }), 'PN12 7/836 3/4');
+  assert.equal(codigoComercial({ ...base, pref: 'TK', largo: 4.25, alto: 36.5 }), 'TK4 1/436 1/2');
   // PCFD con gavetas ocultas.
   assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, pcfdCajones: 2 }), 'PCFD12-2OP-PUSH');
   // Sistema métrico.

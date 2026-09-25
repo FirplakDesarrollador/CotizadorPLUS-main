@@ -1054,3 +1054,7 @@ Se aplicó y registró `0107_eliminar_tipologia_fl.sql`. La verificación poster
 ## [2026-09-25] update | Regresión fraccionaria también para el alto
 
 Se confirma y protege con prueba explícita que el alto usa la misma conversión fraccionaria que el largo: `PN` de 12,875 × 36,75 pulgadas genera `PN12 7/836 3/4`.
+
+## [2026-09-25] update | Alto incorporado al código de TK
+
+La tipología `TK` incorpora el alto después del largo en su código comercial. El caso 4,25 × 36,5 pulgadas pasa de `TK4 1/4` a `TK4 1/436 1/2`, usando fracciones en ambas dimensiones.

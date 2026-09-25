@@ -122,11 +122,11 @@ export function sufijoSistemaFrente(sistemaFrente: string | null | undefined): s
   return sistemaFrente === 'gola' ? '-SM' : '';
 }
 
-// Los superiores de la familia W, los paneles PN y los fillers F incluyen el alto en el código
+// Los superiores de la familia W, los paneles PN, los fillers F y los zocalos TK incluyen el alto en el código
 // (W2936 = 29 de largo, 36 de alto): a diferencia de los demás tipos su alto sí
 // varía y no es un dato implícito del tipo. WCC queda fuera a propósito — es un
 // módulo de clóset (categoria='closet'), no un superior de pared.
-const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F'] as const;
+const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK'] as const;
 
 export function incluyeAltoEnCodigo(pref: string | null | undefined): boolean {
   const base = String(pref ?? '').toUpperCase().split('-')[0];
