@@ -46,6 +46,9 @@ test('convierte dimensiones y construye códigos sin redondear a anchos de catá
   assert.equal(convertirExacto(12, 'in', 'cm'), 30.48);
   assert.equal(convertirExacto(30.48, 'cm', 'in'), 12);
   assert.equal(anchoCodigo(12, 'in', 'imperial'), '12');
+  assert.equal(anchoCodigo(12.75, 'in', 'imperial'), '12 3/4');
+  assert.equal(anchoCodigo(12.875, 'in', 'imperial'), '12 7/8');
+  assert.equal(anchoCodigo(0.5, 'in', 'imperial'), '1/2');
   assert.equal(anchoCodigo(30.48, 'cm', 'metrico'), '30.48');
   assert.equal(codigoModulo('B', 12, 'in', 'imperial'), 'B12');
   assert.equal(codigoModulo('IP', 50, 'cm', 'metrico'), 'IP50');
@@ -109,6 +112,7 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'UDV', largo: 24, alto: 28.75, dbTipo: 'DB-3' }), 'UDV24-3');
   assert.equal(codigoComercial({ ...base, pref: 'B-FE', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-FE-SM');
   assert.equal(codigoComercial({ ...base, pref: 'F', largo: 6, alto: 30, sistemaFrente: 'manija' }), 'F630');
+  assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36 }), 'PN12 7/836');
   // PCFD con gavetas ocultas.
   assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, pcfdCajones: 2 }), 'PCFD12-2OP-PUSH');
   // Sistema métrico.

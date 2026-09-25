@@ -83,6 +83,20 @@ export function precioUnitario(
 export function anchoCodigo(value: number, unidad: UnidadDim, sistema: SistemaMedida): string {
   const target: UnidadDim = sistema === 'imperial' ? 'in' : 'cm';
   const converted = convertirExacto(value, unidad, target);
+  if (sistema === 'imperial') {
+    const denominadorBase = 16;
+    let entero = Math.floor(converted);
+    let numerador = Math.round((converted - entero) * denominadorBase);
+    if (numerador === denominadorBase) {
+      entero += 1;
+      numerador = 0;
+    }
+    if (numerador === 0) return String(entero);
+    const mcd = (a: number, b: number): number => (b === 0 ? a : mcd(b, a % b));
+    const divisor = mcd(numerador, denominadorBase);
+    const fraccion = `${numerador / divisor}/${denominadorBase / divisor}`;
+    return entero === 0 ? fraccion : `${entero} ${fraccion}`;
+  }
   // No redondea: solo elimina ceros de presentación introducidos por Number.
   return String(converted);
 }

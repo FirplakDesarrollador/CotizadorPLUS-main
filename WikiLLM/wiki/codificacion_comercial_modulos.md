@@ -46,6 +46,13 @@ se identifica como `F630`. Al seleccionar esta tipología, Simulador,
 cotizaciones y HDR restablecen el sistema de frente a `manija`, evitando que
 herede Gola de un módulo configurado anteriormente.
 
+En sistema imperial, `anchoCodigo()` presenta cualquier parte decimal como
+fracción de pulgada, redondeada al dieciseisavo más cercano y reducida. Por
+ejemplo, `12.75` se muestra como `12 3/4` y `PN12.87536` como `PN12 7/836`.
+Esta normalización es solo de presentación del código: las dimensiones usadas
+por el motor conservan su valor numérico. Los códigos métricos mantienen sus
+decimales.
+
 Las familias superiores `UW` y `OW` también codifican su alto: por ejemplo,
 `UW1236` corresponde a 12 de largo por 36 de alto.
 

@@ -1046,3 +1046,7 @@ La auditoría previa encontró 0 líneas de cotización, 1 pieza, 0 reglas y 0 h
 ## [2026-09-25] update | Tipología FL eliminada de Supabase
 
 Se aplicó y registró `0107_eliminar_tipologia_fl.sql`. La verificación posterior confirma 0 tipos `FL` y 0 líneas de cotización con ese prefijo; su plantilla se eliminó por cascada. `DEV` no recibió cambios.
+
+## [2026-09-25] update | Fracciones imperiales en códigos comerciales
+
+`anchoCodigo()` representa las partes decimales imperiales como fracciones reducidas al 1/16 más cercano. `12.75` pasa a `12 3/4` y el caso reportado `PN12.87536` pasa a `PN12 7/836`; las medidas de cálculo no se redondean y los códigos métricos conservan decimales.
