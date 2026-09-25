@@ -516,7 +516,8 @@ La migración `0105_wld_cantidad_frentes.sql` sustituye la cantidad fija `2` de
 la pieza `frente` por `n_puertas`. Así WLD usa una puerta hasta 21 pulgadas y
 dos desde 24 pulgadas, conforme a la regla transversal vigente. La fórmula de
 altura propia `A-RV` no cambia: para 36 pulgadas conserva 911,2 mm exactos.
-El ancho sigue siendo `(L-n_puertas*RV)/n_puertas`.
+El ancho sigue siendo `(L-n_puertas*RV)/n_puertas`. La migración está
+aplicada en el proyecto Supabase conectado desde el 25 de septiembre de 2026.
 
 ### Pendientes
 

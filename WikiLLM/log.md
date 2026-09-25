@@ -1022,3 +1022,7 @@ Se aplicó y registró `0104_wsm.sql` en el proyecto conectado. Se verificó `WS
 ## [2026-09-25] fix | WLD respeta la regla de cantidad de frentes
 
 `0105` cambia exclusivamente `frente.formula_cantidad` de `2` a `n_puertas` en WLD. Conserva el ancho paramétrico por cantidad y la altura `A-RV`; a 21×36 pulgadas produce una puerta de 530,2 × 911,2 mm.
+
+## [2026-09-25] update | Migración WLD aplicada en Supabase
+
+Se aplicó y registró `0105_wld_cantidad_frentes.sql`. Se verificó que WLD usa `n_puertas`, conserva `A-RV` y recibe las reglas globales activas de una puerta hasta 21 pulgadas y dos desde 24. `DEV` no recibió cambios.
