@@ -142,7 +142,8 @@ nuevo tipo, por lo que no afectan ninguna otra tipología.
 × 311,5 mm, una puerta de 914,4 × 225,4 mm y fondo de 867 × 206,6 mm.
 Su código comercial incluye siempre ancho, alto y profundidad. Al seleccionarla
 en Simulador, cotizaciones o HDR, la profundidad se inicializa en 14 pulgadas
-(35,56 cm o 355,6 mm según la unidad activa).
+(35,56 cm o 355,6 mm según la unidad activa). La migración está aplicada en
+el proyecto Supabase conectado desde el 25 de septiembre de 2026.
 
 ## Montaje visual BFD-SM
 

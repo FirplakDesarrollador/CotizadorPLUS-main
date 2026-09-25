@@ -1014,3 +1014,7 @@ El selector de tipo presenta una sola familia `DB-SM` y ofrece `DB-2S-SM`, `DB-2
 ## [2026-09-25] ingest | Tipología independiente WSM93614
 
 `0104` crea `WSM` con profundidad predeterminada de 14 pulgadas, laterales `A-1`, puerta de alto nominal y cortes propios de la hoja WSM93614. El código comercial es `WSM` + ancho + alto + profundidad. `W-SM` no se modifica.
+
+## [2026-09-25] update | Migración WSM aplicada en Supabase
+
+Se aplicó y registró `0104_wsm.sql` en el proyecto conectado. Se verificó `WSM` activa con 7 piezas, 10 reglas y 1 herraje; `W-SM` permanece activa y conserva sus propios registros. `DEV` no recibió cambios.
