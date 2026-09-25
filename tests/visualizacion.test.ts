@@ -168,6 +168,82 @@ for (const pref of ['SBFD','SVFD']) test(`${pref}: el refuerzo delantero se mont
   assert.ok(panel.d<=16,'el refuerzo vertical debe tener solo el espesor en profundidad');
 });
 
+test('DB-SM: refuerzo delantero vertical y Gola de madera horizontal',()=>{
+  const m=member('DB',{n_cajones:3,n_cajones_pequenos:2,gola:1});
+  m.pref='DB-2S-SM';
+  const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
+  gola.nombre='gola_madera';
+  const group=calcularGrupoFisico([m]);
+  const scene=construirVisualizacion([m],group);
+  const refuerzos=scene.paneles.filter(p=>p.nombre==='refuerzo_delantero');
+  const golas=scene.paneles.filter(p=>p.nombre==='gola_madera');
+  assert.equal(refuerzos.length,2);
+  assert.ok(refuerzos.every(p=>Math.abs(p.h-80)<.1&&p.d<=16),'los refuerzos deben verse verticales');
+  assert.equal(golas.length,2);
+  assert.ok(golas.every(p=>p.h<=16&&Math.abs(p.d-80)<.1&&p.y===0),'las golas deben verse horizontales contra los frentes');
+  const bases=scene.paneles.filter(p=>p.funcion==='base_gaveta');
+  assert.equal(bases.length,3);
+  assert.ok(Math.abs(refuerzos[0].z+refuerzos[0].h-30*25.4)<.1,'el primer refuerzo debe quedar arriba');
+  assert.ok(Math.abs(refuerzos[1].z+refuerzos[1].h-bases[1].z)<.1,'el segundo refuerzo debe quedar bajo la segunda base de gaveta');
+  assert.ok(Math.abs(golas[0].z-(refuerzos[0].z-golas[0].h))<.1,'la Gola superior debe quedar debajo de su refuerzo');
+  assert.ok(Math.abs(golas[1].z-(refuerzos[1].z-golas[1].h))<1,'la Gola inferior debe quedar debajo de su refuerzo');
+});
+
+test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',()=>{
+  const m=member('DB',{n_cajones:2,n_cajones_pequenos:0,gola:1});
+  m.pref='DB-2-SM';
+  m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('frente_'));
+  m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('trasero_gaveta_'));
+  const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
+  refuerzo.formula_cantidad='2';
+  const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
+  gola.nombre='gola_madera';
+  gola.formula_cantidad='2';
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const frentes=scene.paneles.filter(p=>p.funcion==='frente_gaveta').sort((a,b)=>b.z-a.z);
+  const bases=scene.paneles.filter(p=>p.funcion==='base_gaveta').sort((a,b)=>b.z-a.z);
+  const refuerzos=scene.paneles.filter(p=>p.nombre==='refuerzo_delantero');
+  const golas=scene.paneles.filter(p=>p.nombre==='gola_madera');
+  const traseros=scene.paneles.filter(p=>p.funcion==='trasero_gaveta');
+  assert.equal(frentes.length,2);
+  assert.ok(frentes.every(p=>p.nombre==='frente'),'el despiece debe usar únicamente el nombre frente');
+  assert.ok(frentes.every(p=>Math.abs(p.h-351)<.1),'ambos frentes deben medir 351 mm de alto');
+  assert.equal(bases.length,2);
+  assert.equal(refuerzos.length,2);
+  assert.equal(golas.length,2);
+  assert.equal(traseros.length,2);
+  assert.ok(traseros.every(p=>p.nombre==='trasero_gaveta'&&Math.abs(p.h-183)<.1),'debe haber solo dos traseros genéricos de 183 mm');
+  assert.ok(Math.abs(refuerzos[1].z+refuerzos[1].h-bases[0].z)<.1,'el segundo refuerzo debe quedar bajo la base de la gaveta superior');
+  assert.ok(Math.abs(golas[1].z-(refuerzos[1].z-golas[1].h))<1,'la Gola intermedia debe quedar debajo del segundo refuerzo');
+});
+
+test('DB-3-SM: tres gavetas iguales y el segundo par de Gola queda entre la segunda y la tercera',()=>{
+  const m=member('DB',{n_cajones:3,n_cajones_pequenos:0,gola:1});
+  m.pref='DB-3-SM';
+  m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('frente_')&&!p.nombre.startsWith('trasero_gaveta_'));
+  const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
+  refuerzo.formula_cantidad='2';
+  const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
+  gola.nombre='gola_madera';
+  gola.formula_cantidad='2';
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const frentes=scene.paneles.filter(p=>p.funcion==='frente_gaveta').sort((a,b)=>b.z-a.z);
+  const bases=scene.paneles.filter(p=>p.funcion==='base_gaveta').sort((a,b)=>b.z-a.z);
+  const traseros=scene.paneles.filter(p=>p.funcion==='trasero_gaveta').sort((a,b)=>b.z-a.z);
+  const refuerzos=scene.paneles.filter(p=>p.nombre==='refuerzo_delantero');
+  const golas=scene.paneles.filter(p=>p.nombre==='gola_madera');
+  assert.equal(frentes.length,3);
+  assert.ok(frentes.every(p=>p.nombre==='frente'&&Math.abs(p.h-frentes[0].h)<.1),'los tres frentes deben ser iguales');
+  assert.equal(bases.length,3);
+  assert.ok(bases.every(p=>Math.abs(p.w-bases[0].w)<.1&&Math.abs(p.d-bases[0].d)<.1),'las tres bases deben ser iguales');
+  assert.equal(traseros.length,3);
+  assert.ok(traseros.every(p=>p.nombre==='trasero_gaveta'&&Math.abs(p.h-183)<.1),'los tres traseros deben ser iguales y medir 183 mm');
+  assert.equal(refuerzos.length,2);
+  assert.equal(golas.length,2);
+  assert.ok(Math.abs(refuerzos[1].z+refuerzos[1].h-bases[1].z)<.1,'el segundo refuerzo debe quedar bajo la segunda gaveta');
+  assert.ok(Math.abs(golas[1].z-(refuerzos[1].z-golas[1].h))<1,'la Gola debe quedar entre la segunda y la tercera gaveta');
+});
+
 test('los entrepaños se apoyan contra el fondo del mueble',()=>{
   const m=member('B');
   const scene=construirVisualizacion([m],calcularGrupoFisico([m]));

@@ -15,7 +15,7 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
-import { nombrePieza, ordenarPiezasDespiece, permiteTipologiaDb } from '@/lib/muebles';
+import { DB_SM_TIPOLOGIAS, esTipologiaDbSm, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb } from '@/lib/muebles';
 
 test('convierte índices de grupo en letras de Excel y permite el camino inverso', () => {
   const cases = new Map([
@@ -46,6 +46,9 @@ test('convierte dimensiones y construye códigos sin redondear a anchos de catá
   assert.equal(convertirExacto(12, 'in', 'cm'), 30.48);
   assert.equal(convertirExacto(30.48, 'cm', 'in'), 12);
   assert.equal(anchoCodigo(12, 'in', 'imperial'), '12');
+  assert.equal(anchoCodigo(12.75, 'in', 'imperial'), '12 3/4');
+  assert.equal(anchoCodigo(12.875, 'in', 'imperial'), '12 7/8');
+  assert.equal(anchoCodigo(0.5, 'in', 'imperial'), '1/2');
   assert.equal(anchoCodigo(30.48, 'cm', 'metrico'), '30.48');
   assert.equal(codigoModulo('B', 12, 'in', 'imperial'), 'B12');
   assert.equal(codigoModulo('IP', 50, 'cm', 'metrico'), 'IP50');
@@ -70,8 +73,8 @@ test('sistema de frente gola agrega sufijo comercial SM', () => {
   assert.equal(codigoModulo('W', 29, 'in', 'imperial') + anchoCodigo(36, 'in', 'imperial') + sufijoSistemaFrente('gola'), 'W2936-SM');
 });
 
-test('los superiores de la familia W y los paneles PN llevan el alto en el código', () => {
-  for (const pref of ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'PN']) {
+test('los superiores W, paneles PN, fillers F y zocalos TK llevan el alto en el código', () => {
+  for (const pref of ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK']) {
     assert.equal(incluyeAltoEnCodigo(pref), true, pref);
   }
   // WCC es un módulo de clóset, no un superior de pared; B/DB/SBFD tienen alto implícito.
@@ -94,6 +97,7 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'W-SM', largo: 34, alto: 36, prof: 12 }), 'W3436-SM');
   assert.equal(codigoComercial({ ...base, pref: 'W-SM-LOC', largo: 34, alto: 36, prof: 12 }), 'W3436-SM-LOC');
   assert.equal(codigoComercial({ ...base, pref: 'W-SM-PUSH', largo: 33, alto: 21, prof: 24 }), 'W332124-SM-PUSH');
+  assert.equal(codigoComercial({ ...base, pref: 'WSM', largo: 9, alto: 36, prof: 14 }), 'WSM93614');
   assert.equal(codigoComercial({ ...base, pref: 'WER', largo: 24, alto: 36, sistemaFrente: 'gola' }), 'WER2436-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UW', largo: 12, alto: 36 }), 'UW1236');
   assert.equal(codigoComercial({ ...base, pref: 'OW', largo: 30, alto: 18 }), 'OW3018');
@@ -101,9 +105,16 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'B', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-SM');
   // Tipología DB y prefijo con guion (FE) conviven con el sufijo SM.
   assert.equal(codigoComercial({ ...base, pref: 'DB', largo: 18, alto: 34.5, dbTipo: 'DB-1S', sistemaFrente: 'gola' }), 'DB18-1S-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'DB-2S-SM', largo: 26, alto: 30 }), 'DB26-2S-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'DB-2-SM', largo: 26, alto: 30 }), 'DB26-2-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'DB-3-SM', largo: 26, alto: 30 }), 'DB26-3-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UDB', largo: 18, alto: 28.75, dbTipo: 'DB-2S' }), 'UDB18-2S');
   assert.equal(codigoComercial({ ...base, pref: 'UDV', largo: 24, alto: 28.75, dbTipo: 'DB-3' }), 'UDV24-3');
   assert.equal(codigoComercial({ ...base, pref: 'B-FE', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-FE-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'F', largo: 6, alto: 30, sistemaFrente: 'manija' }), 'F630');
+  assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36 }), 'PN12 7/836');
+  assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36.75 }), 'PN12 7/836 3/4');
+  assert.equal(codigoComercial({ ...base, pref: 'TK', largo: 4.25, alto: 36.5 }), 'TK4 1/436 1/2');
   // PCFD con gavetas ocultas.
   assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, pcfdCajones: 2 }), 'PCFD12-2OP-PUSH');
   // Sistema métrico.
@@ -127,6 +138,13 @@ test('habilita tipologia DB solo en las familias de cajoneras compatibles', () =
   for (const pref of ['B', 'DV', 'DBL', 'PCFD', '', null]) assert.equal(permiteTipologiaDb(pref), false, String(pref));
 });
 
+test('agrupa solo las tres tipologias DB-SM sin ampliar la familia DB existente', () => {
+  assert.deepEqual(DB_SM_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM']);
+  for (const pref of ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM', 'db-3-sm']) assert.equal(esTipologiaDbSm(pref), true, pref);
+  for (const pref of ['DB', 'UDB', 'UDV', 'DB-2S', '', null]) assert.equal(esTipologiaDbSm(pref), false, String(pref));
+  assert.equal(permiteTipologiaDb('DB-2S-SM'), false);
+});
+
 test('ordena el despiece de produccion y normaliza el shelf mal escrito', () => {
   const piezas = ['fondo', 'shlef', 'refuerzo_trasero', 'lateral', 'frente', 'tapa', 'base', 'refuerzo_delantero_removible']
     .map((pieza) => ({ pieza }));
@@ -136,4 +154,13 @@ test('ordena el despiece de produccion y normaliza el shelf mal escrito', () => 
   );
   assert.equal(nombrePieza('shlef', false), 'entrepano');
   assert.equal(nombrePieza('shelf', false), 'entrepano');
+});
+
+test('presenta los frentes de gaveta como alto por ancho una sola vez', () => {
+  // DB26-2S-SM: el motor conserva ancho del módulo × alto del frente y la
+  // tabla es la única que lo orienta para reproducir la hoja de ruta.
+  assert.deepEqual(
+    orientarPieza({ rol: 'frente', largoIn: 657.2 / 25.4, anchoIn: 173.9 / 25.4 }),
+    { largoIn: 173.9 / 25.4, anchoIn: 657.2 / 25.4 },
+  );
 });

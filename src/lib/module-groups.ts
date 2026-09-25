@@ -83,6 +83,20 @@ export function precioUnitario(
 export function anchoCodigo(value: number, unidad: UnidadDim, sistema: SistemaMedida): string {
   const target: UnidadDim = sistema === 'imperial' ? 'in' : 'cm';
   const converted = convertirExacto(value, unidad, target);
+  if (sistema === 'imperial') {
+    const denominadorBase = 16;
+    let entero = Math.floor(converted);
+    let numerador = Math.round((converted - entero) * denominadorBase);
+    if (numerador === denominadorBase) {
+      entero += 1;
+      numerador = 0;
+    }
+    if (numerador === 0) return String(entero);
+    const mcd = (a: number, b: number): number => (b === 0 ? a : mcd(b, a % b));
+    const divisor = mcd(numerador, denominadorBase);
+    const fraccion = `${numerador / divisor}/${denominadorBase / divisor}`;
+    return entero === 0 ? fraccion : `${entero} ${fraccion}`;
+  }
   // No redondea: solo elimina ceros de presentación introducidos por Number.
   return String(converted);
 }
@@ -108,11 +122,11 @@ export function sufijoSistemaFrente(sistemaFrente: string | null | undefined): s
   return sistemaFrente === 'gola' ? '-SM' : '';
 }
 
-// Los superiores de la familia W y los paneles PN incluyen el alto en el código
+// Los superiores de la familia W, los paneles PN, los fillers F y los zocalos TK incluyen el alto en el código
 // (W2936 = 29 de largo, 36 de alto): a diferencia de los demás tipos su alto sí
 // varía y no es un dato implícito del tipo. WCC queda fuera a propósito — es un
 // módulo de clóset (categoria='closet'), no un superior de pared.
-const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'PN'] as const;
+const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK'] as const;
 
 export function incluyeAltoEnCodigo(pref: string | null | undefined): boolean {
   const base = String(pref ?? '').toUpperCase().split('-')[0];
@@ -149,14 +163,16 @@ export function codigoComercial(input: CodigoComercialInput): string {
   if (altoSufijo) agregarMedida(altoSufijo);
   // Los superiores W de 24 in identifican esa profundidad en su código. La
   // comparación se hace en pulgadas para conservar la regla en cm o mm.
-  const esWProf24 = String(pref).toUpperCase().split('-')[0] === 'W'
+  const prefNormalizado = String(pref).toUpperCase();
+  const esWsm = prefNormalizado === 'WSM';
+  const esWProf24 = prefNormalizado.split('-')[0] === 'W'
     && prof != null
     && Math.abs(convertirExacto(prof, unidad, 'in') - 24) < 0.001;
-  const profSufijo = esWProf24 ? anchoCodigo(prof!, unidad, sistema) : '';
+  const profSufijo = (esWProf24 || (esWsm && prof != null)) ? anchoCodigo(prof!, unidad, sistema) : '';
   if (profSufijo) agregarMedida(profSufijo);
   const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
   const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
-  const llevaSmPropio = pref.toUpperCase().split('-').includes('SM');
+  const llevaSmPropio = prefNormalizado.split('-').includes('SM') || esWsm;
   return codigo + dbSufijo + pcfdSufijo + (llevaSmPropio ? '' : sufijoSistemaFrente(input.sistemaFrente));
 }
 

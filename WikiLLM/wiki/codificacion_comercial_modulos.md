@@ -39,7 +39,23 @@ pref + largo [+ alto] [+ profundidad-W24] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM]
 
 ## Qué tipos llevan el alto en el código
 
-`PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'PN']`
+`PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK']`
+
+`F` incluye largo y alto en el código comercial: un filler de 6 × 30 pulgadas
+se identifica como `F630`. Al seleccionar esta tipología, Simulador,
+cotizaciones y HDR restablecen el sistema de frente a `manija`, evitando que
+herede Gola de un módulo configurado anteriormente.
+
+En sistema imperial, `anchoCodigo()` presenta cualquier parte decimal como
+fracción de pulgada, redondeada al dieciseisavo más cercano y reducida. Por
+ejemplo, `12.75` se muestra como `12 3/4` y `PN12.87536` como `PN12 7/836`.
+Esta normalización es solo de presentación del código: las dimensiones usadas
+por el motor conservan su valor numérico. Los códigos métricos mantienen sus
+decimales. El mismo principio se aplica a cada dimensión incorporada al nombre,
+incluido el alto: 12,875 × 36,75 pulgadas produce `PN12 7/836 3/4`.
+
+`TK` también incluye largo y alto. Por ejemplo, un zócalo de 4,25 × 36,5
+pulgadas se identifica como `TK4 1/436 1/2`.
 
 Las familias superiores `UW` y `OW` también codifican su alto: por ejemplo,
 `UW1236` corresponde a 12 de largo por 36 de alto.

@@ -932,6 +932,15 @@ La migración `0081` incorpora BFD-SM, OW-MO, W-SM y W-SM-PUSH, con reglas exclu
 ## [2026-09-24] update | Contacto de refuerzo delantero SB-SM
 
 `0092` mueve el refuerzo delantero a la cara posterior de los frentes, sin sobrepasarlos.
+
+## [2026-09-25] ingest | Tipología DB-2S-SM desde hoja de ruta
+
+`0093` agrega DB-2S-SM como cajonera independiente: dos gavetas pequeñas, una grande, perfiles de Gola superior/inferior y sin manijas; reproduce DB26-2S-SM sin modificar DB.
+
+## [2026-09-25] update | Cantos de traseros DB-2S-SM
+
+`0094` ajusta los cantos de traseros de gaveta a la hoja DB26-2S-SM: 1 largo en pequeños y 1 largo + 2 anchos en el grande.
+
 ## [2026-09-23] fix | Suite en verde tras integrar DEV: fixture regenerado y dos asserts desactualizados
 
 `DEV` llego con **4 tests en rojo**. Verificados como preexistentes en `origin/DEV` (9b0c211) levantando un worktree limpio y corriendolos alli — no los introdujo el merge.
@@ -945,3 +954,107 @@ La migración `0081` incorpora BFD-SM, OW-MO, W-SM y W-SM-PUSH, con reglas exclu
 **Ademas**: la migracion local `0056` se renumero a `0081` porque DEV ya habia usado ese numero (llega a 0080); ya estaba aplicada en Supabase y es idempotente, y se alineo la referencia en sus `notas`. El conflicto del merge estuvo solo en este log, donde ambas ramas anadieron entradas al final: se conservan las dos.
 
 159/159 tests, typecheck, lint (0 errores) y build limpios.
+
+## [2026-09-25] fix | DB-2S-SM conserva Gola propia en el Simulador
+
+El Simulador ya no permite que el selector global de sistema de frente desactive la Gola integrada de `DB-2S-SM`. La tipología calcula siempre sus dos perfiles Gola, dos refuerzos delanteros y los frentes 173,9/173,9/351 × 657,2 mm para la referencia DB26.
+
+## [2026-09-25] fix | Orden de frentes DB-2S-SM
+
+`0095` elimina la doble inversión de ejes de los frentes DB-2S-SM: el despiece presenta 173,9/173,9/351 × 657,2 mm, igual que la hoja DB26-2S-SM.
+
+## [2026-09-25] fix | Gola y frentes exactos DB-2S-SM
+
+`0096` renombra `gola_perfil` a `gola_madera` y ajusta el reparto de alturas de DB26-2S-SM a 173,9/173,9/351 mm exactos.
+
+## [2026-09-25] update | Montaje DB-2S-SM de refuerzos y Gola
+
+`0097` define los refuerzos delanteros DB-2S-SM verticales (plano XZ) y las dos golas de madera horizontales (plano XY), según la guía lateral.
+
+## [2026-09-25] update | Posición por niveles de refuerzos y Golas DB-2S-SM
+
+`0098` coloca un par refuerzo/Gola arriba y el segundo inmediatamente debajo de la segunda gaveta, conservando las orientaciones de montaje.
+
+## [2026-09-25] fix | Protección de geometría DB-2S-SM en el montaje
+
+El generador fuerza los planos confirmados de DB-2S-SM para impedir que una configuración heredada represente el refuerzo horizontal o la Gola vertical.
+
+## [2026-09-25] fix | Segundo par DB-2S-SM anclado a base de gaveta
+
+`0099` y el generador de montaje sitúan el segundo refuerzo directamente bajo la segunda `base_gaveta`, con la Gola inmediatamente debajo y contra el frente.
+
+## [2026-09-25] ingest | Tipología DB-2-SM con dos gavetas grandes
+
+`0100` crea `DB-2-SM` a partir de `DB-2S-SM`: conserva carcasa, herrajes, dos refuerzos y dos Golas de madera, elimina las gavetas pequeñas y monta dos gavetas grandes iguales. La visualización ancla el segundo par refuerzo/Gola bajo la gaveta superior.
+
+## [2026-09-25] update | Migración DB-2-SM aplicada en Supabase
+
+Se aplicó `0100_db_2_sm.sql` al proyecto Supabase conectado. Se verificó `DB-2-SM` activa con 15 piezas, 12 reglas y 4 herrajes; los dos frentes grandes están habilitados, los pequeños desactivados y los dos pares refuerzo/Gola conservados. `DEV` no recibió cambios.
+
+## [2026-09-25] fix | DB-2-SM usa una única fila frente
+
+`0101` elimina de `DB-2-SM` las plantillas `frente_*` heredadas y conserva solo `frente` con cantidad 2. Las dos gavetas iguales dejan de duplicarse como `frente` y `frente_gaveta_grande` en el despiece.
+
+## [2026-09-25] fix | DB-2-SM usa una única fila trasero_gaveta
+
+`0102` elimina de `DB-2-SM` las plantillas `trasero_gaveta_*` y conserva solo `trasero_gaveta`, cantidad 2 y 183 mm. La fila unificada mantiene el canto de producción de la pieza grande: 1 largo y 2 anchos.
+
+## [2026-09-25] ingest | Tipología DB-3-SM con tres gavetas iguales
+
+`0103` crea `DB-3-SM` desde `DB-2-SM`: `frente`, `base_gaveta` y `trasero_gaveta` son filas únicas de cantidad 3. Mantiene dos pares refuerzo/Gola y sitúa el segundo entre la segunda y tercera gaveta.
+
+## [2026-09-25] update | Migración DB-3-SM aplicada en Supabase
+
+Se aplicó `0103_db_3_sm.sql` al proyecto Supabase conectado. Se verificó `DB-3-SM` activa con 9 plantillas sin duplicados, 12 reglas y 4 herrajes: tres frentes, tres bases, tres traseros de 183 mm, dos refuerzos y dos Golas. `DEV` no recibió cambios.
+
+## [2026-09-25] update | Variantes DB-SM agrupadas en el Simulador
+
+El selector de tipo presenta una sola familia `DB-SM` y ofrece `DB-2S-SM`, `DB-2-SM` y `DB-3-SM` en un selector secundario. Cada opción mantiene su tipo real y sus reglas; el selector existente de DB permanece sin cambios.
+
+## [2026-09-25] ingest | Tipología independiente WSM93614
+
+`0104` crea `WSM` con profundidad predeterminada de 14 pulgadas, laterales `A-1`, puerta de alto nominal y cortes propios de la hoja WSM93614. El código comercial es `WSM` + ancho + alto + profundidad. `W-SM` no se modifica.
+
+## [2026-09-25] update | Migración WSM aplicada en Supabase
+
+Se aplicó y registró `0104_wsm.sql` en el proyecto conectado. Se verificó `WSM` activa con 7 piezas, 10 reglas y 1 herraje; `W-SM` permanece activa y conserva sus propios registros. `DEV` no recibió cambios.
+
+## [2026-09-25] fix | WLD respeta la regla de cantidad de frentes
+
+`0105` cambia exclusivamente `frente.formula_cantidad` de `2` a `n_puertas` en WLD. Conserva el ancho paramétrico por cantidad y la altura `A-RV`; a 21×36 pulgadas produce una puerta de 530,2 × 911,2 mm.
+
+## [2026-09-25] update | Migración WLD aplicada en Supabase
+
+Se aplicó y registró `0105_wld_cantidad_frentes.sql`. Se verificó que WLD usa `n_puertas`, conserva `A-RV` y recibe las reglas globales activas de una puerta hasta 21 pulgadas y dos desde 24. `DEV` no recibió cambios.
+
+## [2026-09-25] update | Nombre comercial de TW
+
+`0106` cambia exclusivamente `cot_tipos_mueble.nombre_es` de TW a `Mueble superior puerta basculante`, resolviendo la discrepancia documentada con sus referencias de puerta basculante. No modifica geometría, reglas ni herrajes.
+
+## [2026-09-25] update | Nombre de TW aplicado en Supabase
+
+Se aplicó y registró `0106_tw_nombre_puerta_basculante.sql`. Se verificó que TW está activa y que `nombre_es` es exactamente `Mueble superior puerta basculante`. `DEV` no recibió cambios.
+
+## [2026-09-25] update | Código dimensional y Manija predeterminada para F
+
+La tipología `F` incorpora largo y alto en el código comercial (`F630` para 6 × 30 pulgadas). Al seleccionarla en Simulador, cotizaciones o HDR, el sistema de frente se restablece automáticamente a `manija`.
+
+## [2026-09-25] update | Eliminación de la tipología FL
+
+La auditoría previa encontró 0 líneas de cotización, 1 pieza, 0 reglas y 0 herrajes asociados a `FL`. `0107_eliminar_tipologia_fl.sql` elimina el tipo y su pieza por cascada; la migración se bloquea si detecta una referencia de cotización creada después de la auditoría.
+
+## [2026-09-25] update | Tipología FL eliminada de Supabase
+
+Se aplicó y registró `0107_eliminar_tipologia_fl.sql`. La verificación posterior confirma 0 tipos `FL` y 0 líneas de cotización con ese prefijo; su plantilla se eliminó por cascada. `DEV` no recibió cambios.
+
+## [2026-09-25] update | Fracciones imperiales en códigos comerciales
+
+`anchoCodigo()` representa las partes decimales imperiales como fracciones reducidas al 1/16 más cercano. `12.75` pasa a `12 3/4` y el caso reportado `PN12.87536` pasa a `PN12 7/836`; las medidas de cálculo no se redondean y los códigos métricos conservan decimales.
+
+## [2026-09-25] update | Regresión fraccionaria también para el alto
+
+Se confirma y protege con prueba explícita que el alto usa la misma conversión fraccionaria que el largo: `PN` de 12,875 × 36,75 pulgadas genera `PN12 7/836 3/4`.
+
+## [2026-09-25] update | Alto incorporado al código de TK
+
+La tipología `TK` incorpora el alto después del largo en su código comercial. El caso 4,25 × 36,5 pulgadas pasa de `TK4 1/4` a `TK4 1/436 1/2`, usando fracciones en ambas dimensiones.

@@ -11,8 +11,12 @@ y `W`. No las actualiza ni reutiliza sus plantillas.
 | `W-SM` | `W3436-SM` | Sin manijas; usa únicamente las piezas de la hoja WXXXX-SM y conserva bisagras W. |
 | `W-SM-PUSH` | `W332124-SM-PUSH` | Sin manijas; usa las piezas de su hoja y agrega un Push To Open por puerta. |
 | `W-SM-LOC` | `W3436-SM-LOC` | Variante independiente del W-SM vigente, sin entrepaños en ninguna altura. |
+| `WSM` | `WSM93614` | Superior independiente de 14 in: laterales `A-1`, puerta de alto nominal `A` y geometría propia de la hoja WSM93614. |
 | `SBFD-SM` | `SBFD16-SM` | Variante independiente de BFD-SM, sin entrepaño. Conserva Gola de madera, puertas y herrajes funcionales. |
 | `SB-SM` | `SB30-SM` | Inferior con frente falso, puertas inferiores y Gola de madera, según la hoja SB30-SM. |
+| `DB-2S-SM` | `DB26-2S-SM` | Cajonera independiente 2S con dos gavetas pequeñas, una grande y Gola superior/inferior. |
+| `DB-2-SM` | `DB26-2-SM` | Variante con dos gavetas grandes iguales, Gola superior/intermedia y sin manijas. |
+| `DB-3-SM` | `DB26-3-SM` | Variante con tres gavetas iguales; segundo par refuerzo/Gola entre la segunda y tercera. |
 
 ## Prioridad de reglas PLUS
 
@@ -40,6 +44,68 @@ superior, las puertas quedan debajo y no hay entrepaños. Para una referencia de
 30 × 30 × 24 pulgadas, reproduce base 732 × 585,6 mm, laterales 762 × 609,6 mm,
 puertas 579,6 × 377,8 mm, frente falso 122,4 × 758,8 mm y fondo 760 × 746 mm.
 Como las demás SM inferiores, no tiene manijas y usa Gola de madera explícita.
+
+`DB-2S-SM` reutiliza las fórmulas DB para dos gavetas pequeñas y una grande,
+con `gola = 1` y sin manijas. Para `DB26-2S-SM` reproduce la guía: base
+630,4 × 585,6 mm; laterales 762 × 609,6 mm; fondos de gaveta 555,4 × 492 mm;
+traseros 543,4 × 68/68/183 mm; frentes 173,9/173,9/351 × 657,2 mm y fondo
+760 × 644,4 mm. Mantiene un par de barras para el trasero de 183 mm.
+Los traseros pequeños llevan un canto largo blanco; el trasero grande, un
+canto largo y dos anchos blancos, según `0094_db_2s_sm_cantos_traseros.sql`.
+En el Simulador, esta tipología fuerza `gola = 1` aunque el selector global
+conserve el valor de un módulo anterior. Así siempre salen dos
+`refuerzo_delantero`, dos perfiles Gola y los frentes en el orden de corte de
+la hoja (alto × ancho), sin depender de una selección manual adicional.
+La migración `0095_db_2s_sm_frentes_orden_hoja.sql` conserva internamente los
+ejes de los frentes como ancho del módulo × alto del frente, porque el
+despiece ya los presenta como alto × ancho. Evita así una doble inversión en
+la tabla y en el montaje.
+`0096_db_2s_sm_gola_y_frentes_exactos.sql` nombra estas piezas
+`gola_madera`, igual que los demás SM, y fija el reparto de los 53,6 mm de
+las dos golas: 13,4 mm por cada frente pequeño y el saldo en el grande. Para
+DB26 muestra exactamente 173,9 / 173,9 / 351 mm.
+El montaje específico `0097_db_2s_sm_montaje_refuerzos_gola.sql` representa
+los dos `refuerzo_delantero` en plano XZ, verticales y a 20 mm detrás de los
+frentes. Las dos `gola_madera` usan el plano XY, horizontales y con `y = 0`;
+por tanto tocan los frentes sin modificar su corte.
+`0098_db_2s_sm_posicion_pares_gola.sql` separa los dos pares por niveles:
+uno arriba del mueble y otro debajo de la segunda gaveta desde arriba. Cada
+Gola queda inmediatamente bajo su refuerzo correspondiente.
+El generador de montaje también refuerza esta geometría para `DB-2S-SM`: no
+permite que una configuración heredada de DB vuelva a intercambiar los planos
+de `refuerzo_delantero` y `gola_madera`.
+Desde `0099_db_2s_sm_anclaje_base_gaveta.sql`, el segundo par no se ubica con
+una fórmula proporcional: queda anclado al borde inferior de la segunda
+`base_gaveta`; el refuerzo toca ese borde por debajo y la Gola toca el borde
+inferior del refuerzo, ambas sobre sus caras frontales respectivas.
+
+`0100_db_2_sm.sql` deriva `DB-2-SM` de esa tipología y conserva carcasa,
+herrajes, dos refuerzos y dos Golas. Cambia a `n_cajones=2` y
+`n_cajones_pequenos=0`, por lo que genera dos gavetas grandes con frentes de
+351 × 657,2 mm en `DB26-2-SM`; el segundo par refuerzo/Gola se ancla bajo la
+base de la gaveta superior para separar visualmente ambos niveles. La migración
+está aplicada en el proyecto Supabase conectado desde el 25 de septiembre de
+2026; la tipología está activa y disponible para sesiones autenticadas.
+`0101_db_2_sm_frente_unico.sql` elimina las plantillas especializadas
+`frente_*`: como ambas gavetas son iguales, el despiece muestra únicamente
+`frente`, con cantidad 2.
+`0102_db_2_sm_trasero_unico.sql` aplica el mismo criterio a los traseros: deja
+solo `trasero_gaveta`, cantidad 2 y 183 mm de alto, conservando el canto de la
+pieza grande (1 largo y 2 anchos).
+
+`0103_db_3_sm.sql` deriva `DB-3-SM` de la variante unificada: mantiene una
+sola fila `frente`, `base_gaveta` y `trasero_gaveta`, cada una con cantidad 3.
+Los tres frentes se reparten por igual y los traseros miden 183 mm. El segundo
+par refuerzo/Gola se ancla bajo la segunda base, entre la segunda y tercera
+gaveta. La migración está aplicada en el proyecto Supabase conectado desde el
+25 de septiembre de 2026.
+
+En el Simulador, `DB-2S-SM`, `DB-2-SM` y `DB-3-SM` aparecen agrupadas bajo
+`DB-SM — Cajoneras con Gola de madera`. El selector `Tipología DB-SM` cambia
+entre los tres tipos reales, por lo que cada variante conserva sus propias
+plantillas, reglas, herrajes, código comercial y montaje. Este selector es
+independiente del selector histórico `Tipología DB`; no modifica las familias
+`DB`, `UDB` ni `UDV`.
 
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la
@@ -69,6 +135,15 @@ anterior del fondo y no lo atraviesa.
 
 Las reglas de configuración se guardan exclusivamente contra el ID de cada
 nuevo tipo, por lo que no afectan ninguna otra tipología.
+
+`0104_wsm.sql` crea `WSM` sin modificar `W-SM`. Para la referencia de 9 × 36
+× 14 pulgadas reproduce base/tapa 192,6 × 355,6 mm, laterales 889 ×
+355,6 mm, dos refuerzos traseros de 192,6 × 80 mm, dos entrepaños de 191,6
+× 311,5 mm, una puerta de 914,4 × 225,4 mm y fondo de 867 × 206,6 mm.
+Su código comercial incluye siempre ancho, alto y profundidad. Al seleccionarla
+en Simulador, cotizaciones o HDR, la profundidad se inicializa en 14 pulgadas
+(35,56 cm o 355,6 mm según la unidad activa). La migración está aplicada en
+el proyecto Supabase conectado desde el 25 de septiembre de 2026.
 
 ## Montaje visual BFD-SM
 

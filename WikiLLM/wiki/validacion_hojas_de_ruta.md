@@ -303,7 +303,7 @@ fuente: `BOMH`, `DVE`, `VDF`, `CARTON`, `NA`.
 
 ### Piezas sueltas y kits
 
-`PL` (35, panel), `FL` (16, filler), `KF` (11, kit de frentes), `SC` (9),
+`PL` (35, panel), ~~`FL` (16, filler)~~, `KF` (11, kit de frentes), `SC` (9),
 `BT` (5, base-tapa), `DF` (6, frente de gaveta), `LD`/`LI` (4, laterales),
 `E` (2, entrepaño), `Z` (2, zócalo), `KD` (2, kit de cajones), `WD`, `BK`.
 
@@ -509,6 +509,15 @@ que su borde trasero llega a la cara frontal del fondo sin atravesarlo.
 Para configuraciones UW de dos puertas, `0075` calcula el ancho de cada frente
 como `(L-n_puertas×3,2mm)/n_puertas`. Esto conserva la puerta única de UW1336
 (327mm) y monta dos puertas lado a lado cuando la regla define `n_puertas=2`.
+
+### WLD — cantidad paramétrica de frentes
+
+La migración `0105_wld_cantidad_frentes.sql` sustituye la cantidad fija `2` de
+la pieza `frente` por `n_puertas`. Así WLD usa una puerta hasta 21 pulgadas y
+dos desde 24 pulgadas, conforme a la regla transversal vigente. La fórmula de
+altura propia `A-RV` no cambia: para 36 pulgadas conserva 911,2 mm exactos.
+El ancho sigue siendo `(L-n_puertas*RV)/n_puertas`. La migración está
+aplicada en el proyecto Supabase conectado desde el 25 de septiembre de 2026.
 
 ### Pendientes
 
