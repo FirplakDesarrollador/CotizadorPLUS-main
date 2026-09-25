@@ -137,13 +137,13 @@ regresiones de 0043.
 - **`CC`**, **`CLV`**, **`DFE`** Fuera del Excel, o solo con herraje de clóset (tubo 7.950 +
   soporte 348) en combinaciones que no cierran.
 
-### Anotación aparte: `TW` significa cosas distintas en cada lado
+### Nombre comercial confirmado de `TW`
 
 En el Excel **todas** las filas `TW` son de puerta basculante ("1 puerta basculante",
-"2 puerta basculante"…), mientras que el `TW` del catálogo es "Mueble superior esquinero
-(Transition Wall)" con bisagra + manija. O el nombre del catálogo está mal, o son dos cosas
-que comparten prefijo. No se tocó: `TW` ya se usa, y cambiarle la semántica es decisión de
-producto.
+"2 puerta basculante"…). El nombre anterior del catálogo, "Mueble superior esquinero
+(Transition Wall)", fue corregido por decisión de producto en `0106`: `TW` se presenta como
+**Mueble superior puerta abatible**. El cambio es solo descriptivo y no altera piezas,
+reglas ni herrajes.
 
 ## 2-bis. Apartado original: por qué no se podía arreglar en bloque
 

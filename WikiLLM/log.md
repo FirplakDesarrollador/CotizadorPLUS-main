@@ -1026,3 +1026,7 @@ Se aplicó y registró `0104_wsm.sql` en el proyecto conectado. Se verificó `WS
 ## [2026-09-25] update | Migración WLD aplicada en Supabase
 
 Se aplicó y registró `0105_wld_cantidad_frentes.sql`. Se verificó que WLD usa `n_puertas`, conserva `A-RV` y recibe las reglas globales activas de una puerta hasta 21 pulgadas y dos desde 24. `DEV` no recibió cambios.
+
+## [2026-09-25] update | Nombre comercial de TW
+
+`0106` cambia exclusivamente `cot_tipos_mueble.nombre_es` de TW a `Mueble superior puerta abatible`, resolviendo la discrepancia documentada con sus referencias de puerta basculante. No modifica geometría, reglas ni herrajes.
