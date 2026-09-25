@@ -142,7 +142,7 @@ regresiones de 0043.
 En el Excel **todas** las filas `TW` son de puerta basculante ("1 puerta basculante",
 "2 puerta basculante"…). El nombre anterior del catálogo, "Mueble superior esquinero
 (Transition Wall)", fue corregido por decisión de producto en `0106`: `TW` se presenta como
-**Mueble superior puerta abatible**. El cambio es solo descriptivo y no altera piezas,
+**Mueble superior puerta basculante**. El cambio es solo descriptivo y no altera piezas,
 reglas ni herrajes.
 
 ## 2-bis. Apartado original: por qué no se podía arreglar en bloque

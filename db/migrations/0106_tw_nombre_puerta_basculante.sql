@@ -2,6 +2,6 @@
 -- ni formulas de la tipologia.
 
 update public.cot_tipos_mueble
-set nombre_es = 'Mueble superior puerta abatible',
+set nombre_es = 'Mueble superior puerta basculante',
     updated_at = now()
 where pref = 'TW';
