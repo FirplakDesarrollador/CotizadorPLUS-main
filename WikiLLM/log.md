@@ -1042,3 +1042,7 @@ La tipología `F` incorpora largo y alto en el código comercial (`F630` para 6 
 ## [2026-09-25] update | Eliminación de la tipología FL
 
 La auditoría previa encontró 0 líneas de cotización, 1 pieza, 0 reglas y 0 herrajes asociados a `FL`. `0107_eliminar_tipologia_fl.sql` elimina el tipo y su pieza por cascada; la migración se bloquea si detecta una referencia de cotización creada después de la auditoría.
+
+## [2026-09-25] update | Tipología FL eliminada de Supabase
+
+Se aplicó y registró `0107_eliminar_tipologia_fl.sql`. La verificación posterior confirma 0 tipos `FL` y 0 líneas de cotización con ese prefijo; su plantilla se eliminó por cascada. `DEV` no recibió cambios.
