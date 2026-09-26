@@ -2,13 +2,20 @@
 import { useMemo, useState } from 'react';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
+import MontajeFields from '@/components/MontajeFields';
+import { inferirMontaje } from '@/lib/visualizacion-config';
 import { TIPS_DISENO } from '@/lib/tooltips';
 import {
   getDisenoAction, guardarPiezaAction, eliminarPiezaAction,
   guardarReglaAction, eliminarReglaAction, guardarHerrajeAction, eliminarHerrajeAction, previewAction,
+  guardarTipoAgrupacionAction,
 } from './actions';
+import type { CotizarResult } from '@/lib/cotizar';
 
-type Tipo = { id: string; pref: string; nombre_es: string | null };
+type Tipo = { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; permite_agrupacion: boolean; nombre_es: string | null };
+// Fila de catálogo con forma dinámica (piezas/reglas/herrajes tienen columnas distintas);
+// tipar cada campo obligaría a castear en cada acceso a lo largo del archivo sin beneficio real.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any> & { id?: string };
 type Diseno = {
   piezas: Row[]; reglas: Row[]; herrajes: Row[];
@@ -18,6 +25,7 @@ const ROLES = ['caja', 'refuerzo', 'frente', 'fondo', 'fondo_shaker', 'zocalo', 
 const fmt = (n: number) => Number(n).toLocaleString('es-CO', { maximumFractionDigits: 0 });
 
 export default function DisenoEditor({ tipos, presetDefault }: { tipos: Tipo[]; presetDefault: Record<string, string> }) {
+  const [tiposList, setTiposList] = useState(tipos);
   const [tipoId, setTipoId] = useState('');
   const [d, setD] = useState<Diseno | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +37,11 @@ export default function DisenoEditor({ tipos, presetDefault }: { tipos: Tipo[]; 
     setLoading(false);
   }
   const reload = () => tipoId && load(tipoId);
-  const tipoOptions = useMemo(() => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tipos]);
+  const tipoOptions = useMemo(() => tiposList.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tiposList]);
+
+  function handleTipoAgrupacionUpdated(updated: { pref_imperial: string; pref_metrico: string; permite_agrupacion: boolean }) {
+    setTiposList((prev) => prev.map((t) => t.id === tipoId ? { ...t, ...updated } : t));
+  }
 
   return (
     <div className="space-y-4">
@@ -43,14 +55,49 @@ export default function DisenoEditor({ tipos, presetDefault }: { tipos: Tipo[]; 
       {loading && <p className="text-slate-400 text-sm">Cargando…</p>}
       {d && tipoId && (
         <>
+          <TipoAgrupacionEditor
+            key={tipoId}
+            tipo={tiposList.find((t) => t.id === tipoId)!}
+            onUpdated={handleTipoAgrupacionUpdated}
+          />
           <PiezasEditor tipoId={tipoId} piezas={d.piezas} cantos={d.cantos} onChange={reload} />
           <ReglasEditor tipoId={tipoId} reglas={d.reglas} onChange={reload} />
           <HerrajesEditor tipoId={tipoId} herrajes={d.herrajes} herrajeCat={d.herrajeCat} onChange={reload} />
-          <Preview tipoId={tipoId} presetDefault={presetDefault} tableros={d.tableros} />
+          <Preview tipoId={tipoId} presetDefault={presetDefault} />
         </>
       )}
     </div>
   );
+}
+
+function TipoAgrupacionEditor({
+  tipo,
+  onUpdated,
+}: {
+  tipo: Tipo;
+  onUpdated?: (updated: { pref_imperial: string; pref_metrico: string; permite_agrupacion: boolean }) => void;
+}) {
+  const [imperial, setImperial] = useState(tipo.pref_imperial || tipo.pref);
+  const [metrico, setMetrico] = useState(tipo.pref_metrico || tipo.pref);
+  const [enabled, setEnabled] = useState(tipo.permite_agrupacion);
+  const [message, setMessage] = useState('');
+  async function save() {
+    const result = await guardarTipoAgrupacionAction(tipo.id, { pref_imperial: imperial, pref_metrico: metrico, permite_agrupacion: enabled });
+    if (result.ok) {
+      setMessage('Configuración guardada.');
+      onUpdated?.({ pref_imperial: imperial, pref_metrico: metrico, permite_agrupacion: enabled });
+    } else {
+      setMessage(result.error ?? 'No se pudo guardar');
+    }
+  }
+  return <Section title="Nomenclatura y agrupación" subtitle="Prefijos según el sistema del proyecto. Desactiva la agrupación para geometrías especiales o no homologadas.">
+    <div className="grid gap-2 sm:grid-cols-3 items-end">
+      <F l="Prefijo imperial"><input className={inp} value={imperial} onChange={(e) => setImperial(e.target.value.toUpperCase())} /></F>
+      <F l="Prefijo métrico"><input className={inp} value={metrico} onChange={(e) => setMetrico(e.target.value.toUpperCase())} /></F>
+      <label className="flex items-center gap-2 pb-1 text-sm"><input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> Permite agrupación física</label>
+    </div>
+    <div className="mt-2 flex items-center gap-3"><button onClick={save} className="rounded-lg bg-slate-900 px-4 py-1.5 text-sm text-white">Guardar</button>{message && <span className="text-xs text-slate-500">{message}</span>}</div>
+  </Section>;
 }
 
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
@@ -67,7 +114,7 @@ const inp = 'w-full border border-slate-300 rounded px-2 py-1 text-sm';
 // ---------- Piezas ----------
 function PiezasEditor({ tipoId, piezas, cantos, onChange }: { tipoId: string; piezas: Row[]; cantos: string[]; onChange: () => void }) {
   const [edit, setEdit] = useState<Row | null>(null);
-  const blank = () => ({ nombre: '', rol_tablero: 'caja', formula_cantidad: '1', formula_largo: '', formula_ancho: '', tarugos: 0, soportes: 0, orden: (piezas.length + 1) * 10, _cal: '', _l: 0, _a: 0, _de: '' });
+  const blank = () => ({ nombre: '', rol_tablero: 'caja', formula_cantidad: '1', formula_largo: '', formula_ancho: '', modo_agrupacion: 'local', clave_fusion: '', formula_largo_grupo: '', tarugos: 0, soportes: 0, orden: (piezas.length + 1) * 10, _cal: '', _l: 0, _a: 0, _de: '' });
   const start = (p?: Row) => setEdit(p ? {
     ...p, _cal: p.cantos?.calibre ?? '', _l: p.cantos?.largos ?? 0, _a: p.cantos?.anchos ?? 0, _de: p.cantos?.despEdges ?? '',
   } : blank());
@@ -78,6 +125,9 @@ function PiezasEditor({ tipoId, piezas, cantos, onChange }: { tipoId: string; pi
     const row = {
       tipo_mueble_id: tipoId, nombre: e.nombre, rol_tablero: (!e.rol_tablero || e.rol_tablero === 'canto') ? null : String(e.rol_tablero).trim().toLowerCase().replace(/\s+/g, '_'),
       formula_cantidad: e.formula_cantidad, formula_largo: e.formula_largo, formula_ancho: e.formula_ancho,
+      modo_agrupacion: e.modo_agrupacion ?? 'local', clave_fusion: e.clave_fusion || null,
+      formula_largo_grupo: e.formula_largo_grupo || null,
+      visualizacion: e.visualizacion ?? inferirMontaje({ nombre:e.nombre, rol_tablero:e.rol_tablero, formula_largo:e.formula_largo, formula_ancho:e.formula_ancho }),
       cantos, tarugos: Number(e.tarugos) || 0, soportes: Number(e.soportes) || 0, orden: Number(e.orden) || 0,
     };
     const r = await guardarPiezaAction(e.id ?? null, row);
@@ -114,11 +164,15 @@ function PiezasEditor({ tipoId, piezas, cantos, onChange }: { tipoId: string; pi
           <F l="Orden"><input type="number" className={inp} value={edit.orden} onChange={(e) => setEdit({ ...edit, orden: e.target.value })} /></F>
           <F l="Fórmula largo (in)"><input className={inp} value={edit.formula_largo ?? ''} onChange={(e) => setEdit({ ...edit, formula_largo: e.target.value })} /></F>
           <F l="Fórmula ancho (in)"><input className={inp} value={edit.formula_ancho ?? ''} onChange={(e) => setEdit({ ...edit, formula_ancho: e.target.value })} /></F>
+          <F l="Comportamiento al agrupar"><select className={inp} value={edit.modo_agrupacion ?? 'local'} onChange={(e) => setEdit({ ...edit, modo_agrupacion: e.target.value })}><option value="local">Local</option><option value="continua">Pieza continua</option><option value="lateral_compartido">Lateral compartido</option></select></F>
+          <F l="Clave de fusión"><input className={inp} placeholder="base, fondo, refuerzo_frontal…" value={edit.clave_fusion ?? ''} onChange={(e) => setEdit({ ...edit, clave_fusion: e.target.value })} /></F>
+          <F l="Largo agrupado"><input className={inp} placeholder="LG-(2*TC)" value={edit.formula_largo_grupo ?? ''} onChange={(e) => setEdit({ ...edit, formula_largo_grupo: e.target.value })} /></F>
           <F l="Canto calibre"><select className={inp} value={edit._cal} onChange={(e) => setEdit({ ...edit, _cal: e.target.value })}><option value="">(sin canto)</option>{cantos.map((c) => <option key={c}>{c}</option>)}</select></F>
           <F l="Aristas largo / ancho"><div className="flex gap-1"><input type="number" className={inp} value={edit._l} onChange={(e) => setEdit({ ...edit, _l: e.target.value })} /><input type="number" className={inp} value={edit._a} onChange={(e) => setEdit({ ...edit, _a: e.target.value })} /></div></F>
           <F l="Aristas desperdicio (opc)"><input type="number" className={inp} placeholder="auto" value={edit._de} onChange={(e) => setEdit({ ...edit, _de: e.target.value })} /></F>
           <F l="Tarugos"><input type="number" className={inp} value={edit.tarugos} onChange={(e) => setEdit({ ...edit, tarugos: e.target.value })} /></F>
           <F l="Soportes"><input type="number" className={inp} value={edit.soportes} onChange={(e) => setEdit({ ...edit, soportes: e.target.value })} /></F>
+          <MontajeFields value={edit.visualizacion ?? inferirMontaje({ nombre:edit.nombre, rol_tablero:edit.rol_tablero, formula_largo:edit.formula_largo, formula_ancho:edit.formula_ancho })} onChange={v=>setEdit({...edit,visualizacion:v})} />
           <div className="col-span-full flex gap-2"><button onClick={save} className="rounded-lg bg-slate-900 text-white px-4 py-1.5 text-sm">Guardar</button><button onClick={() => setEdit(null)} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm">Cancelar</button></div>
         </div>
       )}
@@ -203,10 +257,10 @@ function HerrajesEditor({ tipoId, herrajes, herrajeCat, onChange }: { tipoId: st
 }
 
 // ---------- Preview ----------
-function Preview({ tipoId, presetDefault, tableros }: { tipoId: string; presetDefault: Record<string, string>; tableros: string[] }) {
+function Preview({ tipoId, presetDefault }: { tipoId: string; presetDefault: Record<string, string> }) {
   const [L, setL] = useState(33); const [A, setA] = useState(30); const [P, setP] = useState(24);
   const [conH, setConH] = useState(false);
-  const [res, setRes] = useState<any>(null); const [err, setErr] = useState<string | null>(null);
+  const [res, setRes] = useState<CotizarResult | null>(null); const [err, setErr] = useState<string | null>(null);
   async function run() {
     setErr(null);
     const r = await previewAction({ tipoId, largo: L, alto: A, prof: P, unidad: 'in', preset: presetDefault, conHerrajes: conH });
@@ -226,8 +280,8 @@ function Preview({ tipoId, presetDefault, tableros }: { tipoId: string; presetDe
         <div className="mt-3 grid sm:grid-cols-2 gap-3 text-sm">
           <div>
             <p className="text-slate-500">Madera por rol</p>
-            {res.maderaPorRol.map((m: any) => <div key={m.rol} className="flex justify-between"><span className="capitalize">{m.rol} ({m.codigo})</span><span>{fmt(m.costo)}</span></div>)}
-            {res.cantoPorCalibre.map((c: any) => <div key={c.calibre} className="flex justify-between text-slate-500"><span>canto {c.calibre}</span><span>{fmt(c.costo)}</span></div>)}
+            {res.maderaPorRol.map((m) => <div key={m.rol} className="flex justify-between"><span className="capitalize">{m.rol} ({m.codigo})</span><span>{fmt(m.costo)}</span></div>)}
+            {res.cantoPorCalibre.map((c) => <div key={c.calibre} className="flex justify-between text-slate-500"><span>canto {c.calibre}</span><span>{fmt(c.costo)}</span></div>)}
           </div>
           <div className="space-y-1">
             <div className="flex justify-between"><span className="text-slate-500">Madera</span><span>{fmt(res.costoMadera)}</span></div>
