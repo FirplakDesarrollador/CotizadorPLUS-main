@@ -189,6 +189,106 @@ test('DB-SM: refuerzo delantero vertical y Gola de madera horizontal',()=>{
   assert.ok(Math.abs(golas[1].z-(refuerzos[1].z-golas[1].h))<1,'la Gola inferior debe quedar debajo de su refuerzo');
 });
 
+test('DB-2S-SM-FE reutiliza el montaje DB-SM para los dos pares de Gola',()=>{
+  const m=member('DB',{n_cajones:3,n_cajones_pequenos:2,gola:1});
+  m.pref='DB-2S-SM-FE';
+  const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
+  gola.nombre='gola_madera';
+  // La fixture DB usa riel Tandem y no trae laterales de madera. Se agrega la
+  // caja FE confirmada para probar el caso real: lateral 100 mm, trasero 68 mm.
+  m.calc.piezas.push({
+    nombre:'lateral_gaveta_prueba',rol_tablero:'refuerzo',formula_cantidad:'6',
+    formula_largo:'100/25.4',formula_ancho:'500/25.4',cantos:{},tarugos:0,soportes:0,
+    modo_agrupacion:'local',visualizacion:{version:1,funcion:'lateral_gaveta',plano:'YZ',intercambiar:false,confirmado:true},
+  });
+  m.calc.piezas.push({
+    nombre:'contraparche_prueba',rol_tablero:'refuerzo',formula_cantidad:'3',
+    formula_largo:'(L*25.4-86)/25.4',formula_ancho:'100/25.4',cantos:{},tarugos:0,soportes:0,
+    modo_agrupacion:'local',visualizacion:{version:1,funcion:'frente_interior',plano:'XZ',intercambiar:false,confirmado:true},
+  });
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const refuerzos=scene.paneles.filter(p=>p.nombre==='refuerzo_delantero');
+  const golas=scene.paneles.filter(p=>p.nombre==='gola_madera');
+  const bases=scene.paneles.filter(p=>p.funcion==='base_gaveta');
+  assert.equal(refuerzos.length,2);
+  assert.equal(golas.length,2);
+  assert.equal(bases.length,3);
+  assert.ok(refuerzos.every(p=>Math.abs(p.h-80)<.1&&p.d<=16));
+  assert.ok(golas.every(p=>p.h<=16&&Math.abs(p.d-80)<.1&&p.y===0));
+  const golaSuperior=golas.toSorted((a,b)=>b.z-a.z)[0];
+  const frentes=scene.paneles.filter(p=>p.funcion==='frente_gaveta').toSorted((a,b)=>b.z-a.z);
+  const lateralesPorCajon=frentes.map(frente=>scene.paneles.find(p=>p.funcion==='lateral_gaveta'&&p.cajon===frente.cajon)!);
+  assert.ok(Math.abs(golaSuperior.z-(lateralesPorCajon[0].z+lateralesPorCajon[0].h)-3.2)<.1,'la caja superior debe quedar 3,2 mm debajo de la Gola superior');
+  const descensoSuperior=frentes[0].z+30-lateralesPorCajon[0].z;
+  const descensoSegunda=frentes[1].z+30-lateralesPorCajon[1].z;
+  assert.ok(descensoSuperior>0&&Math.abs(descensoSuperior-descensoSegunda-13)<.1,'la segunda caja pequena debe quedar 13 mm mas alta que la superior');
+  assert.ok(Math.abs(lateralesPorCajon[1].z-(refuerzos[1].z+refuerzos[1].h))<.1,'la segunda caja pequena debe quedar sobre el refuerzo delantero inferior');
+  assert.ok(Math.abs(frentes[2].z+30-lateralesPorCajon[2].z)<.1,'la caja grande inferior no debe desplazarse');
+  const traseros=scene.paneles.filter(p=>p.funcion==='trasero_gaveta');
+  const alineables=traseros.flatMap(trasero=>{
+    const lateral=scene.paneles.find(p=>p.funcion==='lateral_gaveta'&&p.cajon===trasero.cajon&&p.h>=trasero.h);
+    return lateral?[{trasero,lateral}]:[];
+  });
+  assert.ok(alineables.length>0,'debe existir al menos un trasero mas bajo que sus laterales');
+  assert.ok(alineables.every(({trasero,lateral})=>Math.abs((trasero.z+trasero.h)-(lateral.z+lateral.h))<.1),'trasero y laterales deben quedar alineados por arriba');
+  assert.ok(alineables.every(({trasero,lateral})=>Math.abs((trasero.z-lateral.z)-(lateral.h-trasero.h))<.1),'la diferencia de altura debe quedar abajo');
+  const cajones=[...new Set(scene.paneles.filter(p=>p.funcion==='base_gaveta').map(p=>p.cajon))];
+  assert.equal(cajones.length,3);
+  for(const cajon of cajones){
+    const laterales=scene.paneles.filter(p=>p.funcion==='lateral_gaveta'&&p.cajon===cajon).sort((a,b)=>a.x-b.x);
+    const base=scene.paneles.find(p=>p.funcion==='base_gaveta'&&p.cajon===cajon)!;
+    const trasero=scene.paneles.find(p=>p.funcion==='trasero_gaveta'&&p.cajon===cajon)!;
+    const contraparche=scene.paneles.find(p=>p.nombre==='contraparche_prueba'&&p.cajon===cajon)!;
+    assert.equal(laterales.length,2,'cada gaveta debe tener dos laterales');
+    assert.ok(trasero&&contraparche,'cada gaveta debe tener trasero y contraparche propios');
+    const interiorIzq=laterales[0].x+laterales[0].w, interiorDer=laterales[1].x;
+    for(const pieza of [trasero,contraparche]){
+      assert.ok(pieza.x>=interiorIzq-.1&&pieza.x+pieza.w<=interiorDer+.1,'trasero y contraparche deben quedar dentro de los laterales');
+    }
+    assert.ok(Math.abs(base.z-laterales[0].z-13)<.1,'la base debe quedar 13 mm sobre el borde inferior del lateral');
+    assert.ok(base.z<contraparche.z+contraparche.h&&base.z+base.h>contraparche.z,'la base debe atravesar verticalmente el contraparche');
+    assert.ok(base.y<contraparche.y+contraparche.d&&base.y+base.d>contraparche.y,'la base debe atravesar la profundidad del contraparche');
+  }
+});
+
+test('DB-3-SM-FE visualiza tres cajas pequenas iguales',()=>{
+  const m=member('DB',{n_cajones:3,n_cajones_pequenos:3,gola:1});
+  m.pref='DB-3-SM-FE';
+  const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
+  gola.nombre='gola_madera';
+  m.calc.piezas=m.calc.piezas.filter(p=>!['lateral_gaveta','trasero_gaveta','frente_interior'].includes(p.visualizacion?.funcion??''));
+  m.calc.piezas.push({
+    nombre:'lateral_gaveta_pequena',rol_tablero:'refuerzo',formula_cantidad:'6',
+    formula_largo:'100/25.4',formula_ancho:'500/25.4',cantos:{},tarugos:0,soportes:0,
+    modo_agrupacion:'local',visualizacion:{version:1,funcion:'lateral_gaveta',plano:'YZ',intercambiar:false,confirmado:true},
+  });
+  m.calc.piezas.push({
+    nombre:'trasero_gaveta_pequena',rol_tablero:'refuerzo',formula_cantidad:'3',
+    formula_largo:'(L*25.4-86)/25.4',formula_ancho:'80/25.4',cantos:{},tarugos:4,soportes:0,
+    modo_agrupacion:'local',visualizacion:{version:1,funcion:'trasero_gaveta',plano:'XZ',intercambiar:false,confirmado:true},
+  });
+  m.calc.piezas.push({
+    nombre:'contraparche_pequeno',rol_tablero:'refuerzo',formula_cantidad:'3',
+    formula_largo:'(L*25.4-86)/25.4',formula_ancho:'100/25.4',cantos:{},tarugos:4,soportes:0,
+    modo_agrupacion:'local',visualizacion:{version:1,funcion:'frente_interior',plano:'XZ',intercambiar:false,confirmado:true},
+  });
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const laterales=scene.paneles.filter(p=>p.nombre==='lateral_gaveta_pequena');
+  const traseros=scene.paneles.filter(p=>p.nombre==='trasero_gaveta_pequena');
+  const contraparches=scene.paneles.filter(p=>p.nombre==='contraparche_pequeno');
+  assert.equal(laterales.length,6);
+  assert.equal(traseros.length,3);
+  assert.equal(contraparches.length,3);
+  assert.ok(laterales.every(p=>Math.abs(p.h-100)<.1),'todos los laterales deben medir 100 mm de alto');
+  assert.ok(traseros.every(p=>Math.abs(p.h-80)<.1),'todos los traseros deben medir 80 mm de alto');
+  assert.ok(contraparches.every(p=>Math.abs(p.h-100)<.1),'todos los contraparches deben medir 100 mm de alto');
+  assert.equal(new Set(laterales.map(p=>p.cajon)).size,3,'debe haber dos laterales en cada una de las tres gavetas');
+  for(const trasero of traseros){
+    const lateral=laterales.find(p=>p.cajon===trasero.cajon)!;
+    assert.ok(Math.abs(trasero.z+trasero.h-lateral.z-lateral.h)<.1,'cada trasero pequeno debe alinear arriba con su lateral');
+  }
+});
+
 test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',()=>{
   const m=member('DB',{n_cajones:2,n_cajones_pequenos:0,gola:1});
   m.pref='DB-2-SM';

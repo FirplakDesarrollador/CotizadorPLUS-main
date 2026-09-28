@@ -124,6 +124,25 @@ export function esTipologiaDbSm(pref: string | null | undefined): boolean {
   return DB_SM_TIPOLOGIAS.some((tipologia) => tipologia.pref === p);
 }
 
+// Cajoneras DB con Gola de madera y cajas de gaveta en madera para riel
+// Full Extension de 500 mm. Se presentan como la familia comercial DB-SM-FE,
+// aunque cada variante conserva una plantilla independiente en la base de datos.
+export type DbSmFeTipologia = {
+  pref: 'DB-2S-SM-FE' | 'DB-2-SM-FE' | 'DB-3-SM-FE';
+  desc: string;
+};
+
+export const DB_SM_FE_TIPOLOGIAS: DbSmFeTipologia[] = [
+  { pref: 'DB-2S-SM-FE', desc: '2 gavetas pequeñas + 1 grande' },
+  { pref: 'DB-2-SM-FE', desc: '2 gavetas iguales' },
+  { pref: 'DB-3-SM-FE', desc: '3 gavetas iguales' },
+];
+
+export function esTipologiaDbSmFe(pref: string | null | undefined): boolean {
+  const p = String(pref ?? '').toUpperCase();
+  return DB_SM_FE_TIPOLOGIAS.some((tipologia) => tipologia.pref === p);
+}
+
 // Configuraciones rápidas de torre PCFD. Son presets editables: después de
 // aplicarlos el usuario puede ajustar cajones, entrepaños, puertas y zócalo.
 export type PcfdConfiguracion = {

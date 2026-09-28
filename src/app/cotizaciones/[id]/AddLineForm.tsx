@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, permiteRemovible, permiteTipologiaDb, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, permiteRemovible, permiteTipologiaDb, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
@@ -61,6 +61,7 @@ export type LineaInicial = {
 };
 
 const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
+const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
 
 const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ??
@@ -162,6 +163,8 @@ export default function AddLineForm({
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const prefTipo = tipos.find((t) => t.id === tipoId)?.pref ?? '';
   const esDB = permiteTipologiaDb(prefTipo);
+  const esDbTradicional = prefTipo === 'DB';
+  const usaTipologiaDbSmFe = esTipologiaDbSmFe(prefTipo);
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
   const usaRiel = (esDB && conHerrajes) || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
@@ -171,11 +174,30 @@ export default function AddLineForm({
     ? (t?.pref_metrico || t?.pref || '')
     : (t?.pref_imperial || t?.pref || '');
 
-  const tipoOptions = tipos.map((t) => ({ value: t.id, label: `${prefProyecto(t)} — ${t.nombre_es ?? ''}` }));
+  const tipoOptions = (() => {
+    const options: { value: string; label: string }[] = [];
+    let dbSmFeAgregado = false;
+    for (const t of tipos) {
+      if (esTipologiaDbSmFe(t.pref)) {
+        if (!dbSmFeAgregado) {
+          options.push({ value: DB_SM_FE_GROUP_VALUE, label: 'DB-SM-FE — Cajoneras con Gola y riel Full Extension' });
+          dbSmFeAgregado = true;
+        }
+        continue;
+      }
+      options.push({ value: t.id, label: `${prefProyecto(t)} — ${t.nombre_es ?? ''}` });
+    }
+    return options;
+  })();
+  const tipoSelectorValue = usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
   const tableroOptions = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({ value: t.codigo, label: `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}` })), [tableros]);
 
   function handleTipoChange(id: string) {
-    setTipoId(id);
+    const resolvedId = id === DB_SM_FE_GROUP_VALUE
+      ? tipos.find((t) => t.pref === DB_SM_FE_TIPOLOGIAS[0].pref)?.id
+      : id;
+    if (!resolvedId) return;
+    setTipoId(resolvedId);
     // El formulario "Agregar mueble" no se remonta entre módulos (sigue abierto
     // después de guardar), así que un override de un tipo anterior (ej.
     // n_cajones=3 al agregar un DB-1S) seguía viajando si el usuario cambiaba
@@ -190,10 +212,15 @@ export default function AddLineForm({
     setRielCodigo('RIELTANDEM');
     setPcfdConfig('');
     // Los muebles superiores de pared (W) siempre parten de 12 de fondo por defecto.
-    const nuevoPref = prefProyecto(tipos.find((t) => t.id === id));
+    const nuevoPref = prefProyecto(tipos.find((t) => t.id === resolvedId));
     if (nuevoPref === 'W') setProf(unidad === 'in' ? '12' : unidad === 'cm' ? '30.48' : '304.8');
     if (nuevoPref === 'WSM') setProf(unidad === 'in' ? '14' : unidad === 'cm' ? '35.56' : '355.6');
-    if ((tipos.find((t) => t.id === id)?.pref ?? '') === 'F') setSistemaFrente('manija');
+    if (['F', 'DB'].includes(tipos.find((t) => t.id === resolvedId)?.pref ?? '')) setSistemaFrente('manija');
+  }
+
+  function aplicarDbSmFeTipo(pref: string) {
+    const tipo = tipos.find((item) => item.pref === pref);
+    if (tipo) handleTipoChange(tipo.id);
   }
 
   function aplicarPerfil(id: string) {
@@ -245,7 +272,7 @@ export default function AddLineForm({
       overrides.n_cajones_ocultos = dbT?.noculto ?? 0;
     }
     // Variantes transversales: override numérico 0/1 (migración 0028).
-    overrides.gola = sistemaFrente === 'gola' ? 1 : 0;
+    overrides.gola = esTipologiaDbSm(prefTipo) || esTipologiaDbSmFe(prefTipo) ? 1 : esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0;
     if (permiteRemovible(prefTipo)) overrides.removible = removible ? 1 : 0;
 
     const payload = {
@@ -273,7 +300,7 @@ export default function AddLineForm({
           })
         : undefined,
       modoFrentes,
-      sistemaFrente,
+      sistemaFrente: esDbTradicional ? 'manija' : sistemaFrente,
       removible: permiteRemovible(prefTipo) ? removible : undefined,
       overrides: Object.keys(overrides).length ? overrides : undefined,
       herrajesExcluidos: conHerrajes && herrajesExcl.length ? herrajesExcl : undefined,
@@ -313,7 +340,7 @@ export default function AddLineForm({
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
         <L label="Tipo">
-          <Combobox value={tipoId} options={tipoOptions} onChange={handleTipoChange} placeholder="Buscar tipo…" />
+          <Combobox value={tipoSelectorValue} options={tipoOptions} onChange={handleTipoChange} placeholder="Buscar tipo…" />
         </L>
 
         <div className="grid grid-cols-4 gap-1">
@@ -400,6 +427,18 @@ export default function AddLineForm({
           </div>
         )}
 
+        {usaTipologiaDbSmFe && (
+          <div className="grid grid-cols-1 gap-1">
+            <L label="Tipología DB-SM-FE">
+              <select value={prefTipo} onChange={(e) => aplicarDbSmFeTipo(e.target.value)} className="inp">
+                {DB_SM_FE_TIPOLOGIAS.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.desc}</option>
+                ))}
+              </select>
+            </L>
+          </div>
+        )}
+
         {usaRiel && (
           <div className="grid grid-cols-1 gap-1">
             <L label="Tipo de riel">
@@ -440,11 +479,13 @@ export default function AddLineForm({
           </L>
         ))}
 
-        <L label="Sistema de frente">
-          <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
-            {SISTEMAS_FRENTE.map((x) => <option key={x.key} value={x.key} title={x.desc}>{x.label}</option>)}
-          </select>
-        </L>
+        {!esDbTradicional && (
+          <L label="Sistema de frente">
+            <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
+              {SISTEMAS_FRENTE.map((x) => <option key={x.key} value={x.key} title={x.desc}>{x.label}</option>)}
+            </select>
+          </L>
+        )}
 
         {permiteRemovible(prefTipo) && (
           <L label="Removible">

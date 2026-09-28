@@ -21,8 +21,12 @@ la variante para localizar el mueble base equivalente.
 
 ## Hallazgo principal
 
-`SM` es una variación transversal del sistema de apertura de los frentes. No
-debe convertirse en tipos duplicados como `BFD_SM`, `DB_SM` o `PCFD_SM`.
+`SM` es una variación transversal del sistema de apertura de los frentes para
+las familias que la admiten. `DB` tradicional es una excepción explícita: sus
+configuraciones `DB-1S`, `DB-2S`, `DB-2`, `DB-3`, `DB-4` y `DB2-1OP` conservan
+el montaje original con manija y `gola=0`. Las cajoneras con Gola se modelan
+como tipos independientes `DB-*-SM` y `DB-*-SM-FE`; seleccionar `DB` nunca debe
+agregar `-SM` ni heredar una configuración Gola de otro mueble.
 
 Sin embargo, el archivo fuente usa tres convenciones parcialmente
 contradictorias:

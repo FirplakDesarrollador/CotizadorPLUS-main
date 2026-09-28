@@ -15,7 +15,7 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
-import { DB_SM_TIPOLOGIAS, esTipologiaDbSm, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb } from '@/lib/muebles';
+import { DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esTipologiaDbSm, esTipologiaDbSmFe, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb } from '@/lib/muebles';
 
 test('convierte índices de grupo en letras de Excel y permite el camino inverso', () => {
   const cases = new Map([
@@ -103,9 +103,13 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'OW', largo: 30, alto: 18 }), 'OW3018');
   // Sin alto en el código: el alto no entra aunque venga en el input.
   assert.equal(codigoComercial({ ...base, pref: 'B', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-SM');
-  // Tipología DB y prefijo con guion (FE) conviven con el sufijo SM.
-  assert.equal(codigoComercial({ ...base, pref: 'DB', largo: 18, alto: 34.5, dbTipo: 'DB-1S', sistemaFrente: 'gola' }), 'DB18-1S-SM');
+  // DB tradicional nunca adopta SM: las cajoneras con Gola son tipos separados.
+  assert.equal(codigoComercial({ ...base, pref: 'DB', largo: 18, alto: 34.5, dbTipo: 'DB-1S', sistemaFrente: 'gola' }), 'DB18-1S');
+  for (const dbTipo of ['DB-1S', 'DB-2S', 'DB-2', 'DB-3', 'DB-4', 'DB2-1OP']) {
+    assert.equal(codigoComercial({ ...base, pref: 'DB', largo: 30, alto: 30, dbTipo, sistemaFrente: 'gola' }).includes('-SM'), false, dbTipo);
+  }
   assert.equal(codigoComercial({ ...base, pref: 'DB-2S-SM', largo: 26, alto: 30 }), 'DB26-2S-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'DB-2S-SM-FE', largo: 12, alto: 30 }), 'DB12-2S-SM-FE');
   assert.equal(codigoComercial({ ...base, pref: 'DB-2-SM', largo: 26, alto: 30 }), 'DB26-2-SM');
   assert.equal(codigoComercial({ ...base, pref: 'DB-3-SM', largo: 26, alto: 30 }), 'DB26-3-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UDB', largo: 18, alto: 28.75, dbTipo: 'DB-2S' }), 'UDB18-2S');
@@ -143,6 +147,12 @@ test('agrupa solo las tres tipologias DB-SM sin ampliar la familia DB existente'
   for (const pref of ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM', 'db-3-sm']) assert.equal(esTipologiaDbSm(pref), true, pref);
   for (const pref of ['DB', 'UDB', 'UDV', 'DB-2S', '', null]) assert.equal(esTipologiaDbSm(pref), false, String(pref));
   assert.equal(permiteTipologiaDb('DB-2S-SM'), false);
+});
+
+test('agrupa las tres tipologias DB-SM-FE como familia independiente', () => {
+  assert.deepEqual(DB_SM_FE_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE']);
+  for (const pref of ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE', 'db-3-sm-fe']) assert.equal(esTipologiaDbSmFe(pref), true, pref);
+  for (const pref of ['DB', 'DB-2S-SM', 'B-FE', '', null]) assert.equal(esTipologiaDbSmFe(pref), false, String(pref));
 });
 
 test('ordena el despiece de produccion y normaliza el shelf mal escrito', () => {
