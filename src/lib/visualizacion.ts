@@ -30,7 +30,10 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
   };
   members.forEach((member, mi) => {
     const {calc,pref}=member, result=group.lineas[mi];
-    const esDbSmEspecial = ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM'].includes(pref);
+    const esDbSmEspecial = [
+      'DB-2S-SM', 'DB-2-SM', 'DB-3-SM',
+      'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE',
+    ].includes(pref);
     const L=mm(calc.dims.L), A=mm(calc.dims.A), P=mm(calc.dims.P);
     const thickness=(rol: string) => Number(calc.tablerosByCode[calc.preset[rol]]?.espesor_mm ?? 0);
     const TC=thickness('caja') || 15, TF=thickness('frente') || 18, TB=thickness('fondo') || 6;
@@ -166,6 +169,40 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     if(voladizoGola) for(const [key,slot] of doorSlots) doorSlots.set(key,{...slot,z:slot.z-voladizoGola});
     if(doorZ-voladizoGola>A+4 && doors.length) warn(`${pref}: la fachada necesita distribución específica por niveles; revisar parámetros de montaje.`);
     const baseDepth=items.find(i=>i.funcion==='base')?.d;
+    // Dos laterales forman el cuerpo de cada gaveta. El trasero puede ser mas
+    // bajo que esos laterales (100/80 mm o 200/180 mm): se alinea por arriba y
+    // la diferencia queda libre abajo, como exige el ensamble de produccion.
+    const lateralDrawerHeights = items
+      .filter((candidate) => candidate.funcion === 'lateral_gaveta')
+      .flatMap((candidate) => Array.from(
+        { length: Math.ceil(candidate.count / 2) },
+        () => candidate.h,
+      ));
+    const lateralDrawerDepths = items
+      .filter((candidate) => candidate.funcion === 'lateral_gaveta')
+      .flatMap((candidate) => Array.from(
+        { length: Math.ceil(candidate.count / 2) },
+        () => candidate.d,
+      ));
+    // En DB-2S-SM-FE las dos cajas pequenas forman un bloque bajo la Gola
+    // superior. Se baja el bloque completo solo lo necesario para conservar
+    // una luz visible de 3,2 mm; la gaveta grande inferior no se desplaza.
+    const smallDrawerCount = Math.min(Number(vars.n_cajones_pequenos ?? 0), drawerSlots.length);
+    const upperRefuerzoHeight = items.find((candidate) => candidate.p.nombre === 'refuerzo_delantero')?.h ?? 80;
+    const upperGolaHeight = items.find((candidate) => candidate.p.nombre === 'gola_madera')?.h ?? TC;
+    const upperGolaBottomZ = A - upperRefuerzoHeight - upperGolaHeight;
+    const firstWoodDrawerTop = (drawerSlots[0]?.z ?? foot) + 30 + (lateralDrawerHeights[0] ?? 0);
+    const upperSmallDrawerDrop = esDbSmEspecial && vars.gola && smallDrawerCount > 0 && lateralDrawerHeights[0] != null
+      ? Math.max(0, firstWoodDrawerTop - (upperGolaBottomZ - 3.2))
+      : 0;
+    const drawerBodyOffsetZ = (drawerIndex: number) => {
+      if (drawerIndex >= smallDrawerCount) return 0;
+      // La segunda caja pequena se apoya sobre el refuerzo delantero inferior.
+      // Sus laterales comienzan 13 mm debajo de la base, por lo que se compensa
+      // esa distancia sin alterar el ensamble interno de la caja.
+      const apoyoSobreRefuerzo = drawerIndex === 1 && lateralDrawerHeights[drawerIndex] != null ? 13 : 0;
+      return -upperSmallDrawerDrop + apoyoSobreRefuerzo;
+    };
     for(const item of items) {
       const {p,config,w,d,h,count,funcion}=item;
       for(let k=0;k<count;k++) {
@@ -175,7 +212,13 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         let x=(width-w)/2, y=0, z=foot, cajon:string|null=null;
         let drawerIndex=i;
         if(funcion==='frente_gaveta') drawerIndex=fronts.findIndex(f=>f.item===item&&f.k===k);
-        else if(funcion==='frente_interior') drawerIndex=Math.max(0,drawerSlots.findIndex(s=>s.interior));
+        else if(funcion==='frente_interior') {
+          // Los frentes ocultos usan el slot interior. Un contraparche es parte
+          // de la caja y corresponde a la gaveta exterior de su secuencia.
+          drawerIndex = /ocult|interior/i.test(p.nombre) && intFronts.length
+            ? Math.max(0,drawerSlots.findIndex(s=>s.interior))
+            : i;
+        }
         else if(funcion==='base_gaveta') {
           if(intFronts.length && k>=fronts.length) drawerIndex=Math.max(0,drawerSlots.findIndex(s=>s.interior))+(k-fronts.length);
           else drawerIndex=k;
@@ -214,10 +257,23 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'frente': {const ds=doorSlots.get(`${item.source}:${k}`)!; x=ds.x; z=ds.z; y=-d; break;}
           case 'frente_falso': x=blind===item?0:(L-w)/2; z=blind===item?foot:A-h; y=-d; break;
           case 'frente_gaveta': z=slot?.z??foot; y=-d; break;
-          case 'base_gaveta': x=(L-w)/2; y=10; z=(slot?.z??foot)+30; break;
-          case 'trasero_gaveta': x=(L-w)/2; y=10+(items.find(v=>v.funcion==='base_gaveta')?.d??P-80)-d; z=(slot?.z??foot)+30+(items.find(v=>v.funcion==='base_gaveta')?.t??TC); break;
-          case 'lateral_gaveta': x=i%2===0?TC+12:L-TC-12-w; y=10; z=(slot?.z??foot)+30; break;
-          case 'frente_interior': x=(L-w)/2; y=10; z=(slot?.z??foot)+30; break;
+          case 'base_gaveta': {
+            const tieneLateralesDeMadera = lateralDrawerHeights[drawerIndex] != null;
+            x=(L-w)/2;
+            y=10;
+            z=(slot?.z??foot)+30+(tieneLateralesDeMadera?13:0)+drawerBodyOffsetZ(drawerIndex);
+            break;
+          }
+          case 'trasero_gaveta': {
+            const lateralHeight = lateralDrawerHeights[drawerIndex];
+            const lateralDepth = lateralDrawerDepths[drawerIndex];
+            x=(L-w)/2;
+            y=10+(lateralDepth??items.find(v=>v.funcion==='base_gaveta')?.d??P-80)-d;
+            z=(slot?.z??foot)+30+Math.max(0,(lateralHeight??h)-h)+drawerBodyOffsetZ(drawerIndex);
+            break;
+          }
+          case 'lateral_gaveta': x=i%2===0?TC+12:L-TC-12-w; y=10; z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
+          case 'frente_interior': x=(L-w)/2; y=10; z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
           case 'gola': y=80; z=i===0?A-h:(drawerSlots.at(-1)?.z??foot)+ (drawerSlots.at(-1)?.h??innerH/2)-h; break;
           case 'zocalo': y=i%2===0?50:P-d; z=0; break;
           case 'panel': x=(L-w)/2; y=-d; z=foot; break;
@@ -248,8 +304,10 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         // apoya arriba y el segundo queda bajo la última gaveta del bloque
         // superior (dos pequeñas en DB-2S-SM, una grande en DB-2-SM).
         if (esDbSmEspecial && (p.nombre === 'refuerzo_delantero' || p.nombre === 'gola_madera')) {
-          const indiceBaseSuperior = pref === 'DB-2-SM' ? 0 : 1;
-          const baseSuperiorZ = (drawerSlots[indiceBaseSuperior]?.z ?? foot) + 30;
+          const indiceBaseSuperior = ['DB-2-SM', 'DB-2-SM-FE'].includes(pref) ? 0 : 1;
+          const tieneLateralesDeMadera = lateralDrawerHeights[indiceBaseSuperior] != null;
+          const desplazamientoBloqueSuperior = indiceBaseSuperior < smallDrawerCount ? -upperSmallDrawerDrop : 0;
+          const baseSuperiorZ = (drawerSlots[indiceBaseSuperior]?.z ?? foot) + 30 + (tieneLateralesDeMadera?13:0) + desplazamientoBloqueSuperior;
           const altoRefuerzo = items.find((candidate) => candidate.p.nombre === 'refuerzo_delantero')?.h ?? 80;
           const arriba = i === 0 ? A : baseSuperiorZ;
           if (p.nombre === 'refuerzo_delantero') {

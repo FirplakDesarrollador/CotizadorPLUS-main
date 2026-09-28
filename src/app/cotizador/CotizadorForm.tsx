@@ -16,7 +16,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, permiteRemovible, permiteTipologiaDb, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, permiteRemovible, permiteTipologiaDb, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
@@ -34,6 +34,7 @@ const fmtUSD = (n: number) => n.toLocaleString('en-US', { style: 'currency', cur
 
 const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', fondo: 'fondo' }
 const DB_SM_GROUP_VALUE = '__DB_SM__';
+const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
 
 const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ??
@@ -168,7 +169,15 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const tipoOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
     let dbSmAgregado = false;
+    let dbSmFeAgregado = false;
     for (const tipo of tipos) {
+      if (esTipologiaDbSmFe(tipo.pref)) {
+        if (!dbSmFeAgregado) {
+          options.push({ value: DB_SM_FE_GROUP_VALUE, label: 'DB-SM-FE — Cajoneras con Gola y riel Full Extension' });
+          dbSmFeAgregado = true;
+        }
+        continue;
+      }
       if (esTipologiaDbSm(tipo.pref)) {
         if (!dbSmAgregado) {
           options.push({ value: DB_SM_GROUP_VALUE, label: 'DB-SM — Cajoneras con Gola de madera' });
@@ -188,13 +197,18 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const tipoPref = tipos.find((t) => t.id === tipoId)?.pref ?? '';
   const usaTipologiaDb = permiteTipologiaDb(tipoPref);
   const usaTipologiaDbSm = esTipologiaDbSm(tipoPref);
-  const tipoSelectorValue = usaTipologiaDbSm ? DB_SM_GROUP_VALUE : tipoId;
+  const usaTipologiaDbSmFe = esTipologiaDbSmFe(tipoPref);
+  const tipoSelectorValue = usaTipologiaDbSm
+    ? DB_SM_GROUP_VALUE
+    : usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
   const esPCFD = tipoPref === 'PCFD';
   const usaRiel = (usaTipologiaDb && conHerrajes) || esPCFD;
   function handleTipoChange(v: string) {
     const tipoSeleccionado = v === DB_SM_GROUP_VALUE
       ? tipos.find((tipo) => tipo.pref === DB_SM_TIPOLOGIAS[0].pref)
-      : tipos.find((tipo) => tipo.id === v);
+      : v === DB_SM_FE_GROUP_VALUE
+        ? tipos.find((tipo) => tipo.pref === DB_SM_FE_TIPOLOGIAS[0].pref)
+        : tipos.find((tipo) => tipo.id === v);
     if (!tipoSeleccionado) return;
     setTipoId(tipoSeleccionado.id);
     // El simulador hereda la configuración del módulo anterior a propósito
@@ -211,7 +225,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setPcfdConfig('');
     if (tipoSeleccionado.pref === 'W') setProf(convertir(12, 'in', unidad));
     if (tipoSeleccionado.pref === 'WSM') setProf(convertir(14, 'in', unidad));
-    if (tipoSeleccionado.pref === 'F') setSistemaFrente('manija');
+    if (tipoSeleccionado.pref === 'F' || tipoSeleccionado.pref === 'DB') setSistemaFrente('manija');
   }
   function aplicarDbSmTipo(pref: string) {
     const tipo = tipos.find((item) => item.pref === pref);
@@ -269,8 +283,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     // fórmulas de pieza y las reglas puedan reaccionar (ver migración 0028).
     // Las variantes DB-SM tienen Gola integrada: un selector heredado en
     // "manija" no puede desactivar sus dos golas ni alterar sus frentes.
-    const esDbSm = ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM'].includes(pref.toUpperCase());
-    overrides.gola = esDbSm || modulo.sistemaFrente === 'gola' ? 1 : 0;
+    const esDbSm = esTipologiaDbSm(pref) || esTipologiaDbSmFe(pref);
+    overrides.gola = esDbSm ? 1 : pref === 'DB' ? 0 : modulo.sistemaFrente === 'gola' ? 1 : 0;
     if (permiteRemovible(pref)) overrides.removible = modulo.removible ? 1 : 0;
     return {
       tipoId: modulo.tipoId,
@@ -694,6 +708,17 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               </select>
             </Field>
           )}
+          {usaTipologiaDbSmFe && (
+            <Field label="Tipología DB-SM-FE">
+              <select value={tipoPref} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {DB_SM_FE_TIPOLOGIAS.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>
+                    {tipologia.pref} · {tipologia.desc}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           {usaTipologiaDb && <Field label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></Field>}
           {usaRiel && (
             <Field label="Tipo de riel">
@@ -709,11 +734,13 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               <option value="normal">Completo</option><option value="sin_frentes">Sin frentes (open)</option><option value="solo_frentes">Solo kit de frentes</option>
             </select>
           </Field>
-          <Field label="Sistema de frente">
-            <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
-              {SISTEMAS_FRENTE.map((s) => <option key={s.key} value={s.key} title={s.desc}>{s.label}</option>)}
-            </select>
-          </Field>
+          {tipoPref !== 'DB' && (
+            <Field label="Sistema de frente">
+              <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
+                {SISTEMAS_FRENTE.map((s) => <option key={s.key} value={s.key} title={s.desc}>{s.label}</option>)}
+              </select>
+            </Field>
+          )}
           {permiteRemovible(tipoPref) && (
             <Field label="Removible">
               <label className="flex items-center gap-2 text-sm">

@@ -173,7 +173,12 @@ export function codigoComercial(input: CodigoComercialInput): string {
   const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
   const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
   const llevaSmPropio = prefNormalizado.split('-').includes('SM') || esWsm;
-  return codigo + dbSufijo + pcfdSufijo + (llevaSmPropio ? '' : sufijoSistemaFrente(input.sistemaFrente));
+  // DB tradicional y sus configuraciones (DB-1S, DB-2S, DB-2, DB-3, DB-4,
+  // DB2-1OP) no son variantes SM. Las familias con Gola son tipos separados
+  // DB-*-SM / DB-*-SM-FE, por lo que un estado heredado nunca debe convertir
+  // DB en `DBXX-...-SM`.
+  const bloqueaSmTransversal = prefNormalizado === 'DB';
+  return codigo + dbSufijo + pcfdSufijo + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente));
 }
 
 export function codigoGrupo(codigos: string[]): string {

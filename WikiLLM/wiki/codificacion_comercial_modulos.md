@@ -35,7 +35,10 @@ pref + largo [+ alto] [+ profundidad-W24] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM]
    prefijo base `DB`; la tipología vive en el formulario.
 5. **PCFD con gavetas ocultas** — `PCFD12-2OP-PUSH`.
 6. **Sistema de frente** — `-SM` cuando `sistemaFrente === 'gola'`, vía
-   `sufijoSistemaFrente()`. Ver [variantes_frente_gola_sm.md](variantes_frente_gola_sm.md).
+   `sufijoSistemaFrente()`. La familia `DB` tradicional lo bloquea incluso si
+   recibe un estado Gola heredado: `DB30-1S` permanece `DB30-1S`. Las familias
+   independientes `DB-*-SM` y `DB-*-SM-FE` ya llevan su sufijo propio. Ver
+   [variantes_frente_gola_sm.md](variantes_frente_gola_sm.md).
 
 ## Qué tipos llevan el alto en el código
 

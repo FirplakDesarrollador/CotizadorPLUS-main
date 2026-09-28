@@ -154,3 +154,80 @@ define únicamente el ensamble visual de las piezas propias de esta tipología:
   posterior de los frentes.
 - `gola_madera` queda horizontal, contra los frentes (`y = 0`) y su borde
   superior toca el borde inferior del refuerzo delantero.
+
+## Familia DB-SM-FE
+
+La migración `0108_db_sm_fe.sql` incorpora la familia comercial `DB-SM-FE`.
+La familia existe solo como encabezado en los selectores de Simulador,
+Cotizaciones y HDR; las filas calculables de `cot_tipos_mueble` son
+`DB-2S-SM-FE`, `DB-2-SM-FE` y `DB-3-SM-FE`. La convención comercial inserta
+la medida inmediatamente después de DB: `DB12-2S-SM-FE`.
+
+La fuente primaria es el PDF `DB12-2S-SM-FE MBLE INF COC 3 GAVETAS 2
+PEQUENAS HDR V2001 .pdf`, de 12 x 30 x 24 pulgadas. La plantilla es
+paramétrica en el ancho: caja y Golas usan `L-30 mm`, traseros y contraplacas
+`L-86 mm`, fondos de gaveta `L-72 mm` y frentes `L-3,2 mm`. Las alturas y
+profundidades de las cajas quedan fijas: laterales de 500 mm; gavetas pequeñas
+de 100/80 mm (lateral/trasero) y grandes de 200/180 mm. Los fondos de gaveta
+son de 508 mm de profundidad.
+
+Los roles de tablero son `caja` para carcasa/Gola, `refuerzo` para cajas de
+gaveta, `frente` para frentes de 18 mm y `fondo` para piezas de 6 mm. No hay
+manijas, bisagras, barras ni soportes. Cada tipo usa cuatro patas, dieciseis
+tornillos y un `RIELFE500` por gaveta. `permite_agrupacion=false` y todas las
+piezas usan montaje local porque no existe una hoja agrupada.
+
+La migración `0109_db_sm_fe_tarugos_gavetas.sql` asigna cuatro tarugos a cada
+`gola_madera`, `trasero_gaveta*` y `contraparche*`: dos en el extremo derecho
+y dos en el izquierdo. El conteo se multiplica por la cantidad física de cada
+plantilla, por lo que respeta automáticamente las variantes de dos y tres
+gavetas.
+
+La migración transversal `0110_gola_madera_tarugos_sm.sql` homologa la misma
+regla para todas las piezas `gola_madera` de tipologías SM. La auditoría previa
+en Supabase encontró nueve tipologías: `BFD-SM`, `SB-SM`, `SBFD-SM` y las tres
+DB-SM-FE ya tenían cuatro tarugos; se corrigieron `DB-2S-SM`, `DB-2-SM` y
+`DB-3-SM`, que todavía tenían cero.
+
+La migración `0111_tarugos_piezas_gaveta_grande.sql` fija seis tarugos por
+pieza en todos los `trasero_gaveta_grande` y `contraparche_grande`: tres en el
+lado derecho y tres en el izquierdo. El alcance por nombre exacto incluye `DB`,
+`DB-2S-SM`, `UDV` y las tres variantes `DB-SM-FE`. Esta regla reemplaza el
+conteo anterior de cuatro tarugos en las piezas grandes FE; las piezas pequeñas
+conservan cuatro.
+
+La migración `0112_db_3_sm_fe_gavetas_pequenas.sql` corrige `DB-3-SM-FE` para
+que sus tres cajas iguales sean pequeñas. El despiece usa seis
+`lateral_gaveta_pequena` de 500 x 100 mm, tres `trasero_gaveta_pequena` de
+L-86 x 80 mm y tres `contraparche_pequeno` de L-86 x 100 mm. Traseros y
+contraparches conservan cuatro tarugos por pieza, dos en cada lado, y la regla
+`n_cajones_pequenos=3` lleva la misma geometría a la visualización.
+
+La visualización reutiliza el montaje validado de la familia DB-SM: refuerzos
+delanteros verticales, Golas horizontales contra los frentes y el segundo par
+anclado bajo la ultima base del bloque superior. Para las variantes iguales,
+los frentes conservan el reparto vertical de `DB-2-SM` y `DB-3-SM`; sus cajas
+FE usan las dimensiones confirmadas de la gaveta grande.
+
+En el montaje de cada caja, `trasero_gaveta` se alinea por su borde superior
+con los `lateral_gaveta`. Cuando el lateral mide 100/200 mm y el trasero
+80/180 mm, la diferencia de 20 mm queda debajo del trasero; no se reparte ni
+se deja en la parte superior.
+
+El trasero y el contraparche se montan dentro del vano definido por los dos
+laterales y se asignan secuencialmente a su propia gaveta. La `base_gaveta`
+queda 13 mm por encima del borde inferior de los laterales y atraviesa el plano
+del contraparche. Esta relación se calcula por gaveta, evitando que los tres
+contraparches o traseros se acumulen en el nivel superior.
+
+En `DB-2S-SM-FE`, la primera caja pequeña deja una luz de 3,2 mm bajo el borde
+inferior de la `gola_madera` superior. La segunda caja pequeña se ubica 13 mm
+más alta dentro del bloque para que el borde inferior de sus laterales quede
+justo sobre el `refuerzo_delantero` inferior. Laterales, trasero, contraparche
+y base se desplazan conjuntamente y conservan entre sí todas sus relaciones
+de ensamble; la caja grande inferior permanece en su posición.
+
+La migración fue aplicada al Supabase configurado el 2026-09-28. La lectura
+posterior confirmó 15/11/11 plantillas de piezas, 9/8/8 reglas y tres herrajes
+por tipo. `DB12-2S-SM-FE` reproduce sus 28 piezas físicas y todos los cortes
+de la hoja con diferencia máxima de 0,02 mm.

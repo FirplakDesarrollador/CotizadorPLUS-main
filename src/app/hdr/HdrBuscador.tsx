@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { previewAction } from '../admin/diseno/actions';
 import { modulosDeCotizacionAction, type ModuloHDR } from './actions';
-import { DB_TIPOLOGIAS, SISTEMAS_FRENTE, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, SISTEMAS_FRENTE, esTipologiaDbSmFe, permiteTipologiaDb, type SistemaFrente } from '@/lib/muebles';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { codigoComercial } from '@/lib/module-groups';
@@ -11,6 +11,7 @@ import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
 
 type Tipo = { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; nombre_es: string | null; categoria: string | null };
+const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
 
 export default function HdrBuscador({ tipos, presetDefault, tableros, cotizaciones }:
   { tipos: Tipo[]; presetDefault: Record<string, string>; tableros: Tablero[]; cotizaciones: CotizacionHeader[] }) {
@@ -33,12 +34,26 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [exportandoTodas, setExportandoTodas] = useState<{ hecho: number; total: number } | null>(null);
   const tablasRef = useRef(new Map<string, HdrTablaHandle>());
 
-  const tipoOptions = useMemo(
-    () => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })),
-    [tipos],
-  );
+  const tipoOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    let dbSmFeAgregado = false;
+    for (const t of tipos) {
+      if (esTipologiaDbSmFe(t.pref)) {
+        if (!dbSmFeAgregado) {
+          options.push({ value: DB_SM_FE_GROUP_VALUE, label: 'DB-SM-FE — Cajoneras con Gola y riel Full Extension' });
+          dbSmFeAgregado = true;
+        }
+        continue;
+      }
+      options.push({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` });
+    }
+    return options;
+  }, [tipos]);
   const tipoSel = tipos.find((t) => t.id === tipoId);
-  const esDB = (tipoSel?.pref ?? '').startsWith('DB');
+  const esDB = permiteTipologiaDb(tipoSel?.pref);
+  const esDbTradicional = tipoSel?.pref === 'DB';
+  const usaTipologiaDbSmFe = esTipologiaDbSmFe(tipoSel?.pref);
+  const tipoSelectorValue = usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
 
   const cotizacionOptions = useMemo(
     () => cotizaciones.map((c) => ({
@@ -49,12 +64,21 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   );
 
   function handleTipoChange(v: string) {
-    setTipoId(v);
-    const pref = tipos.find((t) => t.id === v)?.pref ?? '';
+    const resolvedId = v === DB_SM_FE_GROUP_VALUE
+      ? tipos.find((t) => t.pref === DB_SM_FE_TIPOLOGIAS[0].pref)?.id
+      : v;
+    if (!resolvedId) return;
+    setTipoId(resolvedId);
+    const pref = tipos.find((t) => t.id === resolvedId)?.pref ?? '';
     if (!pref.startsWith('DB')) setDbTipo('');
     if (pref === 'W') setProf(unidad === 'in' ? 12 : unidad === 'cm' ? 30.48 : 304.8);
     if (pref === 'WSM') setProf(unidad === 'in' ? 14 : unidad === 'cm' ? 35.56 : 355.6);
-    if (pref === 'F') setSistemaFrente('manija');
+    if (pref === 'F' || pref === 'DB') setSistemaFrente('manija');
+  }
+
+  function aplicarDbSmFeTipo(pref: string) {
+    const tipo = tipos.find((item) => item.pref === pref);
+    if (tipo) handleTipoChange(tipo.id);
   }
 
   async function buscar(e: React.FormEvent) {
@@ -62,7 +86,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     if (!tipoId) { setError('Elige un tipo de mueble.'); return; }
     setError(null);
     setLoading(true);
-    const overrides: Record<string, number> = { gola: sistemaFrente === 'gola' ? 1 : 0 };
+    const overrides: Record<string, number> = { gola: esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0 };
     if (esDB && dbTipo) {
       const t = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
       if (t) {
@@ -165,7 +189,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         <form onSubmit={buscar} className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
           <div className="grid grid-cols-12 gap-2 items-end">
             <Campo label="Tipo De Mueble" className="col-span-12 sm:col-span-5">
-              <Combobox value={tipoId} options={tipoOptions} onChange={handleTipoChange} placeholder="Buscar tipo…" />
+              <Combobox value={tipoSelectorValue} options={tipoOptions} onChange={handleTipoChange} placeholder="Buscar tipo…" />
             </Campo>
             <Campo label="Largo" className="col-span-4 sm:col-span-2">
               <input type="number" step="any" value={largo} onChange={(e) => setLargo(+e.target.value)} className="inp" />
@@ -192,11 +216,23 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
             </Campo>
           )}
 
-          <Campo label="Sistema de frente">
-            <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
-              {SISTEMAS_FRENTE.map((s) => <option key={s.key} value={s.key} title={s.desc}>{s.label}</option>)}
-            </select>
-          </Campo>
+          {usaTipologiaDbSmFe && (
+            <Campo label="Tipología DB-SM-FE">
+              <select value={tipoSel?.pref ?? ''} onChange={(e) => aplicarDbSmFeTipo(e.target.value)} className="inp">
+                {DB_SM_FE_TIPOLOGIAS.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.desc}</option>
+                ))}
+              </select>
+            </Campo>
+          )}
+
+          {!esDbTradicional && (
+            <Campo label="Sistema de frente">
+              <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
+                {SISTEMAS_FRENTE.map((s) => <option key={s.key} value={s.key} title={s.desc}>{s.label}</option>)}
+              </select>
+            </Campo>
+          )}
 
           <button className="rounded-lg bg-slate-900 text-white px-5 py-2 text-sm font-medium hover:bg-slate-800">Buscar</button>
 

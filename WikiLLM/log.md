@@ -1058,3 +1058,43 @@ Se confirma y protege con prueba explícita que el alto usa la misma conversión
 ## [2026-09-25] update | Alto incorporado al código de TK
 
 La tipología `TK` incorpora el alto después del largo en su código comercial. El caso 4,25 × 36,5 pulgadas pasa de `TK4 1/4` a `TK4 1/436 1/2`, usando fracciones en ambas dimensiones.
+
+## [2026-09-28] update | Familia DB-SM-FE creada y validada
+
+Se crearon el encabezado de selector `DB-SM-FE` y las tipologías paramétricas `DB-2S-SM-FE`, `DB-2-SM-FE` y `DB-3-SM-FE` desde la hoja `DB12-2S-SM-FE`. La migración `0108_db_sm_fe.sql` fue aplicada y verificada en Supabase; la referencia reproduce 28 piezas con diferencia máxima de 0,02 mm, cuatro patas, dieciséis tornillos y tres rieles `RIELFE500`.
+
+## [2026-09-28] update | Tarugos en Golas y cajas DB-SM-FE
+
+La migración `0109_db_sm_fe_tarugos_gavetas.sql` asigna cuatro tarugos por pieza —dos a cada lado— a `gola_madera`, traseros de gaveta y contraplacas de las tres tipologías DB-SM-FE.
+
+## [2026-09-28] update | Tarugos homologados en todas las Golas SM
+
+La migración `0110_gola_madera_tarugos_sm.sql` confirmó nueve tipologías con `gola_madera` y corrigió las tres pendientes (`DB-2S-SM`, `DB-2-SM`, `DB-3-SM`) a cuatro tarugos por pieza: dos al lado derecho y dos al izquierdo.
+
+## [2026-09-28] update | Seis tarugos en piezas de gaveta grande
+
+La migración `0111_tarugos_piezas_gaveta_grande.sql` asigna seis tarugos por pieza —tres a cada lado— a todos los `trasero_gaveta_grande` y `contraparche_grande`, reemplazando las notas anteriores de cuatro tarugos donde correspondía.
+
+## [2026-09-28] update | Traseros de gaveta alineados por arriba
+
+El generador visual alinea el borde superior de cada `trasero_gaveta` con sus `lateral_gaveta`; la diferencia de altura queda íntegramente en la parte inferior. Se agregó regresión geométrica para cajas con trasero más bajo que sus laterales.
+
+## [2026-09-28] update | Ensamble interno completo de cajas de gaveta
+
+El montaje ubica trasero y contraparche dentro de los laterales y distribuye un juego por gaveta. La base queda 13 mm sobre el borde inferior de los laterales y atraviesa el contraparche. La regresión valida estas relaciones en las tres gavetas DB-2S-SM-FE.
+
+## [2026-09-28] update | Cajas pequeñas bajo la Gola superior
+
+La visualización de DB-2S-SM-FE baja conjuntamente las dos cajas pequeñas hasta dejar 3,2 mm bajo la `gola_madera` superior, conserva el ensamble interno y no desplaza la gaveta grande inferior.
+
+## [2026-09-28] update | Segunda caja sobre el refuerzo inferior
+
+La segunda caja pequeña de DB-2S-SM-FE sube 13 mm como conjunto para que el borde inferior de sus laterales apoye sobre el borde superior del `refuerzo_delantero` inferior, sin mover la primera caja ni la gaveta grande.
+
+## [2026-09-28] update | Tres cajas pequeñas en DB-3-SM-FE
+
+La tipología DB-3-SM-FE reemplaza laterales, traseros y contraparches grandes por tres juegos pequeños de 500 x 100/80 mm. La regla `n_cajones_pequenos=3` sincroniza el despiece con la visualización.
+
+## [2026-09-28] update | DB tradicional separado de DB-SM
+
+Los formularios Simulador, Cotizaciones y HDR fuerzan `gola=0`, ocultan el selector SM y omiten el sufijo `-SM` para el tipo DB tradicional y todas sus configuraciones. DB-SM y DB-SM-FE permanecen como familias independientes. La auditoría de Supabase confirmó que las 14 líneas DB existentes ya estaban libres de Gola y del sufijo SM.
