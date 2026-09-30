@@ -26,6 +26,8 @@ export type SimuladorModuloValues = {
   // Variantes transversales (ver src/lib/muebles.ts).
   sistemaFrente: SistemaFrente;
   removible: boolean;
+  door: string;
+  doorHand: 'L' | 'R';
 };
 
 export type SimuladorValues = SimuladorModuloValues & {
@@ -79,6 +81,8 @@ export const initialModuloValues: SimuladorModuloValues = {
   modoFrentes: 'normal',
   sistemaFrente: 'manija',
   removible: false,
+  door: '',
+  doorHand: 'R',
 };
 
 const initialStateValues: SimuladorSnapshot = {
@@ -120,6 +124,8 @@ export const getModuloValues = (state: SimuladorModuloValues): SimuladorModuloVa
   modoFrentes: state.modoFrentes,
   sistemaFrente: state.sistemaFrente,
   removible: state.removible,
+  door: state.door,
+  doorHand: state.doorHand,
 });
 
 const getSnapshot = (state: SimuladorState): SimuladorSnapshot => ({

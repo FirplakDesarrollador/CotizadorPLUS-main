@@ -64,11 +64,29 @@ function ordenPiezaDespiece(nombre: string): number {
   return 999;
 }
 
-export function ordenarPiezasDespiece<T extends { pieza: string }>(piezas: readonly T[]): T[] {
+export function ordenarPiezasDespiece<T extends { pieza: string; origen?: string; compartida?: boolean }>(piezas: readonly T[]): T[] {
   return piezas
-    .map((pieza, index) => ({ pieza, index, orden: ordenPiezaDespiece(pieza.pieza) }))
-    .sort((a, b) => a.orden - b.orden || a.index - b.index)
+    .map((pieza, index) => {
+      const modulo = pieza.origen?.match(/^A(\d+)\b/);
+      const bloque = pieza.compartida ? 0 : modulo ? Number(modulo[1]) : 1;
+      return { pieza, index, bloque, orden: ordenPiezaDespiece(pieza.pieza) };
+    })
+    .sort((a, b) => a.bloque - b.bloque || a.orden - b.orden || a.index - b.index)
     .map(({ pieza }) => pieza);
+}
+
+export type FamiliaMaterial = 'inferior' | 'superior';
+
+// Los prefijos pueden contener ambas letras (por ejemplo WBL). La primera B o
+// W, leída de izquierda a derecha, determina el juego de materiales del proyecto.
+// Los tipos sin ninguna de las dos letras conservan el bloque inferior como
+// fallback compatible con las cotizaciones anteriores.
+export function familiaMaterialPorPrefijo(pref: string | null | undefined): FamiliaMaterial {
+  const value = String(pref ?? '').toUpperCase();
+  const b = value.indexOf('B');
+  const w = value.indexOf('W');
+  if (w >= 0 && (b < 0 || w < b)) return 'superior';
+  return 'inferior';
 }
 
 // Familias con pares base/removible verificados en las hojas de ruta. Fuera de

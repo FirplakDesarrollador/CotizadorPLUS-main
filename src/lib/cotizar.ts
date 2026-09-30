@@ -8,6 +8,7 @@ import {
 import { calcularGrupoFisico, type GroupCalculation, type PreparedGroupMember } from '@/lib/group-engine';
 import { consolidarGrupo, type CotizarGrupoResult } from '@/lib/group-result';
 import { construirVisualizacion } from './visualizacion';
+import { codigoComercial } from './module-groups';
 
 export type CotizarInput = {
   tipoId: string;
@@ -31,6 +32,9 @@ export type CotizarInput = {
   // Si se especifica, se reemplaza el precio del riel por defecto (RIELTANDEM) con
   // el precio del riel elegido, manteniendo la plantilla de herrajes sin tocar.
   rielCodigo?: string;
+  door?: number;
+  doorHand?: 'L' | 'R';
+  conFondo?: boolean;
 };
 
 export type CotizarResult = Breakdown & { trm: number; margen: number };
@@ -47,7 +51,7 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
 
   const [{ data: params }, { data: tipo }] = await Promise.all([
     sb.from('cot_parametros').select('key,value'),
-    sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,etiquetas_und,margen_key,usa_carton').eq('id', inp.tipoId).single(),
+    sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,etiquetas_und,margen_key,usa_carton,categoria').eq('id', inp.tipoId).single(),
   ]);
   if (!tipo) throw new Error('Tipo de mueble no encontrado');
   const P = Object.fromEntries((params ?? []).map((r) => [r.key, r.value])) as Record<string, unknown>;
@@ -106,6 +110,16 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
     A: toInches(inp.alto, inp.unidad),
     P: toInches(inp.prof, inp.unidad),
   };
+  const overrides = {
+    ...(inp.overrides ?? {}),
+    ...(inp.door != null ? { door: toInches(inp.door, inp.unidad) } : {}),
+    ...(inp.doorHand ? { mano_derecha: inp.doorHand === 'R' ? 1 : 0 } : {}),
+  };
+  if (tipo.pref === 'BBLFD') {
+    if (!(inp.door != null && Number.isFinite(inp.door) && inp.door > 0)) throw new Error('Door es obligatorio y debe ser mayor que cero para BBLFD.');
+    if (!inp.doorHand) throw new Error('Selecciona L o R para BBLFD.');
+    if (toInches(inp.door, inp.unidad) >= dims.L) throw new Error('Door debe ser menor que el largo del mueble.');
+  }
 
   for (const key of ['n_puertas', 'n_cajones', 'n_entrepanos', 'n_barras'] as const) {
     const value = inp.overrides?.[key];
@@ -119,9 +133,21 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
     throw new Error('zocalo debe ser mayor o igual a cero y menor que el alto del mueble');
   }
 
+  const piezasAjustadas = ((piezas ?? []) as Pieza[]).map((pieza) => {
+    if (inp.conFondo !== false) return pieza;
+    if (pieza.rol_tablero === 'fondo') return { ...pieza, formula_cantidad: '0' };
+    if (pieza.nombre !== 'base') return pieza;
+
+    // Sin fondo, la base ocupa la profundidad menos exactamente un espesor
+    // del tablero de caja. Se conserva el eje de largo propio de cada plantilla.
+    if (/\bP\b/.test(pieza.formula_ancho ?? '')) return { ...pieza, formula_ancho: 'P-TC' };
+    if (/\bP\b/.test(pieza.formula_largo ?? '')) return { ...pieza, formula_largo: 'P-TC' };
+    return pieza;
+  });
+
   const calc: CalcInput = {
     dims,
-    piezas: (piezas ?? []) as Pieza[],
+    piezas: piezasAjustadas,
     herrajesPlantilla: inp.conHerrajes ? ((herrajesPlant ?? []) as HerrajePlantilla[]) : [],
     reglas: (reglas ?? []) as Regla[],
     preset,
@@ -136,7 +162,7 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
     // recargo: inp.recargoPct ?? 0,
     trm,
     desperdicio,
-    overrides: inp.overrides,
+    overrides,
     modoFrentes: inp.modoFrentes ?? 'normal',
     herrajesExcluidos: inp.herrajesExcluidos,
     descuento: inp.descuento,
@@ -148,6 +174,19 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
   return {
     calc,
     pref: tipo.pref,
+    omiteFondoSoloAgrupado: tipo.categoria === 'inferior'
+      && tipo.pref.toUpperCase().includes('B')
+      && /(^|-)SM($|-)/i.test(tipo.pref),
+    codigoModulo: codigoComercial({
+      pref: tipo.pref,
+      largo: inp.largo,
+      alto: inp.alto,
+      prof: inp.prof,
+      unidad: inp.unidad,
+      sistema: inp.unidad === 'in' ? 'imperial' : 'metrico',
+      door: inp.door,
+      doorHand: inp.doorHand,
+    }),
     prefImperial: tipo.pref_imperial || tipo.pref,
     prefMetrico: tipo.pref_metrico || tipo.pref,
     permiteAgrupacion: tipo.permite_agrupacion === true,
@@ -162,7 +201,20 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
 }
 
 export async function cotizarGrupo(inputs: CotizarInput[]): Promise<GroupCalculation & { preparados: CotizacionPreparada[] }> {
-  const preparados = await Promise.all(inputs.map(prepararCotizacion));
+  // Una estructura físicamente agrupada comparte caja, refuerzos y canto. A1
+  // es la fuente de verdad para evitar estados persistidos o cambios de perfil
+  // que dejen códigos estructurales distintos entre módulos del mismo grupo.
+  const first = inputs[0];
+  const normalizados = inputs.length > 1 && first ? inputs.map((input) => ({
+    ...input,
+    preset: {
+      ...input.preset,
+      caja: first.preset.caja,
+      refuerzo: first.preset.refuerzo ?? first.preset.caja,
+    },
+    cantoCaja: first.cantoCaja,
+  })) : inputs;
+  const preparados = await Promise.all(normalizados.map(prepararCotizacion));
   return { ...calcularGrupoFisico(preparados), preparados };
 }
 

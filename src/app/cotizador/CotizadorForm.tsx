@@ -17,7 +17,7 @@ import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, permiteRemovible, permiteTipologiaDb, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
-import { codigoComercial, codigoGrupo, type SistemaMedida } from '@/lib/module-groups';
+import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -160,6 +160,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const setSistemaFrente = (v: SistemaFrente) => setStore({ sistemaFrente: v });
   const removible = store.removible;
   const setRemovible = (v: boolean) => setStore({ removible: v });
+  const door = store.door ?? '';
+  const setDoor = (v: string) => setStore({ door: v });
+  const doorHand = store.doorHand ?? 'R';
+  const setDoorHand = (v: 'L' | 'R') => setStore({ doorHand: v });
 
   const result = store.result;
 
@@ -185,7 +189,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         }
         continue;
       }
-      options.push({ value: tipo.id, label: `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
+      options.push({ value: tipo.id, label: tipo.pref === 'BBLFD' ? (tipo.nombre_es ?? tipo.pref) : `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
     }
     return options;
   }, [tipos]);
@@ -202,6 +206,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     ? DB_SM_GROUP_VALUE
     : usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
   const esPCFD = tipoPref === 'PCFD';
+  const esBBLFD = tipoPref === 'BBLFD';
   const usaRiel = (usaTipologiaDb && conHerrajes) || esPCFD;
   function handleTipoChange(v: string) {
     const tipoSeleccionado = v === DB_SM_GROUP_VALUE
@@ -223,6 +228,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setDbTipo('');
     setRielCodigo('RIELTANDEM');
     setPcfdConfig('');
+    setDoor('');
+    setDoorHand('R');
     if (tipoSeleccionado.pref === 'W') setProf(convertir(12, 'in', unidad));
     if (tipoSeleccionado.pref === 'WSM') setProf(convertir(14, 'in', unidad));
     if (tipoSeleccionado.pref === 'F' || tipoSeleccionado.pref === 'DB') setSistemaFrente('manija');
@@ -252,6 +259,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setLargo((v) => convertir(v, unidad, nu));
     setAlto((v) => convertir(v, unidad, nu));
     setProf((v) => convertir(v, unidad, nu));
+    if (door !== '' && Number.isFinite(parseMedida(door))) setDoor(String(convertir(parseMedida(door), unidad, nu)));
     setUnidad(nu);
   }
 
@@ -301,6 +309,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       cantoFrentes: modulo.cantoFrentes || undefined,
       cantoCaja: modulo.cantoCaja || undefined,
       rielCodigo: (permiteTipologiaDb(pref) || pref === 'PCFD') && modulo.rielCodigo ? modulo.rielCodigo : undefined,
+      door: pref === 'BBLFD' && modulo.door !== '' ? parseMedida(modulo.door) : undefined,
+      doorHand: pref === 'BBLFD' ? modulo.doorHand : undefined,
     };
   }
 
@@ -487,7 +497,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   // el código sigue la unidad con la que se está simulando.
   const sistemaCodigo: SistemaMedida = unidad === 'in' ? 'imperial' : 'metrico';
 
-  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'sistemaFrente' | 'dbTipo' | 'ncajones'>) => {
+  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'sistemaFrente' | 'dbTipo' | 'ncajones' | 'door' | 'doorHand'>) => {
     const pref = tipos.find((item) => item.id === valores.tipoId)?.pref ?? '';
     if (!pref) return '';
     return codigoComercial({
@@ -500,6 +510,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       sistemaFrente: valores.sistemaFrente,
       dbTipo: permiteTipologiaDb(pref) ? valores.dbTipo : null,
       pcfdCajones: pref === 'PCFD' ? Number(valores.ncajones) : null,
+      door: pref === 'BBLFD' && valores.door !== '' ? parseMedida(valores.door) : null,
+      doorHand: pref === 'BBLFD' ? valores.doorHand : null,
     });
   };
 
@@ -507,7 +519,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   const codigoResultado = store.modulos.length > 0
     ? codigoGrupo(store.modulos.map(codigoDeValores).filter(Boolean))
-    : codigoDeValores({ tipoId, largo, alto, prof, sistemaFrente, dbTipo, ncajones });
+    : codigoDeValores({ tipoId, largo, alto, prof, sistemaFrente, dbTipo, ncajones, door, doorHand });
 
   const editingPosition = store.editingId
     ? store.modulos.findIndex((modulo) => modulo.id === store.editingId) + 1
@@ -628,6 +640,18 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
             </select>
           </Field>
         </div>
+
+        {esBBLFD && (
+          <div className="grid grid-cols-2 gap-2 items-end">
+            <Field label="Door"><input type="text" required value={door} onChange={(e) => setDoor(e.target.value)} placeholder="17 7/8" className="inp" /></Field>
+            <Field label="Apertura">
+              <select value={doorHand} onChange={(e) => setDoorHand(e.target.value as 'L' | 'R')} className="inp">
+                <option value="L">L · Bisagras izquierda</option>
+                <option value="R">R · Bisagras derecha</option>
+              </select>
+            </Field>
+          </div>
+        )}
 
         <div data-tour="tableros" className="space-y-2">
           <p className="text-xs font-medium text-slate-500 uppercase">Tableros</p>
@@ -846,7 +870,7 @@ function ResultadoView({ result, codigo, moneda, setMoneda }:
   const m2De = (m: { m2?: number; cm2: number }) => m.m2 ?? (m.cm2 * (1 + desperdicio)) / 10000;
   const metrosDe = (c: { metros?: number; longCm: number }) => c.metros ?? c.longCm / 100;
   const dim = (valorIn: number) => (unidadPiezas === 'in'
-    ? valorIn.toLocaleString('es-CO', { maximumFractionDigits: 3 })
+    ? valorIn.toLocaleString('es-CO', { maximumFractionDigits: 1 })
     : (valorIn * 25.4).toLocaleString('es-CO', { maximumFractionDigits: 1 }));
   return (
     <>
@@ -964,7 +988,7 @@ function ResultadoView({ result, codigo, moneda, setMoneda }:
               const { largoIn, anchoIn } = orientarPieza(p);
               return (
               <tr key={i} className="border-t border-slate-100">
-                <td className="py-1">{nombrePieza(p.pieza, tienePuertas)}</td><td className="text-slate-500">{p.rol}</td>
+                <td className="py-1">{nombrePieza(p.pieza, tienePuertas)}{p.origen ? ` — ${p.origen}` : ''}</td><td className="text-slate-500">{p.rol}</td>
                 <td className="text-right">{p.cant}</td><td className="text-right">{dim(largoIn)}</td>
                 <td className="text-right">{dim(anchoIn)}</td><td className="text-right">{(p.areaCm2 / 10000).toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
               </tr>

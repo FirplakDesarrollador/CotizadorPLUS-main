@@ -37,7 +37,7 @@ export default function DisenoEditor({ tipos, presetDefault }: { tipos: Tipo[]; 
     setLoading(false);
   }
   const reload = () => tipoId && load(tipoId);
-  const tipoOptions = useMemo(() => tiposList.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tiposList]);
+  const tipoOptions = useMemo(() => tiposList.map((t) => ({ value: t.id, label: t.pref === 'BBLFD' ? (t.nombre_es ?? t.pref) : `${t.pref} — ${t.nombre_es ?? ''}` })), [tiposList]);
 
   function handleTipoAgrupacionUpdated(updated: { pref_imperial: string; pref_metrico: string; permite_agrupacion: boolean }) {
     setTiposList((prev) => prev.map((t) => t.id === tipoId ? { ...t, ...updated } : t));

@@ -2,26 +2,36 @@
 
 ## Propósito
 
-El historial de versiones permite conservar puntos de retorno manuales de una cotización y restaurarlos sin perder definitivamente el estado que se reemplaza. Las versiones son inmutables y se numeran de forma consecutiva por cotización.
+El sistema de versiones permite crear **manualmente** snapshots completos e inmutables de una cotización/proyecto y alternar libremente entre ellos. No existen autosaves ni respaldos automáticos: una versión únicamente se genera cuando el usuario presiona explícitamente "Guardar versión".
 
 ## Modelo de datos
 
-La migración `0024_versiones_cotizacion.sql` crea `cot_cotizacion_versiones` con:
+La tabla `cot_cotizacion_versiones` almacena el historial persistente con:
 
-- `cotizacion_id` y `numero` como identidad lógica única de la versión.
-- `nombre` opcional para describir el hito guardado.
-- `snapshot` JSONB con `schema_version`, cabecera, cocinas, grupos y líneas.
-- `creada_por` y `created_at` para auditoría.
+- `id`: identificador único UUID de la versión.
+- `cotizacion_id` y `numero`: identidad lógica única y numeración consecutiva por proyecto.
+- `nombre`: texto obligatorio (hasta 120 caracteres) asignado manualmente por el usuario (ej. *Propuesta inicial*, *Alternativa 18 mm*).
+- `snapshot`: objeto JSONB inmutable con `schema_version`, cabecera (incluyendo `config_default`, `sistema_medida`, totales, moneda, TRM y notas), cocinas (con cantidades), grupos de módulos (con etiquetas y códigos de grupo) y líneas (con despieces, descripciones, configuraciones completas de herrajes/frentes/cantos y breakdowns monetarios).
+- `creada_por` y `created_at`: auditoría con marca temporal fidedigna del servidor.
 
-La tabla se elimina en cascada con su cotización. RLS permite lectura a usuarios autenticados y creación únicamente al propietario del proyecto o a un administrador.
+RLS permite consulta a usuarios autenticados y creación únicamente al propietario del proyecto o administradores. No se permiten actualizaciones sobre versiones existentes, garantizando inmutabilidad histórica absoluta.
 
 ## Operaciones transaccionales
 
-- `cot_guardar_version`: bloquea la cabecera de la cotización, asigna el siguiente número y captura el agregado persistido completo.
-- `cot_restaurar_version`: valida propiedad y formato, guarda automáticamente el estado actual y sustituye cabecera, cocinas, grupos y líneas dentro de la misma transacción. Conserva el ID, propietario y fecha original de creación de la cotización.
+Las funciones RPC en PostgreSQL garantizan atomicidad (migración `0123_versiones_manuales_inmutables.sql`):
 
-El respaldo automático se nombra `Respaldo automático antes de restaurar vN`, por lo que cualquier restauración puede revertirse desde el mismo historial.
+- `cot_guardar_version(p_cotizacion_id, p_nombre)`:
+  - Valida que `p_nombre` no esté vacío tras `btrim` y no supere 120 caracteres.
+  - Bloquea la fila del proyecto con `FOR UPDATE` para serializar la asignación del número consecutivo.
+  - Serializa todo el árbol del proyecto (`cot_cotizaciones`, `cot_cocinas`, `cot_grupos_modulos`, `cot_cotizacion_lineas`) en un snapshot autocontenido.
+  - Inserta el registro en `cot_cotizacion_versiones`.
+- `cot_restaurar_version(p_cotizacion_id, p_version_id)`:
+  - Valida permisos y compatibilidad de esquema (`schema_version = 1`).
+  - **Sin respaldos automáticos**: no genera versiones espurias al restaurar o navegar.
+  - Dentro de una sola transacción, actualiza `cot_cotizaciones` (restituyendo `config_default`, `config`, totales, TRM, moneda, etc.) y reemplaza las cocinas, grupos y líneas por los registros idénticos del snapshot.
 
-## Integración de aplicación
+## Integración en Frontend
 
-`src/lib/cotizaciones.ts` expone listado, guardado y restauración. Las Server Actions revalidan el detalle y la lista de cotizaciones. `VersionesCotizacion.tsx`, disponible junto a las opciones de exportación, permite crear una versión con nota opcional, consultar el historial y restaurar con confirmación explícita.
+- `src/lib/cotizaciones.ts`: funciones `listarVersionesCotizacion` (ordenadas por fecha más reciente primero), `guardarVersionCotizacion` y `restaurarVersionCotizacion`.
+- `src/app/cotizaciones/actions.ts`: Server Actions con validación estricta de nombre no vacío y revalidación de rutas.
+- `src/app/cotizaciones/[id]/VersionesCotizacion.tsx`: panel con campo obligatorio para el nombre de la versión, prevención de doble envío / estado deshabilitado durante el guardado, confirmación post-transacción, listado con fecha y hora local (`es-CO` / `America/Bogota`), y carga de versión con confirmación y refresco completo sin estados residuales.

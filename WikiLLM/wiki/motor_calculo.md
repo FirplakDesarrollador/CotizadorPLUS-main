@@ -28,6 +28,13 @@ Este archivo actúa como puente entre la base de datos y el motor de cálculo. S
 3. Construye los objetos de parámetros que espera el `engine.ts` (resolviendo presets y overrides).
 4. Invoca `calcularMueble()` y devuelve el `Breakdown` al frontend.
 
+La configuración de proyecto `conFondo=false` transforma las plantillas antes
+de invocar el motor: toda pieza con rol `fondo` recibe cantidad cero y la
+profundidad de la pieza llamada `base` pasa a ser `P-TC`. `TC` proviene del
+espesor real del tablero seleccionado para caja (por ejemplo, caja de 15 mm →
+base con descuento de 15 mm). No modifica tapas, bases de gaveta ni las
+fórmulas almacenadas en Supabase.
+
 El simulador combinado llama `cotizarGrupoConsolidado()` mediante una Server Action con la lista completa de `CotizarInput`. La validación ocurre antes de confirmar un módulo, por lo que una incompatibilidad no altera la última lista ni el último resultado válidos.
 
 **Carga de Datos (`getCotizadorData`):**

@@ -44,6 +44,7 @@ function member(options: {
   permiteAgrupacion?: boolean;
   refuerzoBoard?: string;
   omitBack?: boolean;
+  omiteFondoSoloAgrupado?: boolean;
 }): PreparedGroupMember {
   const pieces = [
     lateral,
@@ -80,7 +81,7 @@ function member(options: {
     desperdicio: 0,
     modoFrentes: 'normal',
   };
-  return { calc, pref: options.pref, permiteAgrupacion: options.permiteAgrupacion ?? true };
+  return { calc, pref: options.pref, omiteFondoSoloAgrupado: options.omiteFondoSoloAgrupado, permiteAgrupacion: options.permiteAgrupacion ?? true };
 }
 
 function pieceTotal(result: ReturnType<typeof calcularGrupoFisico>, name: string) {
@@ -165,5 +166,76 @@ test('bloquea grupos que exceden el largo del tablero', () => {
     member({ pref: 'B', width: 50 }),
     member({ pref: 'DB', width: 50 }),
   ]), /supera el largo disponible/);
+});
+
+test('fusiona un refuerzo opcional compatible y conserva local uno incompatible', () => {
+  const compatible = [member({ pref: 'DB-2S-SM', width: 30 }), member({ pref: 'BFD-SM', width: 15 })];
+  for (const m of compatible) {
+    m.calc.piezas = m.calc.piezas.map((p) => p.clave_fusion === 'refuerzo_frontal'
+      ? { ...p, modo_agrupacion: 'continua_opcional' }
+      : p);
+  }
+  const fused = calcularGrupoFisico(compatible);
+  assert.ok(fused.piezasContinuas.includes('refuerzo_frontal'));
+  assert.equal(pieceTotal(fused, 'refuerzo_horizontal'), 2);
+
+  const incompatible = [member({ pref: 'DB-2S-SM', width: 30 }), member({ pref: 'BFD-SM', width: 15, frontQuantity: 1 })];
+  for (const m of incompatible) {
+    m.calc.piezas = m.calc.piezas.map((p) => p.clave_fusion === 'refuerzo_frontal'
+      ? { ...p, modo_agrupacion: 'continua_opcional' }
+      : p);
+  }
+  const local = calcularGrupoFisico(incompatible);
+  assert.ok(!local.piezasContinuas.includes('refuerzo_frontal'));
+  assert.equal(pieceTotal(local, 'refuerzo_horizontal'), 3);
+});
+
+test('agrupa aunque una tipología tenga una pieza continua adicional', () => {
+  const withBack = member({ pref: 'DB-2S-SM', width: 30 });
+  const withoutBack = member({ pref: 'BFD-SM', width: 15, omitBack: true });
+  const grouped = calcularGrupoFisico([withBack, withoutBack]);
+
+  assert.ok(grouped.piezasContinuas.includes('base'));
+  assert.ok(grouped.piezasContinuas.includes('refuerzo_trasero'));
+  assert.ok(!grouped.piezasContinuas.includes('fondo'));
+  assert.equal(pieceTotal(grouped, 'fondo'), 1);
+});
+
+test('omite fondo y descuenta el espesor de caja en la base al agrupar módulos B-SM', () => {
+  const sm = member({ pref: 'DB-2S-SM', width: 30, omiteFondoSoloAgrupado: true });
+  sm.calc.piezas = sm.calc.piezas.map((p) => p.nombre === 'base'
+    ? { ...p, formula_ancho: 'P-0.70866-TB' }
+    : p);
+  const individual = calcularGrupoFisico([sm]);
+  assert.ok(individual.lineas[0].piezas.some((p) => p.pieza === 'fondo'));
+  assert.ok(Math.abs(individual.lineas[0].piezas.find((p) => p.pieza === 'base')!.anchoIn - (24 - 0.70866 - 6 / 25.4)) < 0.0001);
+
+  const second = member({ pref: 'BFD-SM', width: 15, omiteFondoSoloAgrupado: true });
+  second.calc.piezas = second.calc.piezas.map((p) => p.nombre === 'base'
+    ? { ...p, formula_ancho: 'P-0.70866-TB' }
+    : p);
+  const grouped = calcularGrupoFisico([sm, second]);
+  assert.ok(grouped.lineas.every((line) => !line.piezas.some((p) => p.pieza === 'fondo')));
+  assert.ok(grouped.lineas.every((line) => Math.abs(line.piezas.find((p) => p.pieza === 'base')!.anchoIn - (24 - TC)) < 0.0001));
+});
+
+test('normaliza a 80 mm exactos los refuerzos y Golas nominales', () => {
+  const m = member({ pref: 'BFD-SM', width: 15 });
+  m.calc.piezas.push({
+    nombre: 'gola_madera', rol_tablero: 'caja', formula_cantidad: '1',
+    formula_largo: 'L-2*TC', formula_ancho: '3.14961', modo_agrupacion: 'local',
+  });
+  const result = calcularGrupoFisico([m]);
+  for (const nombre of ['refuerzo_horizontal', 'refuerzo_trasero', 'gola_madera']) {
+    const pieza = result.lineas[0].piezas.find((p) => p.pieza === nombre)!;
+    assert.ok(Math.abs(pieza.anchoIn * 25.4 - 80) < 0.0001, nombre);
+  }
+});
+
+test('no exige el tablero de fondo cuando el grupo B-SM omite esa pieza', () => {
+  const first = member({ pref: 'DB-2S-SM', width: 30, omiteFondoSoloAgrupado: true });
+  const second = member({ pref: 'BFD-SM', width: 15, omiteFondoSoloAgrupado: true });
+  second.calc.preset.fondo = 'OTRO_FONDO';
+  assert.doesNotThrow(() => calcularGrupoFisico([first, second]));
 });
 

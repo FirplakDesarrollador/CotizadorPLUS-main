@@ -146,6 +146,24 @@ En el Excel **todas** las filas `TW` son de puerta basculante ("1 puerta bascula
 reglas ni herrajes. La migración está aplicada en el proyecto Supabase conectado
 desde el 25 de septiembre de 2026.
 
+### Variante `TW-SM-PUSH`
+
+`0116` crea `TW-SM-PUSH` a partir de la geometría vigente de `TW`, con nombre y
+descripción **Mueble superior basculante con push**. La puerta usa ancho
+`L - 3,2 mm`, alto `A - 3,2 mm` y cantidad fija `1` sin depender del ancho del módulo.
+La variante elimina la manija, conserva el herraje funcional heredado de `TW` y
+agrega un dispositivo `PUSHOPENHBM237`. Queda activa y agrupable como tipología SM.
+
+Tanto `TW` como `TW-SM-PUSH` materializan la regla global de entrepaños de
+superiores mediante una pieza local: `0` hasta 16 pulgadas de alto, `1` hasta
+24, `2` hasta 36 y `3` por encima. Cada entrepaño usa largo
+`L - 2*TC - 1 mm` y la profundidad estándar vigente de la familia `W`.
+
+La puerta de `TW` usa alto de corte `A + 15,85 mm`. En la visualización, su
+borde superior se ubica 3,2 mm por debajo del borde superior del lateral
+mediante la coordenada `Z = A - 3,2 - H`; por consecuencia, el excedente bajo
+el lateral es 19,05 mm. Esta regla no modifica la puerta de `TW-SM-PUSH`.
+
 ## 2-bis. Apartado original: por qué no se podía arreglar en bloque
 
 `engine.ts` no tiene fallback de herrajes:

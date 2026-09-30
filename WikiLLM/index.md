@@ -10,7 +10,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, evaluación de reglas matemáticas e integración backend (`engine.ts` y `cotizar.ts`).
 - [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, gestión de estado Zustand y componentes de interfaz.
 - [Sistema de Undo/Redo](wiki/sistema_undo_redo.md) - Historial temporal de estados, captura de atajos de teclado y notificaciones.
-- [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes, numeración, restauración transaccional y respaldo automático.
+- [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes manuales, inmutables, nombre obligatorio, orden cronológico y restauración transaccional limpia sin respaldos automáticos.
 
 ## Infraestructura de Datos
 - [Esquema de Base de Datos](wiki/esquema_base_datos.md) - Estructura de tablas y políticas en Supabase (prefijo `cot_`).
@@ -48,3 +48,5 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Precios CEMA 23_09 frente a PLUS](wiki/precios_cema2309.md) - Comparación de tableros, cantos, herrajes y referencias sin equivalencia exacta.
 - [Sincronización Mat_2309](wiki/sincronizacion_mat_2309.md) - Catálogo de tableros sincronizado con Mat_2309 y verificación de precios.
 - [Tipologías Prueba Gola de madera](wiki/tipologias_prueba_gola_madera.md) - Cuatro tipologías paramétricas independientes y sus reglas exclusivas.
+
+- [Comparativo PB SHORE PRUEBA frente a HDR](wiki/comparativo_pb_shore_prueba.md) - Auditoría de 20 módulos: piezas, tablero y canto netos frente a las HDR PDF y consumos con suplementos.

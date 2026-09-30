@@ -30,7 +30,9 @@ export default function NuevoCotizacionForm({
   const router = useRouter();
 
   const [moneda, setMoneda] = useState<'USD' | 'COP'>('USD');
+  const [conFondo, setConFondo] = useState(true);
   const [preset, setPreset] = useState<Record<string, string>>({ ...presetDefault });
+  const [presetSuperior, setPresetSuperior] = useState<Record<string, string>>({ ...presetDefault });
 
   const [cantoFrentes, setCantoFrentes] = useState(() => {
     const b = tableros.find((t) => t.codigo === presetDefault['frente']);
@@ -44,14 +46,23 @@ export default function NuevoCotizacionForm({
     if (b?.espesor_mm === 15) return getCantoMatch(cantos, '19x0,45');
     return '';
   });
+  const [cantoFrentesSuperior, setCantoFrentesSuperior] = useState(cantoFrentes);
+  const [cantoCajaSuperior, setCantoCajaSuperior] = useState(cantoCaja);
 
   const [margen, setMargen] = useState('');
   const [perfilId, setPerfilId] = useState(perfilDefaultId);
+  const [perfilSuperiorId, setPerfilSuperiorId] = useState(perfilDefaultId);
 
   function aplicarPerfil(id: string) {
     setPerfilId(id);
     const p = perfiles.find((x) => x.id === id);
     if (p) setPreset({ ...p.valores });
+  }
+
+  function aplicarPerfilSuperior(id: string) {
+    setPerfilSuperiorId(id);
+    const p = perfiles.find((x) => x.id === id);
+    if (p) setPresetSuperior({ ...p.valores });
   }
 
   function handleTablero(rol: string, value: string) {
@@ -66,6 +77,18 @@ export default function NuevoCotizacionForm({
     }
   }
 
+  function handleTableroSuperior(rol: string, value: string) {
+    const board = tableros.find((t) => t.codigo === value);
+    setPresetSuperior((p) => ({ ...p, [rol]: value, ...(rol === 'caja' ? { refuerzo: value } : {}) }));
+    if (rol === 'caja') {
+      if (board?.espesor_mm === 18) setCantoCajaSuperior(getCantoMatch(cantos, '22x1'));
+      else if (board?.espesor_mm === 15) setCantoCajaSuperior(getCantoMatch(cantos, '19x0,45'));
+    } else if (rol === 'frente') {
+      if (board?.espesor_mm === 18) setCantoFrentesSuperior(getCantoMatch(cantos, '22x1'));
+      else if (board?.espesor_mm === 15) setCantoFrentesSuperior(getCantoMatch(cantos, '19x0,45'));
+    }
+  }
+
   const tableroOptions = useMemo(
     () => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({ value: t.codigo, label: tableroLabel(t) })),
     [tableros]
@@ -73,8 +96,16 @@ export default function NuevoCotizacionForm({
 
   const configObj = useMemo(() => ({
     preset: { ...preset, refuerzo: preset['caja'] ?? '' },
-    cantoFrentes, cantoCaja, margen, perfilId,
-  }), [preset, cantoFrentes, cantoCaja, margen, perfilId]);
+    cantoFrentes, cantoCaja, margen, perfilId, conFondo,
+    materialesInferiores: {
+      preset: { ...preset, refuerzo: preset['caja'] ?? '' },
+      cantoFrentes, cantoCaja, perfilId,
+    },
+    materialesSuperiores: {
+      preset: { ...presetSuperior, refuerzo: presetSuperior['caja'] ?? '' },
+      cantoFrentes: cantoFrentesSuperior, cantoCaja: cantoCajaSuperior, perfilId: perfilSuperiorId,
+    },
+  }), [preset, cantoFrentes, cantoCaja, margen, perfilId, conFondo, presetSuperior, cantoFrentesSuperior, cantoCajaSuperior, perfilSuperiorId]);
 
   const configEncoded = useMemo(
     () => btoa(encodeURIComponent(JSON.stringify(configObj))),
@@ -123,9 +154,27 @@ export default function NuevoCotizacionForm({
         <span className="mt-1 block text-[11px] text-slate-400">Se fija para todo el proyecto y evita mezclar nomenclaturas.</span>
       </label>
 
+      <fieldset>
+        <legend className="block text-xs text-slate-500 mb-1">Configuración de fondo</legend>
+        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Configuración de fondo">
+          {[
+            { value: true, label: 'Con fondo' },
+            { value: false, label: 'Sin fondo' },
+          ].map((option) => (
+            <label key={option.label} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${conFondo === option.value ? 'border-slate-900 bg-slate-50 text-slate-900' : 'border-slate-300 text-slate-600'}`}>
+              <input type="radio" name="con_fondo" value={option.value ? 'true' : 'false'} checked={conFondo === option.value} onChange={() => setConFondo(option.value)} />
+              {option.label}
+            </label>
+          ))}
+        </div>
+        <span className="mt-1 block text-[11px] text-slate-400">Sin fondo elimina esa pieza y deja la profundidad de la base en Profundidad menos un espesor de caja.</span>
+      </fieldset>
+
       {/* ── Materiales globales ── */}
       <div className="border-t border-slate-100 pt-2 space-y-2">
         <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Materiales globales</p>
+
+        <p className="text-xs font-semibold text-slate-700">Módulos inferiores (B)</p>
 
         {perfiles.length > 0 && (
           <F label="Perfil de material">
@@ -159,6 +208,44 @@ export default function NuevoCotizacionForm({
               {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </F>
+        </div>
+
+        <div className="border-t border-slate-200 pt-3 mt-3 space-y-2">
+          <p className="text-xs font-semibold text-slate-700">Muebles superiores (W)</p>
+
+          {perfiles.length > 0 && (
+            <F label="Perfil de material">
+              <Combobox value={perfilSuperiorId} options={perfiles.map((p) => ({ value: p.id, label: p.nombre }))} onChange={aplicarPerfilSuperior} placeholder="Elegir perfil…" />
+            </F>
+          )}
+
+          <F label="Tablero caja / refuerzos">
+            <Combobox value={presetSuperior['caja'] ?? ''} options={tableroOptions}
+              onChange={(v) => handleTableroSuperior('caja', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+          </F>
+          <F label="Tablero frente">
+            <Combobox value={presetSuperior['frente'] ?? ''} options={tableroOptions}
+              onChange={(v) => handleTableroSuperior('frente', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+          </F>
+          <F label="Tablero fondo">
+            <Combobox value={presetSuperior['fondo'] ?? ''} options={tableroOptions}
+              onChange={(v) => handleTableroSuperior('fondo', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+          </F>
+
+          <div className="grid grid-cols-2 gap-2">
+            <F label="Canto frentes">
+              <select value={cantoFrentesSuperior} onChange={(e) => setCantoFrentesSuperior(e.target.value)} className="inp">
+                <option value="">Por defecto</option>
+                {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </F>
+            <F label="Canto caja">
+              <select value={cantoCajaSuperior} onChange={(e) => setCantoCajaSuperior(e.target.value)} className="inp">
+                <option value="">Por defecto</option>
+                {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </F>
+          </div>
         </div>
 
         <F label="Margen (%)">

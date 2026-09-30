@@ -28,7 +28,7 @@ La base de datos se estructura en torno a los siguientes modelos:
 *   **`cot_cocinas`:** Jerarquía de cocinas dentro de un proyecto. Almacena el nombre, orden, cantidad (multiplicador de los muebles internos) y totales acumulados en COP/USD.
 *   **`cot_cotizacion_lineas`:** Líneas individuales que componen el presupuesto. Almacena las dimensiones, cantidad solicitada, variables de diseño y guarda el objeto `breakdown` final (JSON) generado por el motor para auditoría histórica.
 *   **`cot_grupos_modulos`:** Bloques físicos ordenados dentro de una cocina. Almacena la letra canónica, el código concatenado, los subtotales y el breakdown estructural del grupo. Cada línea apunta a un grupo y conserva su posición de izquierda a derecha.
-*   **`cot_cotizacion_versiones`:** Historial inmutable de snapshots JSONB del agregado completo (cabecera, cocinas, grupos y líneas). La numeración es consecutiva por cotización y cada restauración crea primero un respaldo automático.
+*   **`cot_cotizacion_versiones`:** Historial inmutable de snapshots JSONB del agregado completo (cabecera, cocinas, grupos y líneas). Las versiones se generan exclusivamente por solicitud manual del usuario; no existen respaldos automáticos.
 
 ### Extensiones para agrupación
 
@@ -54,18 +54,20 @@ La migración 0020 fue aplicada y verificada en Supabase **I+D** el 2026-07-15. 
 
 ### Versionado persistente
 
-La migración `0024_versiones_cotizacion.sql` añade la tabla de versiones y las funciones RPC `cot_guardar_version` y `cot_restaurar_version`. La captura se serializa bajo bloqueo de la cabecera para evitar números duplicados. La restauración valida propiedad o rol administrador, repone todo el agregado dentro de una transacción y conserva el estado anterior como una nueva versión de respaldo.
+La migración `0024_versiones_cotizacion.sql` añade la tabla de versiones y las funciones RPC `cot_guardar_version` y `cot_restaurar_version`. La migración `0123_versiones_manuales_inmutables.sql` actualiza ambas funciones para requerir nombre obligatorio, eliminar los respaldos automáticos en restauraciones y restituir `config_default` y `config` atómicamente. La captura se serializa bajo bloqueo de la cabecera. La restauración repone todo el agregado dentro de una única transacción sin crear versiones espurias.
 
 La migración 0024 fue aplicada en Supabase **I+D** el 2026-07-22. Se verificó la existencia de la tabla, las dos funciones RPC y las dos políticas RLS.
 
 ### Materiales globales persistentes del proyecto
 
-La migración `0026_config_default_cotizacion.sql` añade `config_default jsonb` a `cot_cotizaciones`. Guarda el preset de materiales (tableros por rol, perfil, cantos de frente/caja, margen) capturado en el formulario "Nuevo proyecto / cotización". Antes de esta migración ese preset solo viajaba codificado en el parámetro `?cfg=` de la redirección tras crear el proyecto, así que se perdía al volver a abrir la cotización más tarde (los formularios de módulo y el panel "Materiales del proyecto" volvían a los valores por defecto del sistema). Ahora:
+La migración `0026_config_default_cotizacion.sql` añade `config_default jsonb` a `cot_cotizaciones`. Guarda el preset de materiales (tableros por rol, perfil, cantos de frente/caja, margen) y la opción estructural `conFondo` capturados en el formulario "Nuevo proyecto / cotización". Antes de esta migración ese preset solo viajaba codificado en el parámetro `?cfg=` de la redirección tras crear el proyecto, así que se perdía al volver a abrir la cotización más tarde (los formularios de módulo y el panel "Materiales del proyecto" volvían a los valores por defecto del sistema). Ahora:
 
 - `crearCotizacion` guarda el preset elegido en `config_default` al crear el proyecto.
 - Cada cambio en el panel "Materiales del proyecto" (`ProjectConfigPanel` dentro de `CotizacionDetalleClient`) se persiste vía `actualizarCotizacionAction` con `configDefault`.
 - Al abrir `/cotizaciones/[id]`, el servidor prioriza `cabecera.config_default`; el parámetro `?cfg=` queda solo como respaldo del primer render justo después de crear el proyecto.
 - Cada vez que se agrega un mueble (no al editar), `AddLineForm` reporta sus tableros y cantos usados vía `onMaterialesUsados`; `CotizacionDetalleClient` los mezcla en `config_default` y los persiste. Así el próximo mueble que se agregue (misma pestaña, otra pestaña o al día siguiente) arranca con los materiales del último mueble agregado, no con los del momento de creación del proyecto.
+- `conFondo` se fija al crear el proyecto y se copia también a `cot_cotizacion_lineas.config`, de modo que edición, duplicado, agrupación y recálculo conserven la decisión estructural.
+- `materialesInferiores` y `materialesSuperiores` guardan, cada uno, perfil, preset de tableros y cantos. Al agregar un mueble se busca la primera `B` o `W` de su prefijo: `B` primero usa inferiores y `W` primero usa superiores (`WBL` usa superiores). Los prefijos sin ambas letras usan inferiores como fallback compatible. Las claves planas antiguas se conservan como alias del bloque inferior para abrir proyectos previos sin migración.
 
 La migración 0026 fue aplicada y verificada en Supabase **I+D** el 2026-08-10 (columna `config_default` de tipo `jsonb` confirmada en `information_schema.columns`). Nota: el número 0025 ya estaba tomado por `0025_pcfd_gavetas_parametricas.sql` (rama paralela); esta migración se renombró a 0026 al integrar ambas ramas en DEV.
 

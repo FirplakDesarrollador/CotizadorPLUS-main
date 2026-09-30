@@ -30,6 +30,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
   };
   members.forEach((member, mi) => {
     const {calc,pref}=member, result=group.lineas[mi];
+    const esBBLFD = pref === 'BBLFD';
     const esDbSmEspecial = [
       'DB-2S-SM', 'DB-2-SM', 'DB-3-SM',
       'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE',
@@ -69,6 +70,17 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           y: '0', z: 'I===0 ? A-80-H : A-2*alto_frente_pequeno-RV-28.4-80-H',
           confirmado: true,
           nota: 'Gola horizontal contra el frente, bajo cada refuerzo.',
+        };
+      }
+      // BBLFD: el refuerzo central es un montante perpendicular a los frentes.
+      // Su altura A-2*TC lo deja exactamente entre la base y la cara inferior
+      // del refuerzo delantero horizontal de 100 mm.
+      if (esBBLFD && p.nombre === 'refuerzo_vertical') {
+        config = {
+          ...config,
+          funcion: 'travesano_frontal', plano: 'YZ', intercambiar: false,
+          confirmado: true,
+          nota: 'Montante perpendicular a los frentes, bajo el refuerzo delantero de 100 mm.',
         };
       }
       let funcion=config.funcion ?? 'automatico';
@@ -236,7 +248,17 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         const slot=drawerSlots[drawerIndex%Math.max(1,drawerSlots.length)];
         if(isDrawer(funcion)&&slot) cajon=slot.key;
         switch(funcion) {
-          case 'lateral': x=k===0?0:L-w; break;
+          case 'lateral': {
+            x=k===0?0:L-w;
+            if (config.x) {
+              const explicitX = Number(evalExpr(config.x, {
+                L, A, P, TC, TF, TB, LP: w, AP: h, EP: d,
+                I: i, N: n, W: w, D: d, H: h, X: x, Y: y, Z: z,
+              }));
+              if (Number.isFinite(explicitX)) x=explicitX;
+            }
+            break;
+          }
           case 'base': z=foot+i*(innerH-h)/Math.max(1,n-1); break;
           case 'tapa': z=A-h; break;
           case 'base_tapa': z=foot+i*(innerH-h)/Math.max(1,n-1); break;
@@ -244,6 +266,14 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'division': x=(i+1)*L/(n+1)-w/2; z=foot+TC; break;
           case 'respaldo': y=baseDepth ?? P-d; z=foot+(innerH-h)/2; break;
           case 'travesano_frontal': {
+            if (esBBLFD && p.nombre === 'refuerzo_vertical') {
+              const frenteW = mm(Number(vars.door ?? 0));
+              const abreDerecha = Number(vars.mano_derecha ?? 1) === 1;
+              x = (abreDerecha ? L - frenteW : frenteW) - w / 2;
+              y = 0;
+              z = TC;
+              break;
+            }
             const cajonSuperior=drawerSlots[0];
             // En muebles con una gaveta superior y puertas, los dos refuerzos
             // horizontales enmarcan la gaveta: uno arriba y otro abajo.
@@ -254,8 +284,23 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           }
           case 'travesano_posterior': y=P-d; z=foot+i*(innerH-h)/Math.max(1,n-1); break;
           case 'travesano_lateral': x=TC; z=A-h; break;
-          case 'frente': {const ds=doorSlots.get(`${item.source}:${k}`)!; x=ds.x; z=ds.z; y=-d; break;}
-          case 'frente_falso': x=blind===item?0:(L-w)/2; z=blind===item?foot:A-h; y=-d; break;
+          case 'frente': {
+            const ds=doorSlots.get(`${item.source}:${k}`)!;
+            x=ds.x; z=ds.z; y=-d;
+            if (esBBLFD && p.nombre === 'frente') x=Number(vars.mano_derecha ?? 1) === 1 ? L-w : 0;
+            if (config.z) {
+              const explicitZ = Number(evalExpr(config.z, {
+                L, A, P, TC, TF, TB, LP: w, AP: h, EP: d,
+                I: i, N: n, W: w, D: d, H: h, X: x, Y: y, Z: z,
+              }));
+              if (Number.isFinite(explicitZ)) z=explicitZ;
+            }
+            break;
+          }
+          case 'frente_falso':
+            x=blind===item?0:(L-w)/2; z=blind===item?foot:A-h; y=-d;
+            if (esBBLFD && p.nombre === 'blind door') x=Number(vars.mano_derecha ?? 1) === 1 ? 0 : L-w;
+            break;
           case 'frente_gaveta': z=slot?.z??foot; y=-d; break;
           case 'base_gaveta': {
             const tieneLateralesDeMadera = lateralDrawerHeights[drawerIndex] != null;
@@ -325,7 +370,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           nota:config.nota??'',cajon});
       }
     }
-    if(['BBL','BBLFD','BLS','WER','WBL','SDB','WPC','PCFD'].includes(pref)) warn(`${pref}: interpretación de piezas rectangulares; recortes, ensambles y distribución especial requieren validación de montaje.`);
+    if(['BBL','BLS','WER','WBL','SDB','WPC','PCFD'].includes(pref)) warn(`${pref}: interpretación de piezas rectangulares; recortes, ensambles y distribución especial requieren validación de montaje.`);
     offset+=L;
   });
   return scene;

@@ -45,7 +45,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         }
         continue;
       }
-      options.push({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` });
+      options.push({ value: t.id, label: t.pref === 'BBLFD' ? (t.nombre_es ?? t.pref) : `${t.pref} — ${t.nombre_es ?? ''}` });
     }
     return options;
   }, [tipos]);
