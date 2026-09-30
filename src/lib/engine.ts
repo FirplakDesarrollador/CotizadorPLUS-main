@@ -37,7 +37,7 @@ export type Pieza = {
   resta_largo?: number; resta_ancho?: number;
   cantos?: { calibre?: string; largos?: number; anchos?: number; despEdges?: number; forceCalibre?: boolean } | null;
   tarugos?: number; soportes?: number;
-  modo_agrupacion?: 'local' | 'continua' | 'lateral_compartido';
+  modo_agrupacion?: 'local' | 'continua' | 'continua_opcional' | 'lateral_compartido';
   clave_fusion?: string | null;
   formula_largo_grupo?: string | null;
 };
@@ -145,7 +145,7 @@ export function derivarVars(
 
 export type Breakdown = {
   vars: Record<string, number>;
-  piezas: { pieza: string; rol: string; cant: number; largoIn: number; anchoIn: number; areaCm2: number; cantoLargos: number; cantoAnchos: number; cantoCalibre: string | null }[];
+  piezas: { pieza: string; rol: string; cant: number; largoIn: number; anchoIn: number; areaCm2: number; cantoLargos: number; cantoAnchos: number; cantoCalibre: string | null; origen?: string; compartida?: boolean; claveFusion?: string }[];
   // `cm2`/`longCm` son la medida NETA que sale del despiece; `m2`/`metros` son el
   // consumo facturable, ya con la merma. `m2 * precio_m2` y `metros * precio`
   // reproducen el costo salvo redondeo, así que la cantidad explica lo que se cobra.
@@ -240,6 +240,14 @@ export function calcularMueble(inp: CalcInput): Breakdown {
       }
     }
 
+    // Los rails/refuerzos y las Golas de catálogo nominal 80 mm llegan de la
+    // conversión histórica 3.14961 in. Normalizar antes de calcular área evita
+    // exponer 80.01 mm y mantiene costo, canto y despiece sobre 80 mm exactos.
+    if (/^(refuerzo(?:_|$)|gola_madera$)/i.test(pz.nombre)) {
+      if (Math.abs(lIn * 25.4 - 80) <= 0.05) lIn = 80 / 25.4;
+      if (Math.abs(aIn * 25.4 - 80) <= 0.05) aIn = 80 / 25.4;
+    }
+
     const area = cant * lIn * aIn * IN2CM * IN2CM;
     // Solo suma área si la pieza tiene rol de tablero; piezas "canto-only" (sin rol) aportan únicamente canto.
     if (pz.rol_tablero) areaPorRol[pz.rol_tablero] = (areaPorRol[pz.rol_tablero] || 0) + area;
@@ -281,7 +289,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     tarugos += cant * Number(pz.tarugos || 0);
     soportes += cant * Number(pz.soportes || 0);
     piezasDet.push({
-      pieza: pz.nombre, rol: pz.rol_tablero, cant, largoIn: +lIn.toFixed(3), anchoIn: +aIn.toFixed(3), areaCm2: +area.toFixed(2),
+      pieza: pz.nombre, rol: pz.rol_tablero, cant, largoIn: +lIn.toFixed(6), anchoIn: +aIn.toFixed(6), areaCm2: +area.toFixed(2),
       cantoLargos, cantoAnchos, cantoCalibre: cantoCalibreResuelto,
     });
   }

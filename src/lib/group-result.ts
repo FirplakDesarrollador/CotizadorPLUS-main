@@ -45,8 +45,8 @@ export function consolidarGrupo(
   const lineas = group.lineas;
   const piezas = groupBy(
     lineas.flatMap((linea) => linea.piezas),
-    (row) => [row.pieza, row.rol, row.largoIn, row.anchoIn].join('|'),
-    (row) => ({ ...row }),
+    (row) => [row.compartida ? row.claveFusion ?? row.pieza : row.pieza, row.compartida ? 'material-homologado' : row.rol, row.largoIn, row.anchoIn, row.compartida ? 'grupo' : row.origen ?? ''].join('|'),
+    (row) => ({ ...row, pieza: row.claveFusion === 'refuerzo_frontal' ? 'refuerzo_delantero' : row.pieza }),
     (acc, row) => {
       acc.cant = clean(acc.cant + row.cant);
       acc.areaCm2 = clean(acc.areaCm2 + row.areaCm2);

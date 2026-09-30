@@ -15,7 +15,28 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
-import { DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esTipologiaDbSm, esTipologiaDbSmFe, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb } from '@/lib/muebles';
+import { DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb } from '@/lib/muebles';
+
+test('clasifica materiales por la primera B o W del prefijo', () => {
+  assert.equal(familiaMaterialPorPrefijo('BBLFD'), 'inferior');
+  assert.equal(familiaMaterialPorPrefijo('W'), 'superior');
+  assert.equal(familiaMaterialPorPrefijo('WBL'), 'superior');
+  assert.equal(familiaMaterialPorPrefijo('B-W'), 'inferior');
+  assert.equal(familiaMaterialPorPrefijo('PN'), 'inferior');
+});
+
+test('ordena el despiece agrupado por piezas unificadas y luego por módulo', () => {
+  const piezas = ordenarPiezasDespiece([
+    { pieza: 'frente', origen: 'A2 BFD15-SM' },
+    { pieza: 'base_gaveta', origen: 'A1 DB30-2S-SM' },
+    { pieza: 'refuerzo_trasero', origen: 'Grupo A (A1 + A2)', compartida: true },
+    { pieza: 'gola_madera', origen: 'A1 DB30-2S-SM' },
+    { pieza: 'base', origen: 'Grupo A (A1 + A2)', compartida: true },
+  ]);
+  assert.deepEqual(piezas.map((p) => p.pieza), [
+    'base', 'refuerzo_trasero', 'base_gaveta', 'gola_madera', 'frente',
+  ]);
+});
 
 test('convierte índices de grupo en letras de Excel y permite el camino inverso', () => {
   const cases = new Map([
@@ -49,6 +70,8 @@ test('convierte dimensiones y construye códigos sin redondear a anchos de catá
   assert.equal(anchoCodigo(12.75, 'in', 'imperial'), '12 3/4');
   assert.equal(anchoCodigo(12.875, 'in', 'imperial'), '12 7/8');
   assert.equal(anchoCodigo(0.5, 'in', 'imperial'), '1/2');
+  assert.equal(anchoCodigo(Number.NaN, 'in', 'imperial'), '');
+  assert.equal(anchoCodigo(Number.POSITIVE_INFINITY, 'in', 'imperial'), '');
   assert.equal(anchoCodigo(30.48, 'cm', 'metrico'), '30.48');
   assert.equal(codigoModulo('B', 12, 'in', 'imperial'), 'B12');
   assert.equal(codigoModulo('IP', 50, 'cm', 'metrico'), 'IP50');
@@ -97,6 +120,12 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'W-SM', largo: 34, alto: 36, prof: 12 }), 'W3436-SM');
   assert.equal(codigoComercial({ ...base, pref: 'W-SM-LOC', largo: 34, alto: 36, prof: 12 }), 'W3436-SM-LOC');
   assert.equal(codigoComercial({ ...base, pref: 'W-SM-PUSH', largo: 33, alto: 21, prof: 24 }), 'W332124-SM-PUSH');
+  assert.equal(codigoComercial({ ...base, pref: 'TW-SM-PUSH', largo: 30, alto: 24, prof: 12 }), 'TW302412-SM-PUSH');
+  assert.equal(codigoComercial({ ...base, pref: 'TW-SM-PUSH', largo: 30, alto: 18, prof: 15 }), 'TW301815-SM-PUSH');
+  assert.equal(codigoComercial({ ...base, pref: 'TW', largo: 30, alto: 24, prof: 12 }), 'TW302412');
+  assert.equal(codigoComercial({ ...base, pref: 'BBLFD', largo: 42, alto: 30, prof: 24, door: 17.875, doorHand: 'R' }), 'BBLFD42-D17 7/8R');
+  assert.equal(codigoComercial({ ...base, pref: 'BBLFD', largo: 42, alto: 30, prof: 24, door: 17.875, doorHand: 'L' }), 'BBLFD42-D17 7/8L');
+  assert.equal(codigoComercial({ ...base, pref: 'BBLFD', largo: 42, alto: 30, prof: 24, door: Number.NaN, doorHand: 'R' }), 'BBLFD42');
   assert.equal(codigoComercial({ ...base, pref: 'WSM', largo: 9, alto: 36, prof: 14 }), 'WSM93614');
   assert.equal(codigoComercial({ ...base, pref: 'WER', largo: 24, alto: 36, sistemaFrente: 'gola' }), 'WER2436-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UW', largo: 12, alto: 36 }), 'UW1236');

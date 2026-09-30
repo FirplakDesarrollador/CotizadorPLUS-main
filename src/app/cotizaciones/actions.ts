@@ -161,9 +161,11 @@ export async function renombrarCotizacionAction(id: string, nombre: string): Pro
   }
 }
 
-export async function guardarVersionCotizacionAction(cotizacionId: string, nombre?: string): Promise<{ ok: boolean; error?: string }> {
+export async function guardarVersionCotizacionAction(cotizacionId: string, nombre: string): Promise<{ ok: boolean; error?: string }> {
   try {
-    await guardarVersionCotizacion(cotizacionId, nombre);
+    const cleanNombre = nombre?.trim();
+    if (!cleanNombre) return { ok: false, error: 'El nombre de la versión es obligatorio.' };
+    await guardarVersionCotizacion(cotizacionId, cleanNombre);
     revalidatePath(`/cotizaciones/${cotizacionId}`);
     return { ok: true };
   } catch (e) {

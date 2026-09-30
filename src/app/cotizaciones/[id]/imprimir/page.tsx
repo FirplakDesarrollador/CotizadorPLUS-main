@@ -1,92 +1,25 @@
 import { notFound } from 'next/navigation';
-import { Fragment } from 'react';
 import { getCotizacion } from '@/lib/cotizaciones';
 import PrintButton from './PrintButton';
 
 const fmtCOP = (n: number) => Number(n || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+type Linea = { id: string; pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null } | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_total_cop: number; costo_total_cop?: number; breakdown?: Record<string, unknown> | null };
+type Cocina = { id: string; nombre: string; cantidad?: number; lineas: Linea[] };
+function precios(l: Linea, trm: number) { const b = l.breakdown ?? {}; const cant = Number(l.cantidad || 0); const sinUsd = Number(b.precioUsd ?? l.precio_unit_usd ?? 0); const sinCop = Number(b.precioCop ?? sinUsd * trm); const conUsd = Number(b.precioConHerrajesUsd ?? l.precio_unit_usd ?? 0); const conCop = Number(b.precioConHerrajesCop ?? l.precio_total_cop / Math.max(1, cant)); return { cant, sinUsd, sinCop, conUsd, conCop }; }
 
-type Linea = { id: string; pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_total_usd: number; precio_total_cop: number };
-type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
-
-export default async function ImprimirPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const { cabecera, cocinas } = await getCotizacion(id);
-  if (!cabecera) notFound();
-
-  return (
-    <div className="min-h-screen bg-white text-slate-800">
-      <style>{`@media print { .no-print { display:none !important; } @page { margin: 1.5cm; } } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }`}</style>
-      <div className="mx-auto max-w-3xl p-8">
-        <PrintButton />
-
-        <div className="flex items-start justify-between border-b-2 border-slate-800 pb-3 mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Cotización</h1>
-            <p className="text-lg font-semibold">{cabecera.nombre}</p>
-            <p className="text-sm text-slate-500">Cliente: {cabecera.cliente_nombre || '—'} · Estado: {cabecera.estado}</p>
-          </div>
-          <div className="text-right text-sm text-slate-500">
-            <div>Fecha: {new Date().toLocaleDateString('es-CO')}</div>
-            <div>TRM: {Number(cabecera.trm).toLocaleString('es-CO')}</div>
-          </div>
-        </div>
-
-        {(cocinas as Cocina[]).map((c) => (
-          <div key={c.id} className="mb-5">
-            <h2 className="font-semibold text-slate-900 bg-slate-100 px-2 py-1 rounded">
-              🍳 {c.nombre} {c.cantidad && c.cantidad > 1 ? `(Cant: ${c.cantidad})` : ''}
-            </h2>
-            <table className="w-full text-sm mt-1">
-              <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-300">
-                  <th className="py-1">Grupo</th><th>Módulo</th><th>Descripción</th><th className="text-right">Cant</th>
-                  <th className="text-right">Unit USD</th><th className="text-right">Total USD</th><th className="text-right">Total COP</th>
-                </tr>
-              </thead>
-              <tbody>
-                {c.lineas.map((l) => {
-                  const count = c.lineas.filter((x) => x.grupo_id === l.grupo_id).length;
-                  const groupLabel = count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? '');
-                  const shades = ['#eff6ff','#ecfdf5','#fffbeb','#f5f3ff','#fff1f2','#ecfeff'];
-                  return (<Fragment key={l.id}>
-                  <tr key={l.id} className="border-b border-slate-100" style={{ backgroundColor: shades[(l.grupo?.orden ?? 0) % shades.length] }}>
-                    <td className="py-1 font-semibold">{groupLabel}</td>
-                    <td className="font-medium"><div>{l.codigo_modulo ?? l.pref}</div>{count > 1 && <div className="text-[9px] text-slate-500">{l.grupo?.codigo_grupo}</div>}</td>
-                    <td className="text-slate-600">{l.descripcion_es}</td>
-                    <td className="text-right">{l.cantidad}</td>
-                    <td className="text-right">{fmtUSD(l.precio_unit_usd)}</td>
-                    <td className="text-right">{fmtUSD(l.precio_total_usd)}</td>
-                    <td className="text-right">{fmtCOP(l.precio_total_cop)}</td>
-                  </tr>
-                  {count > 1 && l.posicion_grupo === count && <tr className="text-xs font-semibold" style={{ backgroundColor: shades[(l.grupo?.orden ?? 0) % shades.length] }}>
-                    <td></td>
-                    <td colSpan={4} className="py-1 text-left">Subtotal grupo {l.grupo?.etiqueta} · {l.grupo?.codigo_grupo}</td>
-                    <td className="text-right">{fmtUSD(Number(l.grupo?.total_usd ?? 0))}</td>
-                    <td className="text-right">{fmtCOP(Number(l.grupo?.total_cop ?? 0))}</td>
-                  </tr>}
-                </Fragment>);})}
-                <tr className="font-semibold">
-                  <td colSpan={5} className="text-right py-1">Subtotal {c.nombre}</td>
-                  <td className="text-right">{fmtUSD(c.total_usd)}</td>
-                  <td className="text-right">{fmtCOP(c.total_cop)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        ))}
-
-        <div className="flex justify-end border-t-2 border-slate-800 pt-3 mt-4">
-          <table className="text-sm">
-            <tbody>
-              <tr><td className="pr-6 font-bold text-lg">TOTAL</td>
-                <td className="text-right font-bold text-lg">{fmtUSD(cabecera.total_usd)}</td>
-                <td className="text-right font-bold text-lg pl-6">{fmtCOP(cabecera.total_cop)}</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs text-slate-400 mt-8">Generado por Cotizador PLUS · {new Date().toLocaleString('es-CO')}</p>
-      </div>
-    </div>
-  );
+export default async function ImprimirPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const { id } = await params; const query = await searchParams;
+  const { cabecera, cocinas } = await getCotizacion(id); if (!cabecera) notFound();
+  const mostrarSin = query.sinHerrajes !== '0'; const mostrarCon = query.conHerrajes !== '0'; const mostrarUsd = query.usd !== '0'; const mostrarCop = query.cop !== '0'; const trm = Number(cabecera.trm || 0);
+  const proyecto = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 };
+  const cocinasCalculadas = (cocinas as Cocina[]).map((c) => { const sub = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 }; c.lineas.forEach((l) => { const p = precios(l, trm); sub.sinUsd += p.sinUsd * p.cant; sub.sinCop += p.sinCop * p.cant; sub.conUsd += p.conUsd * p.cant; sub.conCop += p.conCop * p.cant; }); const mult = Number(c.cantidad ?? 1); proyecto.sinUsd += sub.sinUsd * mult; proyecto.sinCop += sub.sinCop * mult; proyecto.conUsd += sub.conUsd * mult; proyecto.conCop += sub.conCop * mult; return { c, sub, mult }; });
+  return <div className="min-h-screen bg-white text-slate-800"><style>{`@media print { .no-print { display:none !important; } @page { margin: 1.2cm; } } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }`}</style><div className="mx-auto max-w-6xl p-8"><PrintButton />
+    <div className="mb-4 flex items-start justify-between border-b-2 border-slate-800 pb-3"><div><h1 className="text-2xl font-bold text-slate-900">Cotización</h1><p className="text-lg font-semibold">{cabecera.nombre}</p><p className="text-sm text-slate-500">Cliente: {cabecera.cliente_nombre || '—'} · Estado: {cabecera.estado}</p></div><div className="text-right text-sm text-slate-500"><div>Fecha: {new Date().toLocaleDateString('es-CO')}</div><div>TRM: {trm.toLocaleString('es-CO')}</div></div></div>
+    {cocinasCalculadas.map(({ c, sub, mult }) => <div key={c.id} className="mb-5"><h2 className="rounded bg-slate-100 px-2 py-1 font-semibold text-slate-900">Cocina: {c.nombre} {mult > 1 ? `(Cant: ${mult})` : ''}</h2><table className="mt-1 w-full text-xs"><thead><tr className="border-b border-slate-300 text-left text-slate-500"><th className="py-1">Grupo</th><th>Módulo</th><th>Descripción</th>{mostrarUsd && <th className="text-right">Costo USD</th>}{mostrarCop && <th className="text-right">Costo COP</th>}<th className="text-right">Cant</th>{mostrarSin && mostrarUsd && <><th className="text-right">Unit s/H USD</th><th className="text-right">Total s/H USD</th></>}{mostrarSin && mostrarCop && <><th className="text-right">Unit s/H COP</th><th className="text-right">Total s/H COP</th></>}{mostrarCon && mostrarUsd && <><th className="text-right">Unit c/H USD</th><th className="text-right">Total c/H USD</th></>}{mostrarCon && mostrarCop && <><th className="text-right">Unit c/H COP</th><th className="text-right">Total c/H COP</th></>}</tr></thead><tbody>
+      {c.lineas.map((l) => { const p = precios(l, trm); const costoCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0); const count = c.lineas.filter((x) => x.grupo_id === l.grupo_id).length; const label = count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? ''); return <tr key={l.id} className="border-b border-slate-100"><td className="py-1 font-semibold">{label}</td><td className="font-medium">{l.codigo_modulo ?? l.pref}</td><td className="text-slate-600">{l.descripcion_es}</td>{mostrarUsd && <td className="text-right">{fmtUSD(trm > 0 ? costoCop / trm : 0)}</td>}{mostrarCop && <td className="text-right">{fmtCOP(costoCop)}</td>}<td className="text-right">{p.cant}</td>{mostrarSin && mostrarUsd && <><td className="text-right">{fmtUSD(p.sinUsd)}</td><td className="text-right">{fmtUSD(p.sinUsd * p.cant)}</td></>}{mostrarSin && mostrarCop && <><td className="text-right">{fmtCOP(p.sinCop)}</td><td className="text-right">{fmtCOP(p.sinCop * p.cant)}</td></>}{mostrarCon && mostrarUsd && <><td className="text-right">{fmtUSD(p.conUsd)}</td><td className="text-right">{fmtUSD(p.conUsd * p.cant)}</td></>}{mostrarCon && mostrarCop && <><td className="text-right">{fmtCOP(p.conCop)}</td><td className="text-right">{fmtCOP(p.conCop * p.cant)}</td></>}</tr>; })}
+      <tr className="font-semibold"><td colSpan={3 + Number(mostrarUsd) + Number(mostrarCop) + 1} className="py-1 text-right">Subtotal {c.nombre}</td>{mostrarSin && mostrarUsd && <><td></td><td className="text-right">{fmtUSD(sub.sinUsd * mult)}</td></>}{mostrarSin && mostrarCop && <><td></td><td className="text-right">{fmtCOP(sub.sinCop * mult)}</td></>}{mostrarCon && mostrarUsd && <><td></td><td className="text-right">{fmtUSD(sub.conUsd * mult)}</td></>}{mostrarCon && mostrarCop && <><td></td><td className="text-right">{fmtCOP(sub.conCop * mult)}</td></>}</tr>
+    </tbody></table></div>)}
+    <div className="mt-4 border-t-2 border-slate-800 pt-3"><table className="ml-auto text-sm"><tbody>{mostrarSin && <tr><td className="pr-6 font-bold">TOTAL SIN HERRAJES</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.sinUsd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.sinCop)}</td>}</tr>}{mostrarCon && <tr><td className="pr-6 font-bold">TOTAL CON HERRAJES</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.conUsd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.conCop)}</td>}</tr>}</tbody></table></div>
+    {!mostrarSin && !mostrarCon && <p className="text-sm text-slate-500">La cotización fue generada sin columnas de precio.</p>}<p className="mt-8 text-xs text-slate-400">Generado por Cotizador PLUS · {new Date().toLocaleString('es-CO')}</p></div></div>;
 }

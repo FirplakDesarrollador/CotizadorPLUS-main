@@ -174,8 +174,23 @@ son de 508 mm de profundidad.
 Los roles de tablero son `caja` para carcasa/Gola, `refuerzo` para cajas de
 gaveta, `frente` para frentes de 18 mm y `fondo` para piezas de 6 mm. No hay
 manijas, bisagras, barras ni soportes. Cada tipo usa cuatro patas, dieciseis
-tornillos y un `RIELFE500` por gaveta. `permite_agrupacion=false` y todas las
-piezas usan montaje local porque no existe una hoja agrupada.
+tornillos y un `RIELFE500` por gaveta.
+
+La migración `0113_agrupacion_tipologias_sm_wld.sql` habilita la agrupación
+física de las tipologías SM y de `WLD` sin cambiar su despiece individual. En
+las familias inferiores se comparten laterales y se hacen continuas la base y
+el fondo. En las superiores (`W-SM`, `W-SM-PUSH`, `W-SM-LOC`, `WSM`, `WLD`)
+también se hace continua la tapa. Golas, frentes, gavetas, entrepaños y
+refuerzos permanecen locales para conservar las fórmulas y cantidades de cada
+compartimento. Las validaciones generales de profundidad, tableros, canto,
+margen, espesor de frente, sección continua y formato máximo siguen vigentes.
+
+La migración correctiva `0115_restaurar_fondos_y_limitar_sm_agrupado.sql`
+restaura fondo y profundidad de base en todas las plantillas individuales. La
+omisión del fondo y el retiro de `TB` se aplican solo durante el cálculo de una
+agrupación y únicamente a tipologías inferiores con `B` y segmento `SM`. Para
+esos grupos, base y refuerzo trasero son continuos; refuerzo delantero y
+`gola_madera` son continuos opcionales con geometría y montaje idénticos.
 
 La migración `0109_db_sm_fe_tarugos_gavetas.sql` asigna cuatro tarugos a cada
 `gola_madera`, `trasero_gaveta*` y `contraparche*`: dos en el extremo derecho

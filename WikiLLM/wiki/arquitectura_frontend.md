@@ -1,5 +1,50 @@
 # Arquitectura del Frontend
 
+En el detalle de una cotización, el resumen de `ProyectoHeader` no contiene un
+enlace `editar`. Debajo del resumen y antes de las acciones de exportación se
+muestra el control plegable **CARACTERÍSTICAS DEL PROYECTO**. Al desplegarlo,
+un segundo `ProyectoHeader` en modo `editing` presenta los datos de cabecera y
+compone `ProjectConfigPanel` para perfil, materiales inferiores y superiores y
+cantos. Al cerrarlo, el listado de muebles sigue visible sin ocupar
+espacio adicional.
+
+En el editor desplegado, nombre y cliente forman la primera fila; moneda, TRM
+y margen comparten la segunda. Los materiales aparecen a continuación y el
+estado se ubica al final, inmediatamente antes de Guardar/Cancelar.
+
+La TRM del editor se guarda automáticamente al salir del campo o presionar
+Enter. El backend propaga el valor a todas las líneas, recalcula cada grupo y
+recompone los totales del proyecto, por lo que el resumen y los precios USD se
+actualizan sin depender del botón Guardar.
+
+### Columnas de precio y herrajes en cotizaciones
+
+El detalle permite activar independientemente las columnas de precio **sin
+herrajes** y **con herrajes**. La selección también controla la vista de
+impresión/PDF y el Excel; ambos generan solamente las columnas elegidas. La
+tabla conserva sus datos de costo, cantidad, unidad e identificación.
+
+El mismo control incluye dos selectores de moneda, **Dólares (USD)** y **Pesos
+colombianos (COP)**. Al menos uno permanece activo. Cada moneda elegida controla
+las columnas de costo, precio unitario y total en la tabla, la impresión/PDF y
+Excel; pueden mostrarse individualmente o juntas.
+
+Al seleccionar una fila se despliega el listado informativo de herrajes del
+módulo (rol, código y cantidad). Ya no existe una opción por módulo para
+incluirlos o excluirlos: las líneas nuevas y los recálculos cotizan siempre la
+plantilla completa, y el `breakdown` mantiene los precios con y sin herrajes.
+
+La página de detalle usa un ancho máximo de 1600 px. La tabla conserva un
+ancho mínimo de 1420 px con desplazamiento horizontal en ventanas menores;
+descripción, importes y acciones tienen anchos explícitos para impedir que los
+encabezados o valores monetarios se compriman. La acción **Editar** se mantiene
+porque abre el formulario completo de la línea; la X continúa eliminándola.
+
+El formulario de **Editar** se renderiza dentro de la tabla como una fila
+expandida inmediatamente debajo del módulo activo, en vez de aparecer al final
+del listado. Solo puede existir una edición activa; abrirla cierra el detalle
+de herrajes y comenzar a agregar un módulo cierra la edición.
+
 El frontend de Cotizador PLUS está construido sobre **Next.js (App Router)** y sigue un enfoque de diseño componetizado.
 
 ## 1. Enrutamiento (`src/app/`)

@@ -36,19 +36,21 @@ export async function listarVersionesCotizacion(cotizacionId: string): Promise<C
   const { data, error } = await sb.from('cot_cotizacion_versiones')
     .select('id,cotizacion_id,numero,nombre,creada_por,created_at')
     .eq('cotizacion_id', cotizacionId)
-    .order('numero', { ascending: false });
+    .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as CotizacionVersion[];
 }
 
-export async function guardarVersionCotizacion(cotizacionId: string, nombre?: string) {
+export async function guardarVersionCotizacion(cotizacionId: string, nombre: string) {
   const sb = await createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) throw new Error('No autenticado');
+  const cleanNombre = nombre?.trim();
+  if (!cleanNombre) throw new Error('El nombre de la versión es obligatorio.');
 
   const { data, error } = await sb.rpc('cot_guardar_version', {
     p_cotizacion_id: cotizacionId,
-    p_nombre: nombre?.trim() || null,
+    p_nombre: cleanNombre,
   });
   if (error) throw new Error(error.message);
   return data as string;
@@ -180,6 +182,9 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
       sistemaFrente: input.sistemaFrente ?? 'manija',
       removible: input.removible ?? false,
       rielCodigo: input.rielCodigo ?? null,
+      door: input.door ?? null,
+      doorHand: input.doorHand ?? null,
+      conFondo: input.conFondo !== false,
     },
     cantidad,
     costo_sin_herrajes_cop: res.costoSinHerrajes,
@@ -219,11 +224,11 @@ export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     largo: Number(linea.largo), alto: Number(linea.alto), prof: Number(linea.prof),
     unidad: linea.unidad_dim,
     preset: (c.preset ?? {}) as Record<string, string>,
-    conHerrajes: c.conHerrajes !== false,
+    conHerrajes: true,
     trm: c.trm == null ? undefined : Number(c.trm),
     overrides: (c.overrides ?? undefined) as Record<string, number> | undefined,
     modoFrentes: (c.modoFrentes ?? 'normal') as CotizarInput['modoFrentes'],
-    herrajesExcluidos: (c.herrajesExcluidos ?? undefined) as string[] | undefined,
+    herrajesExcluidos: undefined,
     margenOverride: c.margenOverride == null ? undefined : Number(c.margenOverride),
     tarifaMadera: c.tarifaMadera == null ? undefined : Number(c.tarifaMadera),
     tarifaHerrajes: c.tarifaHerrajes == null ? undefined : Number(c.tarifaHerrajes),
@@ -236,6 +241,9 @@ export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     dbTipo: (c.dbTipo ?? undefined) as string | undefined,
     sistemaFrente: (c.sistemaFrente ?? undefined) as string | undefined,
     removible: c.removible === true,
+    door: c.door == null ? undefined : Number(c.door),
+    doorHand: c.doorHand === 'L' || c.doorHand === 'R' ? c.doorHand : undefined,
+    conFondo: c.conFondo !== false,
   };
 }
 
@@ -300,6 +308,8 @@ async function recalcularGrupo(grupoId: string) {
       sistema,
       sistemaFrente: inputs[i].sistemaFrente,
       dbTipo: inputs[i].dbTipo,
+      door: inputs[i].door,
+      doorHand: inputs[i].doorHand,
     });
     const baseResult = calculated.lineas[i] as CotizarResult;
     const result = {
@@ -548,6 +558,7 @@ export async function reordenarGruposCocina(cocinaId: string, nuevosGrupoIds: st
 
 export async function actualizarCotizacion(id: string, patch: { nombre?: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }) {
   const sb = await createClient();
+  if (patch.trm !== undefined && (!Number.isFinite(Number(patch.trm)) || Number(patch.trm) <= 0)) throw new Error('La TRM debe ser mayor que cero.');
   const upd: Record<string, unknown> = {};
   if (patch.nombre !== undefined) upd.nombre = patch.nombre;
   if (patch.cliente_nombre !== undefined) upd.cliente_nombre = patch.cliente_nombre || null;
@@ -557,6 +568,19 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
   if (patch.configDefault !== undefined) upd.config_default = patch.configDefault;
   const { error } = await sb.from('cot_cotizaciones').update(upd).eq('id', id);
   if (error) throw new Error(error.message);
+  if (patch.trm !== undefined) {
+    const { data: lineas, error: lineasError } = await sb.from('cot_cotizacion_lineas').select('id,grupo_id,config').eq('cotizacion_id', id);
+    if (lineasError) throw new Error(lineasError.message);
+    const grupos = new Set<string>();
+    for (const linea of lineas ?? []) {
+      const config = { ...((linea.config ?? {}) as Record<string, unknown>), trm: Number(patch.trm), conHerrajes: true, herrajesExcluidos: null };
+      const { error: configError } = await sb.from('cot_cotizacion_lineas').update({ config }).eq('id', linea.id);
+      if (configError) throw new Error(configError.message);
+      if (linea.grupo_id) grupos.add(String(linea.grupo_id));
+    }
+    for (const grupoId of grupos) await recalcularGrupo(grupoId);
+    await recomputarTotales(id);
+  }
 }
 
 export async function eliminarLinea(cotizacionId: string, lineaId: string) {

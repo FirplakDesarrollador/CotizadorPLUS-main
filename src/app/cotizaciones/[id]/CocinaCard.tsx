@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineForm';
 import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
 import { colorGrupo, indiceALetras } from '@/lib/module-groups';
+import type { FamiliaMaterial } from '@/lib/muebles';
+import type { ColumnasPrecio } from './CotizacionDetalleClient';
 
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
@@ -21,6 +23,9 @@ type LineaConfig = {
   cantoCaja?: string;
   dbTipo?: string;
   rielCodigo?: string;
+  door?: number;
+  doorHand?: 'L' | 'R';
+  conFondo?: boolean;
 };
 
 type Linea = {
@@ -44,7 +49,14 @@ type Linea = {
   codigo_modulo: string | null;
   grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
   // Presente en líneas antiguas sin costo_total_cop, como respaldo para el costo con herrajes.
-  breakdown?: { costoConHerrajes?: number };
+  breakdown?: {
+    costoConHerrajes?: number;
+    precioCop?: number;
+    precioUsd?: number;
+    precioConHerrajesCop?: number;
+    precioConHerrajesUsd?: number;
+    herrajes?: { rol: string; codigo: string | null; cant: number; precio: number; costo: number }[];
+  } | Record<string, unknown> | null;
 };
 
 type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
@@ -52,9 +64,18 @@ type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metr
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
+const preciosLinea = (linea: Linea, trm: number) => {
+  const breakdown = linea.breakdown ?? {};
+  const sinUnitUsd = Number(breakdown.precioUsd ?? linea.precio_unit_usd ?? 0);
+  const sinUnitCop = Number(breakdown.precioCop ?? sinUnitUsd * trm);
+  const conUnitUsd = Number(breakdown.precioConHerrajesUsd ?? linea.precio_unit_usd ?? 0);
+  const conUnitCop = Number(breakdown.precioConHerrajesCop ?? linea.precio_total_cop / Math.max(1, Number(linea.cantidad)));
+  const cantidad = Number(linea.cantidad || 0);
+  return { sinUnitUsd, sinUnitCop, conUnitUsd, conUnitCop, cantidad };
+};
 
 export default function CocinaCard({
-  cotizacionId, cocina, allCocinas, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, onMaterialesUsados
+  cotizacionId, cocina, allCocinas, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, onMaterialesUsados, columnasPrecio
 }: {
   cotizacionId: string;
   cocina: Cocina;
@@ -70,7 +91,8 @@ export default function CocinaCard({
   trm: number;
   sistemaMedida: 'imperial' | 'metrico';
   projectDefaults?: ProjectDefaults;
-  onMaterialesUsados?: (materiales: { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string }) => void;
+  onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string }) => void;
+  columnasPrecio: ColumnasPrecio;
 }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
@@ -80,6 +102,7 @@ export default function CocinaCard({
   const [cantCocina, setCantCocina] = useState<number>(cocina.cantidad ?? 1);
   const [groupBusy, setGroupBusy] = useState<string | null>(null);
   const [groupError, setGroupError] = useState<string | null>(null);
+  const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
 
   // Sincroniza cantCocina con el prop cuando cambia desde afuera (ej. tras guardar),
   // ajustando el estado durante el render en vez de en un efecto.
@@ -134,9 +157,11 @@ export default function CocinaCard({
     cantoCaja: l.config?.cantoCaja ?? undefined,
     dbTipo: l.config?.dbTipo ?? undefined,
     rielCodigo: l.config?.rielCodigo ?? undefined,
+    door: l.config?.door ?? undefined,
+    doorHand: l.config?.doorHand ?? undefined,
+    conFondo: l.config?.conFondo ?? projectDefaults?.conFondo ?? true,
   });
 
-  const lineaEnEdicion = cocina.lineas.find((l) => l.id === editId) ?? null;
 
   async function saveName() {
     await actualizarCocinaAction(cotizacionId, cocina.id, nombre);
@@ -289,10 +314,23 @@ export default function CocinaCard({
 
   const totalMuebles = groupBlocks.length;
   const totalCostoUsd = cocina.lineas.reduce((acc, l) => {
-    const unitCop = l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0;
+    const unitCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0);
     const unitUsd = trm > 0 ? unitCop / trm : 0;
     return acc + (unitUsd * Number(l.cantidad || 0));
   }, 0);
+  const totalCostoCop = cocina.lineas.reduce((acc, l) => acc + Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0) * Number(l.cantidad || 0), 0);
+  const multiplicadorCocina = Number(cocina.cantidad ?? 1);
+  const sumarPrecios = (lineas: Linea[]) => lineas.reduce((acc, linea) => {
+    const precio = preciosLinea(linea, trm);
+    acc.sinUsd += precio.sinUnitUsd * precio.cantidad;
+    acc.sinCop += precio.sinUnitCop * precio.cantidad;
+    acc.conUsd += precio.conUnitUsd * precio.cantidad;
+    acc.conCop += precio.conUnitCop * precio.cantidad;
+    return acc;
+  }, { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 });
+  const totalesCocina = sumarPrecios(cocina.lineas);
+  const columnasMoneda = Number(columnasPrecio.usd) + Number(columnasPrecio.cop);
+  const totalColumnas = 1 + 3 + columnasMoneda + 1 + (columnasPrecio.sinHerrajes ? 2 * columnasMoneda : 0) + (columnasPrecio.conHerrajes ? 2 * columnasMoneda : 0) + 1;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200">
@@ -332,45 +370,37 @@ export default function CocinaCard({
       </div>
 
       {groupError && <div className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{groupError}</div>}
-      <div className="overflow-x-auto"><table className="w-full text-sm">
+      <div className="overflow-x-auto"><table className={`${columnasPrecio.usd && columnasPrecio.cop ? 'min-w-[1660px]' : 'min-w-[1180px]'} w-full text-sm`}>
         <thead>
           <tr className="bg-slate-100/90 text-slate-900 text-xs font-bold border-b border-slate-200">
             <th className="px-2 py-2 text-center w-10"></th>
             <th className="px-4 py-2 text-left uppercase text-slate-700 font-bold tracking-wider" colSpan={3}>
               Totales Cocina {(cocina.cantidad ?? 1) > 1 ? `(x${cocina.cantidad})` : ''}
             </th>
-            <th className="text-right py-2 font-bold text-slate-800" title="Costo Total USD de la cocina (multiplicado por cantidad de cocinas)">
-              {fmtUSD(totalCostoUsd * (cocina.cantidad ?? 1))}
-            </th>
+            {columnasPrecio.usd && <th className="text-right py-2 font-bold text-slate-800">{fmtUSD(totalCostoUsd * multiplicadorCocina)}</th>}
+            {columnasPrecio.cop && <th className="text-right py-2 font-bold text-slate-800">{fmtCOP(totalCostoCop * multiplicadorCocina)}</th>}
             <th className="text-right py-2 font-bold text-slate-900" title="Cantidad total de muebles (módulos agrupados cuentan como 1 mueble)">
               {totalMuebles * (cocina.cantidad ?? 1)}
             </th>
-            <th className="text-right py-2 text-slate-400 font-normal">
-              -
-            </th>
-            <th className="text-right py-2 font-bold text-slate-900">
-              {fmtUSD(cocina.total_usd)}
-            </th>
-            <th className="text-right px-4 py-2 font-bold text-slate-900">
-              {fmtCOP(cocina.total_cop)}
-            </th>
+            {columnasPrecio.sinHerrajes && <>{columnasPrecio.usd && <><th className="text-right py-2 text-slate-400 font-normal">-</th><th className="text-right py-2 font-bold text-slate-900">{fmtUSD(totalesCocina.sinUsd * multiplicadorCocina)}</th></>}{columnasPrecio.cop && <><th className="text-right py-2 text-slate-400 font-normal">-</th><th className="text-right px-3 py-2 font-bold text-slate-900">{fmtCOP(totalesCocina.sinCop * multiplicadorCocina)}</th></>}</>}
+            {columnasPrecio.conHerrajes && <>{columnasPrecio.usd && <><th className="text-right py-2 text-slate-400 font-normal">-</th><th className="text-right py-2 font-bold text-slate-900">{fmtUSD(totalesCocina.conUsd * multiplicadorCocina)}</th></>}{columnasPrecio.cop && <><th className="text-right py-2 text-slate-400 font-normal">-</th><th className="text-right px-3 py-2 font-bold text-slate-900">{fmtCOP(totalesCocina.conCop * multiplicadorCocina)}</th></>}</>}
             <th className="px-2 py-2"></th>
           </tr>
           <tr className="text-left text-slate-500 border-b border-slate-200 text-xs font-semibold bg-slate-50">
             <th className="px-2 py-2 text-center w-10" title="Arrastrar para reordenar"></th>
-            <th className="px-4 py-2">Grupo</th>
-            <th>Módulo</th>
-            <th>Descripción</th>
-            <th className="text-right">Costo USD</th>
-            <th className="text-right">Cant</th>
-            <th className="text-right">Unit USD</th>
-            <th className="text-right">Total USD</th>
-            <th className="text-right px-4">Total COP</th>
-            <th></th>
+            <th className="w-24 px-4 py-2">Grupo</th>
+            <th className="w-28 px-2">Módulo</th>
+            <th className="min-w-72 px-3">Descripción</th>
+            {columnasPrecio.usd && <th className="w-28 px-2 text-right whitespace-nowrap">Costo USD</th>}
+            {columnasPrecio.cop && <th className="w-32 px-2 text-right whitespace-nowrap">Costo COP</th>}
+            <th className="w-16 px-2 text-right">Cant</th>
+            {columnasPrecio.sinHerrajes && <>{columnasPrecio.usd && <><th className="w-28 px-2 text-right whitespace-nowrap">Unit s/H USD</th><th className="w-28 px-2 text-right whitespace-nowrap">Total s/H USD</th></>}{columnasPrecio.cop && <><th className="w-32 px-2 text-right whitespace-nowrap">Unit s/H COP</th><th className="w-32 px-3 text-right whitespace-nowrap">Total s/H COP</th></>}</>}
+            {columnasPrecio.conHerrajes && <>{columnasPrecio.usd && <><th className="w-28 px-2 text-right whitespace-nowrap">Unit c/H USD</th><th className="w-28 px-2 text-right whitespace-nowrap">Total c/H USD</th></>}{columnasPrecio.cop && <><th className="w-32 px-2 text-right whitespace-nowrap">Unit c/H COP</th><th className="w-32 px-3 text-right whitespace-nowrap">Total c/H COP</th></>}</>}
+            <th className="w-28"></th>
           </tr>
         </thead>
         <tbody>
-          {cocina.lineas.length === 0 && <tr><td colSpan={10} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
+          {cocina.lineas.length === 0 && <tr><td colSpan={totalColumnas} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
           {groupBlocks.map((block, blockIdx) => {
             const members = block.lineas.length;
             const isDraggingThis = draggedGroupIndex === blockIdx;
@@ -378,10 +408,12 @@ export default function CocinaCard({
 
             const groupTotalCant = block.lineas.reduce((acc, l) => acc + Number(l.cantidad || 0), 0);
             const groupTotalCostoUsd = block.lineas.reduce((acc, l) => {
-              const unitCop = l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0;
+              const unitCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0);
               const unitUsd = trm > 0 ? unitCop / trm : 0;
               return acc + (unitUsd * Number(l.cantidad || 0));
             }, 0);
+            const groupTotalCostoCop = block.lineas.reduce((acc, l) => acc + Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0) * Number(l.cantidad || 0), 0);
+            const groupPrices = sumarPrecios(block.lineas);
 
             return (
               <Fragment key={block.grupoId}>
@@ -389,12 +421,14 @@ export default function CocinaCard({
                   const label = members > 1 ? `${block.etiqueta}${l.posicion_grupo}` : block.etiqueta;
                   const isFirstLine = lineIdx === 0;
 
-                  const unitCostoCop = l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0;
+                  const unitCostoCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0);
                   const unitCostoUsd = trm > 0 ? unitCostoCop / trm : 0;
+                  const precio = preciosLinea(l, trm);
+                  const herrajes = Array.isArray(l.breakdown?.herrajes) ? l.breakdown.herrajes : [];
 
                   return (
+                    <Fragment key={l.id}>
                     <tr
-                      key={l.id}
                       draggable
                       onDragStart={(e) => {
                         e.dataTransfer.setData('text/plain', block.grupoId);
@@ -425,6 +459,7 @@ export default function CocinaCard({
                         e.preventDefault();
                         setContextMenu({ x: e.clientX, y: e.clientY, lineaId: l.id });
                       }}
+                      onClick={() => setSelectedLineId((selected) => selected === l.id ? null : l.id)}
                     >
                       <td className="px-2 py-2 text-center align-middle cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-700 select-none">
                         {isFirstLine && (
@@ -466,21 +501,55 @@ export default function CocinaCard({
                           className="w-14 rounded-md border border-slate-300 bg-white/80 px-2 py-1 text-center font-semibold uppercase disabled:opacity-50"
                         />
                       </td>
-                      <td className="py-2 font-medium text-slate-900 cursor-context-menu">
+                      <td className="px-2 py-2 font-medium text-slate-900 cursor-context-menu whitespace-nowrap">
                         <div>{l.codigo_modulo ?? l.pref}</div>
                         {members > 1 && block.codigoGrupo && <div className="max-w-48 truncate text-[10px] font-normal text-slate-500" title={block.codigoGrupo}>{block.codigoGrupo}</div>}
                       </td>
-                      <td className="text-slate-600">{l.descripcion_es}</td>
-                      <td className="text-right font-medium text-slate-700">{fmtUSD(unitCostoUsd)}</td>
-                      <td className="text-right">{l.cantidad}</td>
-                      <td className="text-right">{fmtUSD(l.precio_unit_usd)}</td>
-                      <td className="text-right">{fmtUSD(l.precio_total_usd)}</td>
-                      <td className="text-right px-4">{fmtCOP(l.precio_total_cop)}</td>
-                      <td className="px-2 whitespace-nowrap text-right">
-                        <button onClick={() => { setEditId(l.id); setShowAdd(false); }} className="text-slate-500 hover:text-slate-900 mr-2" title="Editar módulo">Editar</button>
-                        <button onClick={() => delLinea(l.id)} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button>
+                      <td className="px-3 py-2 text-slate-600 leading-5">{l.descripcion_es}</td>
+                      {columnasPrecio.usd && <td className="px-2 text-right font-medium text-slate-700 whitespace-nowrap">{fmtUSD(unitCostoUsd)}</td>}
+                      {columnasPrecio.cop && <td className="px-2 text-right font-medium text-slate-700 whitespace-nowrap">{fmtCOP(unitCostoCop)}</td>}
+                      <td className="px-2 text-right">{l.cantidad}</td>
+                      {columnasPrecio.sinHerrajes && <>{columnasPrecio.usd && <><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.sinUnitUsd)}</td><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.sinUnitUsd * precio.cantidad)}</td></>}{columnasPrecio.cop && <><td className="px-2 text-right whitespace-nowrap">{fmtCOP(precio.sinUnitCop)}</td><td className="px-3 text-right whitespace-nowrap">{fmtCOP(precio.sinUnitCop * precio.cantidad)}</td></>}</>}
+                      {columnasPrecio.conHerrajes && <>{columnasPrecio.usd && <><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.conUnitUsd)}</td><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.conUnitUsd * precio.cantidad)}</td></>}{columnasPrecio.cop && <><td className="px-2 text-right whitespace-nowrap">{fmtCOP(precio.conUnitCop)}</td><td className="px-3 text-right whitespace-nowrap">{fmtCOP(precio.conUnitCop * precio.cantidad)}</td></>}</>}
+                      <td className="px-3 whitespace-nowrap text-right">
+                        <button onClick={(e) => { e.stopPropagation(); setEditId(l.id); setSelectedLineId(null); setShowAdd(false); }} className="text-slate-500 hover:text-slate-900 mr-2" title="Editar módulo">Editar</button>
+                        <button onClick={(e) => { e.stopPropagation(); delLinea(l.id); }} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button>
                       </td>
                     </tr>
+                    {selectedLineId === l.id && <tr className={`${colorGrupo(block.orden)} border-b border-slate-200`}><td colSpan={totalColumnas} className="px-12 py-3"><div className="mb-2 text-xs font-semibold text-slate-700">Herrajes del módulo</div>{herrajes.length ? <div className="flex flex-wrap gap-2">{herrajes.map((herraje, index) => <span key={`${herraje.rol}-${herraje.codigo ?? ''}-${index}`} className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700">{herraje.rol}{herraje.codigo ? ` · ${herraje.codigo}` : ''} · {Number(herraje.cant)} und.</span>)}</div> : <p className="text-xs text-slate-500">Este módulo no tiene herrajes configurados.</p>}</td></tr>}
+                    {editId === l.id && (
+                      <tr className="border-b border-blue-200 bg-blue-50/40">
+                        <td colSpan={totalColumnas} className="px-6 py-5">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">Editar mueble {l.codigo_modulo ?? l.pref}</p>
+                              <p className="text-xs text-slate-500">Los cambios se aplican a este módulo.</p>
+                            </div>
+                            <button type="button" onClick={() => setEditId(null)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">Cerrar</button>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <AddLineForm
+                              key={l.id}
+                              cocinaId={cocina.id}
+                              tipos={tipos}
+                              tableros={tableros}
+                              cantos={cantos}
+                              presetDefault={presetDefault}
+                              rolesByTipo={rolesByTipo}
+                              perfiles={perfiles}
+                              perfilDefaultId={perfilDefaultId}
+                              herrajesByTipo={herrajesByTipo}
+                              trm={trm}
+                              sistemaMedida={sistemaMedida}
+                              projectDefaults={projectDefaults}
+                              initial={toInicial(l)}
+                              onDone={() => setEditId(null)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   );
                 })}
 
@@ -530,11 +599,11 @@ export default function CocinaCard({
                     <td colSpan={2} className="py-2 text-left">
                       Subtotal grupo {block.etiqueta} · {block.codigoGrupo}
                     </td>
-                    <td className="py-2 text-right font-medium text-slate-700">{fmtUSD(groupTotalCostoUsd)}</td>
+                    {columnasPrecio.usd && <td className="py-2 text-right font-medium text-slate-700">{fmtUSD(groupTotalCostoUsd)}</td>}
+                    {columnasPrecio.cop && <td className="py-2 text-right font-medium text-slate-700">{fmtCOP(groupTotalCostoCop)}</td>}
                     <td className="py-2 text-right font-semibold text-slate-900">{groupTotalCant}</td>
-                    <td className="py-2 text-right text-slate-400 font-normal">-</td>
-                    <td className="py-2 text-right">{fmtUSD(Number(block.totalUsd ?? 0))}</td>
-                    <td className="px-4 py-2 text-right">{fmtCOP(Number(block.totalCop ?? 0))}</td>
+                    {columnasPrecio.sinHerrajes && <>{columnasPrecio.usd && <><td className="py-2 text-right text-slate-400 font-normal">-</td><td className="py-2 text-right">{fmtUSD(groupPrices.sinUsd)}</td></>}{columnasPrecio.cop && <><td className="py-2 text-right text-slate-400 font-normal">-</td><td className="px-3 py-2 text-right">{fmtCOP(groupPrices.sinCop)}</td></>}</>}
+                    {columnasPrecio.conHerrajes && <>{columnasPrecio.usd && <><td className="py-2 text-right text-slate-400 font-normal">-</td><td className="py-2 text-right">{fmtUSD(groupPrices.conUsd)}</td></>}{columnasPrecio.cop && <><td className="py-2 text-right text-slate-400 font-normal">-</td><td className="px-3 py-2 text-right">{fmtCOP(groupPrices.conCop)}</td></>}</>}
                     <td></td>
                   </tr>
                 )}
@@ -546,25 +615,7 @@ export default function CocinaCard({
       </table></div>
 
       <div className="p-4 border-t border-slate-100">
-        {lineaEnEdicion ? (
-          <AddLineForm
-            key={lineaEnEdicion.id}
-            cocinaId={cocina.id}
-            tipos={tipos}
-            tableros={tableros}
-            cantos={cantos}
-            presetDefault={presetDefault}
-            rolesByTipo={rolesByTipo}
-            perfiles={perfiles}
-            perfilDefaultId={perfilDefaultId}
-            herrajesByTipo={herrajesByTipo}
-            trm={trm}
-            sistemaMedida={sistemaMedida}
-            projectDefaults={projectDefaults}
-            initial={toInicial(lineaEnEdicion)}
-            onDone={() => setEditId(null)}
-          />
-        ) : showAdd ? (
+        {showAdd ? (
           <div className="space-y-2">
             <AddLineForm
               cocinaId={cocina.id}
@@ -584,7 +635,7 @@ export default function CocinaCard({
             <button onClick={() => setShowAdd(false)} className="text-sm text-slate-400 hover:underline">Cerrar</button>
           </div>
         ) : (
-          <button onClick={() => setShowAdd(true)} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
+          <button onClick={() => { setEditId(null); setShowAdd(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
         )}
       </div>
 

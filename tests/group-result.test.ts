@@ -91,6 +91,13 @@ test('consolida las asignaciones internas en un único resultado físico y comer
   assert.equal(result.herrajes[0].cant, 2);
 });
 
+test('las piezas compartidas indican solo las posiciones del grupo', () => {
+  const first = breakdown({ piezas: [{ pieza: 'base', rol: 'caja', cant: 0.5, largoIn: 30, anchoIn: 23, areaCm2: 100, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null, origen: 'Grupo A (A1 + A2)', compartida: true, claveFusion: 'base' }] });
+  const second = breakdown({ piezas: [{ pieza: 'base', rol: 'caja', cant: 0.5, largoIn: 30, anchoIn: 23, areaCm2: 100, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null, origen: 'Grupo A (A1 + A2)', compartida: true, claveFusion: 'base' }] });
+  const result = consolidarGrupo({ lineas: [first, second], largoTotalIn: 30, laterales: 3, uniones: 1, piezasContinuas: ['base'] }, { trm: 4000, margen: 0.57 });
+  assert.equal(result.piezas[0].origen, 'Grupo A (A1 + A2)');
+});
+
 test('limpia residuos binarios al sumar participaciones de una pieza continua', () => {
   const row = (cant: number) => breakdown({
     piezas: [{ pieza: 'fondo', rol: 'fondo', cant, largoIn: 60, anchoIn: 30, areaCm2: cant * 1000, cantoLargos: 0, cantoAnchos: 0, cantoCalibre: null }],

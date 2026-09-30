@@ -81,8 +81,13 @@ export function precioUnitario(
 }
 
 export function anchoCodigo(value: number, unidad: UnidadDim, sistema: SistemaMedida): string {
+  // Los formularios calculan el código mientras el usuario escribe. Un campo
+  // vacío o una fracción todavía incompleta produce NaN; no debe llegar al
+  // cálculo de fracciones ni derribar el renderizado de toda la página.
+  if (!Number.isFinite(value)) return '';
   const target: UnidadDim = sistema === 'imperial' ? 'in' : 'cm';
   const converted = convertirExacto(value, unidad, target);
+  if (!Number.isFinite(converted)) return '';
   if (sistema === 'imperial') {
     const denominadorBase = 16;
     let entero = Math.floor(converted);
@@ -92,7 +97,16 @@ export function anchoCodigo(value: number, unidad: UnidadDim, sistema: SistemaMe
       numerador = 0;
     }
     if (numerador === 0) return String(entero);
-    const mcd = (a: number, b: number): number => (b === 0 ? a : mcd(b, a % b));
+    const mcd = (a: number, b: number): number => {
+      let x = Math.abs(Math.trunc(a));
+      let y = Math.abs(Math.trunc(b));
+      while (y !== 0) {
+        const resto = x % y;
+        x = y;
+        y = resto;
+      }
+      return x || 1;
+    };
     const divisor = mcd(numerador, denominadorBase);
     const fraccion = `${numerador / divisor}/${denominadorBase / divisor}`;
     return entero === 0 ? fraccion : `${entero} ${fraccion}`;
@@ -143,6 +157,8 @@ export type CodigoComercialInput = {
   sistemaFrente?: string | null;
   dbTipo?: string | null;
   pcfdCajones?: number | null;
+  door?: number | null;
+  doorHand?: 'L' | 'R' | null;
 };
 
 // Código comercial completo de un módulo. Es la única fuente de verdad del orden
@@ -152,6 +168,9 @@ export type CodigoComercialInput = {
 // (el formulario omitía el alto: `W29-SM` en vez de `W2936-SM`).
 export function codigoComercial(input: CodigoComercialInput): string {
   const { pref, largo, alto, prof, unidad, sistema } = input;
+  const prefNormalizado = String(pref).toUpperCase();
+  const esTw = prefNormalizado === 'TW';
+  const esTwSmPush = prefNormalizado === 'TW-SM-PUSH';
   let codigo = codigoModulo(pref, largo, unidad, sistema);
   // Las nuevas tipologías con sufijo propio (W-SM, OW-MO, W-SM-PUSH) conservan
   // ese sufijo al final: sus medidas variables se insertan antes de él.
@@ -159,16 +178,17 @@ export function codigoComercial(input: CodigoComercialInput): string {
     const guion = codigo.indexOf('-');
     codigo = guion === -1 ? codigo + medida : codigo.slice(0, guion) + medida + codigo.slice(guion);
   };
-  const altoSufijo = incluyeAltoEnCodigo(pref) ? anchoCodigo(alto, unidad, sistema) : '';
+  const altoSufijo = (incluyeAltoEnCodigo(pref) || esTw || esTwSmPush) ? anchoCodigo(alto, unidad, sistema) : '';
   if (altoSufijo) agregarMedida(altoSufijo);
   // Los superiores W de 24 in identifican esa profundidad en su código. La
   // comparación se hace en pulgadas para conservar la regla en cm o mm.
-  const prefNormalizado = String(pref).toUpperCase();
   const esWsm = prefNormalizado === 'WSM';
   const esWProf24 = prefNormalizado.split('-')[0] === 'W'
     && prof != null
     && Math.abs(convertirExacto(prof, unidad, 'in') - 24) < 0.001;
-  const profSufijo = (esWProf24 || (esWsm && prof != null)) ? anchoCodigo(prof!, unidad, sistema) : '';
+  const profSufijo = (esWProf24 || ((esWsm || esTw || esTwSmPush) && prof != null))
+    ? anchoCodigo(prof!, unidad, sistema)
+    : '';
   if (profSufijo) agregarMedida(profSufijo);
   const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
   const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
@@ -178,7 +198,14 @@ export function codigoComercial(input: CodigoComercialInput): string {
   // DB-*-SM / DB-*-SM-FE, por lo que un estado heredado nunca debe convertir
   // DB en `DBXX-...-SM`.
   const bloqueaSmTransversal = prefNormalizado === 'DB';
-  return codigo + dbSufijo + pcfdSufijo + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente));
+  const bblfdSufijo = prefNormalizado === 'BBLFD'
+    && input.door != null
+    && Number.isFinite(input.door)
+    && input.door > 0
+    && input.doorHand
+    ? `-D${anchoCodigo(input.door, unidad, sistema)}${input.doorHand}`
+    : '';
+  return codigo + bblfdSufijo + dbSufijo + pcfdSufijo + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente));
 }
 
 export function codigoGrupo(codigos: string[]): string {
@@ -209,4 +236,87 @@ const PASTELES = [
 
 export function colorGrupo(orden: number): string {
   return PASTELES[Math.abs(orden) % PASTELES.length];
+}
+
+export type HerrajeDetalle = {
+  rol: string;
+  codigo: string | null;
+  cant: number;
+  precio: number;
+  costo: number;
+};
+
+export type PreciosLinea = {
+  unitUsdSin: number;
+  totalUsdSin: number;
+  unitCopSin: number;
+  totalCopSin: number;
+  unitUsdCon: number;
+  totalUsdCon: number;
+  unitCopCon: number;
+  totalCopCon: number;
+  herrajes: HerrajeDetalle[];
+};
+
+export function obtenerPreciosLinea(linea: {
+  cantidad?: number;
+  precio_unit_usd?: number;
+  precio_unit_cop?: number;
+  precio_total_usd?: number;
+  precio_total_cop?: number;
+  costo_sin_herrajes_cop?: number;
+  costo_herrajes_cop?: number;
+  costo_total_cop?: number;
+  config?: { conHerrajes?: boolean; margenOverride?: number } | null;
+  breakdown?: {
+    precioUsd?: number;
+    precioCop?: number;
+    precioConHerrajesUsd?: number;
+    precioConHerrajesCop?: number;
+    herrajes?: HerrajeDetalle[];
+    [key: string]: unknown;
+  } | null;
+}, trm = 4200): PreciosLinea {
+  const cant = Math.max(1, Number(linea.cantidad || 1));
+  const bd = linea.breakdown;
+
+  let unitUsdSin = Number(bd?.precioUsd ?? 0);
+  let unitCopSin = Number(bd?.precioCop ?? 0);
+  let unitUsdCon = Number(bd?.precioConHerrajesUsd ?? 0);
+  let unitCopCon = Number(bd?.precioConHerrajesCop ?? 0);
+
+  const fallbackUnitUsd = Number(linea.precio_unit_usd || 0);
+  const fallbackUnitCop = Number(linea.precio_unit_cop || (fallbackUnitUsd * (trm || 4200)));
+
+  if (!unitUsdCon && !unitCopCon) {
+    unitUsdCon = fallbackUnitUsd;
+    unitCopCon = fallbackUnitCop;
+  }
+
+  if (!unitUsdSin && !unitCopSin) {
+    const costoSin = Number(linea.costo_sin_herrajes_cop || 0);
+    const costoCon = Number(linea.costo_total_cop || 0);
+    if (costoCon > 0 && costoSin > 0 && costoSin < costoCon) {
+      const ratio = costoSin / costoCon;
+      unitUsdSin = redondearMoneda(unitUsdCon * ratio);
+      unitCopSin = redondearMoneda(unitCopCon * ratio);
+    } else {
+      unitUsdSin = unitUsdCon;
+      unitCopSin = unitCopCon;
+    }
+  }
+
+  const herrajes = ((bd?.herrajes ?? []) as HerrajeDetalle[]).filter((h) => Number(h.cant || 0) > 0);
+
+  return {
+    unitUsdSin: redondearMoneda(unitUsdSin),
+    totalUsdSin: redondearMoneda(unitUsdSin * cant),
+    unitCopSin: redondearMoneda(unitCopSin),
+    totalCopSin: redondearMoneda(unitCopSin * cant),
+    unitUsdCon: redondearMoneda(unitUsdCon),
+    totalUsdCon: redondearMoneda(unitUsdCon * cant),
+    unitCopCon: redondearMoneda(unitCopCon),
+    totalCopCon: redondearMoneda(unitCopCon * cant),
+    herrajes,
+  };
 }

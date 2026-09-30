@@ -1098,3 +1098,134 @@ La tipología DB-3-SM-FE reemplaza laterales, traseros y contraparches grandes p
 ## [2026-09-28] update | DB tradicional separado de DB-SM
 
 Los formularios Simulador, Cotizaciones y HDR fuerzan `gola=0`, ocultan el selector SM y omiten el sufijo `-SM` para el tipo DB tradicional y todas sus configuraciones. DB-SM y DB-SM-FE permanecen como familias independientes. La auditoría de Supabase confirmó que las 14 líneas DB existentes ya estaban libres de Gola y del sufijo SM.
+
+## [2026-09-29] update | Agrupación física de tipologías SM y WLD
+
+Se habilitó la agrupación física conservadora de todas las tipologías SM creadas y WLD mediante laterales compartidos y carcasa continua compatible, sin modificar fórmulas ni piezas de producción existentes.
+
+## [2026-09-29] update | Inferiores B sin fondo y continuidad estructural precisa
+
+Se eliminó el fondo de los muebles inferiores con B en el prefijo, se recuperó TB en la profundidad de la base, se hicieron continuos base/refuerzos traseros y opcionales los refuerzos delanteros/Golas compatibles. El despiece agrupado identifica el módulo o grupo de origen y muestra hasta dos decimales en milímetros.
+
+## [2026-09-29] update | Fondo omitido solo en agrupaciones inferiores B-SM
+
+Se corrigió el alcance de 0114: todas las tipologías recuperan su fondo y base originales cuando están separadas. La omisión del fondo y la recuperación de TB ocurren únicamente al agrupar tipologías inferiores cuyo prefijo contiene el segmento SM; los tipos no-SM quedan intactos.
+
+## [2026-09-29] update | Orden y etiquetas compactas del despiece agrupado
+
+Las piezas unificadas aparecen primero con etiquetas compactas `Grupo A (A1 + A2...)`; a continuación se listan, en orden, todas las piezas locales de A1, A2, A3 y los módulos adicionales.
+
+## [2026-09-29] update | Refuerzos y Golas a 80 mm exactos
+
+Los refuerzos y `gola_madera` nominales de 80 mm se normalizan antes del cálculo; el despiece presenta todas las dimensiones con máximo un decimal.
+
+## [2026-09-29] update | Material estructural heredado desde A1
+
+El cálculo agrupado normaliza caja, refuerzos y canto de caja con los valores de A1, evitando el bloqueo por perfiles divergentes. Los grupos B-SM ya no comparan tablero de fondo porque esa pieza se omite durante la agrupación.
+
+## [2026-09-29] update | Nueva tipología TW-SM-PUSH
+
+Se creó la variante activa y agrupable `TW-SM-PUSH` basada en `TW`, con descripción "Mueble superior basculante con push", una única puerta sin importar el ancho y alto de puerta igual a `A - 3,2 mm`. La manija se reemplazó por un dispositivo Push To Open.
+
+## [2026-09-29] update | Holgura horizontal de puerta TW-SM-PUSH
+
+La puerta única de `TW-SM-PUSH` ahora descuenta 3,2 mm tanto del largo como del alto del módulo: `L - 3,2 mm` por `A - 3,2 mm`.
+
+## [2026-09-29] update | Entrepaños en las dos tipologías TW
+
+`TW` y `TW-SM-PUSH` incorporan la pieza `entrepano` gobernada por la regla global de superiores: 0 hasta 16 pulgadas, 1 hasta 24, 2 hasta 36 y 3 por encima.
+
+## [2026-09-29] update | Código dimensional completo de TW-SM-PUSH
+
+El código comercial de `TW-SM-PUSH` incorpora siempre largo, alto y profundidad antes del sufijo; por ejemplo, 30 × 24 × 12 pulgadas produce `TW302412-SM-PUSH`. `TW` tradicional conserva su nomenclatura previa.
+
+## [2026-09-29] update | Código y puerta de TW tradicional
+
+`TW` ahora incorpora largo, alto y profundidad en el código (`TW302412`). Su puerta mide `A + 15,85 mm` y se representa con el borde superior 3,2 mm por debajo del borde superior del lateral.
+
+## [2026-09-29] update | Reemplazo completo de BBLFD por BBLFD-D-L/R
+
+`BBLFD` adopta el despiece de la hoja de ruta suministrada, con campos exclusivos y obligatorios `Door` y mano `L/R`, código `BBLFD<largo>-D<Door><mano>`, una sola puerta móvil y la pieza fija denominada exactamente `blind door`. Los valores sobreviven a edición, recálculo e HDR.
+
+## [2026-09-29] update | Etiqueta única de BBLFD-D-L/R
+
+Los selectores de Simulador, Cotizaciones, HDR y Diseño muestran `BBLFD-D-L/R — Mueble inferior esquinero 1 puerta` sin anteponer nuevamente el prefijo interno `BBLFD`.
+
+## [2026-09-29] update | Nombres y montaje normalizados de BBLFD
+
+Las piezas especiales de `BBLFD` adoptan los nombres estándar `lateral`, `refuerzo_delantero`, `refuerzo_trasero`, `refuerzo_vertical`, `entrepano`, `frente` y `fondo`; solo se conserva `blind door`. El refuerzo vertical lleva 4 tarugos y se visualiza vertical, centrado en la unión de los frentes según la mano L/R.
+
+## [2026-09-29] update | Código BBLFD resistente a Door incompleto
+
+El formateador de medidas ahora ignora valores no finitos y el código BBLFD omite temporalmente el sufijo de puerta hasta que `Door` sea válido, evitando el desbordamiento de pila al cargar o editar el formulario.
+
+## [2026-09-29] update | Ensamble y orientación de refuerzos BBLFD
+
+La base BBLFD queda con 8 tarugos (4 por lado), cada refuerzo con 4 (2 por lado), y el refuerzo vertical se representa perpendicular a los frentes, desde la base hasta debajo del refuerzo delantero horizontal de 100 mm.
+
+## [2026-09-29] update | Ancho paramétrico de blind door BBLFD
+
+La puerta fija `blind door` conserva el alto total del módulo y calcula su ancho como `L - Door - 3,2 mm`, completando el frente junto a la puerta móvil con la holgura indicada.
+
+## [2026-09-29] update | Cotizaciones configurables con fondo o sin fondo
+
+El formulario de proyecto permite elegir `Con fondo` o `Sin fondo`. La segunda opción elimina las piezas de rol fondo y calcula la profundidad de cada pieza `base` como `P-TC`, descontando exactamente un espesor del tablero de caja; la selección se conserva en el proyecto y en sus líneas.
+
+## [2026-09-29] update | Materiales globales separados para B y W
+
+Las cotizaciones guardan bloques independientes de perfil, tableros y cantos para inferiores y superiores. El primer carácter `B` o `W` presente en el prefijo determina automáticamente el bloque aplicado; si aparecen ambos, gana el que esté más a la izquierda.
+
+## [2026-09-29] update | Características del proyecto unificadas
+
+La edición de cabecera y la configuración de materiales se integraron en un único panel denominado `CARACTERÍSTICAS DEL PROYECTO`; se eliminó el desplegable separado de materiales sin cambiar sus mecanismos de persistencia.
+
+## [2026-09-29] update | Desplegable de características reubicado
+
+Se eliminó `editar` junto al nombre. `CARACTERÍSTICAS DEL PROYECTO` aparece ahora como control plegable en texto pequeño y negrita antes de Exportar/Imprimir/Versiones; cerrado mantiene despejado y visible el listado de muebles.
+
+## [2026-09-29] update | Alineación de materiales superiores
+
+El encabezado de materiales superiores incorpora su propio separador y comienza en la primera columna, alineado con el encabezado de módulos inferiores; se eliminó el elemento de cuadrícula que lo desplazaba a la derecha.
+
+## [2026-09-29] update | Regla B/W oculta en la interfaz
+
+Los encabezados muestran solo `Módulos inferiores (B)` y `Muebles superiores (W)`. La prioridad basada en la primera B o W del prefijo permanece como regla interna, sin explicación visible para el usuario.
+
+## [2026-09-29] update | Filas uniformes de materiales globales
+
+Los bloques inferior y superior usan cuadrículas independientes e idénticas: perfil y tres tableros ocupan la primera fila de cuatro columnas; los dos cantos aparecen en una segunda fila sin mezclarse con el bloque siguiente.
+
+## [2026-09-29] update | Orden de campos en características del proyecto
+
+Nombre/cliente ocupan la primera fila; moneda, TRM y margen la segunda. Estado se movió debajo de materiales, inmediatamente antes de Guardar y Cancelar.
+
+## [2026-09-30] update | Versiones manuales e inmutables sin respaldos automáticos
+
+Se rediseñó el flujo de versiones para que opere exclusivamente por demanda manual del usuario ("Guardar versión"). Se eliminaron por completo los respaldos automáticos en restauraciones (`cot_restaurar_version`). Se convirtió el nombre de la versión en un campo obligatorio con validación y trim, deshabilitación de doble clic y confirmación post-transacción. Se añadió visualización de fecha y hora local (`es-CO`), ordenamiento más reciente primero y restauración limpia sin estados residuales. Se aplicó la migración `0123_versiones_manuales_inmutables.sql` y se añadieron pruebas automatizadas en `tests/versiones.test.ts`.
+
+## [2026-09-30] update | Precios con/sin herrajes y TRM automática
+
+Se añadieron columnas seleccionables de precio con y sin herrajes en pantalla, impresión/PDF y Excel; detalle informativo de herrajes por módulo; inclusión obligatoria de herrajes al cotizar; y recálculo completo al cambiar la TRM.
+
+## [2026-09-30] update | Ampliación de la tabla de módulos
+
+Se amplió el detalle de cotización a 1600 px y se asignaron anchos mínimos a descripción, precios y acciones. Se verificó que Editar abre el formulario funcional del módulo y se conservó junto a la X de eliminación.
+
+## [2026-09-30] update | Edición de módulo dentro de su fila
+
+El formulario de edición ahora se expande inmediatamente debajo del mueble seleccionado y deja de mostrarse al final del listado; se sincronizaron los estados de edición, detalle de herrajes y alta de módulos.
+
+## [2026-09-30] update | Base sin fondo usa el espesor real de caja
+
+En grupos B-SM que omiten el fondo, la profundidad de la base ahora se calcula como `P-TC`, reemplazando el descuento fijo heredado; `TC` sale del tablero de caja seleccionado.
+
+## [2026-09-30] update | Monedas seleccionables en columnas de precio
+
+Se añadieron selectores USD/COP que controlan costos, precios unitarios y totales en la tabla de cotización, Excel y la vista de impresión/PDF; permiten mostrar una moneda o ambas y evitan dejar las dos desactivadas.
+
+## [2026-09-30] update | Compatibilidad de piezas continuas heterogéneas
+
+El motor de grupos dejó de exigir conjuntos continuos idénticos: ahora unifica la intersección compatible y conserva localmente las piezas estructurales adicionales, evitando bloquear combinaciones SM válidas.
+
+## [2026-09-30] ingest | Comparativo PB SHORE PRUEBA frente a HDR
+Auditoría de 20 módulos contra 23 PDF: 4 piezas adicionales, diferencias de canto en WLD, DB y TK, y un panel de distinta altura. Informe PDF y CSV por módulo/pieza; cotización y fuentes sin cambios.

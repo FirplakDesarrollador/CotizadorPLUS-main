@@ -16,6 +16,9 @@ type LineaConfig = {
   margenOverride?: number;
   cantoFrentes?: string;
   cantoCaja?: string;
+  door?: number;
+  doorHand?: 'L' | 'R';
+  conFondo?: boolean;
 };
 
 type Linea = {
@@ -35,6 +38,10 @@ type Linea = {
   grupo_id: string | null;
   posicion_grupo: number;
   codigo_modulo: string | null;
+  costo_sin_herrajes_cop?: number;
+  costo_herrajes_cop?: number;
+  costo_total_cop?: number;
+  breakdown?: Record<string, unknown> | null;
   grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
 };
 
@@ -74,7 +81,7 @@ export default async function CotizacionDetallePage({
   return (
     <div className="min-h-screen bg-slate-50">
       <AppHeader email={user?.email} rol={rol} active="cotizaciones" />
-      <main className="mx-auto max-w-6xl px-4 py-6 space-y-5">
+      <main className="mx-auto w-full max-w-[1600px] px-4 py-6 space-y-5">
         <CotizacionDetalleClient
           cabecera={cabecera as Parameters<typeof CotizacionDetalleClient>[0]['cabecera']}
           cocinas={cocinas as Cocina[]}

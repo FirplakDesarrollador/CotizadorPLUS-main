@@ -73,13 +73,21 @@ variante `W-XX` heredaría la regla.
 (`categoria='closet'` en `cot_tipos_mueble`), no un superior de pared.
 
 Los demás superiores por categoría (`S`, `SA`, `SBAS`, `SLOC`, `SMO`, `UW`,
-`TW`) tampoco llevan alto: no hay hoja real que respalde el cambio y ampliarlo
-reescribiría códigos ya guardados en el próximo recálculo.
+`TW`) no llevan alto por regla general. Las dos excepciones explícitas de esta
+familia son `TW` y `TW-SM-PUSH`: ambas incorporan siempre largo, alto y
+profundidad. Por ejemplo, 30 × 24 × 12 pulgadas produce `TW302412` o
+`TW302412-SM-PUSH`, respectivamente.
 
 ## Sistema de medida
 
 `anchoCodigo()` convierte la medida al sistema del proyecto (`imperial` → in,
 `metrico` → cm) sin redondear a anchos de catálogo.
+
+Durante la edición, una medida vacía o una fracción incompleta puede ser
+temporalmente `NaN`. `anchoCodigo()` devuelve una cadena vacía para cualquier
+valor no finito y `BBLFD` omite el sufijo `-D...L/R` hasta que `Door` sea un
+número positivo válido. Así, un estado parcial del formulario no interrumpe el
+renderizado del Simulador.
 
 - **Cotizaciones**: el sistema viene del proyecto (`obtenerSistema()`).
 - **HDR**: fijo en `imperial`.

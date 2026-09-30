@@ -35,6 +35,18 @@ La agrupación debe reflejarse en despiece, costo, precio, UI, impresión y Exce
 - Los grupos no atraviesan cocinas ni proyectos.
 - Copiar a otra cocina crea una línea independiente con la siguiente letra disponible.
 - Una línea agrupada exige `cantidad = 1`; cantidades mayores deben separarse en líneas.
+- En el despiece consolidado se listan primero todas las piezas unificadas y
+  después las piezas locales por módulo (`A1`, `A2`, `A3`...). Las piezas
+  compartidas muestran solo posiciones, por ejemplo `Grupo A (A1 + A2 + A3)`;
+  los códigos comerciales permanecen únicamente en las piezas locales.
+- El despiece presenta dimensiones con máximo un decimal. Los refuerzos y
+  `gola_madera` nominales de 80 mm se normalizan a 80 mm exactos antes de
+  calcular área, canto y costo; no se redondean únicamente en pantalla.
+- Al calcular un grupo, A1 define automáticamente el tablero de `caja`, el de
+  `refuerzo` y el canto de caja para todos los integrantes. Esto corrige estados
+  persistidos o cambios de perfil incompatibles sin alterar los materiales de
+  frente. En grupos B-SM no se compara el tablero de fondo porque esa pieza se
+  omite temporalmente.
 
 ### 2.2 Código individual y agrupado
 
@@ -78,6 +90,9 @@ La plantilla declarará el comportamiento; el motor no lo inferirá solo por nom
 - `continua_grupo`: base, tapa, refuerzos estructurales y fondo homologables.
 - `local`: entrepaños, gavetas, traseros de gaveta y piezas exclusivas.
 - `frente`: puertas y frentes; siempre individuales.
+- `continua_opcional`: refuerzos delanteros y Golas que solo se fusionan cuando
+  todos los módulos conservan cantidad, sección, material, canto, orientación
+  y posición de montaje; si no, permanecen locales sin bloquear el grupo.
 
 Los entrepaños permanecen separados porque una pieza continua colisionaría con divisiones de altura completa. Una pieza continua solo se fusiona si es homologable en todos los miembros; nunca atraviesa únicamente parte del grupo.
 
@@ -102,6 +117,14 @@ Fórmulas confirmadas:
 - Frentes y piezas locales: conservan su fórmula con el ancho individual.
 
 No se reemplazarán constantes mediante búsqueda textual. Cada pieza agrupable tendrá una fórmula de grupo explícita para no confundir descuentos estructurales con ajustes especiales.
+
+`0115_restaurar_fondos_y_limitar_sm_agrupado.sql` corrige el alcance de `0114`:
+las plantillas individuales conservan siempre su fondo y la profundidad original
+de base. Solo al calcular un grupo de dos o más módulos, cada integrante inferior
+con `B` y segmento comercial `SM` omite temporalmente el fondo y reemplaza la
+profundidad de su base por `P-TC`. `TC` es el espesor real del tablero elegido
+para caja; no se conserva ningún descuento fijo ni el espesor del tablero de
+fondo. Los tipos no-SM permanecen intactos.
 
 ### 4.3 Cantos y fijaciones
 
@@ -184,6 +207,10 @@ Invariantes:
 - `modo_agrupacion`: `local | lateral_compartido | continua_grupo | frente`.
 - `clave_fusion`: homologa piezas entre tipos diferentes.
 - `formula_largo_grupo`: fórmula explícita con `LG` y `TC`.
+- El conjunto continuo se obtiene por intersección entre los módulos, no por
+  igualdad estricta de sus plantillas. Una pieza se unifica cuando existe en
+  todos; tapas, fondos o refuerzos adicionales de ciertas tipologías permanecen
+  locales y no bloquean una agrupación válida.
 - Metadatos de contacto cuando una fijación no se derive de dos extremos.
 
 ### 7.4 Grupos y líneas
