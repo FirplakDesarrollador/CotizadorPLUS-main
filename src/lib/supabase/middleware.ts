@@ -24,7 +24,8 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isAuthRoute = path.startsWith('/login') || path.startsWith('/auth');
+  const isPasswordRecoveryRoute = path.startsWith('/recuperar-contrasena') || path.startsWith('/actualizar-contrasena');
+  const isAuthRoute = path.startsWith('/login') || path.startsWith('/auth') || isPasswordRecoveryRoute;
   const isPublicAsset = path.startsWith('/_next') || path === '/favicon.ico';
 
   if (!user && !isAuthRoute && !isPublicAsset) {
@@ -32,7 +33,7 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
-  if (user && isAuthRoute) {
+  if (user && isAuthRoute && !isPasswordRecoveryRoute && !path.startsWith('/auth/callback')) {
     const url = request.nextUrl.clone();
     url.pathname = '/cotizador';
     return NextResponse.redirect(url);

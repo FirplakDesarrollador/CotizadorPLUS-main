@@ -53,7 +53,8 @@ El proyecto utiliza el App Router (`app/`) para definir las secciones principale
 - **`cotizaciones/`**: Historial y gestión de cotizaciones ya guardadas.
 - **`admin/`**: Panel administrativo para gestionar parámetros globales, reglas y catálogos.
 - **`hdr/`**: Buscador de despiece por código de mueble (ej. `SBFD30`, `W2436`, `DB18-1S`). Solo admin, ver §5.
-- **`login/`**: Manejo de autenticación.
+- **`login/`**: Inicio de sesión con correo y contraseña mediante Supabase Auth.
+- **`recuperar-contrasena/`**, **`auth/callback/`** y **`actualizar-contrasena/`**: recuperación de contraseña con enlace PKCE de Supabase. El callback intercambia el `code` por una sesión temporal, el formulario actualiza la clave y cierra esa sesión para volver al login. Estas rutas están exceptuadas de la redirección normal del proxy mientras se completa el flujo.
 - **`manual/`**: Documentación o guías de uso para el usuario final.
 
 ## 2. Gestión de Estado (`src/store/simuladorStore.ts`)
