@@ -7,12 +7,19 @@ GAVETA`. Usa `BMW-1` solo como guía estructural; no modifica su tipo, piezas,
 reglas ni herrajes. El código comercial inserta el largo tras la familia: a 36
 pulgadas produce `BOMH36-1`.
 
+El nombre visible único en todos los selectores es `BOMH-1 Mueble inferior
+medio horno`; los formularios no anteponen nuevamente el prefijo.
+
+La tipología heredada `BOMH — Base para microondas` fue eliminada del catálogo
+después de comprobar que no tenía líneas de cotización asociadas. `BOMH-1` es
+la única tipología BOMH disponible.
+
 ## Despiece de referencia
 
 La carcasa conserva base de 884,4×585,6 mm, dos laterales de 762×609,6 mm, un
 refuerzo delantero y dos traseros de 884,4×80 mm, y un `entrepano_fijo` igual a
 la base. La gaveta inferior usa `base_gaveta` de 809,4×492 mm,
-`trasero_gaveta` de 797,4×68 mm y `frente_gaveta` de 332,8×911,2 mm. El fondo
+`trasero_gaveta` de 797,4×183 mm y `frente_gaveta` de 332,8×911,2 mm. El fondo
 inferior mide 332,8×898,4 mm.
 
 ## Hueco libre del horno
@@ -37,3 +44,8 @@ Declara una gaveta, cero puertas, un entrepaño fijo y cuatro patas. Incluye rie
 Tandem, una manija, cuatro patas y dieciséis tornillos. La gaveta y el fondo se
 montan en la parte inferior; los frentes laterales del horno quedan sobre el
 entrepano fijo y separados por el hueco paramétrico.
+
+El `refuerzo_delantero` conserva el corte `L-30 mm` × 80 mm, pero se monta de
+canto en el plano frontal `XZ`, entre los laterales y contra la esquina
+superior. `frente_izq` y `frente_der` quedan inmediatamente debajo de su cara
+inferior mediante `z=A-80-H`.

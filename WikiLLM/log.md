@@ -1345,3 +1345,19 @@ Se ajustó exclusivamente la plantilla `WLD.entrepano` para aplicar canto a dos 
 ## [2026-10-01] ingest | Nueva tipología BOMH-1 con hueco de horno paramétrico
 
 Se creó `BOMH-1` desde la hoja BOMH36-1 usando BMW-1 únicamente como guía y sin editarla. La plantilla reproduce trece piezas físicas, una gaveta inferior y los herrajes de la familia. El Simulador y las cotizaciones incorporan `Largo libre del horno` y `Alto libre del horno`, inicialmente 219,2×153,2 mm. `frente_izq` y `frente_der` conservan el alto solicitado y reparten simétricamente el ancho restante para mantener exactamente el hueco libre indicado.
+
+## [2026-10-01] update | Nombre visible definitivo de BOMH-1
+
+La tipología se muestra como `BOMH-1 Mueble inferior medio horno` en Simulador, cotizaciones, HDR y Diseño. Se evita anteponer nuevamente el prefijo para que el nombre aparezca una sola vez.
+
+## [2026-10-01] update | Tipología BOMH heredada eliminada
+
+Se comprobó que `BOMH — Base para microondas` tenía cero líneas de cotización asociadas y se eliminó completamente del catálogo junto con sus plantillas dependientes. `BOMH-1 Mueble inferior medio horno` permanece activa como la única tipología BOMH.
+
+## [2026-10-01] update | Trasero y montaje frontal de BOMH-1
+
+El `trasero_gaveta` de BOMH-1 cambió de 68 a 183 mm de alto. El `refuerzo_delantero` conserva 884,4×80 mm en la referencia de 36 pulgadas, pero pasa del plano horizontal XY al plano frontal XZ, montado de canto entre los laterales y contra la esquina superior. `frente_izq` y `frente_der` se ubican inmediatamente debajo del refuerzo con `z=A-80-H`, conservando las dimensiones libres paramétricas del horno.
+
+## [2026-10-01] update | Recuperación de contraseña con Supabase Auth
+
+Se añadió el flujo PKCE completo desde el login: solicitud de correo, callback seguro para intercambiar el código, validación del enlace, actualización de la contraseña y cierre de la sesión temporal. El proxy permite las pantallas públicas de recuperación sin desproteger el resto de la aplicación.
