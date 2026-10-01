@@ -13428,7 +13428,7 @@
 {
 "id": "0897fbae-b6b0-40e6-8ac4-9ffc788d2963",
 "tipo_mueble_id": "e5cd2dc2-94f3-4c40-9dfa-65795190f094",
-"nombre": "entrepano_superior",
+"nombre": "entrepano_fijo",
 "rol_tablero": "refuerzo",
 "formula_cantidad": "1",
 "formula_largo": "L-1.181102",

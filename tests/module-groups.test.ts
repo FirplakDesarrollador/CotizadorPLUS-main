@@ -15,12 +15,17 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
-import { DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb } from '@/lib/muebles';
+import { DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb, usaPuertaParametrica } from '@/lib/muebles';
 
 test('clasifica materiales por la primera B o W del prefijo', () => {
   assert.equal(familiaMaterialPorPrefijo('BBLFD'), 'inferior');
   assert.equal(familiaMaterialPorPrefijo('W'), 'superior');
   assert.equal(familiaMaterialPorPrefijo('WBL'), 'superior');
+  assert.equal(familiaMaterialPorPrefijo('TW'), 'superior');
+  assert.equal(familiaMaterialPorPrefijo('TW-SM-PUSH'), 'superior');
+  assert.equal(esMuebleSuperior('TW-SM-PUSH'), true);
+  assert.equal(esMuebleSuperior('WBL-D-L/R-SM'), true);
+  assert.equal(usaPuertaParametrica('WBL-D-L/R-SM'), true);
   assert.equal(familiaMaterialPorPrefijo('B-W'), 'inferior');
   assert.equal(familiaMaterialPorPrefijo('PN'), 'inferior');
 });
@@ -114,6 +119,8 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'W', largo: 30, alto: 20, prof: 24 }), 'W302024');
   assert.equal(codigoComercial({ ...base, pref: 'W', largo: 30, alto: 20, prof: 12 }), 'W3020');
   assert.equal(codigoComercial({ ...base, pref: 'BFD-SM', largo: 16, alto: 30 }), 'BFD16-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'BMW-1', largo: 36, alto: 30, prof: 24 }), 'BMW36-1');
+  assert.equal(codigoComercial({ ...base, pref: 'BMW-1-FE', largo: 36, alto: 30, prof: 24 }), 'BMW36-1-FE');
   assert.equal(codigoComercial({ ...base, pref: 'SBFD-SM', largo: 16, alto: 30 }), 'SBFD16-SM');
   assert.equal(codigoComercial({ ...base, pref: 'SB-SM', largo: 30, alto: 30 }), 'SB30-SM');
   assert.equal(codigoComercial({ ...base, pref: 'OW-MO', largo: 24, alto: 25, prof: 12 }), 'OW2425-MO');
@@ -126,6 +133,8 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'BBLFD', largo: 42, alto: 30, prof: 24, door: 17.875, doorHand: 'R' }), 'BBLFD42-D17 7/8R');
   assert.equal(codigoComercial({ ...base, pref: 'BBLFD', largo: 42, alto: 30, prof: 24, door: 17.875, doorHand: 'L' }), 'BBLFD42-D17 7/8L');
   assert.equal(codigoComercial({ ...base, pref: 'BBLFD', largo: 42, alto: 30, prof: 24, door: Number.NaN, doorHand: 'R' }), 'BBLFD42');
+  assert.equal(codigoComercial({ ...base, pref: 'WBL-D-L/R-SM', largo: 38, alto: 40, prof: 12, door: 22.875, doorHand: 'L' }), 'WBL3840-D22 7/8L-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'WBL-D-L/R-SM', largo: 38, alto: 40, prof: 12, door: 22.875, doorHand: 'R' }), 'WBL3840-D22 7/8R-SM');
   assert.equal(codigoComercial({ ...base, pref: 'WSM', largo: 9, alto: 36, prof: 14 }), 'WSM93614');
   assert.equal(codigoComercial({ ...base, pref: 'WER', largo: 24, alto: 36, sistemaFrente: 'gola' }), 'WER2436-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UW', largo: 12, alto: 36 }), 'UW1236');
@@ -152,6 +161,53 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, pcfdCajones: 2 }), 'PCFD12-2OP-PUSH');
   // Sistema métrico.
   assert.equal(codigoComercial({ pref: 'W', largo: 73.66, alto: 91.44, unidad: 'cm', sistema: 'metrico', sistemaFrente: 'gola' }), 'W73.6691.44-SM');
+});
+
+test('codigoComercial agrega 18MM solo cuando caja y frente son de 18mm', () => {
+  const base = { pref: 'WSM', largo: 25, alto: 15, prof: 14, unidad: 'in', sistema: 'imperial' } as const;
+  assert.equal(codigoComercial({ ...base, espesorCajaMm: 18, espesorFrenteMm: 18 }), 'WSM251514-18MM');
+  assert.equal(codigoComercial({ ...base, espesorCajaMm: 15, espesorFrenteMm: 18 }), 'WSM251514');
+  assert.equal(codigoComercial({ ...base, espesorCajaMm: 18, espesorFrenteMm: 15 }), 'WSM251514');
+  assert.equal(codigoComercial({ ...base, espesorCajaMm: null, espesorFrenteMm: 18 }), 'WSM251514');
+  assert.equal(codigoComercial({
+    ...base, pref: 'W-SM-PUSH', largo: 33, alto: 21, prof: 24,
+    espesorCajaMm: 18, espesorFrenteMm: 18,
+  }), 'W332124-SM18-PUSH');
+  assert.equal(codigoComercial({
+    ...base, pref: 'W', largo: 26, alto: 36, prof: 12, sistemaFrente: 'gola',
+    espesorCajaMm: 18, espesorFrenteMm: 18,
+  }), 'W2636-SM18');
+  assert.equal(codigoComercial({
+    ...base, pref: 'WLD', largo: 30, alto: 30, prof: 12, sistemaFrente: 'gola',
+    espesorCajaMm: 18, espesorFrenteMm: 18,
+  }), 'WLD3030-SM18');
+  assert.equal(codigoComercial({
+    ...base, pref: 'TW-SM-PUSH', largo: 30, alto: 24, prof: 12,
+    espesorCajaMm: 18, espesorFrenteMm: 18,
+  }), 'TW302412-SM18-PUSH');
+  assert.equal(codigoComercial({
+    ...base, pref: 'TW', largo: 30, alto: 24, prof: 12, sistemaFrente: 'gola',
+    espesorCajaMm: 18, espesorFrenteMm: 18,
+  }), 'TW302412-SM18');
+});
+
+test('codigoComercial agrega 15MM con las mismas reglas de integración SM', () => {
+  const base = { pref: 'WSM', largo: 25, alto: 15, prof: 14, unidad: 'in', sistema: 'imperial' } as const;
+  assert.equal(codigoComercial({ ...base, espesorCajaMm: 15, espesorFrenteMm: 15 }), 'WSM251514-15MM');
+  assert.equal(codigoComercial({ ...base, pref: 'B', largo: 30, alto: 34.5, espesorCajaMm: 15, espesorFrenteMm: 15 }), 'B30-15MM');
+  assert.equal(codigoComercial({
+    ...base, pref: 'W-SM-PUSH', largo: 33, alto: 21, prof: 24,
+    espesorCajaMm: 15, espesorFrenteMm: 15,
+  }), 'W332124-SM15-PUSH');
+  assert.equal(codigoComercial({
+    ...base, pref: 'TW-SM-PUSH', largo: 30, alto: 24, prof: 12,
+    espesorCajaMm: 15, espesorFrenteMm: 15,
+  }), 'TW302412-SM15-PUSH');
+  assert.equal(codigoComercial({
+    ...base, pref: 'WBL-D-L/R-SM', largo: 38, alto: 40, prof: 12, door: 22.875, doorHand: 'L',
+    espesorCajaMm: 15, espesorFrenteMm: 15,
+  }), 'WBL3840-D22 7/8L-SM15');
+  assert.equal(codigoComercial({ ...base, espesorCajaMm: 15, espesorFrenteMm: 18 }), 'WSM251514');
 });
 
 test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {

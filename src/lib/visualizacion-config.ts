@@ -13,7 +13,7 @@ export type MontajeConfig = {
   plano?: PlanoMontaje;
   intercambiar?: boolean;
   x?: string; y?: string; z?: string;
-  giro?: 0 | 90 | 180 | 270 | string;
+  giro?: number | string;
   confirmado?: boolean;
   nota?: string;
 };
@@ -30,7 +30,7 @@ export function validarMontaje(value: unknown): MontajeConfig | null {
   if (v.version != null && v.version !== 1) throw new Error('Versión de montaje no soportada.');
   if (v.funcion != null && !FUNCIONES_MONTAJE.includes(v.funcion as FuncionMontaje)) throw new Error('Función de montaje inválida.');
   if (v.plano != null && !['XY','XZ','YZ'].includes(String(v.plano))) throw new Error('Plano inválido.');
-  if (v.giro != null && typeof v.giro !== 'string' && ![0,90,180,270].includes(Number(v.giro))) throw new Error('Giro inválido.');
+  if (v.giro != null && typeof v.giro !== 'string' && (!Number.isFinite(v.giro) || Math.abs(Number(v.giro)) > 360)) throw new Error('Giro inválido.');
   for (const key of ['confirmado','intercambiar']) if (v[key] != null && typeof v[key] !== 'boolean') throw new Error(`${key} debe ser booleano.`);
   for (const key of ['x','y','z','giro']) {
     if (v[key] == null || v[key] === '') continue;

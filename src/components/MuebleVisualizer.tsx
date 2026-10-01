@@ -15,11 +15,18 @@ function color(p:PanelVisual) {
   return '#718096';
 }
 function corners(p:PanelVisual, opening:number, drawer:string): number[][] {
-  const angle=p.giro*Math.PI/180, c=Math.round(Math.cos(angle)),s=Math.round(Math.sin(angle));
+  const angle=p.giro*Math.PI/180, c=Math.cos(angle),s=Math.sin(angle);
   const dy=p.cajon && p.cajon===drawer?-opening:0;
   return [0,p.h].flatMap(z=>[[0,0],[p.w,0],[p.w,p.d],[0,p.d]].map(([x,y])=>[p.x+x*c-y*s,p.y+y*c+x*s+dy,p.z+z]));
 }
 const project=(c:number[],view:View)=>view==='front'?[c[0],-c[2]]:view==='side'?[c[1],-c[2]]:[c[0],-c[1]];
+function convexHull(points:number[][]) {
+  const unique=[...new Map(points.map(([x,y])=>[`${x}:${y}`,[x,y]])).values()].sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  if(unique.length<=2) return unique;
+  const cross=(o:number[],a:number[],b:number[])=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const half=(source:number[][])=>{const out:number[][]=[];for(const point of source){while(out.length>=2&&cross(out.at(-2)!,out.at(-1)!,point)<=0)out.pop();out.push(point);}return out;};
+  return [...half(unique).slice(0,-1),...half([...unique].reverse()).slice(0,-1)];
+}
 
 function Drawing({scene,view,selected,onSelect,solid,opening,drawer}:{scene:EscenaMueble;view:View;selected:string;onSelect:(id:string)=>void;solid:boolean;opening:number;drawer:string}) {
   const ref=useRef<HTMLDivElement>(null);
@@ -42,14 +49,12 @@ function Drawing({scene,view,selected,onSelect,solid,opening,drawer}:{scene:Esce
   const chosen=shapes.find(s=>s.p.id===selected);
   const render=(shape:typeof shapes[number],highlight=false)=>{
     const {p,points}=shape;
-    const xs=points.map(v=>v[0]),ys=points.map(v=>v[1]);
-    const x=ox+Math.min(...xs)*scale,y=oy+Math.min(...ys)*scale;
-    const w=Math.max(.8,(Math.max(...xs)-Math.min(...xs))*scale),h=Math.max(.8,(Math.max(...ys)-Math.min(...ys))*scale);
+    const polygon=convexHull(points).map(([x,y])=>`${ox+x*scale},${oy+y*scale}`).join(' ');
     const faded=selected&&selected!==p.id;
     return <g key={`${p.id}:${highlight}`} onClick={()=>onSelect(p.id)} className="cursor-pointer">
       <title>{p.nombre} · {p.pref} · {mm(p.largo)} × {mm(p.ancho)} × {mm(p.espesor)} mm</title>
-      {solid&&!highlight&&<rect x={x} y={y} width={w} height={h} fill="white"/>}
-      <rect x={x} y={y} width={w} height={h} fill={color(p)} fillOpacity={highlight?.48:solid?.3:faded?.02:.1} stroke={color(p)} strokeOpacity={faded&&!highlight?.15:.85} strokeWidth={highlight?2:1}/>
+      {solid&&!highlight&&<polygon points={polygon} fill="white"/>}
+      <polygon points={polygon} fill={color(p)} fillOpacity={highlight?.48:solid?.3:faded?.02:.1} stroke={color(p)} strokeOpacity={faded&&!highlight?.15:.85} strokeWidth={highlight?2:1}/>
     </g>;
   };
   return <div ref={ref} className="min-w-0">

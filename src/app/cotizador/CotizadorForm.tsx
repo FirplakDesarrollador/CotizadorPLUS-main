@@ -16,7 +16,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, permiteRemovible, permiteTipologiaDb, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
@@ -164,6 +164,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const setDoor = (v: string) => setStore({ door: v });
   const doorHand = store.doorHand ?? 'R';
   const setDoorHand = (v: 'L' | 'R') => setStore({ doorHand: v });
+  const hornoLargo = store.hornoLargo ?? '';
+  const setHornoLargo = (v: string) => setStore({ hornoLargo: v });
+  const hornoAlto = store.hornoAlto ?? '';
+  const setHornoAlto = (v: string) => setStore({ hornoAlto: v });
 
   const result = store.result;
 
@@ -189,7 +193,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         }
         continue;
       }
-      options.push({ value: tipo.id, label: tipo.pref === 'BBLFD' ? (tipo.nombre_es ?? tipo.pref) : `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
+      options.push({ value: tipo.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS'].includes(tipo.pref) ? (tipo.nombre_es ?? tipo.pref) : `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
     }
     return options;
   }, [tipos]);
@@ -206,7 +210,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     ? DB_SM_GROUP_VALUE
     : usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
   const esPCFD = tipoPref === 'PCFD';
-  const esBBLFD = tipoPref === 'BBLFD';
+  const usaDoor = usaPuertaParametrica(tipoPref);
+  const usaHuecoHorno = usaHuecoHornoParametrico(tipoPref);
   const usaRiel = (usaTipologiaDb && conHerrajes) || esPCFD;
   function handleTipoChange(v: string) {
     const tipoSeleccionado = v === DB_SM_GROUP_VALUE
@@ -230,6 +235,13 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setPcfdConfig('');
     setDoor('');
     setDoorHand('R');
+    if (usaHuecoHornoParametrico(tipoSeleccionado.pref)) {
+      setHornoLargo(String(convertir(219.2, 'mm', unidad)));
+      setHornoAlto(String(convertir(153.2, 'mm', unidad)));
+    } else {
+      setHornoLargo('');
+      setHornoAlto('');
+    }
     if (tipoSeleccionado.pref === 'W') setProf(convertir(12, 'in', unidad));
     if (tipoSeleccionado.pref === 'WSM') setProf(convertir(14, 'in', unidad));
     if (tipoSeleccionado.pref === 'F' || tipoSeleccionado.pref === 'DB') setSistemaFrente('manija');
@@ -260,6 +272,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setAlto((v) => convertir(v, unidad, nu));
     setProf((v) => convertir(v, unidad, nu));
     if (door !== '' && Number.isFinite(parseMedida(door))) setDoor(String(convertir(parseMedida(door), unidad, nu)));
+    if (hornoLargo !== '' && Number.isFinite(parseMedida(hornoLargo))) setHornoLargo(String(convertir(parseMedida(hornoLargo), unidad, nu)));
+    if (hornoAlto !== '' && Number.isFinite(parseMedida(hornoAlto))) setHornoAlto(String(convertir(parseMedida(hornoAlto), unidad, nu)));
     setUnidad(nu);
   }
 
@@ -282,6 +296,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (modulo.zocalo !== '') overrides.zocalo = Number(modulo.zocalo);
     if (modulo.nbarras !== '') overrides.n_barras = Number(modulo.nbarras);
     const pref = tipos.find((tipo) => tipo.id === modulo.tipoId)?.pref ?? '';
+    if (usaHuecoHornoParametrico(pref)) {
+      overrides.horno_largo = convertir(parseMedida(modulo.hornoLargo), unidad, 'in');
+      overrides.horno_alto = convertir(parseMedida(modulo.hornoAlto), unidad, 'in');
+    }
     if (permiteTipologiaDb(pref) && modulo.dbTipo) {
       const dbT = DB_TIPOLOGIAS.find((x) => x.key === modulo.dbTipo);
       overrides.n_cajones_pequenos = dbT?.npeq ?? 0;
@@ -309,8 +327,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       cantoFrentes: modulo.cantoFrentes || undefined,
       cantoCaja: modulo.cantoCaja || undefined,
       rielCodigo: (permiteTipologiaDb(pref) || pref === 'PCFD') && modulo.rielCodigo ? modulo.rielCodigo : undefined,
-      door: pref === 'BBLFD' && modulo.door !== '' ? parseMedida(modulo.door) : undefined,
-      doorHand: pref === 'BBLFD' ? modulo.doorHand : undefined,
+      door: usaPuertaParametrica(pref) && modulo.door !== '' ? parseMedida(modulo.door) : undefined,
+      doorHand: usaPuertaParametrica(pref) ? modulo.doorHand : undefined,
     };
   }
 
@@ -510,8 +528,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       sistemaFrente: valores.sistemaFrente,
       dbTipo: permiteTipologiaDb(pref) ? valores.dbTipo : null,
       pcfdCajones: pref === 'PCFD' ? Number(valores.ncajones) : null,
-      door: pref === 'BBLFD' && valores.door !== '' ? parseMedida(valores.door) : null,
-      doorHand: pref === 'BBLFD' ? valores.doorHand : null,
+      door: usaPuertaParametrica(pref) && valores.door !== '' ? parseMedida(valores.door) : null,
+      doorHand: usaPuertaParametrica(pref) ? valores.doorHand : null,
+      espesorCajaMm: tableros.find((tablero) => tablero.codigo === preset.caja)?.espesor_mm,
+      espesorFrenteMm: tableros.find((tablero) => tablero.codigo === preset.frente)?.espesor_mm,
     });
   };
 
@@ -641,9 +661,23 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
           </Field>
         </div>
 
-        {esBBLFD && (
+        {usaHuecoHorno && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 space-y-2">
+            <div className="grid grid-cols-2 gap-2 items-end">
+              <Field label="Largo libre del horno">
+                <input type="text" required value={hornoLargo} onChange={(e) => setHornoLargo(e.target.value)} placeholder="219.2" className="inp" />
+              </Field>
+              <Field label="Alto libre del horno">
+                <input type="text" required value={hornoAlto} onChange={(e) => setHornoAlto(e.target.value)} placeholder="153.2" className="inp" />
+              </Field>
+            </div>
+            <p className="text-xs text-amber-900">Ingresa las medidas libres que necesita el horno para quedar empotrado, en la unidad seleccionada.</p>
+          </div>
+        )}
+
+        {usaDoor && (
           <div className="grid grid-cols-2 gap-2 items-end">
-            <Field label="Door"><input type="text" required value={door} onChange={(e) => setDoor(e.target.value)} placeholder="17 7/8" className="inp" /></Field>
+            <Field label={tipoPref === 'BBLFD' ? 'Door' : 'Puerta'}><input type="text" required value={door} onChange={(e) => setDoor(e.target.value)} placeholder="22 7/8" className="inp" /></Field>
             <Field label="Apertura">
               <select value={doorHand} onChange={(e) => setDoorHand(e.target.value as 'L' | 'R')} className="inp">
                 <option value="L">L · Bisagras izquierda</option>

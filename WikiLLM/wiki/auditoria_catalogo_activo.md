@@ -154,15 +154,35 @@ descripción **Mueble superior basculante con push**. La puerta usa ancho
 La variante elimina la manija, conserva el herraje funcional heredado de `TW` y
 agrega un dispositivo `PUSHOPENHBM237`. Queda activa y agrupable como tipología SM.
 
-Tanto `TW` como `TW-SM-PUSH` materializan la regla global de entrepaños de
-superiores mediante una pieza local: `0` hasta 16 pulgadas de alto, `1` hasta
-24, `2` hasta 36 y `3` por encima. Cada entrepaño usa largo
-`L - 2*TC - 1 mm` y la profundidad estándar vigente de la familia `W`.
+Tanto `TW` como `TW-SM-PUSH` materializan la regla de entrepaños de superiores
+mediante una pieza local: `0` hasta 17 pulgadas de alto, `1` de 18 a 27, `2` de
+28 a 40 y `3` por encima de 40. Cada entrepaño usa largo `L - 2*TC - 1 mm` y
+la profundidad estándar vigente de la familia `W`.
+
+### Regla de entrepaños para superiores W
+
+La migración `0124_regla_entrepanos_superiores.sql` unifica `W`, `WLD`, `W-SM`,
+`W-SM-PUSH`, `WSM`, `OW`, `TW` y `TW-SM-PUSH`: `0` entrepaños hasta 17 pulgadas
+de alto, `1` entre 18 y 27, `2` entre 28 y 40, y `3` por encima de 40. Las
+plantillas de esos ocho tipos calculan su cantidad con
+`n_entrepanos`; esto elimina el valor fijo que conservaba `WLD` y la regla fija
+de `OW`. `UW` mantiene expresamente su configuración exclusiva de tres piezas
+para `UW1336`. Las variantes especiales no incluidas en la solicitud (`OW-MO`,
+`W-SM-LOC`) conservan sus reglas propias.
 
 La puerta de `TW` usa alto de corte `A + 15,85 mm`. En la visualización, su
 borde superior se ubica 3,2 mm por debajo del borde superior del lateral
 mediante la coordenada `Z = A - 3,2 - H`; por consecuencia, el excedente bajo
 el lateral es 19,05 mm. Esta regla no modifica la puerta de `TW-SM-PUSH`.
+
+### Canto longitudinal de refuerzos y Gola de madera
+
+La migración `0127_cantos_largos_refuerzos_y_gola.sql` normaliza todas las
+plantillas cuyo nombre contiene `refuerzo` y las piezas `gola_madera`: todas
+declaran `cantos.largos = 2`. La actualización conserva calibre, cantos cortos,
+`forceCalibre` y los demás metadatos existentes. El alcance incluye refuerzos
+delanteros, traseros, horizontales, verticales, centrales, de profundidad,
+bisagra y variantes removibles presentes o futuras que sigan la nomenclatura.
 
 ## 2-bis. Apartado original: por qué no se podía arreglar en bloque
 
@@ -238,3 +258,8 @@ no `largo` / `ancho` — usarlos mal da 60 falsos positivos de "NaN".
 
 Relacionado: [Motor de Cálculo](motor_calculo.md), [Esquema de Base de Datos](esquema_base_datos.md),
 [Validación contra hojas de ruta](validacion_hojas_de_ruta.md).
+## Ajuste de cantos WLD
+
+Los `entrepano` de la tipología exacta `WLD` llevan canto en sus cuatro lados:
+dos lados largos y dos lados anchos. El ajuste no se extiende a otras familias
+de muebles superiores.

@@ -2,10 +2,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { previewAction } from '../admin/diseno/actions';
 import { modulosDeCotizacionAction, type ModuloHDR } from './actions';
-import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, SISTEMAS_FRENTE, esTipologiaDbSmFe, permiteTipologiaDb, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, SISTEMAS_FRENTE, esTipologiaDbSmFe, permiteTipologiaDb, usaPuertaParametrica, type SistemaFrente } from '@/lib/muebles';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
-import { codigoComercial } from '@/lib/module-groups';
+import { codigoComercial, parseMedida } from '@/lib/module-groups';
 import type { CotizarResult } from '@/lib/cotizar';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
@@ -22,6 +22,8 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>('in');
   const [dbTipo, setDbTipo] = useState('');
   const [sistemaFrente, setSistemaFrente] = useState<SistemaFrente>('manija');
+  const [door, setDoor] = useState('');
+  const [doorHand, setDoorHand] = useState<'L' | 'R'>('R');
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,7 +47,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         }
         continue;
       }
-      options.push({ value: t.id, label: t.pref === 'BBLFD' ? (t.nombre_es ?? t.pref) : `${t.pref} — ${t.nombre_es ?? ''}` });
+      options.push({ value: t.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS'].includes(t.pref) ? (t.nombre_es ?? t.pref) : `${t.pref} — ${t.nombre_es ?? ''}` });
     }
     return options;
   }, [tipos]);
@@ -53,6 +55,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const esDB = permiteTipologiaDb(tipoSel?.pref);
   const esDbTradicional = tipoSel?.pref === 'DB';
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(tipoSel?.pref);
+  const usaDoor = usaPuertaParametrica(tipoSel?.pref);
   const tipoSelectorValue = usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
 
   const cotizacionOptions = useMemo(
@@ -84,6 +87,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   async function buscar(e: React.FormEvent) {
     e.preventDefault();
     if (!tipoId) { setError('Elige un tipo de mueble.'); return; }
+    if (usaDoor && !(parseMedida(door) > 0)) { setError('Escribe una medida válida para Puerta.'); return; }
     setError(null);
     setLoading(true);
     const overrides: Record<string, number> = { gola: esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0 };
@@ -94,7 +98,11 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         overrides.n_cajones_pequenos = t.npeq;
       }
     }
-    const r = await previewAction({ tipoId, largo, alto, prof, unidad, preset: presetDefault, conHerrajes: false, overrides });
+    const r = await previewAction({
+      tipoId, largo, alto, prof, unidad, preset: presetDefault, conHerrajes: false, overrides,
+      door: usaDoor ? parseMedida(door) : undefined,
+      doorHand: usaDoor ? doorHand : undefined,
+    });
     setLoading(false);
     if (!r.ok) { setError(r.error); setRes(null); return; }
     setRes(r.result);
@@ -134,7 +142,13 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   }
 
   const codigo = tipoSel
-    ? codigoComercial({ pref: tipoSel.pref, largo, alto, prof, unidad, sistema: 'imperial', sistemaFrente })
+    ? codigoComercial({
+        pref: tipoSel.pref, largo, alto, prof, unidad, sistema: 'imperial', sistemaFrente,
+        door: usaDoor && door !== '' ? parseMedida(door) : null,
+        doorHand: usaDoor ? doorHand : null,
+        espesorCajaMm: tableros.find((tablero) => tablero.codigo === presetDefault.caja)?.espesor_mm,
+        espesorFrenteMm: tableros.find((tablero) => tablero.codigo === presetDefault.frente)?.espesor_mm,
+      })
     : '';
 
   return (
@@ -161,6 +175,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
               {exportandoTodas ? `Generando ${exportandoTodas.hecho}/${exportandoTodas.total}…` : '⬇ Exportar todas en PDF'}
             </button>
           </div>
+
           {modulos.map((m) => (
             <div key={m.lineaId}>
               {m.ok ? (
@@ -206,6 +221,20 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
               </select>
             </Campo>
           </div>
+
+          {usaDoor && (
+            <div className="grid grid-cols-2 gap-2">
+              <Campo label={tipoSel?.pref === 'BBLFD' ? 'Door' : 'Puerta'}>
+                <input type="text" required value={door} onChange={(e) => setDoor(e.target.value)} placeholder="22 7/8" className="inp" />
+              </Campo>
+              <Campo label="Apertura">
+                <select value={doorHand} onChange={(e) => setDoorHand(e.target.value as 'L' | 'R')} className="inp">
+                  <option value="L">L · Bisagras izquierda</option>
+                  <option value="R">R · Bisagras derecha</option>
+                </select>
+              </Campo>
+            </div>
+          )}
 
           {esDB && (
             <Campo label="Tipología DB">

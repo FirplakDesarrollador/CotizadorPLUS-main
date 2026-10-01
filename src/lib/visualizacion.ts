@@ -30,7 +30,9 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
   };
   members.forEach((member, mi) => {
     const {calc,pref}=member, result=group.lineas[mi];
+    const esBmw1 = pref === 'BMW-1' || pref === 'BMW-1-FE' || pref === 'BOMH-1';
     const esBBLFD = pref === 'BBLFD';
+    const esBlindDoorParametrico = esBBLFD || pref === 'WBL-D-L/R-SM';
     const esDbSmEspecial = [
       'DB-2S-SM', 'DB-2-SM', 'DB-3-SM',
       'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE',
@@ -154,6 +156,13 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       // Internal drawers use the lower cabinet zone; their exact mounting remains editable.
       const zone=vars.n_puertas?Math.min(innerH*.5,bodyCount*200):innerH;
       for(let i=0;i<bodyCount;i++) drawerSlots.push({z:foot+(bodyCount-i-1)*zone/Math.max(1,bodyCount),h:zone/Math.max(1,bodyCount),key:`${mi}:gaveta:${i}`});
+    }
+    // BMW-1, BMW-1-FE y BOMH-1 ubican su unica gaveta debajo del entrepano fijo. La plantilla
+    // general asume gavetas sobre puertas/frentes y por eso necesita esta
+    // excepcion confirmada por la hoja BMW36-1.
+    if(esBmw1 && drawerSlots[0]) {
+      drawerSlots[0].z=3.2;
+      drawerSlots[0].h=pref === 'BOMH-1' ? 332.8 : 220.13;
     }
     const sequence=new Map<string,number>();
     const totals=new Map<string,number>();
@@ -287,7 +296,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'frente': {
             const ds=doorSlots.get(`${item.source}:${k}`)!;
             x=ds.x; z=ds.z; y=-d;
-            if (esBBLFD && p.nombre === 'frente') x=Number(vars.mano_derecha ?? 1) === 1 ? L-w : 0;
+            if (esBlindDoorParametrico && p.nombre === 'frente') x=Number(vars.mano_derecha ?? 1) === 1 ? L-w : 0;
             if (config.z) {
               const explicitZ = Number(evalExpr(config.z, {
                 L, A, P, TC, TF, TB, LP: w, AP: h, EP: d,
@@ -299,7 +308,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           }
           case 'frente_falso':
             x=blind===item?0:(L-w)/2; z=blind===item?foot:A-h; y=-d;
-            if (esBBLFD && p.nombre === 'blind door') x=Number(vars.mano_derecha ?? 1) === 1 ? 0 : L-w;
+            if (esBlindDoorParametrico && p.nombre.toLowerCase() === 'blind door') x=Number(vars.mano_derecha ?? 1) === 1 ? 0 : L-w;
             break;
           case 'frente_gaveta': z=slot?.z??foot; y=-d; break;
           case 'base_gaveta': {
@@ -343,7 +352,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           for(const axis of ['x','y','z'] as const) if(config[axis]) defaults[axis]=Number(evalExpr(config[axis],ctx));
           if(!Object.values(defaults).every(Number.isFinite)) throw new Error('Coordenada no finita');
           giro=Number(evalExpr(String(config.giro??0),ctx));
-          if(![0,90,180,270].includes(giro)) throw new Error('Giro debe ser ortogonal');
+          if(!Number.isFinite(giro) || Math.abs(giro)>360) throw new Error('Giro fuera de rango');
         } catch { warn(`${pref} · ${p.nombre}: fórmula de ubicación inválida; se usa posición inferida.`); defaults.x=x;defaults.y=y;defaults.z=z;giro=0;confirmed=false; }
         // Los pares DB-SM se relacionan con componentes físicos: el primero se
         // apoya arriba y el segundo queda bajo la última gaveta del bloque

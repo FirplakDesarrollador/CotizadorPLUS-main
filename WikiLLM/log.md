@@ -1229,3 +1229,119 @@ El motor de grupos dejó de exigir conjuntos continuos idénticos: ahora unifica
 
 ## [2026-09-30] ingest | Comparativo PB SHORE PRUEBA frente a HDR
 Auditoría de 20 módulos contra 23 PDF: 4 piezas adicionales, diferencias de canto en WLD, DB y TK, y un panel de distinta altura. Informe PDF y CSV por módulo/pieza; cotización y fuentes sin cambios.
+
+## [2026-09-30] update | Regla de entrepaños para muebles superiores
+
+W, WLD, W-SM, W-SM-PUSH, WSM, OW, TW y TW-SM-PUSH usan 0 entrepaños hasta 17 pulgadas, 1 de 18 a 27, 2 de 28 a 40 y 3 por encima de 40; UW conserva su regla exclusiva.
+
+## [2026-09-30] update | Separación superior de puertas WLD
+
+La puerta de todos los WLD queda 3,2 mm por debajo de la cara exterior de la tapa, sin modificar el corte ni el costo.
+
+## [2026-09-30] update | Orden posterior de fondos y entrepaños superiores
+
+En W, WLD, W-SM, W-SM-PUSH, WSM, OW, TW, TW-SM-PUSH, UW, OW-MO y W-SM-LOC el fondo queda delante de los refuerzos traseros y los entrepaños terminan delante del fondo, sin cambiar cortes ni costos.
+
+## [2026-09-30] update | Cantos largos en refuerzos y Gola de madera
+
+Todas las piezas cuyo nombre contiene `refuerzo` y todas las `gola_madera` llevan canto en sus dos lados largos, preservando calibre y cantos cortos existentes.
+
+## [2026-09-30] update | Sufijo comercial para caja y frente de 18 mm
+
+Los módulos cuyo tablero de caja y tablero de frente son ambos de 18 mm agregan `-18MM` al final del código comercial en simulador, cotizaciones, persistencia y HDR.
+
+## [2026-09-30] update | Integración de espesor en códigos W-SM y TW-SM
+
+En muebles superiores W y TW con sistema SM, los materiales de caja y frente de 18 mm se identifican como `SM18` dentro del segmento (`W2636-SM18`, `W332124-SM18-PUSH`, `TW302412-SM18-PUSH`) en lugar del sufijo separado `-18MM`. TW y sus variantes quedan explícitamente incluidos en la clasificación central de muebles superiores.
+
+## [2026-09-30] update | Alineación del entrepaño superior de UW con la puerta
+
+El `entrepano_superior` de UW queda a la misma altura que el borde inferior de la puerta (`Z=7,841732in`, aproximadamente 199,18mm desde la base). Los entrepaños interiores conservan su separación de 40mm tomando esta posición como nueva referencia.
+
+## [2026-09-30] ingest | Nueva tipología superior WBL-D-L/R-SM
+
+Se creó desde la hoja WBL3840 D22 7/8L-SM, sin reutilizar la tipología WBL existente. Incluye puerta paramétrica con fracciones, apertura L/R, pieza fija `Blind Door`, geometría propia, ausencia de manija, código `WBL<largo><alto>-D<Puerta><L/R>-SM` y la regla común de entrepaños superiores.
+
+## [2026-09-30] update | Nombre único de WBL-D-L/R-SM
+
+Los selectores de Simulador, cotizaciones, HDR y Diseño muestran exactamente `WBL-D-L/R-SM — Mueble superior Blind Door`, sin anteponer nuevamente el prefijo.
+
+## [2026-09-30] update | Entrepano fijo de UW identificado por el largo de la base
+
+En UW, la pieza antes llamada `entrepano_superior` se denomina `entrepano_fijo`. La migración asigna ese nombre al entrepano cuya fórmula de largo coincide con la de la base; los entrepaños móviles mantienen su nombre.
+
+## [2026-09-30] update | Sufijo comercial para caja y frente de 15 mm
+
+Todos los módulos cuyos materiales de caja y frente son ambos de 15 mm agregan `-15MM`. En muebles superiores W/TW con segmento SM, el espesor se integra como `SM15` o `SM15-PUSH`, siguiendo la misma regla establecida para 18 mm. Los espesores mixtos no generan indicador.
+
+## [2026-09-30] ingest | BLS36 reconstruido desde hoja Lazy Susan
+
+La plantilla BLS que mezclaba tres configuraciones fue sustituida por el despiece confirmado de BLS36: base cuadrada, laterales diferenciados, dos refuerzos delanteros, un trasero, dos fondos de 15 mm, un entrepaño y dos puertas iguales. Se fijaron las reglas de dos puertas y un entrepaño sin inferir herrajes no presentes en la hoja.
+
+## [2026-10-01] update | Nombre BLS sin prefijo duplicado
+
+Los selectores de Simulador, cotizaciones, HDR y Diseño muestran `BLS — Mueble inferior esquinero Lazy Susan`, respetando el nombre completo almacenado en catálogo sin anteponer nuevamente `BLS`.
+
+## [2026-10-01] update | Visualización BLS36 ajustada con archivo IGES
+
+Se extrajeron los once sólidos de `BLS36.iges` y se parametrizó la planta esquinera real de BLS: laterales, fondos y puertas perpendiculares, refuerzos del entrante, entrepaño a 200 mm y refuerzo trasero diagonal. El visor ahora admite giros no ortogonales para representar la pieza a 45 grados; cortes y costos no cambian. Tras detectar en la UI que el entrepaño seguía en la posición heredada `P-D=-148 mm`, se aplicó `0132` a Supabase y se verificaron los diez registros de montaje persistidos.
+
+## [2026-10-01] update | Puertas cerradas y refuerzo trasero reubicado en BLS36
+
+Se corrigió una mezcla de unidades en la coordenada de la puerta horizontal (`L-282,6 mm`, no `L-(282,6/25,4)`), que extendía falsamente el dibujo hasta 1.182,7 mm. Las dos puertas quedan cerradas y perpendiculares junto al rincón. El refuerzo trasero parte ahora explícitamente de la esquina posterior izquierda y se orienta `-45°` hacia el interior, junto al fondo izquierdo.
+
+## [2026-10-01] update | Orientación final del refuerzo trasero BLS36
+
+La vista superior aportada confirmó que el refuerzo trasero debía inclinarse en el sentido contrario al montaje anterior. Se cambió a `+45°` y se compensaron ancho y espesor con `sqrt(1/2)` para apoyarlo en el fondo izquierdo, dirigirlo hacia la esquina posterior y mantenerlo completamente dentro de la planta de 914,4 mm.
+
+## [2026-10-01] ingest | Nueva tipología BMW-1 desde hoja BMW36-1
+
+Se creó `BMW-1` como tipología independiente de `BMW`, con código comercial `BMW<largo>-1`. La plantilla reproduce doce piezas normalizadas desde la hoja de producción, declara una gaveta, cero puertas, un entrepaño fijo y cuatro patas, e incluye riel Tandem, manija, cuatro patas y dieciséis tornillos. BMW histórico no se modificó.
+
+## [2026-10-01] update | Medidas y montaje inferior de BMW-1
+
+Se corrigieron los ejes persistidos de `frente_gaveta` y `frente` para que el despiece muestre 220,13×911,2 mm y 535,47×911,2 mm, respectivamente. La gaveta y sus componentes se ubicaron en la zona inferior; el `entrepano_fijo`, explícitamente igual a la base, se fijó a 241,33 mm. El fondo queda debajo y termina en esa misma cota, sin invadir el vano superior.
+
+## [2026-10-01] update | BMW histórico retirado del selector
+
+La captura de validación mostró `BMW · gaveta 1` y las medidas de la plantilla histórica, no BMW-1. Se comprobó que BMW y BMW-1 tenían cero líneas de cotización asociadas; BMW se marcó inactivo para evitar la selección equivocada y BMW-1 queda como la única tipología activa de esta configuración.
+
+## [2026-10-01] update | BMW eliminado y refuerzo delantero BMW-1 alineado
+
+Se eliminó definitivamente la tipología histórica `BMW`, después de volver a comprobar que no tenía líneas de cotización asociadas. En `BMW-1`, el `refuerzo_delantero` queda en `y=0` y con su cara superior contra la cara inferior del `entrepano_fijo` a 241,33 mm, reproduciendo la ubicación señalada en la vista lateral.
+
+## [2026-10-01] update | Refuerzo delantero BMW-1 en posición superior
+
+Se corrigió la interpretación de la anotación visual: el amarillo señalaba la posición anterior y la marca azul superior era el destino. El `refuerzo_delantero` se trasladó a la esquina frontal superior, en `y=0` y `z=A-H`, con su cara superior al ras del mueble.
+
+## [2026-10-01] update | Entrepaño fijo BMW-1 centrado en la junta de frentes
+
+El `entrepano_fijo` se desplazó al centro vertical de la unión entre el frente de gaveta y el frente superior: 224,93 mm. Su origen visual es `224,93-H/2`, de modo que el tablero cruza el centro de la junta; en profundidad se mantiene entre los frentes y el fondo con `y=P-D`. Conserva exactamente las mismas medidas de corte que la base.
+
+## [2026-10-01] update | Refuerzo delantero de BFD simple fijado en 80 mm
+
+Se eliminó de `BFD` la excepción `L<12 ? 5 : 3.14961`, que producía refuerzos delanteros de 127 mm en módulos angostos. El ancho queda siempre en `80/25.4`. El alcance usa coincidencia exacta `pref='BFD'`: no modifica BFD-SM, SBFD, SBFD-SM, UBFD ni ningún otro prefijo compuesto.
+
+## [2026-10-01] update | Contraparche B-FE corregido contra hoja B18-FE
+
+La auditoría exclusiva de B-FE comparó sus 16 piezas con B18-FE. Quince medidas ya coincidían; `contraparche` daba 345,8mm por usar `L-111,4mm`, mientras la hoja exige 371,2mm. Se corrigió a `L-86mm`, igual al largo del `trasero_gaveta`. No se modificaron B, UB-FE, V-FE ni otras tipologías.
+
+## [2026-10-01] update | Segundo refuerzo delantero B-FE bajo la gaveta
+
+La visualización genérica repartía el segundo `refuerzo_delantero` a media altura. En B-FE se fijaron posiciones por instancia: el primero en `A-H` y el segundo en `A-155,6-H`, inmediatamente bajo la gaveta superior de 152,4 mm y su reveal de 3,2 mm. El cambio es exclusivo de B-FE.
+
+## [2026-10-01] update | Base de gaveta DB-2S-SM-FE a 492 mm
+
+Se cambió exclusivamente `DB-2S-SM-FE.base_gaveta` de 508 mm (`19.99999in`) a 492 mm (`492/25.4`). La cantidad sigue siendo tres. No se modificaron DB-2-SM-FE, DB-3-SM-FE ni otras tipologías.
+
+## [2026-10-01] ingest | Nueva tipología BMW-1-FE
+
+Se creó `BMW-1-FE` manteniendo la estructura general, entrepaño, fondo limitado y frentes de `BMW-1`. Exclusivamente el conjunto de gaveta procede de `B-FE`: laterales de madera de 100×500 mm, trasero y contraparche `L-86 mm`, fondo `L-72 mm` × 492 mm y riel `RIELFE500`. Conserva los demás herrajes de BMW-1 y el montaje inferior bajo el entrepaño fijo. El código comercial a 36 pulgadas es `BMW36-1-FE`.
+
+## [2026-10-01] update | Entrepaños WLD con canto en cuatro lados
+
+Se ajustó exclusivamente la plantilla `WLD.entrepano` para aplicar canto a dos lados largos y dos lados anchos, conservando el calibre existente. No se modificaron otras tipologías superiores.
+
+## [2026-10-01] ingest | Nueva tipología BOMH-1 con hueco de horno paramétrico
+
+Se creó `BOMH-1` desde la hoja BOMH36-1 usando BMW-1 únicamente como guía y sin editarla. La plantilla reproduce trece piezas físicas, una gaveta inferior y los herrajes de la familia. El Simulador y las cotizaciones incorporan `Largo libre del horno` y `Alto libre del horno`, inicialmente 219,2×153,2 mm. `frente_izq` y `frente_der` conservan el alto solicitado y reparten simétricamente el ancho restante para mantener exactamente el hueco libre indicado.

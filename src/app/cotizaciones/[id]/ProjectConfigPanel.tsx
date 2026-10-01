@@ -148,7 +148,7 @@ export default function ProjectConfigPanel({ tableros, cantos, perfiles, default
         </section>
 
         <section className="space-y-2 border-t border-blue-200 pt-3">
-          <p className="text-xs font-semibold text-slate-700">Muebles superiores (W)</p>
+          <p className="text-xs font-semibold text-slate-700">Muebles superiores (W y TW)</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {perfiles.length > 0 && (
               <F label="Cargar perfil predefinido (Preset)">

@@ -310,6 +310,8 @@ async function recalcularGrupo(grupoId: string) {
       dbTipo: inputs[i].dbTipo,
       door: inputs[i].door,
       doorHand: inputs[i].doorHand,
+      espesorCajaMm: prepared?.calc.tablerosByCode[prepared.calc.preset.caja]?.espesor_mm,
+      espesorFrenteMm: prepared?.calc.tablerosByCode[prepared.calc.preset.frente]?.espesor_mm,
     });
     const baseResult = calculated.lineas[i] as CotizarResult;
     const result = {

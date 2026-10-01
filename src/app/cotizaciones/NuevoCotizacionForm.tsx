@@ -211,7 +211,7 @@ export default function NuevoCotizacionForm({
         </div>
 
         <div className="border-t border-slate-200 pt-3 mt-3 space-y-2">
-          <p className="text-xs font-semibold text-slate-700">Muebles superiores (W)</p>
+          <p className="text-xs font-semibold text-slate-700">Muebles superiores (W y TW)</p>
 
           {perfiles.length > 0 && (
             <F label="Perfil de material">

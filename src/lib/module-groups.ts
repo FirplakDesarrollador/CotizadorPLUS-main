@@ -1,4 +1,5 @@
 import type { UnidadDim } from '@/lib/engine';
+import { esMuebleSuperior } from '@/lib/muebles';
 
 export type SistemaMedida = 'imperial' | 'metrico';
 
@@ -159,6 +160,8 @@ export type CodigoComercialInput = {
   pcfdCajones?: number | null;
   door?: number | null;
   doorHand?: 'L' | 'R' | null;
+  espesorCajaMm?: number | null;
+  espesorFrenteMm?: number | null;
 };
 
 // Código comercial completo de un módulo. Es la única fuente de verdad del orden
@@ -205,7 +208,30 @@ export function codigoComercial(input: CodigoComercialInput): string {
     && input.doorHand
     ? `-D${anchoCodigo(input.door, unidad, sistema)}${input.doorHand}`
     : '';
-  return codigo + bblfdSufijo + dbSufijo + pcfdSufijo + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente));
+  if (prefNormalizado === 'WBL-D-L/R-SM'
+    && input.door != null
+    && Number.isFinite(input.door)
+    && input.door > 0
+    && input.doorHand) {
+    codigo = codigo.replace(
+      '-D-L/R-SM',
+      `-D${anchoCodigo(input.door, unidad, sistema)}${input.doorHand}-SM`,
+    );
+  }
+  const espesorCajaMm = Number(input.espesorCajaMm);
+  const espesorFrenteMm = Number(input.espesorFrenteMm);
+  const espesorComun = espesorCajaMm === espesorFrenteMm && [15, 18].includes(espesorCajaMm)
+    ? espesorCajaMm
+    : null;
+  const codigoBase = codigo + bblfdSufijo + dbSufijo + pcfdSufijo
+    + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente));
+  if (espesorComun == null) return codigoBase;
+  // En muebles superiores W/TW con sistema SM el indicador de espesor forma
+  // parte del propio segmento: `-SM15`, `-SM18` o sus variantes `-PUSH`.
+  if (esMuebleSuperior(prefNormalizado) && codigoBase.includes('-SM')) {
+    return codigoBase.replace('-SM', `-SM${espesorComun}`);
+  }
+  return `${codigoBase}-${espesorComun === 18 ? '18MM' : '15MM'}`;
 }
 
 export function codigoGrupo(codigos: string[]): string {

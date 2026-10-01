@@ -21,10 +21,14 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Torres PCFD con gavetas ocultas](wiki/muebles_pcfd_gavetas_ocultas.md) - Variantes `STANDARD`/`2OP`/`4OP`, fórmulas CEMA y uso paramétrico de cajones y entrepaños.
 - [Variantes de frente Gola SM](wiki/variantes_frente_gola_sm.md) - Investigación de códigos `SM`/`SMG`, refuerzos por familia y modelo recomendado como opción transversal de frentes.
 - [W2936-SM desde hoja real](wiki/w_sm_hoja_real.md) - Integracion verificada de `W` con sistema de frente `SM`: formulas condicionales, ausencia de manijas, HDR y carga en Supabase.
+- [WBL-D-L/R-SM Blind Door](wiki/wbl_blind_door_sm.md) - Tipología superior independiente con puerta paramétrica en fracciones, apertura L/R, Blind Door fijo y regla común de entrepaños.
 - [Codificación comercial de módulos](wiki/codificacion_comercial_modulos.md) - Fuente única `codigoComercial()`: orden de segmentos, qué tipos llevan el alto (familia W + PN) y sistema de medida por superficie.
 - [Voladizo de la puerta con gola](wiki/visualizacion_gola_voladizo.md) - Por qué el sobrante de una puerta `SM` cuelga bajo la base en la visualización, y por qué en un mueble base tendría que ir arriba.
 - [DB18-1S desde hoja real](wiki/db_hoja_real.md) - Cruce de  contra la hoja: la estructura ya era correcta; solo la base de gaveta estaba 0.1mm larga.
 - [B12 desde hoja real](wiki/b_hoja_real.md) - Cruce de las 10 piezas de `B` contra la hoja de producción: tres medidas corregidas cuyo valor correcto ya estaba en las variantes FE.
+- [BLS36 desde hoja real](wiki/bls36_hoja_real.md) - Reconstrucción del esquinero Lazy Susan: once piezas, dos puertas, un entrepaño y respaldos de 15 mm.
+- [BMW-1 y BMW-1-FE](wiki/bmw_1_hoja_real.md) - Mueble inferior para microondas y su variante con caja de gaveta de madera y riel full extension.
+- [BOMH-1 con horno paramétrico](wiki/bomh_1_horno_parametrico.md) - Mueble inferior para medio horno y una gaveta, con largo y alto libres configurables para empotrar el equipo.
 - [Consumo de materiales: unidades y merma](wiki/consumo_materiales.md) - Tablero en m² y canto en metros lineales; por qué sus mermas son distintas y cómo se reconstruye el consumo desde el despiece.
 - [Holgura de 1mm sobre la estructura](wiki/holgura_1mm_estructura.md) - Por qué entrepaños y fondos se cortan 1mm más pequeños, qué tipos ya la tenían y el alcance aplicado en `0049`.
 - [Ejes del fondo (backing)](wiki/ejes_fondo_backing.md) - `largo`/`ancho` son ejes geométricos atados a `intercambiar`, no "el mayor primero": el defecto que giraba 90° el backing de `W` con gola y la auditoría de los 44 tipos.

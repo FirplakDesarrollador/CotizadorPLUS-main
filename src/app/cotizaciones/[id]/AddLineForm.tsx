@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, permiteRemovible, permiteTipologiaDb, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
@@ -71,6 +71,9 @@ export type LineaInicial = {
 
 const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
+const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
+const convertir = (value: number, from: 'in' | 'cm' | 'mm', to: 'in' | 'cm' | 'mm') =>
+  Math.round((value * TO_MM[from]) / TO_MM[to] * 1e6) / 1e6;
 
 const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ??
@@ -104,11 +107,12 @@ export default function AddLineForm({
   const ov = initial?.overrides ?? null;
   const projectUnit: 'in' | 'cm' = sistemaMedida === 'metrico' ? 'cm' : 'in';
   const tipoInicialId = initial?.tipoId ?? projectDefaults?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '';
+  const tipoInicialPref = tipos.find((t) => t.id === tipoInicialId)?.pref ?? '';
   const materialProyecto = (pref: string): MaterialDefaults | undefined =>
     familiaMaterialPorPrefijo(pref) === 'superior'
       ? projectDefaults?.materialesSuperiores
       : projectDefaults?.materialesInferiores;
-  const materialInicial = materialProyecto(tipos.find((t) => t.id === tipoInicialId)?.pref ?? '');
+  const materialInicial = materialProyecto(tipoInicialPref);
 
   // Estados — si viene de NuevoCotizacionForm (projectDefaults), usar esos valores como defaults
   const [tipoId, setTipoId] = useState(tipoInicialId);
@@ -173,6 +177,16 @@ export default function AddLineForm({
   const [removible, setRemovible] = useState<boolean>(initial?.removible ?? false);
   const [door, setDoor] = useState(initial?.door != null ? String(initial.door) : '');
   const [doorHand, setDoorHand] = useState<'L' | 'R'>(initial?.doorHand ?? 'R');
+  const [hornoLargo, setHornoLargo] = useState(
+    ov?.horno_largo != null
+      ? String(convertir(ov.horno_largo, 'in', unidad))
+      : usaHuecoHornoParametrico(tipoInicialPref) ? String(convertir(219.2, 'mm', unidad)) : '',
+  );
+  const [hornoAlto, setHornoAlto] = useState(
+    ov?.horno_alto != null
+      ? String(convertir(ov.horno_alto, 'in', unidad))
+      : usaHuecoHornoParametrico(tipoInicialPref) ? String(convertir(153.2, 'mm', unidad)) : '',
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -184,7 +198,8 @@ export default function AddLineForm({
   const esDbTradicional = prefTipo === 'DB';
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(prefTipo);
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
-  const esBBLFD = prefTipo === 'BBLFD';
+  const usaDoor = usaPuertaParametrica(prefTipo);
+  const usaHuecoHorno = usaHuecoHornoParametrico(prefTipo);
   const usaRiel = esDB || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
 
@@ -204,7 +219,7 @@ export default function AddLineForm({
         }
         continue;
       }
-      options.push({ value: t.id, label: t.pref === 'BBLFD' ? (t.nombre_es ?? prefProyecto(t)) : `${prefProyecto(t)} — ${t.nombre_es ?? ''}` });
+      options.push({ value: t.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS'].includes(t.pref) ? (t.nombre_es ?? prefProyecto(t)) : `${prefProyecto(t)} — ${t.nombre_es ?? ''}` });
     }
     return options;
   })();
@@ -233,6 +248,13 @@ export default function AddLineForm({
     setDoor('');
     setDoorHand('R');
     const nuevoTipo = tipos.find((t) => t.id === resolvedId);
+    if (usaHuecoHornoParametrico(nuevoTipo?.pref)) {
+      setHornoLargo(String(convertir(219.2, 'mm', unidad)));
+      setHornoAlto(String(convertir(153.2, 'mm', unidad)));
+    } else {
+      setHornoLargo('');
+      setHornoAlto('');
+    }
     const materiales = materialProyecto(nuevoTipo?.pref ?? '');
     if (materiales) {
       setPreset({ ...materiales.preset });
@@ -279,14 +301,18 @@ export default function AddLineForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const dimsInvalidas = [['Largo', largo], ['Alto', alto], ['Prof', prof], ...(esBBLFD ? [['Door', door]] : [])]
+    const dimsInvalidas = [
+      ['Largo', largo], ['Alto', alto], ['Prof', prof],
+      ...(usaDoor ? [['Puerta', door]] : []),
+      ...(usaHuecoHorno ? [['Largo libre del horno', hornoLargo], ['Alto libre del horno', hornoAlto]] : []),
+    ]
       .filter(([, v]) => Number.isNaN(parseMedida(v as string)));
     if (dimsInvalidas.length > 0) {
       setError(`Medida inválida en ${dimsInvalidas.map(([label]) => label).join(', ')}. Usa un número (24.875) o una fracción (24 7/8).`);
       return;
     }
     setLoading(true);
-    if (esBBLFD && parseMedida(door) <= 0) {
+    if (usaDoor && parseMedida(door) <= 0) {
       setError('Door es obligatorio y debe ser mayor que cero.');
       setLoading(false);
       return;
@@ -297,6 +323,10 @@ export default function AddLineForm({
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
     if (zocalo !== '') overrides.zocalo = Number(zocalo);
     if (nbarras !== '') overrides.n_barras = Number(nbarras);
+    if (usaHuecoHorno) {
+      overrides.horno_largo = convertir(parseMedida(hornoLargo), unidad, 'in');
+      overrides.horno_alto = convertir(parseMedida(hornoAlto), unidad, 'in');
+    }
     if (esDB && dbTipo) {
       const dbT = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
       overrides.n_cajones_pequenos = dbT?.npeq ?? 0;
@@ -328,8 +358,10 @@ export default function AddLineForm({
             sistemaFrente,
             dbTipo: esDB ? dbTipo : null,
             pcfdCajones: esPCFD ? Number(ncajones) : null,
-            door: esBBLFD ? parseMedida(door) : null,
-            doorHand: esBBLFD ? doorHand : null,
+            door: usaDoor ? parseMedida(door) : null,
+            doorHand: usaDoor ? doorHand : null,
+            espesorCajaMm: tableros.find((tablero) => tablero.codigo === preset.caja)?.espesor_mm,
+            espesorFrenteMm: tableros.find((tablero) => tablero.codigo === preset.frente)?.espesor_mm,
           })
         : undefined,
       modoFrentes,
@@ -343,8 +375,8 @@ export default function AddLineForm({
       cantoCaja: cantoCajaSel !== '' ? cantoCajaSel : undefined,
       rielCodigo: usaRiel && rielCodigo ? rielCodigo : undefined,
       dbTipo: esDB && dbTipo ? dbTipo : undefined,
-      door: esBBLFD ? parseMedida(door) : undefined,
-      doorHand: esBBLFD ? doorHand : undefined,
+      door: usaDoor ? parseMedida(door) : undefined,
+      doorHand: usaDoor ? doorHand : undefined,
       conFondo: initial?.conFondo ?? projectDefaults?.conFondo ?? true,
     };
 
@@ -399,10 +431,24 @@ export default function AddLineForm({
           </L>
         </div>
 
-        {esBBLFD && (
+        {usaHuecoHorno && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 md:col-span-2 lg:col-span-4">
+            <div className="grid grid-cols-2 gap-2">
+              <L label="Largo libre del horno">
+                <input type="text" required value={hornoLargo} onChange={(e) => setHornoLargo(e.target.value)} placeholder="219.2" className="inp" />
+              </L>
+              <L label="Alto libre del horno">
+                <input type="text" required value={hornoAlto} onChange={(e) => setHornoAlto(e.target.value)} placeholder="153.2" className="inp" />
+              </L>
+            </div>
+            <p className="mt-2 text-xs text-amber-900">Estas son las medidas libres que necesita el horno para quedar empotrado, expresadas en la unidad del proyecto.</p>
+          </div>
+        )}
+
+        {usaDoor && (
           <div className="grid grid-cols-2 gap-1 md:col-span-2">
-            <L label="Door">
-              <input type="text" required value={door} onChange={(e) => setDoor(e.target.value)} placeholder="17 7/8" className="inp" />
+            <L label={prefTipo === 'BBLFD' ? 'Door' : 'Puerta'}>
+              <input type="text" required value={door} onChange={(e) => setDoor(e.target.value)} placeholder="22 7/8" className="inp" />
             </L>
             <L label="Apertura">
               <select value={doorHand} onChange={(e) => setDoorHand(e.target.value as 'L' | 'R')} className="inp">
