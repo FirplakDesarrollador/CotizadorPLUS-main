@@ -1,0 +1,124 @@
+- generic [active] [ref=f2e1]:
+  - button "Open Next.js Dev Tools" [ref=f2e99] [cursor=pointer]
+  - alert [ref=f2e103]
+  - generic [ref=f2e104]:
+    - banner [ref=f2e105]:
+      - generic [ref=f2e106]:
+        - generic [ref=f2e107]:
+          - generic [ref=f2e108]:
+            - text: Cotizador PLUS
+            - generic [ref=f2e109]: v1.0.2
+          - link "Simulador" [ref=f2e110] [cursor=pointer]:
+            - /url: /cotizador
+          - link "Cotizaciones" [ref=f2e111] [cursor=pointer]:
+            - /url: /cotizaciones
+          - link "Manual" [ref=f2e112] [cursor=pointer]:
+            - /url: /manual
+        - generic [ref=f2e113]:
+          - generic [ref=f2e114]: codex-group-e2e-20260715@example.invalid
+          - generic [ref=f2e115]: vendedor
+          - button "Salir" [ref=f2e117]
+    - main [ref=f2e118]:
+      - generic [ref=f2e119]:
+        - generic [ref=f2e121]:
+          - generic [ref=f2e122]:
+            - link "← Cotizaciones" [ref=f2e123] [cursor=pointer]:
+              - /url: /cotizaciones
+            - generic [ref=f2e124]:
+              - heading "E2E Agrupación B12 DB10 BFD20 2026-07-15" [level=1] [ref=f2e125]
+              - button "editar" [ref=f2e126]
+            - paragraph [ref=f2e127]: Codex E2E · TRM 3.300 ·borradorin · imperial
+          - generic [ref=f2e128]:
+            - generic [ref=f2e129]: $384.73
+            - generic [ref=f2e130]: $ 1.269.612
+        - generic [ref=f2e131]:
+          - button "Guía" [ref=f2e132]:
+            - generic [ref=f2e133]: 💡
+            - text: Guía
+          - button "Tips" [ref=f2e134]:
+            - generic [ref=f2e135]: 💬
+            - text: Tips
+      - button "⚙️ Materiales del proyecto ▼ ver / editar ECOCARB15COLOR" [ref=f2e137]:
+        - generic [ref=f2e138]: ⚙️
+        - generic [ref=f2e139]: Materiales del proyecto
+        - generic [ref=f2e140]: ▼ ver / editar
+        - generic [ref=f2e141]: ECOCARB15COLOR
+      - generic [ref=f2e142]:
+        - link "⬇ Exportar Excel" [ref=f2e143] [cursor=pointer]:
+          - /url: /cotizaciones/3de74bdb-7c82-40a3-ba48-c130a9dbf9ab/export
+        - link "🖨 Imprimir / PDF" [ref=f2e144] [cursor=pointer]:
+          - /url: /cotizaciones/3de74bdb-7c82-40a3-ba48-c130a9dbf9ab/imprimir
+      - generic [ref=f2e145]:
+        - generic [ref=f2e146]:
+          - generic [ref=f2e147]:
+            - generic [ref=f2e148]:
+              - heading "🍳 Cocina 1" [level=3] [ref=f2e149]
+              - button "renombrar" [ref=f2e150]
+              - generic [ref=f2e151]: · 3 módulo(s)
+            - generic [ref=f2e152]:
+              - generic [ref=f2e153]:
+                - text: $384.73
+                - generic [ref=f2e154]: · $ 1.269.612
+              - button "🗑" [ref=f2e155]
+          - table [ref=f2e157]:
+            - rowgroup [ref=f2e158]:
+              - row [ref=f2e159]:
+                - columnheader "Grupo" [ref=f2e160]
+                - columnheader "Módulo" [ref=f2e161]
+                - columnheader "Descripción" [ref=f2e162]
+                - columnheader "Cant" [ref=f2e163]
+                - columnheader "Unit USD" [ref=f2e164]
+                - columnheader "Total USD" [ref=f2e165]
+                - columnheader "Total COP" [ref=f2e166]
+                - columnheader [ref=f2e167]
+            - rowgroup [ref=f2e168]:
+              - row [ref=f2e427]:
+                - cell [ref=f2e355]:
+                  - textbox "Grupo del módulo B12" [ref=f2e356]: A1
+                - cell "B12 B12.DB10.BFD20" [ref=f2e428]:
+                  - generic [ref=f2e299]: B12
+                  - generic "B12.DB10.BFD20" [ref=f2e429]
+                - cell "B 12x30x24 in · 1 puerta(s)" [ref=f2e300]
+                - cell "1" [ref=f2e301]
+                - cell "$124.47" [ref=f2e430]
+                - cell "$124.47" [ref=f2e431]
+                - cell "$ 410.751" [ref=f2e432]
+                - cell [ref=f2e305]:
+                  - button "Editar" [ref=f2e306]
+                  - button "✕" [ref=f2e307]
+              - row [ref=f2e433]:
+                - cell [ref=f2e363]:
+                  - textbox "Grupo del módulo DB10" [ref=f2e364]: A2
+                - cell "DB10 B12.DB10.BFD20" [ref=f2e434]:
+                  - generic [ref=f2e315]: DB10
+                  - generic "B12.DB10.BFD20" [ref=f2e435]
+                - cell "DB 10x30x24 in" [ref=f2e316]
+                - cell "1" [ref=f2e317]
+                - cell "$159.94" [ref=f2e436]
+                - cell "$159.94" [ref=f2e437]
+                - cell "$ 527.810" [ref=f2e438]
+                - cell [ref=f2e321]:
+                  - button "Editar" [ref=f2e322]
+                  - button "✕" [ref=f2e323]
+              - row [ref=f2e439]:
+                - cell [ref=f2e440]:
+                  - textbox "Grupo del módulo BFD20" [ref=f2e441]: A3
+                - cell "BFD20 B12.DB10.BFD20" [ref=f2e442]:
+                  - generic [ref=f2e342]: BFD20
+                  - generic "B12.DB10.BFD20" [ref=f2e443]
+                - cell "BFD 20x30x24 in · 1 puerta(s)" [ref=f2e343]
+                - cell "1" [ref=f2e344]
+                - cell "$100.32" [ref=f2e444]
+                - cell "$100.32" [ref=f2e445]
+                - cell "$ 331.051" [ref=f2e446]
+                - cell [ref=f2e348]:
+                  - button "Editar" [ref=f2e349]
+                  - button "✕" [ref=f2e350]
+              - row [ref=f2e447]:
+                - cell "Subtotal grupo A · B12.DB10.BFD20" [ref=f2e448]
+                - cell "$384.73" [ref=f2e449]
+                - cell "$ 1.269.612" [ref=f2e450]
+                - cell [ref=f2e451]
+          - button "+ Agregar módulo" [ref=f2e584]
+        - button "+ Agregar cocina" [ref=f2e174]
+      - button "Eliminar proyecto" [ref=f2e176]

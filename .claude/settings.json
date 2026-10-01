@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git pull *)",
+      "Bash(npm run *)",
+      "Bash(Start-Sleep -Seconds 8)",
+      "Bash(Get-Content \"C:\\\\Users\\\\ANDRES~1.SAL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-andres-saldarriaga-Desktop-CotizadorPLUS-main\\\\b3e0d2cb-852e-4efd-8056-fb338892adc8\\\\tasks\\\\be93lcmap.output\")",
+      "Bash(taskkill /PID 22980 /F)",
+      "PowerShell(Stop-Process -Id 22980 -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Process -Name \"node\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3000,3001 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { $p = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; [PSCustomObject]@{Port=$_.LocalPort; PID=$_.OwningProcess; Name=$p.Name} })",
+      "Bash(node -e \"const {execSync}=require\\('child_process'\\); try{execSync\\('npx next dev --turbo', {timeout:15000, stdio:'pipe'}\\)}catch\\(e\\){console.log\\(e.stdout?.toString\\(\\)\\); console.log\\(e.stderr?.toString\\(\\)\\)}\")",
+      "Bash(npx tsc *)",
+      "Bash(node -e ' *)",
+      "Bash(cd \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" && ls -la '~$materiales.xlsx' 2>&1)",
+      "Read(//c/Users/andres.saldarriaga/Desktop/CotizadorPLUS-main/**)",
+      "Bash(cd \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" && ls -la \"materiales.xlsx\" \"~\\\\$materiales.xlsx\" 2>&1)",
+      "Bash(git rev-list *)",
+      "Bash(git check-ignore *)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(git commit -m ' *)",
+      "Bash(git -C \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" fetch --all --prune)",
+      "Bash(git -C \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" branch -a)",
+      "Bash(git -C \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" status)",
+      "Bash(git -C \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" fetch correct --prune)",
+      "Bash(git -C \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" checkout -B DEV origin/DEV)",
+      "Bash(git -C \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" merge correct/Ale --no-edit)",
+      "Bash(git -C \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" log --oneline -1 correct/Ale)",
+      "Bash(git -C \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" merge-base --is-ancestor correct/Ale HEAD)",
+      "Bash(git -C \"c:\\\\Users\\\\andres.saldarriaga\\\\Desktop\\\\CotizadorPLUS-main\" merge DEV --no-edit)",
+      "Bash(netstat -ano)",
+      "Bash(npx --no-install playwright --version)",
+      "Bash(chromium-cli --help)",
+      "Bash(node -e \"console.log\\(require.resolve\\('playwright'\\)\\)\")",
+      "Bash(supabase --version)",
+      "Bash(npx --no-install supabase --version)",
+      "Bash(npx eslint *)"
+    ]
+  }
+}

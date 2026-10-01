@@ -5,20 +5,41 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
-type Tipo = { id: string; pref: string; nombre_es: string | null };
-type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
+type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
+type MaterialDefaults = { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string };
 
 export type ProjectDefaults = {
   preset: Record<string, string>;
   cantoFrentes: string;
   cantoCaja: string;
-  recargoId: string;
+  // recargoId: string;
   margen: string;
+  conFondo?: boolean;
+  materialesInferiores?: MaterialDefaults;
+  materialesSuperiores?: MaterialDefaults;
+  // Defaults del primer mueble (opcionales, vienen de NuevoCotizacionForm)
+  tipoId?: string;
+  largo?: string;
+  alto?: string;
+  prof?: string;
+  unidad?: 'in' | 'cm' | 'mm';
+  perfilId?: string;
+  modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
+  sistemaFrente?: SistemaFrente;
+  removible?: boolean;
+  door?: number;
+  doorHand?: 'L' | 'R';
+  conHerrajes?: boolean;
+  herrajesExcl?: string[];
+  npuertas?: string;
+  ncajones?: string;
+  nentrepanos?: string;
 };
 
 export type LineaInicial = {
@@ -38,14 +59,21 @@ export type LineaInicial = {
   margenOverride?: number;
   cantoFrentes?: string;
   cantoCaja?: string;
+  dbTipo?: string;
+  rielCodigo?: string;
+  // Variantes transversales (ver src/lib/muebles.ts).
+  sistemaFrente?: SistemaFrente;
+  removible?: boolean;
+  door?: number;
+  doorHand?: 'L' | 'R';
+  conFondo?: boolean;
 };
 
-const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja', refuerzo: 'Tablero refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
-
-// Conversión exacta entre unidades vía milímetros.
+const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
+const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
-const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
-  Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
+const convertir = (value: number, from: 'in' | 'cm' | 'mm', to: 'in' | 'cm' | 'mm') =>
+  Math.round((value * TO_MM[from]) / TO_MM[to] * 1e6) / 1e6;
 
 const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ??
@@ -53,11 +81,10 @@ const getCantoMatch = (cantos: string[], target: string) =>
   target;
 
 export default function AddLineForm({
-  cocinaId, tipos, recargos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, projectDefaults, initial, onDone
+  cocinaId, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, initial, onDone, onMaterialesUsados
 }: {
   cocinaId: string;
   tipos: Tipo[];
-  recargos: Recargo[];
   tableros: Tablero[];
   cantos: string[];
   presetDefault: Record<string, string>;
@@ -66,30 +93,45 @@ export default function AddLineForm({
   perfilDefaultId: string;
   herrajesByTipo: Record<string, HerrajeTipo[]>;
   trm: number;
+  sistemaMedida: 'imperial' | 'metrico';
   projectDefaults?: ProjectDefaults;
   initial?: LineaInicial;
   onDone?: () => void;
+  // Se dispara al agregar un mueble (no al editar) con los materiales y cantos usados,
+  // para que el próximo mueble de la cocina arranque con esos mismos valores por defecto.
+  onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string }) => void;
 }) {
   const router = useRouter();
   const esEdicion = !!initial;
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
   const ov = initial?.overrides ?? null;
+  const projectUnit: 'in' | 'cm' = sistemaMedida === 'metrico' ? 'cm' : 'in';
+  const tipoInicialId = initial?.tipoId ?? projectDefaults?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '';
+  const tipoInicialPref = tipos.find((t) => t.id === tipoInicialId)?.pref ?? '';
+  const materialProyecto = (pref: string): MaterialDefaults | undefined =>
+    familiaMaterialPorPrefijo(pref) === 'superior'
+      ? projectDefaults?.materialesSuperiores
+      : projectDefaults?.materialesInferiores;
+  const materialInicial = materialProyecto(tipoInicialPref);
 
-  // Estados
-  const [tipoId, setTipoId] = useState(initial?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '');
-  const [unidad, setUnidad] = useState<'in' | 'cm' | 'mm'>(initial?.unidad ?? 'in');
-  const [largo, setLargo] = useState(initial?.largo != null ? String(initial.largo) : '33');
-  const [alto, setAlto] = useState(initial?.alto != null ? String(initial.alto) : '30');
-  const [prof, setProf] = useState(initial?.prof != null ? String(initial.prof) : '24');
-  const [perfilId, setPerfilId] = useState(initial ? '' : perfilDefaultId);
+  // Estados — si viene de NuevoCotizacionForm (projectDefaults), usar esos valores como defaults
+  const [tipoId, setTipoId] = useState(tipoInicialId);
+  // La unidad se fija al crear el proyecto (ver el <select disabled> más abajo) — no hay setter.
+  const [unidad] = useState<'in' | 'cm' | 'mm'>(initial?.unidad ?? projectDefaults?.unidad ?? 'in');
+  const [largo, setLargo] = useState(initial?.largo != null ? String(initial.largo) : (projectDefaults?.largo ?? '33'));
+  const [alto, setAlto] = useState(initial?.alto != null ? String(initial.alto) : (projectDefaults?.alto ?? '30'));
+  const [prof, setProf] = useState(initial?.prof != null ? String(initial.prof) : (projectDefaults?.prof ?? '24'));
+  const [perfilId, setPerfilId] = useState(initial ? '' : (materialInicial?.perfilId ?? projectDefaults?.perfilId ?? perfilDefaultId));
   const [preset, setPreset] = useState<Record<string, string>>(() => {
     if (initial?.preset) return initial.preset;
+    if (materialInicial?.preset) return materialInicial.preset;
     if (projectDefaults?.preset) return projectDefaults.preset;
     return presetDefault;
   });
 
   const [cantoFrentesSel, setCantoFrentesSel] = useState(() => {
     if (initial?.cantoFrentes !== undefined) return initial.cantoFrentes;
+    if (materialInicial?.cantoFrentes !== undefined) return materialInicial.cantoFrentes;
     if (projectDefaults?.cantoFrentes !== undefined) return projectDefaults.cantoFrentes;
     const b = tableros.find((t) => t.codigo === (presetDefault['frente']));
     if (b?.espesor_mm === 18) return getCantoMatch(cantos, '22x1');
@@ -99,6 +141,7 @@ export default function AddLineForm({
 
   const [cantoCajaSel, setCantoCajaSel] = useState(() => {
     if (initial?.cantoCaja !== undefined) return initial.cantoCaja;
+    if (materialInicial?.cantoCaja !== undefined) return materialInicial.cantoCaja;
     if (projectDefaults?.cantoCaja !== undefined) return projectDefaults.cantoCaja;
     const b = tableros.find((t) => t.codigo === (presetDefault['caja']));
     if (b?.espesor_mm === 18) return getCantoMatch(cantos, '22x1');
@@ -106,36 +149,130 @@ export default function AddLineForm({
     return '';
   });
 
-  const [recargoId, setRecargoId] = useState(() => {
+  /* const [recargoId, setRecargoId] = useState(() => {
     if (initial) {
       return recargos.find((r) => r.recargo_pct === initial.recargoPct)?.id ?? '';
     }
     return projectDefaults?.recargoId ?? '';
-  });
+  }); */
 
-  const [conHerrajes, setConHerrajes] = useState(initial?.conHerrajes ?? true);
-  const [herrajesExcl, setHerrajesExcl] = useState<string[]>(initial?.herrajesExcluidos ?? []);
   const [cantidad, setCantidad] = useState(initial?.cantidad ?? 1);
-  const [margenInput, setMargenInput] = useState(initial?.margenOverride != null ? String(initial.margenOverride) : (projectDefaults?.margen ?? ''));
+  const [margenInput, setMargenInput] = useState(initial?.margenOverride != null ? String(initial.margenOverride * 100) : (projectDefaults?.margen ?? ''));
 
-  const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : '');
-  const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : '');
-  const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : '');
+  const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : (projectDefaults?.npuertas ?? ''));
+  const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : (projectDefaults?.ncajones ?? ''));
+  const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : (projectDefaults?.nentrepanos ?? ''));
+  const [zocalo, setZocalo] = useState(ov?.zocalo != null ? String(ov.zocalo) : '');
   const [nbarras, setNbarras] = useState(ov?.n_barras != null ? String(ov.n_barras) : '');
-  const [dbTipo, setDbTipo] = useState('');
-  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? 'normal');
+  const [dbTipo, setDbTipo] = useState(initial?.dbTipo ?? '');
+  const [rielCodigo, setRielCodigo] = useState(initial?.rielCodigo ?? 'RIELTANDEM');
+  const [pcfdConfig, setPcfdConfig] = useState(() => {
+    if (ov?.n_cajones === 2 && ov?.n_entrepanos === 3) return '2OP';
+    if (ov?.n_cajones === 4 && ov?.n_entrepanos === 3) return '4OP';
+    if (ov?.n_cajones === 0 && ov?.n_entrepanos === 5) return 'STANDARD';
+    return '';
+  });
+  const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? projectDefaults?.modoFrentes ?? 'normal');
+  const [sistemaFrente, setSistemaFrente] = useState<SistemaFrente>(initial?.sistemaFrente ?? 'manija');
+  const [removible, setRemovible] = useState<boolean>(initial?.removible ?? false);
+  const [door, setDoor] = useState(initial?.door != null ? String(initial.door) : '');
+  const [doorHand, setDoorHand] = useState<'L' | 'R'>(initial?.doorHand ?? 'R');
+  const [hornoLargo, setHornoLargo] = useState(
+    ov?.horno_largo != null
+      ? String(convertir(ov.horno_largo, 'in', unidad))
+      : usaHuecoHornoParametrico(tipoInicialPref) ? String(convertir(219.2, 'mm', unidad)) : '',
+  );
+  const [hornoAlto, setHornoAlto] = useState(
+    ov?.horno_alto != null
+      ? String(convertir(ov.horno_alto, 'in', unidad))
+      : usaHuecoHornoParametrico(tipoInicialPref) ? String(convertir(153.2, 'mm', unidad)) : '',
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Mapeos y opciones
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
-  const esDB = (tipos.find((t) => t.id === tipoId)?.pref ?? '').startsWith('DB');
+  const prefTipo = tipos.find((t) => t.id === tipoId)?.pref ?? '';
+  const esDB = permiteTipologiaDb(prefTipo);
+  const esDbTradicional = prefTipo === 'DB';
+  const usaTipologiaDbSmFe = esTipologiaDbSmFe(prefTipo);
+  const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
+  const usaDoor = usaPuertaParametrica(prefTipo);
+  const usaHuecoHorno = usaHuecoHornoParametrico(prefTipo);
+  const usaRiel = esDB || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
-  const tipo = tipos.find((t) => t.id === tipoId);
 
-  const tipoOptions = useMemo(() => tipos.map((t) => ({ value: t.id, label: `${t.pref} — ${t.nombre_es ?? ''}` })), [tipos]);
+  const tipo = tipos.find((t) => t.id === tipoId);
+  const prefProyecto = (t: Tipo | undefined) => sistemaMedida === 'metrico'
+    ? (t?.pref_metrico || t?.pref || '')
+    : (t?.pref_imperial || t?.pref || '');
+
+  const tipoOptions = (() => {
+    const options: { value: string; label: string }[] = [];
+    let dbSmFeAgregado = false;
+    for (const t of tipos) {
+      if (esTipologiaDbSmFe(t.pref)) {
+        if (!dbSmFeAgregado) {
+          options.push({ value: DB_SM_FE_GROUP_VALUE, label: 'DB-SM-FE — Cajoneras con Gola y riel Full Extension' });
+          dbSmFeAgregado = true;
+        }
+        continue;
+      }
+      options.push({ value: t.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS'].includes(t.pref) ? (t.nombre_es ?? prefProyecto(t)) : `${prefProyecto(t)} — ${t.nombre_es ?? ''}` });
+    }
+    return options;
+  })();
+  const tipoSelectorValue = usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
   const tableroOptions = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({ value: t.codigo, label: `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}` })), [tableros]);
+
+  function handleTipoChange(id: string) {
+    const resolvedId = id === DB_SM_FE_GROUP_VALUE
+      ? tipos.find((t) => t.pref === DB_SM_FE_TIPOLOGIAS[0].pref)?.id
+      : id;
+    if (!resolvedId) return;
+    setTipoId(resolvedId);
+    // El formulario "Agregar mueble" no se remonta entre módulos (sigue abierto
+    // después de guardar), así que un override de un tipo anterior (ej.
+    // n_cajones=3 al agregar un DB-1S) seguía viajando si el usuario cambiaba
+    // de Tipo sin vaciarlo a mano — terminaba cobrando herraje de cajón en un
+    // módulo sin gavetas. Cambiar de Tipo arranca limpio.
+    setNpuertas('');
+    setNcajones('');
+    setNentrepanos('');
+    setZocalo('');
+    setNbarras('');
+    setDbTipo('');
+    setRielCodigo('RIELTANDEM');
+    setPcfdConfig('');
+    setDoor('');
+    setDoorHand('R');
+    const nuevoTipo = tipos.find((t) => t.id === resolvedId);
+    if (usaHuecoHornoParametrico(nuevoTipo?.pref)) {
+      setHornoLargo(String(convertir(219.2, 'mm', unidad)));
+      setHornoAlto(String(convertir(153.2, 'mm', unidad)));
+    } else {
+      setHornoLargo('');
+      setHornoAlto('');
+    }
+    const materiales = materialProyecto(nuevoTipo?.pref ?? '');
+    if (materiales) {
+      setPreset({ ...materiales.preset });
+      setCantoFrentesSel(materiales.cantoFrentes);
+      setCantoCajaSel(materiales.cantoCaja);
+      setPerfilId(materiales.perfilId ?? '');
+    }
+    // Los muebles superiores de pared (W) siempre parten de 12 de fondo por defecto.
+    const nuevoPref = prefProyecto(nuevoTipo);
+    if (nuevoPref === 'W') setProf(unidad === 'in' ? '12' : unidad === 'cm' ? '30.48' : '304.8');
+    if (nuevoPref === 'WSM') setProf(unidad === 'in' ? '14' : unidad === 'cm' ? '35.56' : '355.6');
+    if (['F', 'DB'].includes(tipos.find((t) => t.id === resolvedId)?.pref ?? '')) setSistemaFrente('manija');
+  }
+
+  function aplicarDbSmFeTipo(pref: string) {
+    const tipo = tipos.find((item) => item.pref === pref);
+    if (tipo) handleTipoChange(tipo.id);
+  }
 
   function aplicarPerfil(id: string) {
     setPerfilId(id);
@@ -152,46 +289,95 @@ export default function AddLineForm({
     }
   }
 
-  const toggleHerraje = (rol: string) =>
-    setHerrajesExcl((xs) => xs.includes(rol) ? xs.filter((x) => x !== rol) : [...xs, rol]);
-
-  function changeUnidad(nu: 'in' | 'cm' | 'mm') {
-    if (nu === unidad) return;
-    setLargo((v) => String(convertir(Number(v), unidad, nu)));
-    setAlto((v) => String(convertir(Number(v), unidad, nu)));
-    setProf((v) => String(convertir(Number(v), unidad, nu)));
-    setUnidad(nu);
+  function aplicarPcfdConfig(k: string) {
+    setPcfdConfig(k);
+    const config = PCFD_CONFIGURACIONES.find((x) => x.key === k);
+    if (!config) return;
+    setNcajones(String(config.nc));
+    setNentrepanos(String(config.ne));
+    setZocalo(String(config.zocalo));
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    const dimsInvalidas = [
+      ['Largo', largo], ['Alto', alto], ['Prof', prof],
+      ...(usaDoor ? [['Puerta', door]] : []),
+      ...(usaHuecoHorno ? [['Largo libre del horno', hornoLargo], ['Alto libre del horno', hornoAlto]] : []),
+    ]
+      .filter(([, v]) => Number.isNaN(parseMedida(v as string)));
+    if (dimsInvalidas.length > 0) {
+      setError(`Medida inválida en ${dimsInvalidas.map(([label]) => label).join(', ')}. Usa un número (24.875) o una fracción (24 7/8).`);
+      return;
+    }
+    setLoading(true);
+    if (usaDoor && parseMedida(door) <= 0) {
+      setError('Door es obligatorio y debe ser mayor que cero.');
+      setLoading(false);
+      return;
+    }
     const overrides: Record<string, number> = {};
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
+    if (zocalo !== '') overrides.zocalo = Number(zocalo);
     if (nbarras !== '') overrides.n_barras = Number(nbarras);
+    if (usaHuecoHorno) {
+      overrides.horno_largo = convertir(parseMedida(hornoLargo), unidad, 'in');
+      overrides.horno_alto = convertir(parseMedida(hornoAlto), unidad, 'in');
+    }
+    if (esDB && dbTipo) {
+      const dbT = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
+      overrides.n_cajones_pequenos = dbT?.npeq ?? 0;
+      overrides.n_cajones_ocultos = dbT?.noculto ?? 0;
+    }
+    // Variantes transversales: override numérico 0/1 (migración 0028).
+    overrides.gola = esTipologiaDbSm(prefTipo) || esTipologiaDbSmFe(prefTipo) ? 1 : esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0;
+    if (permiteRemovible(prefTipo)) overrides.removible = removible ? 1 : 0;
 
     const payload = {
       tipoId,
-      largo: Number(largo),
-      alto: Number(alto),
-      prof: Number(prof),
+      largo: parseMedida(largo),
+      alto: parseMedida(alto),
+      prof: parseMedida(prof),
       unidad,
       preset,
-      conHerrajes,
+      conHerrajes: true,
       trm,
-      recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
+      // recargoPct: recargos.find((r) => r.id === recargoId)?.recargo_pct ?? 0,
       cantidad,
-      prefLabel: tipo?.pref,
+      prefLabel: prefProyecto(tipo)
+        ? codigoComercial({
+            pref: prefProyecto(tipo),
+            largo: parseMedida(largo),
+            alto: parseMedida(alto),
+            prof: parseMedida(prof),
+            unidad,
+            sistema: sistemaMedida,
+            sistemaFrente,
+            dbTipo: esDB ? dbTipo : null,
+            pcfdCajones: esPCFD ? Number(ncajones) : null,
+            door: usaDoor ? parseMedida(door) : null,
+            doorHand: usaDoor ? doorHand : null,
+            espesorCajaMm: tableros.find((tablero) => tablero.codigo === preset.caja)?.espesor_mm,
+            espesorFrenteMm: tableros.find((tablero) => tablero.codigo === preset.frente)?.espesor_mm,
+          })
+        : undefined,
       modoFrentes,
+      sistemaFrente: esDbTradicional ? 'manija' : sistemaFrente,
+      removible: permiteRemovible(prefTipo) ? removible : undefined,
       overrides: Object.keys(overrides).length ? overrides : undefined,
-      herrajesExcluidos: conHerrajes && herrajesExcl.length ? herrajesExcl : undefined,
+      herrajesExcluidos: undefined,
       // Andrés overrides
-      margenOverride: margenInput !== '' ? Number(margenInput) : undefined,
+      margenOverride: margenInput !== '' ? Number(margenInput) / 100 : undefined,
       cantoFrentes: cantoFrentesSel !== '' ? cantoFrentesSel : undefined,
       cantoCaja: cantoCajaSel !== '' ? cantoCajaSel : undefined,
+      rielCodigo: usaRiel && rielCodigo ? rielCodigo : undefined,
+      dbTipo: esDB && dbTipo ? dbTipo : undefined,
+      door: usaDoor ? parseMedida(door) : undefined,
+      doorHand: usaDoor ? doorHand : undefined,
+      conFondo: initial?.conFondo ?? projectDefaults?.conFondo ?? true,
     };
 
     const res = esEdicion
@@ -201,6 +387,12 @@ export default function AddLineForm({
     if (!res.ok) {
       setError(res.error ?? 'Error al guardar');
       return;
+    }
+    if (!esEdicion) {
+      onMaterialesUsados?.({
+        familia: familiaMaterialPorPrefijo(prefTipo),
+        preset, cantoFrentes: cantoFrentesSel, cantoCaja: cantoCajaSel, perfilId,
+      });
     }
     router.refresh();
     onDone?.();
@@ -219,7 +411,7 @@ export default function AddLineForm({
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
         <L label="Tipo">
-          <Combobox value={tipoId} options={tipoOptions} onChange={setTipoId} placeholder="Buscar tipo…" />
+          <Combobox value={tipoSelectorValue} options={tipoOptions} onChange={handleTipoChange} placeholder="Buscar tipo…" />
         </L>
 
         <div className="grid grid-cols-4 gap-1">
@@ -233,15 +425,41 @@ export default function AddLineForm({
             <input type="text" value={prof} onChange={(e) => setProf(e.target.value)} className="inp" />
           </L>
           <L label="Un">
-            <select value={unidad} onChange={(e) => changeUnidad(e.target.value as 'in' | 'cm' | 'mm')} className="inp">
-              <option>in</option>
-              <option>cm</option>
-              <option>mm</option>
+            <select value={unidad} disabled className="inp bg-slate-100" title="La unidad se fija al crear el proyecto">
+              <option>{projectUnit}</option>
             </select>
           </L>
         </div>
 
-        <L label="Cliente (recargo)">
+        {usaHuecoHorno && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 md:col-span-2 lg:col-span-4">
+            <div className="grid grid-cols-2 gap-2">
+              <L label="Largo libre del horno">
+                <input type="text" required value={hornoLargo} onChange={(e) => setHornoLargo(e.target.value)} placeholder="219.2" className="inp" />
+              </L>
+              <L label="Alto libre del horno">
+                <input type="text" required value={hornoAlto} onChange={(e) => setHornoAlto(e.target.value)} placeholder="153.2" className="inp" />
+              </L>
+            </div>
+            <p className="mt-2 text-xs text-amber-900">Estas son las medidas libres que necesita el horno para quedar empotrado, expresadas en la unidad del proyecto.</p>
+          </div>
+        )}
+
+        {usaDoor && (
+          <div className="grid grid-cols-2 gap-1 md:col-span-2">
+            <L label={prefTipo === 'BBLFD' ? 'Door' : 'Puerta'}>
+              <input type="text" required value={door} onChange={(e) => setDoor(e.target.value)} placeholder="22 7/8" className="inp" />
+            </L>
+            <L label="Apertura">
+              <select value={doorHand} onChange={(e) => setDoorHand(e.target.value as 'L' | 'R')} className="inp">
+                <option value="L">L · Bisagras izquierda</option>
+                <option value="R">R · Bisagras derecha</option>
+              </select>
+            </L>
+          </div>
+        )}
+
+        {/* <L label="Cliente (recargo)">
           <select value={recargoId} onChange={(e) => setRecargoId(e.target.value)} className="inp">
             <option value="">Sin recargo</option>
             {recargos.map((r) => (
@@ -250,7 +468,7 @@ export default function AddLineForm({
               </option>
             ))}
           </select>
-        </L>
+        </L> */}
 
         <div className="grid grid-cols-2 gap-1">
           <L label="Cantidad">
@@ -273,12 +491,26 @@ export default function AddLineForm({
             <input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" />
           </L>
           <L label="Nº cajones">
-            <input type="number" placeholder="auto" value={ncajones} onChange={(e) => setNcajones(e.target.value)} className="inp" />
+            <input type="number" min={0} step={1} placeholder="auto" value={ncajones} onChange={(e) => { setNcajones(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" />
           </L>
           <L label="Nº entrepaños">
-            <input type="number" placeholder="auto" value={nentrepanos} onChange={(e) => setNentrepanos(e.target.value)} className="inp" />
+            <input type="number" min={0} step={1} placeholder="auto" value={nentrepanos} onChange={(e) => { setNentrepanos(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" />
           </L>
         </div>
+
+        {esPCFD && (
+          <div className="grid grid-cols-2 gap-1 md:col-span-2">
+            <L label="Configuración PCFD">
+              <select value={pcfdConfig} onChange={(e) => aplicarPcfdConfig(e.target.value)} className="inp">
+                <option value="">— manual —</option>
+                {PCFD_CONFIGURACIONES.map((config) => <option key={config.key} value={config.key}>{config.key} · {config.desc}</option>)}
+              </select>
+            </L>
+            <L label="Zócalo TK (in)">
+              <input type="number" min={0} step="any" placeholder="auto" value={zocalo} onChange={(e) => { setZocalo(e.target.value); setPcfdConfig(''); }} className="inp" />
+            </L>
+          </div>
+        )}
 
         {esDB && (
           <div className="grid grid-cols-2 gap-1">
@@ -290,6 +522,30 @@ export default function AddLineForm({
             </L>
             <L label="Nº barras (pares)">
               <input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" />
+            </L>
+          </div>
+        )}
+
+        {usaTipologiaDbSmFe && (
+          <div className="grid grid-cols-1 gap-1">
+            <L label="Tipología DB-SM-FE">
+              <select value={prefTipo} onChange={(e) => aplicarDbSmFeTipo(e.target.value)} className="inp">
+                {DB_SM_FE_TIPOLOGIAS.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.desc}</option>
+                ))}
+              </select>
+            </L>
+          </div>
+        )}
+
+        {usaRiel && (
+          <div className="grid grid-cols-1 gap-1">
+            <L label="Tipo de riel">
+              <select value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
+                {DB_RIELES.map((r) => (
+                  <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
+                ))}
+              </select>
             </L>
           </div>
         )}
@@ -322,6 +578,23 @@ export default function AddLineForm({
           </L>
         ))}
 
+        {!esDbTradicional && (
+          <L label="Sistema de frente">
+            <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
+              {SISTEMAS_FRENTE.map((x) => <option key={x.key} value={x.key} title={x.desc}>{x.label}</option>)}
+            </select>
+          </L>
+        )}
+
+        {permiteRemovible(prefTipo) && (
+          <L label="Removible">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={removible} onChange={(e) => setRemovible(e.target.checked)} />
+              <span>Panel removible</span>
+            </label>
+          </L>
+        )}
+
         <L label="Frentes">
           <select value={modoFrentes} onChange={(e) => setModoFrentes(e.target.value as 'normal' | 'sin_frentes' | 'solo_frentes')} className="inp">
             <option value="normal">Completo</option>
@@ -345,22 +618,15 @@ export default function AddLineForm({
           </L>
         </div>
 
-        <div className="flex items-center gap-4 py-2">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={conHerrajes} onChange={(e) => setConHerrajes(e.target.checked)} /> Con herrajes
-          </label>
-        </div>
-
-        {conHerrajes && herrajesTipo.length > 0 && (
+        {herrajesTipo.length > 0 && (
           <div className="col-span-full rounded-lg border border-slate-200 p-2.5">
-            <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes incluidos (destilda para excluir)</p>
+            <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes del módulo</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {herrajesTipo.map((h) => (
-                <label key={h.rol} className="flex items-center gap-1.5 text-sm text-slate-700 capitalize">
-                  <input type="checkbox" checked={!herrajesExcl.includes(h.rol)} onChange={() => toggleHerraje(h.rol)} />
+                <span key={h.rol} className="rounded-full bg-slate-100 px-2.5 py-1 text-sm text-slate-700 capitalize">
                   {h.rol}
                   {h.codigo ? <span className="text-slate-400 normal-case">· {h.codigo}</span> : null}
-                </label>
+                </span>
               ))}
             </div>
           </div>

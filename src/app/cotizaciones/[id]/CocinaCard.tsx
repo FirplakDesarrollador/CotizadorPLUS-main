@@ -1,8 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineForm';
-import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction } from '../actions';
+import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
+import { colorGrupo, indiceALetras } from '@/lib/module-groups';
+import type { FamiliaMaterial } from '@/lib/muebles';
+import type { ColumnasPrecio } from './CotizacionDetalleClient';
+
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -17,6 +21,11 @@ type LineaConfig = {
   margenOverride?: number;
   cantoFrentes?: string;
   cantoCaja?: string;
+  dbTipo?: string;
+  rielCodigo?: string;
+  door?: number;
+  doorHand?: 'L' | 'R';
+  conFondo?: boolean;
 };
 
 type Linea = {
@@ -24,6 +33,8 @@ type Linea = {
   pref: string | null;
   descripcion_es: string | null;
   cantidad: number;
+  costo_total_cop?: number;
+
   precio_unit_usd: number;
   precio_total_usd: number;
   precio_total_cop: number;
@@ -33,23 +44,43 @@ type Linea = {
   prof: number;
   unidad_dim: string;
   config: LineaConfig | null;
+  grupo_id: string | null;
+  posicion_grupo: number;
+  codigo_modulo: string | null;
+  grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
+  // Presente en líneas antiguas sin costo_total_cop, como respaldo para el costo con herrajes.
+  breakdown?: {
+    costoConHerrajes?: number;
+    precioCop?: number;
+    precioUsd?: number;
+    precioConHerrajesCop?: number;
+    precioConHerrajesUsd?: number;
+    herrajes?: { rol: string; codigo: string | null; cant: number; precio: number; costo: number }[];
+  } | Record<string, unknown> | null;
 };
 
-type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
-type Tipo = { id: string; pref: string; nombre_es: string | null };
-type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
+type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
+type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
+const preciosLinea = (linea: Linea, trm: number) => {
+  const breakdown = linea.breakdown ?? {};
+  const sinUnitUsd = Number(breakdown.precioUsd ?? linea.precio_unit_usd ?? 0);
+  const sinUnitCop = Number(breakdown.precioCop ?? sinUnitUsd * trm);
+  const conUnitUsd = Number(breakdown.precioConHerrajesUsd ?? linea.precio_unit_usd ?? 0);
+  const conUnitCop = Number(breakdown.precioConHerrajesCop ?? linea.precio_total_cop / Math.max(1, Number(linea.cantidad)));
+  const cantidad = Number(linea.cantidad || 0);
+  return { sinUnitUsd, sinUnitCop, conUnitUsd, conUnitCop, cantidad };
+};
 
 export default function CocinaCard({
-  cotizacionId, cocina, allCocinas, tipos, recargos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, projectDefaults
+  cotizacionId, cocina, allCocinas, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, onMaterialesUsados, columnasPrecio
 }: {
   cotizacionId: string;
   cocina: Cocina;
   allCocinas: Cocina[];
   tipos: Tipo[];
-  recargos: Recargo[];
   tableros: Tablero[];
   cantos: string[];
   presetDefault: Record<string, string>;
@@ -58,13 +89,42 @@ export default function CocinaCard({
   perfilDefaultId: string;
   herrajesByTipo: Record<string, HerrajeTipo[]>;
   trm: number;
+  sistemaMedida: 'imperial' | 'metrico';
   projectDefaults?: ProjectDefaults;
+  onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string }) => void;
+  columnasPrecio: ColumnasPrecio;
 }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState(false);
   const [nombre, setNombre] = useState(cocina.nombre);
+  const [cantCocina, setCantCocina] = useState<number>(cocina.cantidad ?? 1);
+  const [groupBusy, setGroupBusy] = useState<string | null>(null);
+  const [groupError, setGroupError] = useState<string | null>(null);
+  const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
+
+  // Sincroniza cantCocina con el prop cuando cambia desde afuera (ej. tras guardar),
+  // ajustando el estado durante el render en vez de en un efecto.
+  const [prevCantidadProp, setPrevCantidadProp] = useState(cocina.cantidad ?? 1);
+  if (prevCantidadProp !== (cocina.cantidad ?? 1)) {
+    setPrevCantidadProp(cocina.cantidad ?? 1);
+    setCantCocina(cocina.cantidad ?? 1);
+  }
+
+  async function saveCantidad(val: number) {
+    const cleanVal = Math.max(1, Math.floor(val || 1));
+    if (cleanVal === (cocina.cantidad ?? 1)) return;
+    setGroupBusy('cantidad');
+    const res = await actualizarCocinaAction(cotizacionId, cocina.id, { cantidad: cleanVal });
+    setGroupBusy(null);
+    if (!res.ok) {
+      setCantCocina(cocina.cantidad ?? 1);
+      setGroupError(res.error ?? 'No se pudo actualizar la cantidad de la cocina');
+    } else {
+      router.refresh();
+    }
+  }
 
   // Estados de duplicación contextual (Andrés)
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, lineaId: string } | null>(null);
@@ -95,9 +155,13 @@ export default function CocinaCard({
     margenOverride: l.config?.margenOverride ?? undefined,
     cantoFrentes: l.config?.cantoFrentes ?? undefined,
     cantoCaja: l.config?.cantoCaja ?? undefined,
+    dbTipo: l.config?.dbTipo ?? undefined,
+    rielCodigo: l.config?.rielCodigo ?? undefined,
+    door: l.config?.door ?? undefined,
+    doorHand: l.config?.doorHand ?? undefined,
+    conFondo: l.config?.conFondo ?? projectDefaults?.conFondo ?? true,
   });
 
-  const lineaEnEdicion = cocina.lineas.find((l) => l.id === editId) ?? null;
 
   async function saveName() {
     await actualizarCocinaAction(cotizacionId, cocina.id, nombre);
@@ -116,10 +180,162 @@ export default function CocinaCard({
     router.refresh();
   }
 
+  async function saveGroup(linea: Linea, value: string, input: HTMLInputElement, fallbackLabel?: string) {
+    const members = linea.grupo_id ? cocina.lineas.filter((x) => x.grupo_id === linea.grupo_id).length : 1;
+    const current = (linea.grupo_id && linea.grupo?.etiqueta)
+      ? (members > 1 ? `${linea.grupo.etiqueta}${linea.posicion_grupo}` : linea.grupo.etiqueta)
+      : (fallbackLabel ?? '');
+    if (value.trim().toUpperCase() === current.trim().toUpperCase()) return;
+    setGroupBusy(linea.id);
+    setGroupError(null);
+    const res = await cambiarGrupoLineaAction(linea.id, value);
+    setGroupBusy(null);
+    if (!res.ok) {
+      input.value = current;
+      setGroupError(res.error ?? 'No se pudo cambiar el grupo');
+    }
+    router.refresh();
+  }
+
+  async function handleDesagrupar(grupoId: string) {
+    if (!grupoId) return;
+    setGroupBusy(grupoId);
+    setGroupError(null);
+    const res = await desagruparGrupoAction(grupoId);
+    setGroupBusy(null);
+    if (!res.ok) {
+      setGroupError(res.error ?? 'No se pudo desagrupar el grupo');
+    }
+    router.refresh();
+  }
+
+  // Estados para Drag and Drop de bloques de grupo
+
+  const [draggedGroupIndex, setDraggedGroupIndex] = useState<number | null>(null);
+  const [dragOverGroupIndex, setDragOverGroupIndex] = useState<number | null>(null);
+  const [localGroupOrder, setLocalGroupOrder] = useState<string[] | null>(null);
+
+  // Descarta el orden de arrastre local cuando llegan líneas nuevas del servidor
+  // (ej. tras confirmar el reordenamiento), ajustando el estado durante el render.
+  const [prevLineas, setPrevLineas] = useState(cocina.lineas);
+  if (prevLineas !== cocina.lineas) {
+    setPrevLineas(cocina.lineas);
+    setLocalGroupOrder(null);
+  }
+
+  type GroupBlock = {
+    grupoId: string;
+    orden: number;
+    etiqueta: string;
+    codigoGrupo?: string | null;
+    totalCop?: number;
+    totalUsd?: number;
+    lineas: Linea[];
+  };
+
+  const rawGroupBlocks: GroupBlock[] = [];
+  const groupMap = new Map<string, GroupBlock>();
+
+  for (const l of cocina.lineas) {
+    const gid = l.grupo_id ?? l.grupo?.id ?? l.id;
+    if (!groupMap.has(gid)) {
+      const block: GroupBlock = {
+        grupoId: gid,
+        orden: l.grupo?.orden ?? 0,
+        etiqueta: l.grupo?.etiqueta ?? 'A',
+        codigoGrupo: l.grupo?.codigo_grupo,
+        totalCop: l.grupo?.total_cop,
+        totalUsd: l.grupo?.total_usd,
+        lineas: [],
+      };
+      groupMap.set(gid, block);
+      rawGroupBlocks.push(block);
+    }
+    groupMap.get(gid)!.lineas.push(l);
+  }
+
+  const groupBlocks = [...rawGroupBlocks];
+  if (localGroupOrder) {
+    groupBlocks.sort((a, b) => {
+      const ia = localGroupOrder.indexOf(a.grupoId);
+      const ib = localGroupOrder.indexOf(b.grupoId);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
+  }
+
+  groupBlocks.forEach((block, idx) => {
+    block.etiqueta = indiceALetras(idx);
+    block.orden = idx;
+  });
+
+  async function handleDrop(targetIndex: number) {
+    if (draggedGroupIndex === null || draggedGroupIndex === targetIndex) return;
+
+    const currentIds = groupBlocks.map((g) => g.grupoId);
+    const reordered = [...currentIds];
+    const [removed] = reordered.splice(draggedGroupIndex, 1);
+    reordered.splice(targetIndex, 0, removed);
+
+    setLocalGroupOrder(reordered);
+    setDraggedGroupIndex(null);
+    setDragOverGroupIndex(null);
+
+    setGroupBusy('reorder');
+    const res = await reordenarGruposCocinaAction(cocina.id, reordered);
+    setGroupBusy(null);
+    if (!res.ok) {
+      setLocalGroupOrder(null);
+      setGroupError(res.error ?? 'Error al reordenar los muebles');
+    } else {
+      router.refresh();
+    }
+  }
+
+  async function handleMoveBlock(fromIndex: number, direction: 'up' | 'down') {
+    const targetIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+    if (targetIndex < 0 || targetIndex >= groupBlocks.length) return;
+
+    const currentIds = groupBlocks.map((g) => g.grupoId);
+    const reordered = [...currentIds];
+    const [removed] = reordered.splice(fromIndex, 1);
+    reordered.splice(targetIndex, 0, removed);
+
+    setLocalGroupOrder(reordered);
+    setGroupBusy('reorder');
+    const res = await reordenarGruposCocinaAction(cocina.id, reordered);
+    setGroupBusy(null);
+    if (!res.ok) {
+      setLocalGroupOrder(null);
+      setGroupError(res.error ?? 'Error al reordenar los muebles');
+    } else {
+      router.refresh();
+    }
+  }
+
+  const totalMuebles = groupBlocks.length;
+  const totalCostoUsd = cocina.lineas.reduce((acc, l) => {
+    const unitCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0);
+    const unitUsd = trm > 0 ? unitCop / trm : 0;
+    return acc + (unitUsd * Number(l.cantidad || 0));
+  }, 0);
+  const totalCostoCop = cocina.lineas.reduce((acc, l) => acc + Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0) * Number(l.cantidad || 0), 0);
+  const multiplicadorCocina = Number(cocina.cantidad ?? 1);
+  const sumarPrecios = (lineas: Linea[]) => lineas.reduce((acc, linea) => {
+    const precio = preciosLinea(linea, trm);
+    acc.sinUsd += precio.sinUnitUsd * precio.cantidad;
+    acc.sinCop += precio.sinUnitCop * precio.cantidad;
+    acc.conUsd += precio.conUnitUsd * precio.cantidad;
+    acc.conCop += precio.conUnitCop * precio.cantidad;
+    return acc;
+  }, { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 });
+  const totalesCocina = sumarPrecios(cocina.lineas);
+  const columnasMoneda = Number(columnasPrecio.usd) + Number(columnasPrecio.cop);
+  const totalColumnas = 1 + 3 + columnasMoneda + 1 + (columnasPrecio.sinHerrajes ? 2 * columnasMoneda : 0) + (columnasPrecio.conHerrajes ? 2 * columnasMoneda : 0) + 1;
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200">
-      <div className="flex items-center justify-between p-4 border-b border-slate-100">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between p-4 border-b border-slate-100 flex-wrap gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {editName ? (
             <>
               <input value={nombre} onChange={(e) => setNombre(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-1 text-sm font-semibold" />
@@ -130,82 +346,280 @@ export default function CocinaCard({
             <>
               <h3 className="font-semibold text-slate-900">🍳 {cocina.nombre}</h3>
               <button onClick={() => setEditName(true)} className="text-xs text-slate-400 hover:text-slate-700 underline">renombrar</button>
-              <span className="text-xs text-slate-400">· {cocina.lineas.length} módulo(s)</span>
+              <span className="text-xs text-slate-400">· {totalMuebles} mueble(s)</span>
             </>
           )}
+
+          <div className="flex items-center gap-1.5 ml-2 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
+            <span className="text-xs font-semibold text-slate-600">Cant. Cocina:</span>
+            <input
+              type="number"
+              min={1}
+              value={cantCocina}
+              onChange={(e) => setCantCocina(Math.max(1, parseInt(e.target.value) || 1))}
+              onBlur={() => saveCantidad(cantCocina)}
+              onKeyDown={(e) => { if (e.key === 'Enter') saveCantidad(cantCocina); }}
+              className="w-14 text-center text-xs font-bold border border-slate-300 rounded px-1 py-0.5 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              title="Cantidad de cocinas (multiplica los muebles internos)"
+            />
+          </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-right text-sm">
-            <span className="font-semibold text-slate-900">{fmtUSD(cocina.total_usd)}</span>
-            <span className="text-slate-400"> · {fmtCOP(cocina.total_cop)}</span>
-          </div>
           <button onClick={delCocina} className="text-slate-300 hover:text-red-600" title="Eliminar cocina">🗑</button>
         </div>
       </div>
 
-      <table className="w-full text-sm">
+      {groupError && <div className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{groupError}</div>}
+      <div className="overflow-x-auto"><table className={`${columnasPrecio.usd && columnasPrecio.cop ? 'min-w-[1660px]' : 'min-w-[1180px]'} w-full text-sm`}>
         <thead>
-          <tr className="text-left text-slate-400 border-b border-slate-100">
-            <th className="px-4 py-2">Módulo</th>
-            <th>Descripción</th>
-            <th className="text-right">Cant</th>
-            <th className="text-right">Unit USD</th>
-            <th className="text-right">Total USD</th>
-            <th className="text-right px-4">Total COP</th>
-            <th></th>
+          <tr className="bg-slate-100/90 text-slate-900 text-xs font-bold border-b border-slate-200">
+            <th className="px-2 py-2 text-center w-10"></th>
+            <th className="px-4 py-2 text-left uppercase text-slate-700 font-bold tracking-wider" colSpan={3}>
+              Totales Cocina {(cocina.cantidad ?? 1) > 1 ? `(x${cocina.cantidad})` : ''}
+            </th>
+            {columnasPrecio.usd && <th className="text-right py-2 font-bold text-slate-800">{fmtUSD(totalCostoUsd * multiplicadorCocina)}</th>}
+            {columnasPrecio.cop && <th className="text-right py-2 font-bold text-slate-800">{fmtCOP(totalCostoCop * multiplicadorCocina)}</th>}
+            <th className="text-right py-2 font-bold text-slate-900" title="Cantidad total de muebles (módulos agrupados cuentan como 1 mueble)">
+              {totalMuebles * (cocina.cantidad ?? 1)}
+            </th>
+            {columnasPrecio.sinHerrajes && <>{columnasPrecio.usd && <><th className="text-right py-2 text-slate-400 font-normal">-</th><th className="text-right py-2 font-bold text-slate-900">{fmtUSD(totalesCocina.sinUsd * multiplicadorCocina)}</th></>}{columnasPrecio.cop && <><th className="text-right py-2 text-slate-400 font-normal">-</th><th className="text-right px-3 py-2 font-bold text-slate-900">{fmtCOP(totalesCocina.sinCop * multiplicadorCocina)}</th></>}</>}
+            {columnasPrecio.conHerrajes && <>{columnasPrecio.usd && <><th className="text-right py-2 text-slate-400 font-normal">-</th><th className="text-right py-2 font-bold text-slate-900">{fmtUSD(totalesCocina.conUsd * multiplicadorCocina)}</th></>}{columnasPrecio.cop && <><th className="text-right py-2 text-slate-400 font-normal">-</th><th className="text-right px-3 py-2 font-bold text-slate-900">{fmtCOP(totalesCocina.conCop * multiplicadorCocina)}</th></>}</>}
+            <th className="px-2 py-2"></th>
+          </tr>
+          <tr className="text-left text-slate-500 border-b border-slate-200 text-xs font-semibold bg-slate-50">
+            <th className="px-2 py-2 text-center w-10" title="Arrastrar para reordenar"></th>
+            <th className="w-24 px-4 py-2">Grupo</th>
+            <th className="w-28 px-2">Módulo</th>
+            <th className="min-w-72 px-3">Descripción</th>
+            {columnasPrecio.usd && <th className="w-28 px-2 text-right whitespace-nowrap">Costo USD</th>}
+            {columnasPrecio.cop && <th className="w-32 px-2 text-right whitespace-nowrap">Costo COP</th>}
+            <th className="w-16 px-2 text-right">Cant</th>
+            {columnasPrecio.sinHerrajes && <>{columnasPrecio.usd && <><th className="w-28 px-2 text-right whitespace-nowrap">Unit s/H USD</th><th className="w-28 px-2 text-right whitespace-nowrap">Total s/H USD</th></>}{columnasPrecio.cop && <><th className="w-32 px-2 text-right whitespace-nowrap">Unit s/H COP</th><th className="w-32 px-3 text-right whitespace-nowrap">Total s/H COP</th></>}</>}
+            {columnasPrecio.conHerrajes && <>{columnasPrecio.usd && <><th className="w-28 px-2 text-right whitespace-nowrap">Unit c/H USD</th><th className="w-28 px-2 text-right whitespace-nowrap">Total c/H USD</th></>}{columnasPrecio.cop && <><th className="w-32 px-2 text-right whitespace-nowrap">Unit c/H COP</th><th className="w-32 px-3 text-right whitespace-nowrap">Total c/H COP</th></>}</>}
+            <th className="w-28"></th>
           </tr>
         </thead>
         <tbody>
-          {cocina.lineas.length === 0 && <tr><td colSpan={7} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
-          {cocina.lineas.map((l) => (
-            <tr
-              key={l.id}
-              className="border-b border-slate-50 hover:bg-slate-50/50"
-              onContextMenu={(e) => {
-                e.preventDefault();
-                setContextMenu({ x: e.clientX, y: e.clientY, lineaId: l.id });
-              }}
-            >
-              <td className="px-4 py-2 font-medium text-slate-900 cursor-context-menu">{l.pref}</td>
-              <td className="text-slate-600">{l.descripcion_es}</td>
-              <td className="text-right">{l.cantidad}</td>
-              <td className="text-right">{fmtUSD(l.precio_unit_usd)}</td>
-              <td className="text-right">{fmtUSD(l.precio_total_usd)}</td>
-              <td className="text-right px-4">{fmtCOP(l.precio_total_cop)}</td>
-              <td className="px-2 whitespace-nowrap text-right">
-                <button onClick={() => { setEditId(l.id); setShowAdd(false); }} className="text-slate-500 hover:text-slate-900 mr-2" title="Editar módulo">Editar</button>
-                <button onClick={() => delLinea(l.id)} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button>
-              </td>
-            </tr>
-          ))}
+          {cocina.lineas.length === 0 && <tr><td colSpan={totalColumnas} className="px-4 py-5 text-center text-slate-400 text-sm">Agrega módulos a esta cocina.</td></tr>}
+          {groupBlocks.map((block, blockIdx) => {
+            const members = block.lineas.length;
+            const isDraggingThis = draggedGroupIndex === blockIdx;
+            const isDragOverThis = dragOverGroupIndex === blockIdx;
+
+            const groupTotalCant = block.lineas.reduce((acc, l) => acc + Number(l.cantidad || 0), 0);
+            const groupTotalCostoUsd = block.lineas.reduce((acc, l) => {
+              const unitCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0);
+              const unitUsd = trm > 0 ? unitCop / trm : 0;
+              return acc + (unitUsd * Number(l.cantidad || 0));
+            }, 0);
+            const groupTotalCostoCop = block.lineas.reduce((acc, l) => acc + Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0) * Number(l.cantidad || 0), 0);
+            const groupPrices = sumarPrecios(block.lineas);
+
+            return (
+              <Fragment key={block.grupoId}>
+                {block.lineas.map((l, lineIdx) => {
+                  const label = members > 1 ? `${block.etiqueta}${l.posicion_grupo}` : block.etiqueta;
+                  const isFirstLine = lineIdx === 0;
+
+                  const unitCostoCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0);
+                  const unitCostoUsd = trm > 0 ? unitCostoCop / trm : 0;
+                  const precio = preciosLinea(l, trm);
+                  const herrajes = Array.isArray(l.breakdown?.herrajes) ? l.breakdown.herrajes : [];
+
+                  return (
+                    <Fragment key={l.id}>
+                    <tr
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', block.grupoId);
+                        e.dataTransfer.effectAllowed = 'move';
+                        setDraggedGroupIndex(blockIdx);
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        if (dragOverGroupIndex !== blockIdx) {
+                          setDragOverGroupIndex(blockIdx);
+                        }
+                      }}
+                      onDragEnd={() => {
+                        setDraggedGroupIndex(null);
+                        setDragOverGroupIndex(null);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        handleDrop(blockIdx);
+                      }}
+                      className={`border-b border-slate-50 transition-colors ${colorGrupo(block.orden)} ${
+                        isDraggingThis ? 'opacity-40 bg-blue-50' : ''
+                      } ${
+                        isDragOverThis ? 'border-t-2 border-t-blue-500 bg-blue-50/50' : ''
+                      }`}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setContextMenu({ x: e.clientX, y: e.clientY, lineaId: l.id });
+                      }}
+                      onClick={() => setSelectedLineId((selected) => selected === l.id ? null : l.id)}
+                    >
+                      <td className="px-2 py-2 text-center align-middle cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-700 select-none">
+                        {isFirstLine && (
+                          <div className="flex items-center justify-center gap-0.5" title="Arrastra sostenido para reordenar el mueble o grupo">
+                            <span className="text-base font-bold leading-none">⋮⋮</span>
+                            <div className="flex flex-col text-[9px] leading-tight font-bold">
+                              <button
+                                type="button"
+                                disabled={blockIdx === 0 || groupBusy !== null}
+                                onClick={(e) => { e.stopPropagation(); handleMoveBlock(blockIdx, 'up'); }}
+                                className="hover:text-blue-600 disabled:opacity-20"
+                                title="Mover arriba"
+                              >
+                                ▲
+                              </button>
+                              <button
+                                type="button"
+                                disabled={blockIdx === groupBlocks.length - 1 || groupBusy !== null}
+                                onClick={(e) => { e.stopPropagation(); handleMoveBlock(blockIdx, 'down'); }}
+                                className="hover:text-blue-600 disabled:opacity-20"
+                                title="Mover abajo"
+                              >
+                                ▼
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-2">
+                        <input
+                          key={`${l.id}-${label}`}
+                          defaultValue={label}
+                          disabled={groupBusy === l.id || groupBusy === 'reorder'}
+                          aria-label={`Grupo del módulo ${l.codigo_modulo ?? l.pref ?? ''}`}
+                          title="A, B… para bloques; A1, A2… para unir y ordenar"
+                          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                          onBlur={(e) => saveGroup(l, e.currentTarget.value, e.currentTarget, label)}
+                          className="w-14 rounded-md border border-slate-300 bg-white/80 px-2 py-1 text-center font-semibold uppercase disabled:opacity-50"
+                        />
+                      </td>
+                      <td className="px-2 py-2 font-medium text-slate-900 cursor-context-menu whitespace-nowrap">
+                        <div>{l.codigo_modulo ?? l.pref}</div>
+                        {members > 1 && block.codigoGrupo && <div className="max-w-48 truncate text-[10px] font-normal text-slate-500" title={block.codigoGrupo}>{block.codigoGrupo}</div>}
+                      </td>
+                      <td className="px-3 py-2 text-slate-600 leading-5">{l.descripcion_es}</td>
+                      {columnasPrecio.usd && <td className="px-2 text-right font-medium text-slate-700 whitespace-nowrap">{fmtUSD(unitCostoUsd)}</td>}
+                      {columnasPrecio.cop && <td className="px-2 text-right font-medium text-slate-700 whitespace-nowrap">{fmtCOP(unitCostoCop)}</td>}
+                      <td className="px-2 text-right">{l.cantidad}</td>
+                      {columnasPrecio.sinHerrajes && <>{columnasPrecio.usd && <><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.sinUnitUsd)}</td><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.sinUnitUsd * precio.cantidad)}</td></>}{columnasPrecio.cop && <><td className="px-2 text-right whitespace-nowrap">{fmtCOP(precio.sinUnitCop)}</td><td className="px-3 text-right whitespace-nowrap">{fmtCOP(precio.sinUnitCop * precio.cantidad)}</td></>}</>}
+                      {columnasPrecio.conHerrajes && <>{columnasPrecio.usd && <><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.conUnitUsd)}</td><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.conUnitUsd * precio.cantidad)}</td></>}{columnasPrecio.cop && <><td className="px-2 text-right whitespace-nowrap">{fmtCOP(precio.conUnitCop)}</td><td className="px-3 text-right whitespace-nowrap">{fmtCOP(precio.conUnitCop * precio.cantidad)}</td></>}</>}
+                      <td className="px-3 whitespace-nowrap text-right">
+                        <button onClick={(e) => { e.stopPropagation(); setEditId(l.id); setSelectedLineId(null); setShowAdd(false); }} className="text-slate-500 hover:text-slate-900 mr-2" title="Editar módulo">Editar</button>
+                        <button onClick={(e) => { e.stopPropagation(); delLinea(l.id); }} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button>
+                      </td>
+                    </tr>
+                    {selectedLineId === l.id && <tr className={`${colorGrupo(block.orden)} border-b border-slate-200`}><td colSpan={totalColumnas} className="px-12 py-3"><div className="mb-2 text-xs font-semibold text-slate-700">Herrajes del módulo</div>{herrajes.length ? <div className="flex flex-wrap gap-2">{herrajes.map((herraje, index) => <span key={`${herraje.rol}-${herraje.codigo ?? ''}-${index}`} className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700">{herraje.rol}{herraje.codigo ? ` · ${herraje.codigo}` : ''} · {Number(herraje.cant)} und.</span>)}</div> : <p className="text-xs text-slate-500">Este módulo no tiene herrajes configurados.</p>}</td></tr>}
+                    {editId === l.id && (
+                      <tr className="border-b border-blue-200 bg-blue-50/40">
+                        <td colSpan={totalColumnas} className="px-6 py-5">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">Editar mueble {l.codigo_modulo ?? l.pref}</p>
+                              <p className="text-xs text-slate-500">Los cambios se aplican a este módulo.</p>
+                            </div>
+                            <button type="button" onClick={() => setEditId(null)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">Cerrar</button>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <AddLineForm
+                              key={l.id}
+                              cocinaId={cocina.id}
+                              tipos={tipos}
+                              tableros={tableros}
+                              cantos={cantos}
+                              presetDefault={presetDefault}
+                              rolesByTipo={rolesByTipo}
+                              perfiles={perfiles}
+                              perfilDefaultId={perfilDefaultId}
+                              herrajesByTipo={herrajesByTipo}
+                              trm={trm}
+                              sistemaMedida={sistemaMedida}
+                              projectDefaults={projectDefaults}
+                              initial={toInicial(l)}
+                              onDone={() => setEditId(null)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
+                  );
+                })}
+
+                {members > 1 && (
+                  <tr
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', block.grupoId);
+                      e.dataTransfer.effectAllowed = 'move';
+                      setDraggedGroupIndex(blockIdx);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
+                      if (dragOverGroupIndex !== blockIdx) {
+                        setDragOverGroupIndex(blockIdx);
+                      }
+                    }}
+                    onDragEnd={() => {
+                      setDraggedGroupIndex(null);
+                      setDragOverGroupIndex(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      handleDrop(blockIdx);
+                    }}
+                    className={`${colorGrupo(block.orden)} border-b border-slate-200 text-xs font-semibold text-slate-600 ${
+                      isDraggingThis ? 'opacity-40 bg-blue-50' : ''
+                    } ${
+                      isDragOverThis ? 'border-b-2 border-b-blue-500 bg-blue-50/50' : ''
+                    }`}
+                  >
+                    <td className="px-2 py-2 text-center align-middle cursor-grab active:cursor-grabbing text-slate-400 select-none">
+                      <span className="text-base font-bold leading-none">⋮⋮</span>
+                    </td>
+                    <td className="px-4 py-2 text-left">
+                      <button
+                        type="button"
+                        disabled={groupBusy === block.grupoId}
+                        onClick={() => handleDesagrupar(block.grupoId)}
+                        className="rounded-md bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-bold text-[10px] px-2 py-1 shadow-sm transition-colors disabled:opacity-50 uppercase tracking-wider cursor-pointer"
+                        title={`Desagrupar el grupo ${block.etiqueta}`}
+                      >
+                        Desagrupar
+                      </button>
+                    </td>
+                    <td colSpan={2} className="py-2 text-left">
+                      Subtotal grupo {block.etiqueta} · {block.codigoGrupo}
+                    </td>
+                    {columnasPrecio.usd && <td className="py-2 text-right font-medium text-slate-700">{fmtUSD(groupTotalCostoUsd)}</td>}
+                    {columnasPrecio.cop && <td className="py-2 text-right font-medium text-slate-700">{fmtCOP(groupTotalCostoCop)}</td>}
+                    <td className="py-2 text-right font-semibold text-slate-900">{groupTotalCant}</td>
+                    {columnasPrecio.sinHerrajes && <>{columnasPrecio.usd && <><td className="py-2 text-right text-slate-400 font-normal">-</td><td className="py-2 text-right">{fmtUSD(groupPrices.sinUsd)}</td></>}{columnasPrecio.cop && <><td className="py-2 text-right text-slate-400 font-normal">-</td><td className="px-3 py-2 text-right">{fmtCOP(groupPrices.sinCop)}</td></>}</>}
+                    {columnasPrecio.conHerrajes && <>{columnasPrecio.usd && <><td className="py-2 text-right text-slate-400 font-normal">-</td><td className="py-2 text-right">{fmtUSD(groupPrices.conUsd)}</td></>}{columnasPrecio.cop && <><td className="py-2 text-right text-slate-400 font-normal">-</td><td className="px-3 py-2 text-right">{fmtCOP(groupPrices.conCop)}</td></>}</>}
+                    <td></td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
         </tbody>
-      </table>
+
+      </table></div>
 
       <div className="p-4 border-t border-slate-100">
-        {lineaEnEdicion ? (
-          <AddLineForm
-            key={lineaEnEdicion.id}
-            cocinaId={cocina.id}
-            tipos={tipos}
-            recargos={recargos}
-            tableros={tableros}
-            cantos={cantos}
-            presetDefault={presetDefault}
-            rolesByTipo={rolesByTipo}
-            perfiles={perfiles}
-            perfilDefaultId={perfilDefaultId}
-            herrajesByTipo={herrajesByTipo}
-            trm={trm}
-            projectDefaults={projectDefaults}
-            initial={toInicial(lineaEnEdicion)}
-            onDone={() => setEditId(null)}
-          />
-        ) : showAdd ? (
+        {showAdd ? (
           <div className="space-y-2">
             <AddLineForm
               cocinaId={cocina.id}
               tipos={tipos}
-              recargos={recargos}
               tableros={tableros}
               cantos={cantos}
               presetDefault={presetDefault}
@@ -214,12 +628,14 @@ export default function CocinaCard({
               perfilDefaultId={perfilDefaultId}
               herrajesByTipo={herrajesByTipo}
               trm={trm}
+              sistemaMedida={sistemaMedida}
               projectDefaults={projectDefaults}
+              onMaterialesUsados={onMaterialesUsados}
             />
             <button onClick={() => setShowAdd(false)} className="text-sm text-slate-400 hover:underline">Cerrar</button>
           </div>
         ) : (
-          <button onClick={() => setShowAdd(true)} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
+          <button onClick={() => { setEditId(null); setShowAdd(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
         )}
       </div>
 

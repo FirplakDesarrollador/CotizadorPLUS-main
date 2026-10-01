@@ -1,0 +1,11 @@
+- main [ref=f1e2]:
+  - generic [ref=f1e3]:
+    - generic [ref=f1e4]:
+      - generic [ref=f1e5]:
+        - heading "Cotizador PLUS" [level=1] [ref=f1e6]
+        - generic [ref=f1e7]: v1.0.0
+      - paragraph [ref=f1e8]: Inicia sesión para continuar
+    - generic [ref=f1e9]:
+      - textbox "correo@firplak.com" [ref=f1e10]
+      - textbox "Contraseña" [ref=f1e11]
+    - button "Ingresar" [ref=f1e12]

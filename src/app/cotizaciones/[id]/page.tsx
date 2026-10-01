@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getUserAndRole } from '@/lib/auth';
-import { getCotizacion } from '@/lib/cotizaciones';
+import { getCotizacion, listarVersionesCotizacion } from '@/lib/cotizaciones';
 import { getCotizadorData } from '@/lib/cotizar';
 import AppHeader from '@/components/AppHeader';
 import CotizacionDetalleClient from './CotizacionDetalleClient';
@@ -16,6 +16,9 @@ type LineaConfig = {
   margenOverride?: number;
   cantoFrentes?: string;
   cantoCaja?: string;
+  door?: number;
+  doorHand?: 'L' | 'R';
+  conFondo?: boolean;
 };
 
 type Linea = {
@@ -32,6 +35,14 @@ type Linea = {
   prof: number;
   unidad_dim: string;
   config: LineaConfig | null;
+  grupo_id: string | null;
+  posicion_grupo: number;
+  codigo_modulo: string | null;
+  costo_sin_herrajes_cop?: number;
+  costo_herrajes_cop?: number;
+  costo_total_cop?: number;
+  breakdown?: Record<string, unknown> | null;
+  grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop: number; total_usd: number } | null;
 };
 
 type Cocina = { id: string; nombre: string; total_cop: number; total_usd: number; lineas: Linea[] };
@@ -54,24 +65,28 @@ export default async function CotizacionDetallePage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const { user, rol } = await getUserAndRole();
-  const { cabecera, cocinas } = await getCotizacion(id);
+  const [{ user, rol }, { cabecera, cocinas }, data, versiones] = await Promise.all([
+    getUserAndRole(),
+    getCotizacion(id),
+    getCotizadorData(),
+    listarVersionesCotizacion(id),
+  ]);
   if (!cabecera) notFound();
-  const data = await getCotizadorData();
 
-  // Si viene del formulario de creación, la config viene en ?cfg=<base64>
-  const initialConfig = parseConfigParam(sp['cfg']);
+  // La config de materiales globales queda guardada en el proyecto (config_default);
+  // ?cfg=<base64> es solo el fallback del primer render justo tras crear el proyecto.
+  const dbConfig = (cabecera as { config_default?: Partial<ProjectDefaults> | null }).config_default ?? null;
+  const initialConfig = dbConfig ?? parseConfigParam(sp['cfg']);
 
   return (
     <div className="min-h-screen bg-slate-50">
       <AppHeader email={user?.email} rol={rol} active="cotizaciones" />
-      <main className="mx-auto max-w-6xl px-4 py-6 space-y-5">
+      <main className="mx-auto w-full max-w-[1600px] px-4 py-6 space-y-5">
         <CotizacionDetalleClient
           cabecera={cabecera as Parameters<typeof CotizacionDetalleClient>[0]['cabecera']}
           cocinas={cocinas as Cocina[]}
           cotizacionId={id}
           tipos={data.tipos}
-          recargos={data.recargos}
           tableros={data.tableros}
           cantos={data.cantos}
           presetDefault={data.presetDefault}
@@ -80,6 +95,7 @@ export default async function CotizacionDetallePage({
           perfiles={data.perfiles}
           perfilDefaultId={data.perfilDefaultId}
           herrajesByTipo={data.herrajesByTipo}
+          versiones={versiones}
         />
       </main>
     </div>

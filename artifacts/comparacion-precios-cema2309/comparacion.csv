@@ -1,0 +1,210 @@
+﻿categoria;codigo;nombre;fuente;excel;plus;unidad;diferencia;porcentaje;estado;nota
+Tablero;CHI4,5CARBH002 YM002 BLANCO - BLACK;BLANCO - BLACK;Materiales;;8832;COP/m²;;;Solo PLUS;
+Tablero;CHIRHCARB4BLANCO AMERICANO;BLANCO AMERICANO;Materiales!M50;38902.51276538565;12900;COP/m²;-26002.512765385647;-66.840188247485;Diferente;"Excel lámina 115804.99999999999, área 2.9768; PLUS lámina 38400, área 2.9768; activo True"
+Tablero;CHICARB18SD 4075 DARK BROWN;DARK BROWN SD 4075+ MAD TEXTURE (SIMILAR AL H4001 +MD133);Materiales;;27982.5;COP/m²;;;Solo PLUS;
+Tablero;CHIRHCARB18H002 YM002 BLANCO 183;H002 YM002 BLANCO 183;Materiales!M54;25728.074890262473;25728;COP/m²;-0.07489026247276342;-0.00029108381716157005;Redondeo al peso;"Excel lámina 114881, área 4.4652; PLUS lámina 114881, área 4.4652; activo True"
+Tablero;ECOCARB15ARLINGTON;ARLINGTON;Materiales!M67;32489.026247424525;29645;COP/m²;-2844.0262474245246;-8.753805748948777;Diferente;"Excel lámina 145070, área 4.4652; PLUS lámina 132371, área 4.4652; activo True"
+Tablero;CHIRHCARB15BLANCO AMERICANO;BLANCO AMERICANO;Materiales;;26041;COP/m²;;;Solo PLUS;
+Tablero;CHIRHCARB18H002 YM002 BLANCO;H002 YM002 BLANCO;Materiales;;27445;COP/m²;;;Solo PLUS;
+Tablero;CHIRHCARB18H4001 MD133 DARK;H4001 MD133 DARK;Materiales;;26572;COP/m²;;;Solo PLUS;
+Tablero;ECOCARB18ARLINGTON;ARLINGTON;Materiales!M68;39309.32545014781;39309;COP/m²;-0.32545014780771453;-0.0008279209680676186;Redondeo al peso;"Excel lámina 175524, área 4.4652; PLUS lámina 175524, área 4.4652; activo True"
+Tablero;PRICARB15CANDELARIA (POLAR);CANDELARIA (POLAR);Materiales!M34;38480.023291229954;38480;COP/m²;-0.023291229954338633;-6.052810773544146e-05;Redondeo al peso;"Excel lámina 171821, área 4.4652; PLUS lámina 171821, área 4.4652; activo True"
+Tablero;PRICARB18CANDELARIA (POLAR);CANDELARIA (POLAR);Materiales!M35;38912.03081608886;38912;COP/m²;-0.030816088859864976;-7.919424459111891e-05;Redondeo al peso;"Excel lámina 173750, área 4.4652; PLUS lámina 173750, área 4.4652; activo True"
+Tablero;PRICARB15COLOR;COLOR;Materiales!M36;42080.08599838753;42080;COP/m²;-0.08599838752707001;-0.0002043683739866059;Redondeo al peso;"Excel lámina 187896, área 4.4652; PLUS lámina 187896, área 4.4652; activo True"
+Tablero;PRICARB18COLOR;COLOR;Materiales!M37;46885.46985577353;46885;COP/m²;-0.46985577353189;-0.00100213514971106;Redondeo al peso;"Excel lámina 209353, área 4.4652; PLUS lámina 209353, área 4.4652; activo True"
+Tablero;PRICARB15COLORCLASICO;COLORCLASICO;Materiales!M38;40860.65573770492;40861;COP/m²;0.3442622950824443;0.0008425275827494123;Redondeo al peso;"Excel lámina 182451, área 4.4652; PLUS lámina 182451, área 4.4652; activo True"
+Tablero;PRICARB18COLORCLASICO;COLORCLASICO;Materiales!M39;45217.45946430171;45217;COP/m²;-0.45946430171170505;-0.001016121443254553;Redondeo al peso;"Excel lámina 201905.00000000003, área 4.4652; PLUS lámina 201905, área 4.4652; activo True"
+Tablero;PRICARB6CANDELARIA (POLAR);CANDELARIA (POLAR);Materiales!M40;28858.281823882466;28858;COP/m²;-0.28182388246568735;-0.000976578869752586;Redondeo al peso;"Excel lámina 128858, área 4.4652; PLUS lámina 128858, área 4.4652; activo True"
+Tablero;PRICARB6COLOR;COLOR;Materiales!M41;37131.3714951178;37131;COP/m²;-0.37149511779716704;-0.0010004885433494235;Redondeo al peso;"Excel lámina 165799, área 4.4652; PLUS lámina 165799, área 4.4652; activo True"
+Tablero;CHIRHCARB18BLANCO AMERICANO;BLANCO AMERICANO;Materiales;;26041;COP/m²;;;Solo PLUS;
+Tablero;CHIRHCARB6BLANCO AMERICANO;BLANCO AMERICANO;Materiales;;13062;COP/m²;;;Solo PLUS;
+Tablero;CHIRHCARB18M7394-1 MD133;M7394-1 MD133;Materiales!M57;26989.24731182796;26989;COP/m²;-0.2473118279594928;-0.0009163346613638577;Redondeo al peso;"Excel lámina 82328, área 3.0504; PLUS lámina 82328, área 3.0504; activo True"
+Tablero;ECOCARB15COLOR;COLOR;Materiales!M69;35608.70733673743;35609;COP/m²;0.2926632625676575;0.0008218867924635877;Redondeo al peso;"Excel lámina 159000, área 4.4652; PLUS lámina 159000, área 4.4652; activo True"
+Tablero;ECOCARB18COLOR;COLOR;Materiales!M70;48529.96506315506;48530;COP/m²;0.034936844938783906;7.199025363673437e-05;Redondeo al peso;"Excel lámina 216696, área 4.4652; PLUS lámina 216696, área 4.4652; activo True"
+Tablero;ECOCARB9ARLINGTON 2 LADOS;ARLINGTON 2 LADOS;Materiales!M71;27868.85245901639;28962;COP/m²;1093.1475409836094;3.922470588235304;Diferente;"Excel lámina 124440, área 4.4652; PLUS lámina 129320, área 4.4652; activo True"
+Tablero;DURCARB15BALANCE;BALANCE;Materiales!M21;43450.88685837141;43451;COP/m²;0.11314162859343924;0.0002603896877001049;Redondeo al peso;"Excel lámina 194016.90000000002, área 4.4652; PLUS lámina 194016.9, área 4.4652; activo True"
+Tablero;DURCARB18COLOR;COLOR;Materiales!M22;53607.5091821195;53608;COP/m²;0.49081788049807074;0.0009155767316676232;Redondeo al peso;"Excel lámina 239368.25000000003, área 4.4652; PLUS lámina 239368.25, área 4.4652; activo True"
+Tablero;DURCARB18COLORLIQ;COLORLIQ;Materiales!M23;38582.03439935501;38582;COP/m²;-0.034399355012283195;-8.915899731004922e-05;Redondeo al peso;"Excel lámina 172276.5, área 4.4652; PLUS lámina 172276.5, área 4.4652; activo True"
+Tablero;DURCARB18POLAR;POLAR;Materiales!M24;46623.66747290155;46624;COP/m²;0.33252709844964556;0.0007132152326775147;Redondeo al peso;"Excel lámina 208184.00000000003, área 4.4652; PLUS lámina 208184, área 4.4652; activo True"
+Tablero;DURCARB15POLAR;POLAR;Materiales!M25;43480.448804084925;43480;COP/m²;-0.44880408492463175;-0.0010321974525765872;Redondeo al peso;"Excel lámina 194148.90000000002, área 4.4652; PLUS lámina 194148.9, área 4.4652; activo True"
+Tablero;DURCARB15COLOR;COLOR;Materiales!M26;46312.48320343994;46312;COP/m²;-0.48320343993691495;-0.0010433546346766054;Redondeo al peso;"Excel lámina 206794.50000000003, área 4.4652; PLUS lámina 206794.5, área 4.4652; activo True"
+Tablero;DURCARB6POLAR;POLAR;Materiales!M27;29726.999910418344;29727;COP/m²;8.958165562944487e-05;3.013477845036405e-07;Coincide;"Excel lámina 132737, área 4.4652; PLUS lámina 132737, área 4.4652; activo True"
+Tablero;DURCARB6COLOR;COLOR;Materiales!M28;29729.709755442083;29730;COP/m²;0.2902445579165942;0.0009762778052801688;Redondeo al peso;"Excel lámina 132749.1, área 4.4652; PLUS lámina 132749.1, área 4.4652; activo True"
+Tablero;DURCARB9POLAR 2 LADOS;POLAR 2 LADOS;Materiales!M30;35967.52665054197;35968;COP/m²;0.4733494580286788;0.0013160467291168218;Redondeo al peso;"Excel lámina 160602.2, área 4.4652; PLUS lámina 160602.2, área 4.4652; activo True"
+Tablero;DURCARB9POLAR 1 LADO;POLAR 1 LADO;Materiales!M31;34324.4983427394;34324;COP/m²;-0.4983427394035971;-0.001451857313186372;Redondeo al peso;"Excel lámina 153265.75, área 4.4652; PLUS lámina 153265.75, área 4.4652; activo True"
+Tablero;DURCARB9COLOR 2 LADOS;COLOR 2 LADOS;Materiales!M32;39701.6930932545;39702;COP/m²;0.30690674549987307;0.0007730318824917266;Redondeo al peso;"Excel lámina 177276, área 4.4652; PLUS lámina 177276, área 4.4652; activo True"
+Tablero;DURRH15NEVADO;NEVADO;Materiales!M7;34421.8064140464;34422;COP/m²;0.1935859536024509;0.0005623933598193001;Redondeo al peso;"Excel lámina 153700.24999999997, área 4.4652; PLUS lámina 153700.25, área 4.4652; activo True"
+Tablero;DURRH18NEVADO;NEVADO;Materiales!M8;51497.64848159097;51498;COP/m²;0.3515184090283583;0.0006825911850208397;Redondeo al peso;"Excel lámina 229947.30000000002, área 4.4652; PLUS lámina 229947.3, área 4.4652; activo True"
+Tablero;DURRH15COLOR;COLOR;Materiales!M9;48427.14772014692;48427;COP/m²;-0.14772014691698132;-0.00030503581951725397;Redondeo al peso;"Excel lámina 216236.90000000002, área 4.4652; PLUS lámina 216236.9, área 4.4652; activo True"
+Tablero;DURRH15CDL;CDL;Materiales!M10;48887.575024634956;48888;COP/m²;0.4249753650437924;0.0008692911538967579;Redondeo al peso;"Excel lámina 218292.80000000002, área 4.4652; PLUS lámina 218292.8, área 4.4652; activo True"
+Tablero;DURRH18COLOR;COLOR;Materiales!M11;53975.185881931386;53975;COP/m²;-0.18588193138566567;-0.00034438405046399495;Redondeo al peso;"Excel lámina 241010.00000000003, área 4.4652; PLUS lámina 241010, área 4.4652; activo True"
+Tablero;DURRH18CDL;CDL;Materiales!M12;51522.29687360029;51522;COP/m²;-0.29687360028765397;-0.0005762041257903822;Redondeo al peso;"Excel lámina 230057.36000000002, área 4.4652; PLUS lámina 230057.36, área 4.4652; activo True"
+Tablero;DURRH6NEVADO;NEVADO;Materiales!M13;34743.79647048284;34744;COP/m²;0.20352951715904055;0.0005858010287734456;Redondeo al peso;"Excel lámina 155138, área 4.4652; PLUS lámina 155138, área 4.4652; activo True"
+Tablero;DURRH6COLOR;COLOR;Materiales!M14;34743.79647048284;34744;COP/m²;0.20352951715904055;0.0005858010287734456;Redondeo al peso;"Excel lámina 155138, área 4.4652; PLUS lámina 155138, área 4.4652; activo True"
+Tablero;DURST15COLOR;COLOR;Materiales!M15;42457.975006718625;42458;COP/m²;0.024993281374918297;5.886592888842041e-05;Redondeo al peso;"Excel lámina 189583.35, área 4.4652; PLUS lámina 189583.35, área 4.4652; activo True"
+Tablero;DURST15CDL;CDL;Materiales!M16;40142.08546089761;40142;COP/m²;-0.08546089760784525;-0.00021289600833293202;Redondeo al peso;"Excel lámina 179242.44, área 4.4652; PLUS lámina 179242.44, área 4.4652; activo True"
+Tablero;DURST18COLOR;COLOR;Materiales!M17;47311.06109468781;47311;COP/m²;-0.061094687807781156;-0.00012913404686803993;Redondeo al peso;"Excel lámina 211253.35, área 4.4652; PLUS lámina 211253.35, área 4.4652; activo True"
+Tablero;DURST18CDL;CDL;Materiales!M18;44730.45776225029;44730;COP/m²;-0.4577622502911254;-0.0010233793106348402;Redondeo al peso;"Excel lámina 199730.44, área 4.4652; PLUS lámina 199730.44, área 4.4652; activo True"
+Tablero;CHICARB181124 COLD WHITE;1124 COLD WHITE #19 MATT FINISH;Materiales;;27527.5;COP/m²;;;Solo PLUS;
+Tablero;CHIRHCARB18H4001 MD133 DARK 183;H4001 MD133 DARK 183;Materiales!M56;26176.2071127833;26176;COP/m²;-0.20711278330054483;-0.0007912253383699739;Redondeo al peso;"Excel lámina 116882, área 4.4652; PLUS lámina 116881, área 4.4652; activo True"
+Tablero;ARKST18Blanco High Gloss;Blanco High Gloss;Materiales!M3;122952.49932813761;;COP/m²;;;Solo Excel;
+Tablero;ARKRH18Blanco High Gloss;Blanco High Gloss;Materiales!M4;151960.15855952702;;COP/m²;;;Solo Excel;
+Tablero;ARKCARB18Pet blanco brillante;Pet blanco brillante;Materiales!M5;73233.00188121473;;COP/m²;;;Solo Excel;
+Tablero;TURCARB18BLANCO BRILLANTE ;BLANCO BRILLANTE ;Materiales!M6;120263.37006181135;;COP/m²;;;Solo Excel;
+Tablero;DURST6NEVADO;NEVADO;Materiales!M19;27945.153632536058;;COP/m²;;;Solo Excel;
+Tablero;DURST6COLOR;COLOR;Materiales!M20;27945.153632536058;;COP/m²;;;Solo Excel;
+Tablero;NA;;Materiales!M29;0;;COP/m²;;;Solo Excel;
+Tablero;DURCARB9COLOR 1 LADO;COLOR 1 LADO;Materiales!M33;27945.153632536058;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB18BLANCO AMERICANO EXPO 124;BLANCO AMERICANO EXPO 124;Materiales!M42;25759.900340938893;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB18BLANCO AMERICANO NACIONAL 124;BLANCO AMERICANO NACIONAL 124;Materiales!M43;27936.00839234199;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB18BLANCO AMERICANO EXPO 183;BLANCO AMERICANO EXPO 183;Materiales!M44;25760.32428558631;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB18BLANCO AMERICANO NACIONAL 183;BLANCO AMERICANO NACIONAL 183;Materiales!M45;27936.038699274388;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB15BLANCO AMERICANO 124;BLANCO AMERICANO 124;Materiales!M46;22356.740099659062;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB15BLANCO AMERICANO NACIONAL 124;BLANCO AMERICANO NACIONAL 124;Materiales!M47;24339.10306845004;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB15BLANCO AMERICANO 183 EXPO;BLANCO AMERICANO 183 EXPO;Materiales!M48;25696.049449072827;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB15BLANCO AMERICANO 183 NACIONAL;BLANCO AMERICANO 183 NACIONAL;Materiales!M49;27904.013258084742;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB4,5BLANCO AMERICANO EXPO;BLANCO AMERICANO EXPO;Materiales!M51;8959.957000806235;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB4,5BLANCO AMERICANO NACIONAL;BLANCO AMERICANO NACIONAL;Materiales!M52;9599.905939263639;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB18H002 YM002 BLANCO 124;H002 YM002 BLANCO 124;Materiales!M53;25833.988985051143;;COP/m²;;;Solo Excel;
+Tablero;CHIRHCARB18H4001 MD133 DARK 124;H4001 MD133 DARK 124;Materiales!M55;25098.019931812225;;COP/m²;;;Solo Excel;
+Tablero;CHICARB4,5H002 YM002 BLANCO/BLACK;H002 YM002 BLANCO/BLACK;Materiales!M58;8736.226820747112;;COP/m²;;;Solo Excel;
+Tablero;CHICARB6GRIS;GRIS;Materiales!M59;9931.470034936845;;COP/m²;;;Solo Excel;
+Tablero;CHICARB15BLANCO EXPO;BLANCO EXPO;Materiales!M60;25999.95520917316;;COP/m²;;;Solo Excel;
+Tablero;CHICARB15COLOR MARDERA EXPO;COLOR MARDERA EXPO;Materiales!M61;27547.92618471737;;COP/m²;;;Solo Excel;
+Tablero;CHICARB15BLANCO NACIONAL ;BLANCO NACIONAL ;Materiales!M62;28132.894383230312;;COP/m²;;;Solo Excel;
+Tablero;CHICARB15COLOR NACIONAL;COLOR NACIONAL;Materiales!M63;29870.106602167874;;COP/m²;;;Solo Excel;
+Tablero;CHICARB18COLOR NACIONAL;COLOR NACIONAL;Materiales!M64;34987.01066021679;;COP/m²;;;Solo Excel;
+Tablero;CHICARB18COLOR EXPO;COLOR EXPO;Materiales!M65;32259.02535160799;;COP/m²;;;Solo Excel;
+Tablero;KROCARB18TOBACO FRANKLIN ;TOBACO FRANKLIN ;Materiales!M66;33600.069013112494;;COP/m²;;;Solo Excel;
+Tablero;ECORH18BRILLANTE ;BRILLANTE ;Materiales!M72;53223.819761712795;;COP/m²;;;Solo Excel;
+Tablero;ECORH18COLOR;COLOR;Materiales!M73;49852.19027143241;;COP/m²;;;Solo Excel;
+Tablero;ECOST18COLOR ;COLOR ;Materiales!M74;41129.1767446027;;COP/m²;;;Solo Excel;
+Tablero;PRIRH15ARTICO;ARTICO;Materiales!M75;34598.002329122995;;COP/m²;;;Solo Excel;
+Tablero;PRIRH15CLASICO;CLASICO;Materiales!M76;39722.96873600286;;COP/m²;;;Solo Excel;
+Tablero;PRIRH15TENDENCIA;TENDENCIA;Materiales!M77;48381.2595180507;;COP/m²;;;Solo Excel;
+Tablero;PRIRH15COLOR CONSTRUCTOR ;COLOR CONSTRUCTOR ;Materiales!M78;39379.8710024187;;COP/m²;;;Solo Excel;
+Tablero;PRIRH18ARTICO;ARTICO;Materiales!M79;38353.937113679116;;COP/m²;;;Solo Excel;
+Tablero;PRIRH18COLOR;COLOR;Materiales!M80;53912.03081608886;;COP/m²;;;Solo Excel;
+Tablero;PRIRH18COLOR CONSTRUCTOR ;COLOR CONSTRUCTOR ;Materiales!M81;43881.79700797277;;COP/m²;;;Solo Excel;
+Tablero;PRIST18COLOR CONSTRUCTOR ;COLOR CONSTRUCTOR ;Materiales!M82;36691.30162142793;;COP/m²;;;Solo Excel;
+Tablero;PRIST18COLOR TENDENCIA;COLOR TENDENCIA;Materiales!M83;44702.14100152288;;COP/m²;;;Solo Excel;
+Tablero;PRIST15ARTICO;ARTICO;Materiales!M84;28622.458120576903;;COP/m²;;;Solo Excel;
+Tablero;PRIRH6ARTICO;ARTICO;Materiales!M85;25261.578428737794;;COP/m²;;;Solo Excel;
+Tablero;PRIRH6COLOR;COLOR;Materiales!M86;37131.3714951178;;COP/m²;;;Solo Excel;
+Tablero;PRIRH6COLOR CONSTRUCTOR ;COLOR CONSTRUCTOR ;Materiales!M87;30223.05831765654;;COP/m²;;;Solo Excel;
+Tablero;UNKPVC18COLOR;COLOR;Materiales!M88;57000;;COP/m²;;;Solo Excel;
+Tablero;UNKPVC18COLOR - 70;COLOR - 70;Materiales!M89;74000;;COP/m²;;;Solo Excel;
+Tablero;UNKPVC6COLOR;COLOR;Materiales!M90;43720;;COP/m²;;;Solo Excel;
+Tablero;LAMCARBPLYHPL-V18White 1 SIDE;White 1 SIDE;Materiales!M91;32489;;COP/m²;;;Solo Excel;
+Tablero;LAMCARBPLYHPL-V18White 2 SIDES;White 2 SIDES;Materiales!M92;32489;;COP/m²;;;Solo Excel;
+Tablero;LAMCARBPLYHPL-V6White 1 SIDE;White 1 SIDE;Materiales!M93;32489;;COP/m²;;;Solo Excel;
+Tablero;LAMCARBCOMBIHPL-I18White 1 SIDE;White 1 SIDE;Materiales!M94;32489;;COP/m²;;;Solo Excel;
+Tablero;LAMCARBCOMBIHPL-I18White 2 SIDES;White 2 SIDES;Materiales!M95;32489;;COP/m²;;;Solo Excel;
+Tablero;LAMCARBCOMBIHPL-I6White 1 SIDE;White 1 SIDE;Materiales!M96;32489;;COP/m²;;;Solo Excel;
+Tablero;LAMCARBPLYPF18White 1 SIDE;White 1 SIDE;Materiales!M97;32489;;COP/m²;;;Solo Excel;
+Tablero;LAMCARBPLYPF18White 2 SIDES;White 2 SIDES;Materiales!M98;32489;;COP/m²;;;Solo Excel;
+Tablero;LAMCARBPLYPF6White 1 SIDE;White 1 SIDE;Materiales!M99;32489;;COP/m²;;;Solo Excel;
+Canto;CANT22x1;22x1;Materiales!C104;980;980;COP/m;0;0.0;Coincide;
+Canto;CANT22x0,45;22x0,45;Materiales!C105;421;421;COP/m;0;0.0;Coincide;
+Canto;CANT22x1 High Gloss;22x1 High Gloss;Materiales!C108;3930.15;3930.15;COP/m;0.0;0.0;Coincide;
+Canto;CANTNA;NA;Materiales!C109;0;0;COP/m;0;;Coincide;
+Canto;CANT19X2;19X2;Materiales!C106;1333;1333;COP/m;0;0.0;Coincide;
+Canto;CANT19X0,45;19X0,45;Materiales!C107;400;400;COP/m;0;0.0;Coincide;
+Canto;CANT19X1;19X1;Materiales!C110;764;764;COP/m;0;0.0;Coincide;
+Herraje/consumible;TARUGO8x30;Tarugo preimpregnado 8x30mm;costos unitarios!B31;142.56;142.56;COP/und;0.0;0.0;Coincide;Activo
+Herraje/consumible;CARTON;Lámina cartón protección;costos unitarios!B29;6886;6886;COP/und;0;0.0;Coincide;Activo
+Herraje/consumible;ETIQUETA;Etiqueta;costos unitarios!B30;594;594;COP/und;0;0.0;Coincide;Activo
+Herraje/consumible;PATA10AJUST;Pata ajustable 10cm;costos unitarios!B28;1987;1987;COP/und;0;0.0;Coincide;Activo
+Herraje/consumible;BISAGRAPAR;Bisagra par (cierre lento);costos unitarios!B33;5800;5800;COP/par;0;0.0;Coincide;Activo
+Herraje/consumible;MANIJA415;MANIJA 415 ACERO 201 CEPILLADA CUADRADA CC:160MM;costos unitarios!B70;7450;7450;COP/und;0;0.0;Coincide;Activo
+Herraje/consumible;TORNILLO858;Tornillo 8 5/8;costos unitarios!B83;23;23;COP/und;0;0.0;Coincide;Activo
+Herraje/consumible;RIELTANDEM;Riel cajón Tandem (par);costos unitarios!B84;49706.8;49706.8;COP/par;0.0;0.0;Coincide;Activo
+Herraje/consumible;BARRAEST;Barra estabilizadora (par);costos unitarios!B37;9800;9800;COP/par;0;0.0;Coincide;Activo
+Herraje/consumible;BONUITMX500;Bonuit MAX 500mm;costos unitarios!B90;57000;57000;COP/und;0;0.0;Coincide;Activo
+Herraje/consumible;RIELMETALBOX;Riel metal BOX (par);costos unitarios!B43;28000;28000;COP/par;0;0.0;Coincide;Activo
+Herraje/consumible;RIELSLIMCHI;Riel Slim China (par);costos unitarios!B85;55671.61600000001;55671.62;COP/par;0.00399999999353895;7.184989912164484e-06;Coincide;Activo
+Herraje/consumible;SLIMBOXALTO;Slim Box Alto Madecentro (par);costos unitarios!B125;48250;48250;COP/par;0;0.0;Coincide;Activo
+Herraje/consumible;SLIMBOXBAJO;Slim Box Bajo Madecentro (par);costos unitarios!B126;28700;28700;COP/par;0;0.0;Coincide;Activo
+Herraje/consumible;BARRAESTMCTO;Barra estabilizadora par Madecentro;;;11800;COP/par;;;Sin equivalencia exacta;Activo
+Herraje/consumible;RIELFE500;Riel full extension 500mm;costos unitarios!B76;31064;31064;COP/par;0;0.0;Coincide;Activo
+Herraje/consumible;PUSHOPENHBM237;Dispositivo PUSH TO OPEN imán HBM237-02;costos unitarios!B105;8032;8032;COP/und;0;0.0;Coincide;Activo
+Herraje/consumible;SOPORTE5x9;Soporte entrepaño 5x9 L;costos unitarios!B32;47;47;COP/und;0;0.0;"Inactivo; coincide";Inactivo
+Herraje/consumible;SOPORTEMET 5MM;SOPORTE ENTREPAÑO METALICO 5MM;;;45.7;COP/und;;;Sin equivalencia exacta;Activo
+Herraje/consumible;GRAPASJ-08;GRAPAS PARA CAJAS J-08;;;48.76;COP/und;;;Sin equivalencia exacta;Activo
+Referencia Excel pendiente;38;plantina fijacion 10x10;costos unitarios!B38;6817.999999999999;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;39;PERALM59 - Perfil zócalo aluminio 100mm x 3m;costos unitarios!B39;50493;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;40;EMPLAM97 Empaque zócalo aluminio x 3m;costos unitarios!B40;6423;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;41;FIMCPP Clip pata plástica zócalo aluminio;costos unitarios!B41;740;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;45;Soporte repisa;costos unitarios!B45;2304;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;46;Precio LVM Oslo 25x19;costos unitarios!B46;47.72;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;47;Precio LVM Oslo 31x19;costos unitarios!B47;56.371437045;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;48;Precio LVM Oslo 37x19;costos unitarios!B48;73.50799549500002;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;49;Precio LVM Oslo 48x19;costos unitarios!B49;88.66208934;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;50;Precio LVM Oslo 61x19;costos unitarios!B50;140.25;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;51;Costo zócalo PVC Alum;costos unitarios!B51;37193;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;52;Precio LVR Aqua 31x24;costos unitarios!B52;75.85;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;53;Precio LVP KOA 33X22;costos unitarios!B53;93.73;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;54;Precio Meson 180;costos unitarios!B54;135.8;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;55;Precio Meson 150;costos unitarios!B55;97;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;56;Precio Tina Española;costos unitarios!B56;222;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;57;Costo herraje Aceitero;costos unitarios!B57;240426;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;58;Costo herraje basureras;costos unitarios!B58;594240;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;59;Costo Accesorio para fijar Frente;costos unitarios!B59;90752;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;60;Costo platero;costos unitarios!B60;142390;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;61;Costo soporte entrepaño oculto;costos unitarios!B61;11352;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;62;FIMTIE59 Esquinero Zocalo aluminio 100mm;costos unitarios!B62;2675;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;64;Brazo AIR SE PUSH NGR 500-1400 KM*MM;costos unitarios!B64;63000;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;65;HSL302-00 Brazo AIR SE (Und);costos unitarios!B65;61000;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;66; Tubo para colgar ropa ovalado x 3 MT;costos unitarios!B66;7950;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;67;Soporte de tubo ovalado ;costos unitarios!B67;348;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;68;Costo Corner Brace;costos unitarios!B68;8000;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;69;Costo manija cuadrada (HMA792-03);costos unitarios!B69;6026;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;71;MA 418  ACE 201 CC 128 MM DORADO (HMA418-03);costos unitarios!B71;5370;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;72;Costo Gola L 3m;costos unitarios!B72;33952;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;73;Costo Gola C 3m;costos unitarios!B73;42024;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;74;Costo Sistema Fijación Metálica Gola;costos unitarios!B74;2634;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;75;Costo Sistema Fijación Liviano Gola;costos unitarios!B75;1455;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;77;Costo CMPD07-0047-000-0000 PLATERO ACERO INOX 201 60CM HSO567-02;costos unitarios!B77;33913;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;78;PLATERO ACERO INOX 201 90CM HSO567-02;costos unitarios!B78;58275;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;79;Costo Manija estándar FPK;costos unitarios!B79;4201;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;86;Flat Hidden countertop Bracket Costo;costos unitarios!B86;51250;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;87;HSL205-02 BONUIT FOLD ST GRIS 880-959MM;costos unitarios!B87;287612;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;88;SOPORTE DE TUBO LATERAL FMCST100;costos unitarios!B88;1476;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;89;TUBO ALUMINIO OVALADO 15 X 30MM X 3 MT PERALM12;costos unitarios!B89;28140;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;91;RIEL EXTENSIÓN TOTAL MEDIANO 126 ACERO GALVANIZADO-ZINC H:42 L:500 MM;costos unitarios!B91;6905;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;92;KIT SISTEMA CORREDIZO AMAZONAS;costos unitarios!B92;123226;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;93;PERALM16- GUIA SUPERIOR PUERTA AMAZONAS X3MT;costos unitarios!B93;63271;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;94;PERALM17- GUIA INFERIOR PUERTA AMAZONAS X3MT;costos unitarios!B94;36124;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;95;FIMGPAM -KIT 2 GUÍAS SUPERIORES + 2 RODACHINAS;costos unitarios!B95;23831;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;96;Costo Cam Lock;costos unitarios!B96;2000;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;97;HPA697-15 PATA 697  ACERO 201  H: 150 MM Ø 50 MM CON NIVELADOR;costos unitarios!B97;1700;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;98;Costo manija redonda (HMA021-02);costos unitarios!B98;1290;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;99;Brazo neumatico CR;costos unitarios!B99;5436;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;100;Riel full extensión de 35 cm;costos unitarios!B100;20000;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;101;Tornillo de ensamble;costos unitarios!B101;150;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;102;Chazo mas tornillo;costos unitarios!B102;700;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;103;Zocalo de pvc 12 cm;costos unitarios!B103;64116;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;104;Esquinero de zocalo de 12;costos unitarios!B104;2610;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;106;Clip universal pata plástica para zócalo de pvc;costos unitarios!B106;790;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;107;Torno esquinero 270 grados cromado ;costos unitarios!B107;226335;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;108;Canasta condimentero tres niveles cierre lento;costos unitarios!B108;161000;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;109;Para puertas elevables de dos piezas ;costos unitarios!B109;1200000;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;110;Riel corredera para cajón cierre lento con extensión total 30 kg;costos unitarios!B110;64000;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;111;HSC130-02 ACCESORIO U GRIS 257MM PARA CAJÓN BAJO FREGADERO;costos unitarios!B111;25000;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;112;GUÍA SUPERIOR E INFERIOR PUERTA CORDOBESA X 3M (PERALM26 & PERALM27);costos unitarios!B112;86012;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;113;GUÍA SUPERIOR E INFERIOR PUERTA CORDOBESA X 2M (PERALM26B &  PERALM27B);costos unitarios!B113;59949;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;114;KIT 2 GUÍAS + 2 RODACHINAS PTA CORDOBESA FIMGPCOR;costos unitarios!B114;19058;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;115;GUÍA SUPERIOR E INFERIOR PUERTA AMAZONAS X 3M (PERALM16 & PERALM17);costos unitarios!B115;100790.58;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;116;GUÍA SUPERIOR E INFERIOR PUERTA AMAZONAS X 2M (PERALM16B &  PERALM17B);costos unitarios!B116;72771;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;117;KIT 2 GUÍAS + 2 RODACHINAS PTA AMAZONAS FIMGPAM;costos unitarios!B117;24166;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;118;FRENO CIERRE SUAVE PARA SISTEMA CORREDIZO FRENOSC40KG;costos unitarios!B118;26022;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;119;PERFIL MANIJA PUERTA AMAZONAS X 3MT.PARA TABLERO 18 MM. INCLUYE FELPA. - PERALM18;costos unitarios!B119;19580;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;120;PERFIL MANIJA PUERTA AMAZONAS X 2,60MT PARA TABLERO 18 MM. INCLUYE FELPA. - PERALM18X260;costos unitarios!B120;22412;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;121;PERFIL TUBO OVALADO ALUMINIO X 3M - PERALM43;costos unitarios!B121;10965;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;122;KIT SOPORTE TUBO OVALADO SISTEMA CLOSET - KMCST001;costos unitarios!B122;7965;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;123;SOPORTE TUBO OVALADO 30x15 MM NIQUELADO (ZAMAK) - HTU100-01;costos unitarios!B123;271;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;124;TUBO ALUMINIO ANODIZADO OVALADO 15 X 30MM X 3 MT (espesor 1.2mm) - PERALM12;costos unitarios!B124;28821;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;127;PERFIL DE ALUM CON LUZ CALIDA X 3M NEGRO (HIL338-02);costos unitarios!B127;35726;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;128;CABLE 1.8M CON ENCHUMACH HEMBRA Y TAPA (HIL336-01);costos unitarios!B128;4077;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;129;SENSOR TACTIL INTEGRADO PARA FUENTE (HIL312-01);costos unitarios!B129;26475;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;
+Referencia Excel pendiente;130;FUENTE DE ALIMENTACION SLIM 12V, 3AMP, 2 (HIL492-30);costos unitarios!B130;38708;;Unidad/moneda según referencia;;;Sin equivalencia confirmada;

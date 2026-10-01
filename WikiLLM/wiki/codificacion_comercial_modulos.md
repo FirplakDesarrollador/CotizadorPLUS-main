@@ -1,0 +1,155 @@
+# Codificación comercial de módulos
+
+## Fuente única de verdad
+
+`codigoComercial()` en `src/lib/module-groups.ts` arma el código final de un
+módulo. Antes de 2026-09-15 la regla estaba replicada en cuatro superficies que
+producían cadenas distintas para el mismo módulo:
+
+| Superficie | Resultado para `W` 29×36 con `SM` |
+| --- | --- |
+| `recalcularGrupo()` (`cotizaciones.ts`) | `W2936-SM` ✔ |
+| `AddLineForm` (`prefLabel`) | `W29-SM` ✘ — omitía el alto |
+| `HdrBuscador` | `W2936-SM` ✔ |
+| Simulador (`moduleTitle`) | `W29` ✘ — sin alto, sin tipología, sin sufijo |
+
+El valor persistido en `cot_cotizacion_lineas.codigo_modulo` siempre salió de
+`recalcularGrupo()`, así que el dato guardado era correcto; lo que divergía era
+lo que el usuario veía antes de guardar. Las cuatro superficies ahora llaman a
+`codigoComercial()`.
+
+## Orden de los segmentos
+
+```text
+pref + largo [+ alto] [+ profundidad-W24] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM] [+ -18MM]
+```
+
+1. **`pref` + largo** — vía `codigoModulo()`. En prefijos con guion la medida se
+   inserta antes del guion: `B-FE` + 12" → `B12-FE` (ver migración
+   `0041_codigo_modulo_medida_antes_del_sufijo.sql`).
+2. **Alto** — solo en los tipos de `PREFS_ALTO_EN_CODIGO` (ver abajo).
+3. **Profundidad W de 24 in** — se concatena solo en la familia `W` cuando la
+   profundidad equivale exactamente a 24 in. Por ejemplo, largo 30, alto 20 y
+   profundidad 24 producen `W302024`; una profundidad distinta conserva `W3020`.
+4. **Tipología DB** — `DB18` + `DB-1S` → `DB18-1S`. El motor solo conoce el
+   prefijo base `DB`; la tipología vive en el formulario.
+5. **PCFD con gavetas ocultas** — `PCFD12-2OP-PUSH`.
+6. **Sistema de frente** — `-SM` cuando `sistemaFrente === 'gola'`, vía
+   `sufijoSistemaFrente()`. La familia `DB` tradicional lo bloquea incluso si
+   recibe un estado Gola heredado: `DB30-1S` permanece `DB30-1S`. Las familias
+   independientes `DB-*-SM` y `DB-*-SM-FE` ya llevan su sufijo propio. Ver
+   [variantes_frente_gola_sm.md](variantes_frente_gola_sm.md).
+
+## Qué tipos llevan el alto en el código
+
+`PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK']`
+
+`F` incluye largo y alto en el código comercial: un filler de 6 × 30 pulgadas
+se identifica como `F630`. Al seleccionar esta tipología, Simulador,
+cotizaciones y HDR restablecen el sistema de frente a `manija`, evitando que
+herede Gola de un módulo configurado anteriormente.
+
+En sistema imperial, `anchoCodigo()` presenta cualquier parte decimal como
+fracción de pulgada, redondeada al dieciseisavo más cercano y reducida. Por
+ejemplo, `12.75` se muestra como `12 3/4` y `PN12.87536` como `PN12 7/836`.
+Esta normalización es solo de presentación del código: las dimensiones usadas
+por el motor conservan su valor numérico. Los códigos métricos mantienen sus
+decimales. El mismo principio se aplica a cada dimensión incorporada al nombre,
+incluido el alto: 12,875 × 36,75 pulgadas produce `PN12 7/836 3/4`.
+
+`TK` también incluye largo y alto. Por ejemplo, un zócalo de 4,25 × 36,5
+pulgadas se identifica como `TK4 1/436 1/2`.
+
+Las familias superiores `UW` y `OW` también codifican su alto: por ejemplo,
+`UW1236` corresponde a 12 de largo por 36 de alto.
+
+La familia `W` de superiores de pared y los paneles `PN` son los únicos cuyo
+alto varía de forma independiente del tipo; en el resto el alto es un dato
+implícito de la tipología y no se codifica. `incluyeAltoEnCodigo()` compara
+contra la base del prefijo (lo anterior al primer guion), de modo que una
+variante `W-XX` heredaría la regla.
+
+**`WCC` queda fuera a propósito**: pese al prefijo `W`, es un módulo de clóset
+(`categoria='closet'` en `cot_tipos_mueble`), no un superior de pared.
+
+Los demás superiores por categoría (`S`, `SA`, `SBAS`, `SLOC`, `SMO`, `UW`,
+`TW`) no llevan alto por regla general. Las dos excepciones explícitas de esta
+familia son `TW` y `TW-SM-PUSH`: ambas incorporan siempre largo, alto y
+profundidad. Por ejemplo, 30 × 24 × 12 pulgadas produce `TW302412` o
+`TW302412-SM-PUSH`, respectivamente.
+
+## Sistema de medida
+
+`anchoCodigo()` convierte la medida al sistema del proyecto (`imperial` → in,
+`metrico` → cm) sin redondear a anchos de catálogo.
+
+Durante la edición, una medida vacía o una fracción incompleta puede ser
+temporalmente `NaN`. `anchoCodigo()` devuelve una cadena vacía para cualquier
+valor no finito y `BBLFD` omite el sufijo `-D...L/R` hasta que `Door` sea un
+número positivo válido. Así, un estado parcial del formulario no interrumpe el
+renderizado del Simulador.
+
+- **Cotizaciones**: el sistema viene del proyecto (`obtenerSistema()`).
+- **HDR**: fijo en `imperial`.
+- **Simulador**: no tiene sistema de proyecto; se deriva de la unidad activa
+  (`in` → imperial, `cm`/`mm` → métrico).
+
+## Dónde se ve el código
+
+- **Simulador**: badge bajo el precio estimado en el panel de resultado, y
+  título de cada tarjeta en modo combinado. En modo combinado el badge muestra
+  el código de grupo (`codigoGrupo()`, unido por `.`).
+- **Cotizaciones**: `codigo_modulo` de cada línea; `CocinaCard` e `imprimir`
+  hacen fallback a `pref` si está vacío.
+- **HDR**: título del módulo en el buscador manual.
+
+## Estado en Supabase
+
+La migración `0080_codigo_modulo_w_prof_24.sql` normaliza las líneas `W` de
+profundidad 24 in (o 60,96 cm en sistema métrico) que conservaron el formato
+anterior, incluyendo la variante con `-SM`. Solo actualiza el código construido
+sin la profundidad, por lo que es idempotente y no toca códigos ya normalizados.
+
+La regla está normalizada en la base real. `0046_codigo_modulo_alto_familia_w.sql`
+corrigió las líneas guardadas con el código corto (`PN14` → `PN1422`): 16 líneas
+de la familia W/PN, todas coherentes con la regla, 0 desactualizadas.
+
+Los cuatro tipos que la regla añadió (`WBL`, `WER`, `WLD`, `WPC`) no tenían
+ninguna línea guardada, así que ampliarla no reescribió códigos existentes.
+
+La migración es idempotente y su condición es estricta: solo toca filas cuyo
+código es exactamente `pref || largo`, de modo que un código con sufijo (`-SM`,
+`-1S`, `-2OP-PUSH`) queda intacto. Solo normaliza las líneas cuya unidad ya es la
+del sistema del proyecto (imperial→in, métrico→cm); las demás combinaciones
+exigirían replicar la conversión de unidades en SQL y se dejan al recálculo, que
+usa el motor real.
+
+## Deuda conocida
+
+`construirFilaLinea()` arma `descripcion_es` con `prefLabel`, que al agregar la
+línea es el código completo y al recalcular es solo el prefijo base. La
+descripción de una línea cambia de `W2936-SM 29x36x12 in` a `W 29x36x12 in`
+tras el primer recálculo. El campo `codigo_modulo` no se ve afectado.
+## Sufijo por espesor de caja y frente
+
+`codigoComercial()` agrega `-18MM` al final del código cuando los tableros
+seleccionados para los roles `caja` y `frente` tienen ambos `espesor_mm = 18`,
+y agrega `-15MM` cuando ambos tienen `espesor_mm = 15`.
+La condición usa el dato estructurado del catálogo, no el texto del código o de
+la descripción del material. Si uno de los roles usa otro espesor, el sufijo no
+se genera. Ejemplos sin SM: `WSM251514-18MM` y `WSM251514-15MM`.
+
+Cuando el módulo es un mueble superior de las familias `W` o `TW` y el código
+contiene el segmento `-SM`, el indicador se integra inmediatamente después de
+`SM`: `W2636-SM18`, `W332124-SM18-PUSH`, `TW302412-SM18` o
+`TW302412-SM18-PUSH`. Para 15mm se aplica la misma integración:
+`W2636-SM15`, `W332124-SM15-PUSH` o `TW302412-SM15-PUSH`. En esos casos no se
+agrega un sufijo separado al final.
+
+La clasificación compartida de muebles superiores incluye explícitamente a
+`TW` y todas sus variantes `TW-*`, además de las tipologías determinadas por la
+familia `W`. Toda regla formulada para “muebles superiores” debe usar esta
+clasificación central y contemplar también los TW.
+
+El sufijo se propaga desde la misma fuente de verdad a Simulador, alta y
+recálculo de cotizaciones, persistencia de `codigo_modulo` y buscador HDR.

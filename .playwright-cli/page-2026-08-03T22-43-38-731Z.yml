@@ -1,0 +1,14 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - heading "Cotizador PLUS" [level=1] [ref=e6]
+          - generic [ref=e7]: v1.0.0
+        - paragraph [ref=e8]: Inicia sesión para continuar
+      - generic [ref=e9]:
+        - textbox "correo@firplak.com" [ref=e10]
+        - textbox "Contraseña" [ref=e11]
+      - button "Ingresar" [ref=e12]
+  - button "Open Next.js Dev Tools" [ref=e18] [cursor=pointer]
+  - alert [ref=e22]

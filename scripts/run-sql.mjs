@@ -6,11 +6,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 function loadEnv() {
-  const envPath = path.resolve(process.cwd(), '.env.local');
-  if (fs.existsSync(envPath)) {
-    for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
-      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-      if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
+  // `.env.local` mantiene prioridad cuando existe; `.env` permite ejecutar
+  // migraciones en este proyecto, donde las credenciales viven allí.
+  for (const filename of ['.env.local', '.env']) {
+    const envPath = path.resolve(process.cwd(), filename);
+    if (fs.existsSync(envPath)) {
+      for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+        const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+        if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
+      }
     }
   }
 }

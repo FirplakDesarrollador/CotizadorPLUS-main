@@ -5,18 +5,34 @@ import { useMemo, useState } from 'react';
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
 type Perfil = { id: string; nombre: string; valores: Record<string, string> };
+export type MaterialDefaults = { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string };
 
 export type ProjectDefaults = {
   preset: Record<string, string>;
   cantoFrentes: string;
   cantoCaja: string;
-  recargoId: string;
+  // recargoId: string;
   margen: string;
+  conFondo?: boolean;
+  materialesInferiores?: MaterialDefaults;
+  materialesSuperiores?: MaterialDefaults;
+  // Defaults del primer mueble (vienen del formulario de creación)
+  tipoId?: string;
+  largo?: string;
+  alto?: string;
+  prof?: string;
+  unidad?: 'in' | 'cm' | 'mm';
+  perfilId?: string;
+  modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
+  conHerrajes?: boolean;
+  herrajesExcl?: string[];
+  npuertas?: string;
+  ncajones?: string;
+  nentrepanos?: string;
 };
 
 interface ProjectConfigPanelProps {
   tableros: Tablero[];
-  recargos: Recargo[];
   cantos: string[];
   perfiles: Perfil[];
   defaults: ProjectDefaults;
@@ -26,36 +42,43 @@ interface ProjectConfigPanelProps {
 const tableroLabel = (t: Tablero) =>
   `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}`;
 
-export default function ProjectConfigPanel({ tableros, recargos, cantos, perfiles, defaults, onChange }: ProjectConfigPanelProps) {
-  const [perfilId, setPerfilId] = useState('');
+export default function ProjectConfigPanel({ tableros, cantos, perfiles, defaults, onChange }: ProjectConfigPanelProps) {
+  const [perfilId, setPerfilId] = useState(defaults.materialesInferiores?.perfilId ?? defaults.perfilId ?? '');
+  const [perfilSuperiorId, setPerfilSuperiorId] = useState(defaults.materialesSuperiores?.perfilId ?? '');
+  const legacyMaterials: MaterialDefaults = {
+    preset: defaults.preset,
+    cantoFrentes: defaults.cantoFrentes,
+    cantoCaja: defaults.cantoCaja,
+    perfilId: defaults.perfilId,
+  };
+  const materialesInferiores = defaults.materialesInferiores ?? legacyMaterials;
+  const materialesSuperiores = defaults.materialesSuperiores ?? legacyMaterials;
 
   const tableroOptions = useMemo(
     () => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({ value: t.codigo, label: tableroLabel(t) })),
     [tableros]
   );
 
-  function set(patch: Partial<ProjectDefaults>) {
-    onChange({ ...defaults, ...patch });
-  }
-
-  function aplicarPerfil(id: string) {
-    setPerfilId(id);
+  function aplicarPerfil(id: string, familia: 'inferior' | 'superior') {
+    if (familia === 'superior') setPerfilSuperiorId(id);
+    else setPerfilId(id);
     const p = perfiles.find((x) => x.id === id);
     if (p) {
-      onChange({
-        ...defaults,
-        preset: { ...defaults.preset, ...p.valores }
-      });
+      const key = familia === 'superior' ? 'materialesSuperiores' : 'materialesInferiores';
+      const actual = familia === 'superior' ? materialesSuperiores : materialesInferiores;
+      const next = { ...actual, preset: { ...actual.preset, ...p.valores }, perfilId: id };
+      onChange({ ...defaults, [key]: next, ...(familia === 'inferior' ? { ...next } : {}) });
     }
   }
 
-  function setPresetRol(rol: string, value: string) {
+  function setPresetRol(rol: string, value: string, familia: 'inferior' | 'superior') {
     const board = tableros.find((t) => t.codigo === value);
-    const nextPreset = { ...defaults.preset, [rol]: value };
+    const actual = familia === 'superior' ? materialesSuperiores : materialesInferiores;
+    const nextPreset = { ...actual.preset, [rol]: value };
     if (rol === 'caja') nextPreset.refuerzo = value;
 
-    let nextCantoFrentes = defaults.cantoFrentes;
-    let nextCantoCaja = defaults.cantoCaja;
+    let nextCantoFrentes = actual.cantoFrentes;
+    let nextCantoCaja = actual.cantoCaja;
 
     const getMatch = (target: string) => cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ?? cantos.find((c) => c.replace(',', '.').toLowerCase() === target.replace(',', '.').toLowerCase()) ?? target;
 
@@ -67,120 +90,103 @@ export default function ProjectConfigPanel({ tableros, recargos, cantos, perfile
       if (board?.espesor_mm === 18) nextCantoCaja = getMatch('22x1');
       if (board?.espesor_mm === 15) nextCantoCaja = getMatch('19x0,45');
     }
-    onChange({ ...defaults, preset: nextPreset, cantoFrentes: nextCantoFrentes, cantoCaja: nextCantoCaja });
+    const key = familia === 'superior' ? 'materialesSuperiores' : 'materialesInferiores';
+    const next = { ...actual, preset: nextPreset, cantoFrentes: nextCantoFrentes, cantoCaja: nextCantoCaja };
+    onChange({ ...defaults, [key]: next, ...(familia === 'inferior' ? { ...next } : {}) });
+  }
+
+  function setMaterial(familia: 'inferior' | 'superior', patch: Partial<MaterialDefaults>) {
+    const key = familia === 'superior' ? 'materialesSuperiores' : 'materialesInferiores';
+    const actual = familia === 'superior' ? materialesSuperiores : materialesInferiores;
+    const next = { ...actual, ...patch };
+    onChange({ ...defaults, [key]: next, ...(familia === 'inferior' ? { ...next } : {}) });
   }
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-blue-600 text-lg">⚙️</span>
-        <div>
-          <h3 className="font-semibold text-slate-900 text-sm">Configuración global del proyecto</h3>
-          <p className="text-xs text-slate-500">Estos materiales se asignan automáticamente a cada mueble que agregues. Puedes cambiarlos por mueble si es necesario.</p>
-        </div>
+    <div className="border-t border-slate-200 pt-4 mt-4">
+      <div className="mb-4">
+        <h3 className="font-semibold text-slate-900 text-sm">Materiales globales</h3>
+        <p className="text-xs text-slate-500">Estos materiales se asignan automáticamente a cada mueble que agregues. Puedes cambiarlos por mueble si es necesario.</p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-        {/* Selector de perfil preconfigurado de BD */}
-        {perfiles.length > 0 && (
-          <F label="Cargar perfil predefinido (Preset)">
-            <select
-              value={perfilId}
-              onChange={(e) => aplicarPerfil(e.target.value)}
-              className="inp"
-            >
-              <option value="">— seleccionar preset —</option>
-              {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-            </select>
-          </F>
-        )}
+      <div className="space-y-4">
+        <section className="space-y-2">
+          <p className="text-xs font-semibold text-slate-700">Módulos inferiores (B)</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {perfiles.length > 0 && (
+              <F label="Cargar perfil predefinido (Preset)">
+                <select value={perfilId} onChange={(e) => aplicarPerfil(e.target.value, 'inferior')} className="inp">
+                  <option value="">— seleccionar preset —</option>
+                  {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                </select>
+              </F>
+            )}
+            <F label="Tablero caja / refuerzos">
+              <Combobox value={materialesInferiores.preset['caja'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('caja', v, 'inferior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+            </F>
+            <F label="Tablero frente">
+              <Combobox value={materialesInferiores.preset['frente'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('frente', v, 'inferior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+            </F>
+            <F label="Tablero fondo">
+              <Combobox value={materialesInferiores.preset['fondo'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('fondo', v, 'inferior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+            </F>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <F label="Canto frentes">
+              <select value={materialesInferiores.cantoFrentes} onChange={(e) => setMaterial('inferior', { cantoFrentes: e.target.value })} className="inp">
+                <option value="">Por defecto</option>
+                {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </F>
+            <F label="Canto caja">
+              <select value={materialesInferiores.cantoCaja} onChange={(e) => setMaterial('inferior', { cantoCaja: e.target.value })} className="inp">
+                <option value="">Por defecto</option>
+                {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </F>
+          </div>
+        </section>
 
-        {/* Tableros */}
-        <F label="Tablero caja">
-          <Combobox
-            value={defaults.preset['caja'] ?? ''}
-            options={tableroOptions}
-            onChange={(v) => setPresetRol('caja', v)}
-            placeholder="Buscar tablero…"
-            allowEmpty
-            emptyLabel="— seleccionar —"
-          />
-        </F>
-        <F label="Tablero frente">
-          <Combobox
-            value={defaults.preset['frente'] ?? ''}
-            options={tableroOptions}
-            onChange={(v) => setPresetRol('frente', v)}
-            placeholder="Buscar tablero…"
-            allowEmpty
-            emptyLabel="— seleccionar —"
-          />
-        </F>
-        <F label="Tablero fondo">
-          <Combobox
-            value={defaults.preset['fondo'] ?? ''}
-            options={tableroOptions}
-            onChange={(v) => setPresetRol('fondo', v)}
-            placeholder="Buscar tablero…"
-            allowEmpty
-            emptyLabel="— seleccionar —"
-          />
-        </F>
+        <section className="space-y-2 border-t border-blue-200 pt-3">
+          <p className="text-xs font-semibold text-slate-700">Muebles superiores (W y TW)</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {perfiles.length > 0 && (
+              <F label="Cargar perfil predefinido (Preset)">
+                <select value={perfilSuperiorId} onChange={(e) => aplicarPerfil(e.target.value, 'superior')} className="inp">
+                  <option value="">— seleccionar preset —</option>
+                  {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                </select>
+              </F>
+            )}
+            <F label="Tablero caja / refuerzos">
+              <Combobox value={materialesSuperiores.preset['caja'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('caja', v, 'superior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+            </F>
+            <F label="Tablero frente">
+              <Combobox value={materialesSuperiores.preset['frente'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('frente', v, 'superior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+            </F>
+            <F label="Tablero fondo">
+              <Combobox value={materialesSuperiores.preset['fondo'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('fondo', v, 'superior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+            </F>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <F label="Canto frentes">
+              <select value={materialesSuperiores.cantoFrentes} onChange={(e) => setMaterial('superior', { cantoFrentes: e.target.value })} className="inp">
+                <option value="">Por defecto</option>
+                {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </F>
+            <F label="Canto caja">
+              <select value={materialesSuperiores.cantoCaja} onChange={(e) => setMaterial('superior', { cantoCaja: e.target.value })} className="inp">
+                <option value="">Por defecto</option>
+                {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </F>
+          </div>
+        </section>
 
-        {/* Cantos */}
-        <F label="Canto frentes">
-          <select
-            value={defaults.cantoFrentes}
-            onChange={(e) => set({ cantoFrentes: e.target.value })}
-            className="inp"
-          >
-            <option value="">Por defecto</option>
-            {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </F>
-        <F label="Canto caja">
-          <select
-            value={defaults.cantoCaja}
-            onChange={(e) => set({ cantoCaja: e.target.value })}
-            className="inp"
-          >
-            <option value="">Por defecto</option>
-            {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </F>
-
-        {/* Recargo */}
-        <F label="Cliente (recargo)">
-          <select
-            value={defaults.recargoId}
-            onChange={(e) => set({ recargoId: e.target.value })}
-            className="inp"
-          >
-            <option value="">Sin recargo</option>
-            {recargos.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.cliente_nombre} (+{(r.recargo_pct * 100).toFixed(0)}%)
-              </option>
-            ))}
-          </select>
-        </F>
-
-        {/* Margen */}
-        <F label="Margen (%)">
-          <input
-            type="number"
-            min={0}
-            max={100}
-            step={0.5}
-            placeholder="auto (sistema)"
-            value={defaults.margen}
-            onChange={(e) => set({ margen: e.target.value })}
-            className="inp"
-          />
-        </F>
       </div>
 
-      <style>{`.inp{width:100%;border:1px solid #bfdbfe;border-radius:.5rem;padding:.4rem .6rem;font-size:.8rem;background:white}.inp:focus{outline:2px solid #93c5fd;outline-offset:0}`}</style>
+      <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.4rem .6rem;font-size:.8rem;background:white}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}`}</style>
     </div>
   );
 }

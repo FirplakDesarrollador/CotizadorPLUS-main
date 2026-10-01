@@ -1,0 +1,122 @@
+- generic [ref=f2e2]:
+  - banner [ref=f2e3]:
+    - generic [ref=f2e4]:
+      - generic [ref=f2e5]:
+        - generic [ref=f2e6]:
+          - text: Cotizador PLUS
+          - generic [ref=f2e7]: v1.0.2
+        - link "Simulador" [ref=f2e8] [cursor=pointer]:
+          - /url: /cotizador
+        - link "Cotizaciones" [ref=f2e9] [cursor=pointer]:
+          - /url: /cotizaciones
+        - link "Manual" [ref=f2e10] [cursor=pointer]:
+          - /url: /manual
+      - generic [ref=f2e11]:
+        - generic [ref=f2e12]: codex-group-e2e-20260715@example.invalid
+        - generic [ref=f2e13]: vendedor
+        - button "Salir" [ref=f2e15]
+  - generic [ref=f2e16]:
+    - button "Guía de uso" [ref=f2e17]:
+      - generic [ref=f2e18]: 💡
+      - text: Guía de uso
+    - button "Tips" [ref=f2e19]:
+      - generic [ref=f2e20]: 💬
+      - text: Tips
+  - main [ref=f2e21]:
+    - generic [ref=f2e22]:
+      - heading "Nuevo proyecto / cotización" [level=2] [ref=f2e23]
+      - generic [ref=f2e24]:
+        - generic [ref=f2e25]: Nombre del proyecto *
+        - textbox "Nombre del proyecto *" [ref=f2e26]:
+          - /placeholder: Ej. Cocina Torre A — Apto 502
+      - textbox "Cliente" [ref=f2e27]
+      - generic [ref=f2e28]:
+        - combobox [ref=f2e29]:
+          - option "USD" [selected]
+          - option "COP"
+        - spinbutton "TRM" [ref=f2e30]: "3300"
+      - generic [ref=f2e31]:
+        - generic [ref=f2e32]: Sistema de medidas y nomenclatura
+        - combobox "Sistema de medidas y nomenclatura Se fija para todo el proyecto y evita mezclar nomenclaturas." [ref=f2e33]:
+          - option "Pulgadas · nomenclatura imperial" [selected]
+          - option "Centímetros · nomenclatura métrica"
+        - generic [ref=f2e34]: Se fija para todo el proyecto y evita mezclar nomenclaturas.
+      - generic [ref=f2e35]:
+        - generic [ref=f2e36]:
+          - generic [ref=f2e37]: Tablero caja
+          - textbox "Tablero caja" [ref=f2e39]:
+            - /placeholder: ECOCARB15COLOR · ECOFORT CARB 15mm COLOR
+            - text: ECOCARB15COLOR · ECOFORT CARB 15mm COLOR
+        - generic [ref=f2e40]:
+          - generic [ref=f2e41]: Tablero frente
+          - textbox "Tablero frente" [ref=f2e43]:
+            - /placeholder: ECOCARB18COLOR · ECOFORT CARB 18mm COLOR
+            - text: ECOCARB18COLOR · ECOFORT CARB 18mm COLOR
+        - generic [ref=f2e44]:
+          - generic [ref=f2e45]: Tablero fondo
+          - textbox "Tablero fondo" [ref=f2e47]:
+            - /placeholder: PRICARB6CANDELARIA (POLAR) · PRIMADERA CARB 6mm CANDELARIA (POLAR)
+            - text: PRICARB6CANDELARIA (POLAR) · PRIMADERA CARB 6mm CANDELARIA (POLAR)
+        - generic [ref=f2e48]:
+          - generic [ref=f2e49]:
+            - generic [ref=f2e50]: Canto frentes
+            - combobox "Canto frentes" [ref=f2e51]:
+              - option "Por defecto"
+              - option "19X0,45"
+              - option "19X1"
+              - option "19X2"
+              - option "22x0,45"
+              - option "22x1" [selected]
+              - option "22x1 High Gloss"
+              - option "NA"
+          - generic [ref=f2e52]:
+            - generic [ref=f2e53]: Canto caja
+            - combobox "Canto caja" [ref=f2e54]:
+              - option "Por defecto"
+              - option "19X0,45" [selected]
+              - option "19X1"
+              - option "19X2"
+              - option "22x0,45"
+              - option "22x1"
+              - option "22x1 High Gloss"
+              - option "NA"
+        - generic [ref=f2e55]:
+          - generic [ref=f2e56]: Margen (%)
+          - spinbutton "Margen (%)" [ref=f2e57]
+      - button "Crear y agregar muebles" [ref=f2e58]
+    - table [ref=f2e60]:
+      - rowgroup [ref=f2e61]:
+        - row [ref=f2e62]:
+          - columnheader "Cotización" [ref=f2e63]
+          - columnheader "Cliente" [ref=f2e64]
+          - columnheader "Estado" [ref=f2e65]
+          - columnheader "Total USD" [ref=f2e66]
+          - columnheader "Total COP" [ref=f2e67]
+          - columnheader [ref=f2e68]
+      - rowgroup [ref=f2e69]:
+        - row [ref=f2e70]:
+          - cell "Prueba carpintería 2-0 14/7/2026" [ref=f2e71]:
+            - link "Prueba carpintería 2-0" [ref=f2e72] [cursor=pointer]:
+              - /url: /cotizaciones/220ff280-3257-4c78-873b-939af6f55b55
+            - generic [ref=f2e73]: 14/7/2026
+          - cell "FIRPLAK" [ref=f2e74]
+          - cell "borrador" [ref=f2e75]
+          - cell "$407.15" [ref=f2e76]
+          - cell "$ 1.343.586" [ref=f2e77]
+          - cell [ref=f2e78]:
+            - generic [ref=f2e79]:
+              - button "Renombrar" [ref=f2e80]
+              - button "✕" [ref=f2e81]
+        - row [ref=f2e82]:
+          - cell "Prueba 2026 22/6/2026" [ref=f2e83]:
+            - link "Prueba 2026" [ref=f2e84] [cursor=pointer]:
+              - /url: /cotizaciones/dc413334-f4af-4d30-b737-cde3618f83ad
+            - generic [ref=f2e85]: 22/6/2026
+          - cell "Andrés S" [ref=f2e86]
+          - cell "borrador" [ref=f2e87]
+          - cell "$2,408.52" [ref=f2e88]
+          - cell "$ 8.739.164" [ref=f2e89]
+          - cell [ref=f2e90]:
+            - generic [ref=f2e91]:
+              - button "Renombrar" [ref=f2e92]
+              - button "✕" [ref=f2e93]

@@ -1,0 +1,1578 @@
+<div id="db-interpretacion-20260910">
+  <div class="viz-row"><h2>DB · interpretación del armado</h2><span class="text-small">Medidas documentadas · posiciones inferidas</span></div>
+  <div class="viz-controls">
+    <label class="form-label">Modelo<select class="form-select" id="db-model"></select></label>
+    <label class="form-label">Representación<select class="form-select" id="db-mode"><option value="xray">Piezas en transparencia</option><option value="solid">Exterior ensamblado</option></select></label>
+  </div>
+  <div class="viz-row text-small tabular-nums" id="db-size" aria-live="polite"></div>
+  <div class="db-views">
+    <section><h3>Frontal</h3><svg class="db-drawing" data-view="front" role="img" aria-label="Vista frontal: largo horizontal y alto vertical"></svg></section>
+    <section><h3>Lateral derecha</h3><svg class="db-drawing" data-view="side" role="img" aria-label="Vista lateral: frente a la izquierda y respaldo a la derecha"></svg></section>
+    <section><h3>Superior</h3><svg class="db-drawing" data-view="top" role="img" aria-label="Planta: respaldo arriba y frente abajo"></svg></section>
+  </div>
+  <div class="viz-row text-small db-legend" aria-label="Leyenda">
+    <span><i data-color="structure"></i>Carcasa</span><span><i data-color="drawer"></i>Gavetas</span><span><i data-color="front"></i>Frentes</span><span><i data-color="rail"></i>Travesaños</span><span><i data-color="gola"></i>Gola</span><span>┄ Herraje esquemático</span>
+  </div>
+  <div class="viz-controls">
+    <label class="form-label"><span id="db-opening-label">Apertura superior</span> · <output id="db-opening-value">0 mm</output><input class="form-range" id="db-opening" type="range" min="0" max="300" step="10" value="0" aria-label="Desplazamiento ilustrativo de la gaveta, en milímetros"></label>
+    <label class="form-label">Pieza resaltada<select class="form-select" id="db-part"><option value="">Todas las piezas</option></select></label>
+  </div>
+  <div class="text-small" id="db-detail" aria-live="polite"></div>
+  <div class="text-small" id="db-source"></div>
+  <div class="text-small" id="db-residual" role="status"></div>
+  <span class="sr-only">Modelo de interpretación, sin mecanizados ni herrajes de fabricante. Las tres vistas se proyectan de los mismos paneles. Las letras identifican piezas de la hoja de producción. El selector de pieza permite inspeccionar también elementos ocultos.</span>
+</div>
+<style>
+  #db-interpretacion-20260910 { color:var(--foreground); }
+  #db-interpretacion-20260910 .db-views { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-block:12px; }
+  #db-interpretacion-20260910 .db-views section { min-width:0; }
+  #db-interpretacion-20260910 .db-views h3 { margin-block:8px; }
+  #db-interpretacion-20260910 .db-drawing { display:block; width:100%; overflow:visible; }
+  #db-interpretacion-20260910 .db-drawing text { fill:var(--foreground); font-size:12px; }
+  #db-interpretacion-20260910 .db-legend { gap:12px; margin-block:8px; }
+  #db-interpretacion-20260910 .db-legend span { display:inline-flex; align-items:center; gap:5px; }
+  #db-interpretacion-20260910 .db-legend i { width:10px; height:10px; display:inline-block; }
+  #db-interpretacion-20260910 [data-color="structure"] { background:var(--muted-foreground); }
+  #db-interpretacion-20260910 [data-color="drawer"] { background:var(--viz-series-1); }
+  #db-interpretacion-20260910 [data-color="front"] { background:var(--viz-series-2); }
+  #db-interpretacion-20260910 [data-color="rail"] { background:var(--viz-series-3); }
+  #db-interpretacion-20260910 [data-color="gola"] { background:var(--viz-series-4); }
+  #db-interpretacion-20260910 #db-detail { margin-top:10px; min-height:2.5em; overflow-wrap:anywhere; }
+  #db-interpretacion-20260910 #db-source, #db-interpretacion-20260910 #db-residual { margin-top:6px; overflow-wrap:anywhere; }
+  @media (max-width:760px) { #db-interpretacion-20260910 .db-views { grid-template-columns:1fr; } }
+</style>
+<script type="application/json" id="db-evidence">{
+  "source": "Hojas de ruta 2.xlsx",
+  "sheet": "Hoja1",
+  "date": "2026-09-10",
+  "dbRows": 1240,
+  "dbSheets": 71,
+  "examples": [
+    {
+      "label": "DB15-1S",
+      "sku": "DB15-1S MBLE INF COC 3 GAVETAS 1 PEQUEÑA CARB2",
+      "nc": 3,
+      "small": 1,
+      "gola": false,
+      "hidden": false,
+      "W": 381.0,
+      "H": 762.0,
+      "D": 609.6,
+      "closure": 0.16,
+      "panels": [
+        {
+          "row": 16919,
+          "letter": "A",
+          "name": "BASE",
+          "l": 351.0,
+          "a": 585.6,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL AxP{-24}PyA",
+          "quantity": null
+        },
+        {
+          "row": 16920,
+          "letter": "B",
+          "name": "SIDE R - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 16921,
+          "letter": "C",
+          "name": "SIDE L - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 16922,
+          "letter": "D",
+          "name": "RAIL DELANTERO",
+          "l": 351.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16923,
+          "letter": "E",
+          "name": "RAIL DELANTERO",
+          "l": 351.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16924,
+          "letter": "F",
+          "name": "RAIL DELANTERO",
+          "l": 351.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16926,
+          "letter": "G",
+          "name": "RAIL TRASERO",
+          "l": 351.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16927,
+          "letter": "H",
+          "name": "RAIL TRASERO",
+          "l": 351.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16928,
+          "letter": "I",
+          "name": "FONDO GAVETA SUP",
+          "l": 276.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16929,
+          "letter": "J",
+          "name": "FONDO GAVETA CENTRAL",
+          "l": 276.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16930,
+          "letter": "K",
+          "name": "FONDO GAVETA INF",
+          "l": 276.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16931,
+          "letter": "L",
+          "name": "TRASERO CAJON SUP",
+          "l": 264.0,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16932,
+          "letter": "M",
+          "name": "TRASERO CAJON CENTRAL",
+          "l": 264.0,
+          "a": 183.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16933,
+          "letter": "N",
+          "name": "TRASERO CAJON INF",
+          "l": 264.0,
+          "a": 183.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 16934,
+          "letter": "O",
+          "name": "FRENTE GAVETA SUP",
+          "l": 152.4,
+          "a": 377.8,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 16935,
+          "letter": "P",
+          "name": "FRENTE GAVETA CENTRAL",
+          "l": 300.08,
+          "a": 377.8,
+          "t": 18.0,
+          "formula": "LxA[0,3938]AyL AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 16937,
+          "letter": "Q",
+          "name": "FRENTE GAVETA INF",
+          "l": 300.08,
+          "a": 377.8,
+          "t": 18.0,
+          "formula": "LxA[0,3938]AyL AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 16938,
+          "letter": "R",
+          "name": "BACKING",
+          "l": 760.0,
+          "a": 365.0,
+          "t": 6.0,
+          "formula": "LxA{-2}AyL AxL{-16}LyA",
+          "quantity": null
+        }
+      ]
+    },
+    {
+      "label": "DB30-2S",
+      "sku": "DB30-2S MBLE INF COC 3 GAVETAS 2 PEQUEÑAS CARB2",
+      "nc": 3,
+      "small": 2,
+      "gola": false,
+      "hidden": false,
+      "W": 762.0,
+      "H": 762.0,
+      "D": 609.6,
+      "closure": 0.0,
+      "panels": [
+        {
+          "row": 7997,
+          "letter": "A",
+          "name": "BASE",
+          "l": 732.0,
+          "a": 585.6,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL AxP{-24}PyA",
+          "quantity": null
+        },
+        {
+          "row": 7998,
+          "letter": "B",
+          "name": "SIDE R - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 7999,
+          "letter": "C",
+          "name": "SIDE L - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 8000,
+          "letter": "D",
+          "name": "RAIL DELANTERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8001,
+          "letter": "E",
+          "name": "RAIL DELANTERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8002,
+          "letter": "F",
+          "name": "RAIL DELANTERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8003,
+          "letter": "G",
+          "name": "RAIL TRASERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8004,
+          "letter": "H",
+          "name": "RAIL TRASERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8005,
+          "letter": "I",
+          "name": "FONDO GAVETA SUP",
+          "l": 657.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8006,
+          "letter": "J",
+          "name": "FONDO GAVETA CENTRAL",
+          "l": 657.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8007,
+          "letter": "K",
+          "name": "FONDO GAVETA INF",
+          "l": 657.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8008,
+          "letter": "L",
+          "name": "TRASERO CAJON SUP",
+          "l": 645.0,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8009,
+          "letter": "M",
+          "name": "TRASERO CAJON CENTRAL",
+          "l": 645.0,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8010,
+          "letter": "N",
+          "name": "TRASERO CAJON INF",
+          "l": 645.0,
+          "a": 183.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8011,
+          "letter": "O",
+          "name": "FRENTE GAVETA SUP",
+          "l": 187.3,
+          "a": 758.8,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 8012,
+          "letter": "P",
+          "name": "FRENTE GAVETA CENTRAL",
+          "l": 187.3,
+          "a": 758.8,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 8013,
+          "letter": "Q",
+          "name": "FRENTE GAVETA INF",
+          "l": 377.8,
+          "a": 758.8,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 8014,
+          "letter": "R",
+          "name": "BACKING",
+          "l": 760.0,
+          "a": 746.0,
+          "t": 6.0,
+          "formula": "LxA{-2}AyL AxL{-16}LyA",
+          "quantity": null
+        }
+      ]
+    },
+    {
+      "label": "DB24-2",
+      "sku": "HRJ DB24-2 MBLE INF COC 2 GAVETAS",
+      "nc": 2,
+      "small": 0,
+      "gola": false,
+      "hidden": false,
+      "W": 609.6,
+      "H": 762.0,
+      "D": 609.6,
+      "closure": 0.0,
+      "panels": [
+        {
+          "row": 7568,
+          "letter": "A",
+          "name": "BASE",
+          "l": 579.6,
+          "a": 585.6,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL AxP{-24}PyA",
+          "quantity": null
+        },
+        {
+          "row": 7569,
+          "letter": "B",
+          "name": "SIDE R - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 7570,
+          "letter": "C",
+          "name": "SIDE L - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 7571,
+          "letter": "D",
+          "name": "RAIL DELANTERO",
+          "l": 579.6,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 7572,
+          "letter": "E",
+          "name": "RAIL DELANTERO",
+          "l": 579.6,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 7580,
+          "letter": "F",
+          "name": "REF TRASERO",
+          "l": 579.6,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 7581,
+          "letter": "G",
+          "name": "REF TRASERO",
+          "l": 579.6,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 7573,
+          "letter": "H",
+          "name": "FONDO GAVETA SUP",
+          "l": 504.6,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 7574,
+          "letter": "I",
+          "name": "FONDO GAVETA INF",
+          "l": 504.6,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 7575,
+          "letter": "J",
+          "name": "TRASERO CAJON SUP",
+          "l": 492.6,
+          "a": 183.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 7576,
+          "letter": "K",
+          "name": "TRASERO CAJON INF",
+          "l": 492.6,
+          "a": 183.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 7577,
+          "letter": "L",
+          "name": "FRENTE GAVETA SUP",
+          "l": 377.8,
+          "a": 606.4,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 7578,
+          "letter": "M",
+          "name": "FRENTE GAVETA INF",
+          "l": 377.8,
+          "a": 606.4,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 7579,
+          "letter": "N",
+          "name": "BACKING",
+          "l": 760.0,
+          "a": 593.6,
+          "t": 6.0,
+          "formula": "LxA{-2}AyL AxL{-16}LyA",
+          "quantity": null
+        }
+      ]
+    },
+    {
+      "label": "DB30-3",
+      "sku": "DB30-3 MBLE INF COC 3 GAVETAS CARB2",
+      "nc": 3,
+      "small": 0,
+      "gola": false,
+      "hidden": false,
+      "W": 762.0,
+      "H": 762.0,
+      "D": 609.6,
+      "closure": 0.0,
+      "panels": [
+        {
+          "row": 8812,
+          "letter": "A",
+          "name": "BASE",
+          "l": 732.0,
+          "a": 585.6,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL AxP{-24}PyA",
+          "quantity": null
+        },
+        {
+          "row": 8813,
+          "letter": "B",
+          "name": "SIDE R - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 8814,
+          "letter": "C",
+          "name": "SIDE L - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 8815,
+          "letter": "D",
+          "name": "RAIL DELANTERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8816,
+          "letter": "E",
+          "name": "RAIL DELANTERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8817,
+          "letter": "F",
+          "name": "RAIL DELANTERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8818,
+          "letter": "G",
+          "name": "RAIL TRASERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8819,
+          "letter": "H",
+          "name": "RAIL TRASERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8820,
+          "letter": "I",
+          "name": "FONDO GAVETA SUP",
+          "l": 657.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8821,
+          "letter": "J",
+          "name": "FONDO GAVETA CENTRAL",
+          "l": 657.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8822,
+          "letter": "K",
+          "name": "FONDO GAVETA INF",
+          "l": 657.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8823,
+          "letter": "L",
+          "name": "TRASERO CAJON SUP",
+          "l": 645.0,
+          "a": 183.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8824,
+          "letter": "M",
+          "name": "TRASERO CAJON CENTRAL",
+          "l": 645.0,
+          "a": 183.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8825,
+          "letter": "N",
+          "name": "TRASERO CAJON INF",
+          "l": 645.0,
+          "a": 183.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 8826,
+          "letter": "O",
+          "name": "FRENTE GAVETA SUP",
+          "l": 250.8,
+          "a": 758.8,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 8827,
+          "letter": "P",
+          "name": "FRENTE GAVETA CENTRAL",
+          "l": 250.8,
+          "a": 758.8,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 8828,
+          "letter": "Q",
+          "name": "FRENTE GAVETA INF",
+          "l": 250.8,
+          "a": 758.8,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 8829,
+          "letter": "R",
+          "name": "BACKING",
+          "l": 760.0,
+          "a": 746.0,
+          "t": 6.0,
+          "formula": "LxA{-2}AyL AxL{-16}LyA",
+          "quantity": null
+        }
+      ]
+    },
+    {
+      "label": "DB24-4",
+      "sku": "DB24-4 MBLE INF COC 4 GAVETAS CARB2",
+      "nc": 4,
+      "small": 0,
+      "gola": false,
+      "hidden": false,
+      "W": 609.6,
+      "H": 762.0,
+      "D": 609.6,
+      "closure": 1.6,
+      "panels": [
+        {
+          "row": 5019,
+          "letter": "A",
+          "name": "BASE",
+          "l": 579.6,
+          "a": 585.6,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL AxP{-24}PyA",
+          "quantity": null
+        },
+        {
+          "row": 5020,
+          "letter": "B",
+          "name": "SIDE R - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 5021,
+          "letter": "C",
+          "name": "SIDE L - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 5022,
+          "letter": "D",
+          "name": "RAIL DELANTERO",
+          "l": 579.6,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5023,
+          "letter": "E",
+          "name": "RAIL DELANTERO",
+          "l": 579.6,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5024,
+          "letter": "F",
+          "name": "RAIL DELANTERO",
+          "l": 579.6,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5037,
+          "letter": "G",
+          "name": "RAIL DELANTERO",
+          "l": 579.6,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5025,
+          "letter": "H",
+          "name": "RAIL TRASERO",
+          "l": 579.6,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5026,
+          "letter": "I",
+          "name": "RAIL TRASERO",
+          "l": 579.6,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5027,
+          "letter": "J",
+          "name": "FONDO GAVETA",
+          "l": 504.6,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5028,
+          "letter": "K",
+          "name": "FONDO GAVETA",
+          "l": 504.6,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5029,
+          "letter": "L",
+          "name": "FONDO GAVETA",
+          "l": 504.6,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5038,
+          "letter": "M",
+          "name": "FONDO GAVETA",
+          "l": 504.6,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5030,
+          "letter": "N",
+          "name": "TRASERO CAJON",
+          "l": 492.6,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5031,
+          "letter": "O",
+          "name": "TRASERO CAJON",
+          "l": 492.6,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5032,
+          "letter": "P",
+          "name": "TRASERO CAJON",
+          "l": 492.6,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5039,
+          "letter": "Q",
+          "name": "TRASERO CAJON",
+          "l": 492.6,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 5033,
+          "letter": "R",
+          "name": "FRENTE GAVETA",
+          "l": 187.7,
+          "a": 606.4,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 5034,
+          "letter": "S",
+          "name": "FRENTE GAVETA",
+          "l": 187.7,
+          "a": 606.4,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 5035,
+          "letter": "T",
+          "name": "FRENTE GAVETA",
+          "l": 187.7,
+          "a": 606.4,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 5040,
+          "letter": "U",
+          "name": "FRENTE GAVETA",
+          "l": 187.7,
+          "a": 606.4,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 5036,
+          "letter": "V",
+          "name": "BACKING",
+          "l": 760.0,
+          "a": 593.6,
+          "t": 6.0,
+          "formula": "LxA{-2}AyL AxL{-16}LyA",
+          "quantity": null
+        }
+      ]
+    },
+    {
+      "label": "DB30-2S SM",
+      "sku": "HRJ DB30-2S SM-15MM MBLE INF COC 3 GAVETAS 2 PEQUEÑAS",
+      "nc": 3,
+      "small": 2,
+      "gola": true,
+      "hidden": false,
+      "W": 762.0,
+      "H": 762.0,
+      "D": 609.6,
+      "closure": 0.0,
+      "panels": [
+        {
+          "row": 13937,
+          "letter": "A",
+          "name": "BASE",
+          "l": 732.0,
+          "a": 585.6,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL AxP{-24}PyA",
+          "quantity": null
+        },
+        {
+          "row": 13938,
+          "letter": "B",
+          "name": "SIDE R - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 13939,
+          "letter": "C",
+          "name": "SIDE L - R17L762",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 13940,
+          "letter": "D",
+          "name": "RAIL DELANTERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13941,
+          "letter": "E",
+          "name": "RAIL DELANTERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13942,
+          "letter": "F",
+          "name": "RAIL TRASERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13943,
+          "letter": "G",
+          "name": "RAIL TRASERO",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13954,
+          "letter": "H",
+          "name": "GOLA",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13955,
+          "letter": "I",
+          "name": "GOLA",
+          "l": 732.0,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13944,
+          "letter": "J",
+          "name": "FONDO GAVETA SUP",
+          "l": 657.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13945,
+          "letter": "K",
+          "name": "FONDO GAVETA CENTRAL",
+          "l": 657.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13946,
+          "letter": "L",
+          "name": "FONDO GAVETA INF",
+          "l": 657.0,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13947,
+          "letter": "M",
+          "name": "TRASERO CAJON SUP",
+          "l": 645.0,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13948,
+          "letter": "N",
+          "name": "TRASERO CAJON CENTRAL",
+          "l": 645.0,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13949,
+          "letter": "O",
+          "name": "TRASERO CAJON INF",
+          "l": 645.0,
+          "a": 183.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 13950,
+          "letter": "P",
+          "name": "FRENTE GAVETA SUP",
+          "l": 173.9,
+          "a": 758.8,
+          "t": 15.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 13951,
+          "letter": "Q",
+          "name": "FRENTE GAVETA CENTRAL",
+          "l": 173.9,
+          "a": 758.8,
+          "t": 15.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 13952,
+          "letter": "R",
+          "name": "FRENTE GAVETA INF",
+          "l": 351.0,
+          "a": 758.8,
+          "t": 15.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 13953,
+          "letter": "S",
+          "name": "BACKING",
+          "l": 760.0,
+          "a": 746.0,
+          "t": 6.0,
+          "formula": "LxA{-2}AyL AxL{-16}LyA",
+          "quantity": null
+        }
+      ]
+    },
+    {
+      "label": "DB22-2+INT SMG",
+      "sku": "HRJ DB22-2+INT SMG Expocamacol",
+      "nc": 2,
+      "small": 0,
+      "gola": true,
+      "hidden": true,
+      "W": 558.8,
+      "H": 762.0,
+      "D": 609.6,
+      "closure": 0.0,
+      "panels": [
+        {
+          "row": 17043,
+          "letter": "A",
+          "name": "BASE",
+          "l": 528.8,
+          "a": 585.6,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL AxP{-24}PyA",
+          "quantity": null
+        },
+        {
+          "row": 17045,
+          "letter": "B",
+          "name": "SIDE R - R20L",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 17046,
+          "letter": "C",
+          "name": "SIDE L - R20L",
+          "l": 762.0,
+          "a": 609.6,
+          "t": 15.0,
+          "formula": "LxA{0}AyL AxP{0}PyA",
+          "quantity": null
+        },
+        {
+          "row": 17047,
+          "letter": "D",
+          "name": "RAIL DEL",
+          "l": 528.8,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 17048,
+          "letter": "E",
+          "name": "RAIL TRAS",
+          "l": 528.8,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 17049,
+          "letter": "F",
+          "name": "RAIL TRAS",
+          "l": 528.8,
+          "a": 80.0,
+          "t": 15.0,
+          "formula": "LxL{-30}LyL",
+          "quantity": null
+        },
+        {
+          "row": 17050,
+          "letter": "G",
+          "name": "FONDO GAV SUP",
+          "l": 453.8,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 17051,
+          "letter": "H",
+          "name": "FONDO GAV INF",
+          "l": 453.8,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 17052,
+          "letter": "I",
+          "name": "TRAS CAJON SUP",
+          "l": 441.8,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 17053,
+          "letter": "J",
+          "name": "TRAS CAJON INF",
+          "l": 441.8,
+          "a": 183.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 17054,
+          "letter": "K",
+          "name": "FRENTE GAVETA SUP",
+          "l": 351.0,
+          "a": 555.6,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 17056,
+          "letter": "L",
+          "name": "FRENTE GAVETA INF",
+          "l": 351.0,
+          "a": 555.6,
+          "t": 18.0,
+          "formula": "AxL{-3,2}LyA",
+          "quantity": null
+        },
+        {
+          "row": 17057,
+          "letter": "M",
+          "name": "BACKING",
+          "l": 760.0,
+          "a": 542.8,
+          "t": 6.0,
+          "formula": "LxA{-2}AyL AxL{-16}LyA",
+          "quantity": null
+        },
+        {
+          "row": 17058,
+          "letter": "N",
+          "name": "FONDO GAV INT",
+          "l": 453.8,
+          "a": 492.0,
+          "t": 15.0,
+          "formula": "LxL{-105}LyL",
+          "quantity": null
+        },
+        {
+          "row": 17059,
+          "letter": "O",
+          "name": "TRAS CAJON INT",
+          "l": 441.8,
+          "a": 68.0,
+          "t": 15.0,
+          "formula": "LxL{-117}LyL",
+          "quantity": null
+        },
+        {
+          "row": 17060,
+          "letter": "P",
+          "name": "FRENTE GAV INT",
+          "l": 100.0,
+          "a": 525.6,
+          "t": 15.0,
+          "formula": "AxL{-33,2}LyA",
+          "quantity": null
+        }
+      ]
+    }
+  ]
+}</script>
+<script>
+(() => {
+  const root = document.getElementById('db-interpretacion-20260910');
+  const evidence = JSON.parse(document.getElementById('db-evidence').textContent);
+  const $ = selector => root.querySelector(selector);
+  const NS = 'http://www.w3.org/2000/svg';
+  const colors = {structure:'var(--muted-foreground)',drawer:'var(--viz-series-1)',front:'var(--viz-series-2)',rail:'var(--viz-series-3)',gola:'var(--viz-series-4)'};
+  const fmt = value => new Intl.NumberFormat('es-CO',{maximumFractionDigits:2}).format(value);
+  let model, panels = [], frontHeights = [], metadata;
+  function option(value, label) { const o=document.createElement('option'); o.value=value; o.textContent=label; return o; }
+  evidence.examples.forEach((e,i)=>$('#db-model').append(option(i,e.label)));
+  function make(tag, attrs, text) {
+    const el=document.createElementNS(NS,tag);
+    Object.entries(attrs||{}).forEach(([k,v])=>el.setAttribute(k,v));
+    if(text!==undefined) el.textContent=text;
+    return el;
+  }
+  function build() {
+    model=evidence.examples[Number($('#db-model').value)];
+    const {W,H,D}=model, raw=model.panels;
+    const side=raw.find(p=>p.name.startsWith('SIDE R')), TC=side.t;
+    const fronts=raw.filter(p=>p.name.startsWith('FRENTE')&&!p.name.includes(' INT'));
+    const bases=raw.filter(p=>p.name.startsWith('FONDO GAV')&&!p.name.includes(' INT'));
+    const backs=raw.filter(p=>/^TRAS|^TRA GAV/.test(p.name)&&!p.name.includes(' INT'));
+    const TF=fronts[0].t, opening=Number($('#db-opening').value);
+    const slot=53.6*(model.gola?1:0);
+    const sum=fronts.reduce((a,p)=>a+p.l,0);
+    const edge=(H-sum-(fronts.length-1)*3.2-slot)/2;
+    const stacks=[]; let z=H-edge;
+    fronts.forEach((p,i)=>{
+      if(model.gola && (i===0||i===fronts.length-1)) z-=26.8;
+      stacks.push({bottom:z-p.l, top:z}); z-=p.l+3.2;
+    });
+    panels=[];
+    const push=(source,kind,x,y,z,w,d,h,assembly,drawer=-1)=>{
+      const movement=drawer===(model.hidden?99:0)?opening:0;
+      panels.push({...source,kind,x,y:y-movement,z,w,d,h,assembly,drawer});
+    };
+    raw.forEach(p=>{
+      const n=p.name;
+      if(n==='BASE') push(p,'structure',(W-p.l)/2,0,0,p.l,p.a,p.t,'Horizontal, entre laterales; borde delantero alineado con la caja.');
+      else if(n.startsWith('SIDE R')) push(p,'structure',W-p.t,0,0,p.t,p.a,p.l,'Lateral derecho visto desde el frente.');
+      else if(n.startsWith('SIDE L')) push(p,'structure',0,0,0,p.t,p.a,p.l,'Lateral izquierdo visto desde el frente.');
+      else if(n==='BACKING') {
+        const base=raw.find(q=>q.name==='BASE');
+        push(p,'structure',(W-p.a)/2,base.a,(H-p.l)/2,p.a,p.t,p.l,'Respaldo vertical centrado; encastre en los laterales inferido.');
+      }
+    });
+    const rear=raw.filter(p=>/RAIL TRAS|REF TRAS/.test(p.name));
+    rear.forEach((p,i)=>push(p,'rail',(W-p.l)/2,D-p.t,i===0?H-p.a:TC,p.l,p.t,p.a,'Travesaño posterior vertical; posición superior/inferior asumida.'));
+    const forward=raw.filter(p=>/RAIL DEL/.test(p.name));
+    forward.forEach((p,i)=>{
+      const level=stacks[Math.min(i,stacks.length-1)].top;
+      push(p,'rail',(W-p.l)/2,0,level-p.t,p.l,p.a,p.t,'Travesaño delantero horizontal; cota vertical inferida en la parte alta de una gaveta.');
+    });
+    const golas=raw.filter(p=>p.name.startsWith('GOLA'));
+    golas.forEach((p,i)=>{
+      const level=stacks[i===0?0:stacks.length-1].top;
+      push(p,'gola',(W-p.l)/2,80,Math.min(H-p.a,level+26.8-p.a),p.l,p.t,p.a,'Tablero de gola vertical, detrás del travesaño; retranqueo y altura de montaje asumidos.');
+    });
+    fronts.forEach((p,i)=>{
+      push(p,'front',(W-p.a)/2,-p.t,stacks[i].bottom,p.a,p.t,p.l,'Frente exterior sobrepuesto; separación lateral centrada y juntas verticales repartidas.',i);
+      const b=bases[i], back=backs[i], bz=stacks[i].bottom+30;
+      push(b,'drawer',(W-b.l)/2,10,bz,b.l,b.a,b.t,'Fondo horizontal de gaveta; +30 mm respecto al borde inferior del frente y +10 mm en profundidad, asumidos.',i);
+      push(back,'drawer',(W-back.l)/2,10+b.a-back.t,bz+b.t,back.l,back.t,back.a,'Trasero vertical sobre el fondo, junto a su borde posterior; unión asumida.',i);
+    });
+    if(model.hidden) {
+      const f=raw.find(p=>p.name.startsWith('FRENTE')&&p.name.includes(' INT'));
+      const b=raw.find(p=>p.name.startsWith('FONDO')&&p.name.includes(' INT'));
+      const t=raw.find(p=>p.name.startsWith('TRAS')&&p.name.includes(' INT'));
+      const bottom=H-30-f.l;
+      push(f,'front',(W-f.a)/2,30,bottom,f.a,f.t,f.l,'Frente interior embutido, detrás del frente superior; retranqueo 30 mm y cota superior H−30 asumidos.',99);
+      push(b,'drawer',(W-b.l)/2,30+f.t,bottom,b.l,b.a,b.t,'Fondo de la gaveta interior; por encima de la gaveta superior exterior.',99);
+      push(t,'drawer',(W-t.l)/2,30+f.t+b.a-t.t,bottom+b.t,t.l,t.t,t.a,'Trasero de gaveta interior; unión sobre el fondo asumida.',99);
+    }
+    if(panels.length!==raw.length) throw new Error('Piezas sin representar: '+(raw.length-panels.length));
+    frontHeights=fronts.map(p=>p.l);
+    metadata={TF,edge,TC,opening};
+  }
+  function bounds(p,view) {
+    if(view==='front') return [p.x,model.H-p.z-p.h,p.w,p.h];
+    if(view==='side') return [p.y+metadata.TF,model.H-p.z-p.h,p.d,p.h];
+    return [p.x,model.D-p.y-p.d,p.w,p.d];
+  }
+  function depth(p,view) { return view==='front'?-p.y:view==='side'?p.x:p.z; }
+  function draw(svg, scale, width, height) {
+    const view=svg.dataset.view, selected=$('#db-part').value, solid=$('#db-mode').value==='solid';
+    svg.replaceChildren(); svg.setAttribute('viewBox',`0 0 ${width} ${height}`); svg.setAttribute('height',height);
+    svg.append(make('title',{},`${model.label}, ${view==='front'?'frontal':view==='side'?'lateral derecha':'planta'}, ${panels.length} tableros documentados`));
+    const extW=view==='side'?model.D+metadata.TF:model.W;
+    const extH=view==='top'?model.D+metadata.TF:model.H;
+    const move=view==='side'?metadata.opening:0;
+    const x0=(width-(extW+move)*scale)/2+move*scale;
+    const y0=42;
+    const rect=(b,attrs)=>make('rect',{x:x0+b[0]*scale,y:y0+b[1]*scale,width:Math.max(.4,b[2]*scale),height:Math.max(.4,b[3]*scale),...attrs});
+    const sorted=[...panels].sort((a,b)=>depth(a,view)-depth(b,view));
+    function drawPanel(p, highlight=false) {
+      const b=bounds(p,view), faded=selected && p.letter!==selected;
+      if(solid&&!highlight) svg.append(rect(b,{fill:'var(--background)',stroke:'none'}));
+      const fillOpacity=highlight?.44:solid?.35:faded?.025:p.kind==='front'?.08:p.kind==='structure'?.07:.18;
+      const r=rect(b,{fill:colors[p.kind],'fill-opacity':fillOpacity,stroke:highlight?colors[p.kind]:solid?'var(--foreground)':colors[p.kind],
+        'stroke-width':highlight?2:1,'stroke-opacity':highlight?1:faded?.17:solid?.8:.65,
+        'data-tooltip':`${p.letter} · ${p.name} · ${fmt(p.l)} × ${fmt(p.a)} × ${fmt(p.t)} mm`, 'data-panel':p.letter});
+      svg.append(r);
+    }
+    sorted.forEach(p=>drawPanel(p));
+    // Metal drawer sides are illustrative centerlines, not manufactured solids.
+    if(!solid) {
+      for(const p of panels.filter(p=>p.kind==='drawer'&&p.name.startsWith('FONDO'))) {
+        if(selected && p.letter!==selected) continue;
+        for(const x of [p.x-6,p.x+p.w+6]) {
+          const line={x,y:p.y,z:p.z+p.h+60,w:0,d:p.d,h:0};
+          const b=bounds(line,view);
+          svg.append(make('line',{x1:x0+b[0]*scale,y1:y0+b[1]*scale,x2:x0+(b[0]+b[2])*scale,y2:y0+(b[1]+b[3])*scale,
+            stroke:'var(--muted-foreground)','stroke-width':1,'stroke-dasharray':'5 4','pointer-events':'none'}));
+        }
+      }
+    }
+    const chosen=panels.find(p=>p.letter===selected);
+    if(chosen) drawPanel(chosen,true);
+    // Nominal carcass envelope and dimension lines. Opening is outside this envelope.
+    const label=(x,y,text,anchor='middle')=>svg.append(make('text',{x,y,'text-anchor':anchor,'pointer-events':'none'},text));
+    svg.append(make('line',{x1:x0,y1:23,x2:x0+extW*scale,y2:23,stroke:'var(--border)'}));
+    for(const x of [x0,x0+extW*scale]) svg.append(make('line',{x1:x,y1:19,x2:x,y2:27,stroke:'var(--foreground)'}));
+    label(x0+extW*scale/2,16,view==='side'?`${fmt(extW)} mm · total`:`L ${fmt(model.W)} mm`);
+    const lower=y0+(extH+(view==='top'?metadata.opening:0))*scale+22;
+    label(width/2,lower,view==='front'?`A ${fmt(model.H)} mm`:view==='side'?`Frente ←   P caja ${fmt(model.D)} mm   → Atrás`:'← Izquierda     Frente     Derecha →');
+    if(view==='top') label(width/2,lower+18,`P total ${fmt(extH)} mm`);
+    if(view==='front') {
+      panels.filter(p=>p.kind==='front'&&p.drawer!==99).forEach(p=>{
+        const b=bounds(p,view), labelText=extW*scale>150?`${p.letter} · ${fmt(p.h)} mm`:`${p.letter} · ${fmt(p.h)}`;
+        if(!selected||p.letter===selected) label(x0+(b[0]+b[2]/2)*scale,y0+(b[1]+b[3]/2)*scale+4,labelText);
+      });
+    }
+    if(chosen && (view!=='front'||chosen.kind!=='front'||chosen.drawer===99)) {
+      const b=bounds(chosen,view);
+      label(Math.max(15,Math.min(width-15,x0+(b[0]+b[2]/2)*scale)),Math.max(36,y0+(b[1]+b[3]/2)*scale-6),chosen.letter);
+    }
+  }
+  function describe() {
+    const p=panels.find(p=>p.letter===$('#db-part').value);
+    $('#db-size').textContent=`${fmt(model.W)} × ${fmt(model.H)} × ${fmt(model.D)} mm de caja · ${panels.length} tableros · frentes ${frontHeights.map(fmt).join(' / ')} mm`;
+    $('#db-opening-label').textContent=model.hidden?'Apertura interior (hipótesis)':'Apertura superior (hipótesis)';
+    $('#db-opening-value').textContent=fmt(metadata.opening)+' mm';
+    $('#db-detail').textContent=p?`${p.letter} · ${p.name} · corte ${fmt(p.l)} × ${fmt(p.a)} × ${fmt(p.t)} mm. ${p.assembly}`:'Todas las piezas · letras originales de producción · herrajes laterales esquemáticos';
+    $('#db-source').textContent=p?`Hojas de ruta 2.xlsx · Hoja1 · fila ${p.row} · medidas de corte documentadas`:`Hojas de ruta 2.xlsx · ${model.label} · filas ${Math.min(...model.panels.map(p=>p.row))}–${Math.max(...model.panels.map(p=>p.row))}`;
+    $('#db-residual').textContent=model.hidden?'Gola: holgura exterior de 53,6 mm; perfiles ausentes en esta hoja.':Math.abs(model.closure)>.5?`Cierre de la fuente: +${fmt(model.closure)} mm con juntas de 3,2 mm. Márgenes extremos inferidos: ${fmt(metadata.edge)} mm.`:'';
+  }
+  function render() {
+    build(); describe();
+    const svgs=[...root.querySelectorAll('.db-drawing')];
+    const widths=svgs.map(s=>s.parentElement.getBoundingClientRect().width);
+    const available=Math.min(...widths);
+    if(available<10) return;
+    const maxW=Math.max(model.W,model.D+metadata.TF+metadata.opening);
+    const maxH=Math.max(model.H,model.D+metadata.TF+metadata.opening);
+    const scale=Math.min((available-40)/maxW,310/maxH);
+    const height=42+maxH*scale+55;
+    svgs.forEach((svg,i)=>draw(svg,scale,widths[i],height));
+  }
+  function changeModel() {
+    $('#db-opening').value='0'; build();
+    const select=$('#db-part'); select.replaceChildren(option('','Todas las piezas'));
+    [...panels].sort((a,b)=>a.letter.localeCompare(b.letter)).forEach(p=>select.append(option(p.letter,`${p.letter} · ${p.name}`)));
+    render();
+  }
+  $('#db-model').addEventListener('change',changeModel);
+  $('#db-mode').addEventListener('change',render);
+  $('#db-part').addEventListener('change',render);
+  $('#db-opening').addEventListener('input',render);
+  root.querySelectorAll('.db-drawing').forEach(svg=>svg.addEventListener('click',event=>{
+    const panel=event.target.closest('[data-panel]');
+    if(panel) {$('#db-part').value=panel.dataset.panel; render();}
+  }));
+  changeModel();
+  new ResizeObserver(()=>render()).observe($('.db-views'));
+})();
+</script>

@@ -1,10 +1,15 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import {
-  calcularMueble, derivarVars, toInches, normCalibre,
+  calcularMueble, toInches, normCalibre,
   type Dims, type UnidadDim, type Regla, type Pieza, type HerrajePlantilla,
-  type Breakdown,
+  type Breakdown, type CalcInput,
 } from '@/lib/engine';
+import { calcularGrupoFisico, type GroupCalculation, type PreparedGroupMember } from '@/lib/group-engine';
+import { consolidarGrupo, type CotizarGrupoResult } from '@/lib/group-result';
+import { construirVisualizacion } from './visualizacion';
+import { codigoComercial } from './module-groups';
+import { usaHuecoHornoParametrico, usaPuertaParametrica } from './muebles';
 
 export type CotizarInput = {
   tipoId: string;
@@ -12,7 +17,7 @@ export type CotizarInput = {
   unidad: UnidadDim;
   preset: Record<string, string>;       // rol_tablero -> codigo
   conHerrajes: boolean;
-  recargoPct: number;                    // recargo cliente (0.10 = 10%)
+  // recargoPct: number;                    // DESACTIVADO: recargo cliente (0.10 = 10%)
   trm?: number;                          // override TRM (si no, usa parámetro)
   overrides?: Record<string, number>;    // n_puertas, etc.
   modoFrentes?: 'normal' | 'sin_frentes' | 'solo_frentes';
@@ -24,16 +29,30 @@ export type CotizarInput = {
   etiquetas?: number;        // nº de etiquetas por mueble (override del proyecto, ej. 3)
   cantoFrentes?: string;
   cantoCaja?: string;
+  // Para diseños con cajón (DB/PCFD-OP): código del riel a usar.
+  // Si se especifica, se reemplaza el precio del riel por defecto (RIELTANDEM) con
+  // el precio del riel elegido, manteniendo la plantilla de herrajes sin tocar.
+  rielCodigo?: string;
+  door?: number;
+  doorHand?: 'L' | 'R';
+  conFondo?: boolean;
 };
 
 export type CotizarResult = Breakdown & { trm: number; margen: number };
 
-export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
+export type CotizacionPreparada = PreparedGroupMember & {
+  trm: number;
+  margen: number;
+  prefImperial: string;
+  prefMetrico: string;
+};
+
+export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionPreparada> {
   const sb = await createClient();
 
   const [{ data: params }, { data: tipo }] = await Promise.all([
     sb.from('cot_parametros').select('key,value'),
-    sb.from('cot_tipos_mueble').select('id,etiquetas_und,margen_key,usa_carton').eq('id', inp.tipoId).single(),
+    sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,etiquetas_und,margen_key,usa_carton,categoria').eq('id', inp.tipoId).single(),
   ]);
   if (!tipo) throw new Error('Tipo de mueble no encontrado');
   const P = Object.fromEntries((params ?? []).map((r) => [r.key, r.value])) as Record<string, unknown>;
@@ -43,7 +62,7 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     sb.from('cot_reglas_config').select('*').or(`tipo_mueble_id.is.null,tipo_mueble_id.eq.${inp.tipoId}`).eq('activo', true),
     sb.from('cot_herrajes_plantilla').select('*').eq('tipo_mueble_id', inp.tipoId).order('orden'),
     sb.from('cot_cantos').select('calibre,precio'),
-    sb.from('cot_herrajes').select('codigo,precio,selector_key,categoria'),
+    sb.from('cot_herrajes').select('codigo,precio,selector_key,categoria').eq('activo', true),
   ]);
 
   // Preset final: el preset por defecto cubre cualquier rol que el formulario no envíe (p.ej. "refuerzo").
@@ -52,7 +71,7 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
 
   // Tableros del preset
   const codes = [...new Set(Object.values(preset).filter(Boolean))];
-  const { data: tableros } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm').in('codigo', codes);
+  const { data: tableros } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato').in('codigo', codes);
 
   const tablerosByCode = Object.fromEntries((tableros ?? []).map((t) => [t.codigo, t]));
   const cantosByCalibre = Object.fromEntries((cantos ?? []).map((c) => [normCalibre(c.calibre), c]));
@@ -60,6 +79,19 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
   const consumiblesBySelector = Object.fromEntries(
     (herrajesAll ?? []).filter((h) => h.categoria === 'consumible' && h.selector_key).map((h) => [h.selector_key as string, Number(h.precio)])
   );
+
+  // Riel override para muebles DB: si el usuario elige un riel distinto al RIELTANDEM (por
+  // defecto en la plantilla), se sustituye el precio en herrajesByCode para el código del riel
+  // real elegido, asignándolo también como RIELTANDEM para que el motor lo encuentre por el
+  // codigo de la plantilla. El nombre visible en el breakdown cambia al código elegido.
+  if (inp.rielCodigo && inp.rielCodigo !== 'RIELTANDEM') {
+    const rielElegido = herrajesByCode[inp.rielCodigo];
+    if (rielElegido) {
+      // La plantilla de DB referencia herraje_codigo='RIELTANDEM', así que sobreescribimos
+      // su precio con el del riel elegido. El motor usa herrajesByCode[hp.herraje_codigo].
+      herrajesByCode['RIELTANDEM'] = { ...herrajesByCode['RIELTANDEM'], precio: Number(rielElegido.precio) };
+    }
+  }
 
   const margenes = (P.margenes ?? {}) as Record<string, number>;
   // Margen del mueble: el override del proyecto aplica solo a la categoría 'muebles';
@@ -79,10 +111,60 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     A: toInches(inp.alto, inp.unidad),
     P: toInches(inp.prof, inp.unidad),
   };
+  const overrides = {
+    ...(inp.overrides ?? {}),
+    ...(inp.door != null ? { door: toInches(inp.door, inp.unidad) } : {}),
+    ...(inp.doorHand ? { mano_derecha: inp.doorHand === 'R' ? 1 : 0 } : {}),
+  };
+  if (usaPuertaParametrica(tipo.pref)) {
+    if (!(inp.door != null && Number.isFinite(inp.door) && inp.door > 0)) throw new Error('Puerta es obligatoria y debe ser mayor que cero para esta tipología.');
+    if (!inp.doorHand) throw new Error('Selecciona L o R para la apertura.');
+    if (toInches(inp.door, inp.unidad) >= dims.L) throw new Error('Puerta debe ser menor que el largo del mueble.');
+  }
+  if (usaHuecoHornoParametrico(tipo.pref)) {
+    const hornoLargo = Number(inp.overrides?.horno_largo);
+    const hornoAlto = Number(inp.overrides?.horno_alto);
+    if (!(Number.isFinite(hornoLargo) && hornoLargo > 0)) {
+      throw new Error('El largo libre del horno es obligatorio y debe ser mayor que cero.');
+    }
+    if (!(Number.isFinite(hornoAlto) && hornoAlto > 0)) {
+      throw new Error('El alto libre del horno es obligatorio y debe ser mayor que cero.');
+    }
+    if (hornoLargo >= dims.L - (3.2 / 25.4)) {
+      throw new Error('El largo libre del horno debe dejar espacio para los frentes izquierdo y derecho.');
+    }
+    if (hornoAlto >= dims.A) {
+      throw new Error('El alto libre del horno debe ser menor que el alto del mueble.');
+    }
+  }
 
-  const breakdown = calcularMueble({
+  for (const key of ['n_puertas', 'n_cajones', 'n_entrepanos', 'n_barras'] as const) {
+    const value = inp.overrides?.[key];
+    if (value == null) continue;
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(`${key} debe ser un número entero mayor o igual a cero`);
+    }
+  }
+  const zocaloOverride = inp.overrides?.zocalo;
+  if (zocaloOverride != null && (!Number.isFinite(zocaloOverride) || zocaloOverride < 0 || zocaloOverride >= dims.A)) {
+    throw new Error('zocalo debe ser mayor o igual a cero y menor que el alto del mueble');
+  }
+
+  const piezasAjustadas = ((piezas ?? []) as Pieza[]).map((pieza) => {
+    if (inp.conFondo !== false) return pieza;
+    if (pieza.rol_tablero === 'fondo') return { ...pieza, formula_cantidad: '0' };
+    if (pieza.nombre !== 'base') return pieza;
+
+    // Sin fondo, la base ocupa la profundidad menos exactamente un espesor
+    // del tablero de caja. Se conserva el eje de largo propio de cada plantilla.
+    if (/\bP\b/.test(pieza.formula_ancho ?? '')) return { ...pieza, formula_ancho: 'P-TC' };
+    if (/\bP\b/.test(pieza.formula_largo ?? '')) return { ...pieza, formula_largo: 'P-TC' };
+    return pieza;
+  });
+
+  const calc: CalcInput = {
     dims,
-    piezas: (piezas ?? []) as Pieza[],
+    piezas: piezasAjustadas,
     herrajesPlantilla: inp.conHerrajes ? ((herrajesPlant ?? []) as HerrajePlantilla[]) : [],
     reglas: (reglas ?? []) as Regla[],
     preset,
@@ -94,27 +176,84 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
     usaCarton: tipo.usa_carton !== false,
     margen,
     margenHerraje,
-    recargo: inp.recargoPct ?? 0,
+    // recargo: inp.recargoPct ?? 0,
     trm,
     desperdicio,
-    overrides: inp.overrides,
+    overrides,
     modoFrentes: inp.modoFrentes ?? 'normal',
     herrajesExcluidos: inp.herrajesExcluidos,
     descuento: inp.descuento,
     cantoFrentes: inp.cantoFrentes,
     cantoCaja: inp.cantoCaja,
-  });
+    rielCodigo: inp.rielCodigo ?? 'RIELTANDEM',
+  };
 
-  return { ...breakdown, trm, margen };
+  return {
+    calc,
+    pref: tipo.pref,
+    omiteFondoSoloAgrupado: tipo.categoria === 'inferior'
+      && tipo.pref.toUpperCase().includes('B')
+      && /(^|-)SM($|-)/i.test(tipo.pref),
+    codigoModulo: codigoComercial({
+      pref: tipo.pref,
+      largo: inp.largo,
+      alto: inp.alto,
+      prof: inp.prof,
+      unidad: inp.unidad,
+      sistema: inp.unidad === 'in' ? 'imperial' : 'metrico',
+      door: inp.door,
+      doorHand: inp.doorHand,
+      espesorCajaMm: tablerosByCode[preset.caja]?.espesor_mm,
+      espesorFrenteMm: tablerosByCode[preset.frente]?.espesor_mm,
+    }),
+    prefImperial: tipo.pref_imperial || tipo.pref,
+    prefMetrico: tipo.pref_metrico || tipo.pref,
+    permiteAgrupacion: tipo.permite_agrupacion === true,
+    trm,
+    margen,
+  };
 }
+
+export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
+  const prepared = await prepararCotizacion(inp);
+  return { ...calcularMueble(prepared.calc), trm: prepared.trm, margen: prepared.margen };
+}
+
+export async function cotizarGrupo(inputs: CotizarInput[]): Promise<GroupCalculation & { preparados: CotizacionPreparada[] }> {
+  // Una estructura físicamente agrupada comparte caja, refuerzos y canto. A1
+  // es la fuente de verdad para evitar estados persistidos o cambios de perfil
+  // que dejen códigos estructurales distintos entre módulos del mismo grupo.
+  const first = inputs[0];
+  const normalizados = inputs.length > 1 && first ? inputs.map((input) => ({
+    ...input,
+    preset: {
+      ...input.preset,
+      caja: first.preset.caja,
+      refuerzo: first.preset.refuerzo ?? first.preset.caja,
+    },
+    cantoCaja: first.cantoCaja,
+  })) : inputs;
+  const preparados = await Promise.all(normalizados.map(prepararCotizacion));
+  return { ...calcularGrupoFisico(preparados), preparados };
+}
+
+export async function cotizarGrupoConsolidado(inputs: CotizarInput[]): Promise<CotizarGrupoResult> {
+  if (inputs.length === 0) throw new Error('Agrega al menos un módulo para calcular.');
+  const group = await cotizarGrupo(inputs);
+  const first = group.preparados[0];
+  const result = consolidarGrupo(group, { trm: first.trm, margen: first.margen });
+  return { ...result, visualizacion: construirVisualizacion(group.preparados, group) };
+}
+
+export type { CotizarGrupoResult } from '@/lib/group-result';
 
 // Datos para poblar la UI del cotizador.
 export async function getCotizadorData() {
   const sb = await createClient();
-  const [{ data: tipos }, { data: recargos }, { data: tableros }, { data: params }, { data: piezasRoles }, { data: perfiles }, { data: cantos }] = await Promise.all([
-    sb.from('cot_tipos_mueble').select('id,pref,nombre_es,categoria,margen_key').eq('activo', true).order('pref'),
-    sb.from('cot_recargos_cliente').select('id,cliente_nombre,recargo_pct,incluye_herrajes').eq('activo', true).order('cliente_nombre'),
-    sb.from('cot_tableros').select('codigo,proveedor,sustrato,espesor_mm,color_nombre,precio_m2').eq('activo', true).order('codigo'),
+  const [{ data: tipos }, /* { data: recargos }, */ { data: tableros }, { data: params }, { data: piezasRoles }, { data: perfiles }, { data: cantos }] = await Promise.all([
+    sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,nombre_es,categoria,margen_key').eq('activo', true).order('pref'),
+    // sb.from('cot_recargos_cliente').select('id,cliente_nombre,recargo_pct,incluye_herrajes').eq('activo', true).order('cliente_nombre'),
+    sb.from('cot_tableros').select('codigo,proveedor,sustrato,espesor_mm,color_nombre,precio_m2,formato').eq('activo', true).order('codigo'),
     sb.from('cot_parametros').select('key,value'),
     sb.from('cot_piezas_plantilla').select('tipo_mueble_id,rol_tablero').not('rol_tablero', 'is', null),
     sb.from('cot_preset_perfiles').select('id,nombre,descripcion,valores,es_default,orden').eq('activo', true).order('orden').order('nombre'),
@@ -147,7 +286,7 @@ export async function getCotizadorData() {
 
   return {
     tipos: tipos ?? [],
-    recargos: recargos ?? [],
+    // recargos: recargos ?? [],
     tableros: tableros ?? [],
     cantos: (cantos ?? []).map((c) => c.calibre as string),
     trmDefault: Number((P.trm as { valor?: number })?.valor ?? 4200),
