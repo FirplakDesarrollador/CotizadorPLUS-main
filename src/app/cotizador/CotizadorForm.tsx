@@ -193,7 +193,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         }
         continue;
       }
-      options.push({ value: tipo.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS'].includes(tipo.pref) ? (tipo.nombre_es ?? tipo.pref) : `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
+      options.push({ value: tipo.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS', 'BOMH-1'].includes(tipo.pref) ? (tipo.nombre_es ?? tipo.pref) : `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
     }
     return options;
   }, [tipos]);

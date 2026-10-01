@@ -219,7 +219,7 @@ export default function AddLineForm({
         }
         continue;
       }
-      options.push({ value: t.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS'].includes(t.pref) ? (t.nombre_es ?? prefProyecto(t)) : `${prefProyecto(t)} — ${t.nombre_es ?? ''}` });
+      options.push({ value: t.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS', 'BOMH-1'].includes(t.pref) ? (t.nombre_es ?? prefProyecto(t)) : `${prefProyecto(t)} — ${t.nombre_es ?? ''}` });
     }
     return options;
   })();
