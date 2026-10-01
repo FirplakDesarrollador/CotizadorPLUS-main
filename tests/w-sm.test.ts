@@ -16,10 +16,10 @@ const reglas: Regla[] = [
   { tipo_mueble_id: null, variable: 'n_puertas', condicion: 'L <= 21', valor: '1', prioridad: 10 },
   { tipo_mueble_id: null, variable: 'n_puertas', condicion: 'L >= 24', valor: '2', prioridad: 20 },
   { tipo_mueble_id: null, variable: 'n_puertas', condicion: 'true', valor: '1', prioridad: 99 },
-  { tipo_mueble_id: null, variable: 'n_entrepanos', condicion: 'A <= 16', valor: '0', prioridad: 10 },
-  { tipo_mueble_id: null, variable: 'n_entrepanos', condicion: 'A <= 24', valor: '1', prioridad: 20 },
-  { tipo_mueble_id: null, variable: 'n_entrepanos', condicion: 'A <= 36', valor: '2', prioridad: 30 },
-  { tipo_mueble_id: null, variable: 'n_entrepanos', condicion: 'true', valor: '3', prioridad: 99 },
+  { tipo_mueble_id: null, variable: 'n_entrepanos', condicion: 'A <= 17', valor: '0', prioridad: 10 },
+  { tipo_mueble_id: null, variable: 'n_entrepanos', condicion: 'A <= 27', valor: '1', prioridad: 20 },
+  { tipo_mueble_id: null, variable: 'n_entrepanos', condicion: 'A <= 40', valor: '2', prioridad: 30 },
+  { tipo_mueble_id: null, variable: 'n_entrepanos', condicion: 'true', valor: '3', prioridad: 40 },
 ];
 
 const herrajes: HerrajePlantilla[] = [
@@ -85,6 +85,26 @@ test('W2936-SM reproduce la hoja real adjunta', () => {
   // (base A). Mismo panel, misma área; ver migración 0047.
   assertMm(piece(result, 'fondo').largoIn, 720.6, 'largo backing SM (horizontal, base L)');
   assertMm(piece(result, 'fondo').anchoIn, 873, 'ancho backing SM (vertical, sigue al lateral A-1")');
+});
+
+test('superiores aplican la regla de entrepanos en todos sus limites', () => {
+  const casos = [
+    { alto: 17, esperado: 0 },
+    { alto: 18, esperado: 1 },
+    { alto: 27, esperado: 1 },
+    { alto: 28, esperado: 2 },
+    { alto: 40, esperado: 2 },
+    { alto: 40.01, esperado: 3 },
+    { alto: 41, esperado: 3 },
+  ];
+
+  for (const { alto, esperado } of casos) {
+    const result = calcularMueble({ ...input({ gola: 1 }), dims: { L: 29, A: alto, P: 12 } });
+    assert.equal(result.vars.n_entrepanos, esperado, `A=${alto}`);
+    const entrepano = result.piezas.find((item) => item.pieza === 'entrepano');
+    if (esperado === 0) assert.equal(entrepano, undefined, `A=${alto}`);
+    else assert.equal(entrepano?.cant, esperado, `A=${alto}`);
+  }
 });
 
 test('W-SM conserva bisagras y elimina manijas', () => {

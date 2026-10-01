@@ -21,7 +21,7 @@ lo que el usuario veía antes de guardar. Las cuatro superficies ahora llaman a
 ## Orden de los segmentos
 
 ```text
-pref + largo [+ alto] [+ profundidad-W24] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM]
+pref + largo [+ alto] [+ profundidad-W24] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM] [+ -18MM]
 ```
 
 1. **`pref` + largo** — vía `codigoModulo()`. En prefijos con guion la medida se
@@ -130,3 +130,26 @@ usa el motor real.
 línea es el código completo y al recalcular es solo el prefijo base. La
 descripción de una línea cambia de `W2936-SM 29x36x12 in` a `W 29x36x12 in`
 tras el primer recálculo. El campo `codigo_modulo` no se ve afectado.
+## Sufijo por espesor de caja y frente
+
+`codigoComercial()` agrega `-18MM` al final del código cuando los tableros
+seleccionados para los roles `caja` y `frente` tienen ambos `espesor_mm = 18`,
+y agrega `-15MM` cuando ambos tienen `espesor_mm = 15`.
+La condición usa el dato estructurado del catálogo, no el texto del código o de
+la descripción del material. Si uno de los roles usa otro espesor, el sufijo no
+se genera. Ejemplos sin SM: `WSM251514-18MM` y `WSM251514-15MM`.
+
+Cuando el módulo es un mueble superior de las familias `W` o `TW` y el código
+contiene el segmento `-SM`, el indicador se integra inmediatamente después de
+`SM`: `W2636-SM18`, `W332124-SM18-PUSH`, `TW302412-SM18` o
+`TW302412-SM18-PUSH`. Para 15mm se aplica la misma integración:
+`W2636-SM15`, `W332124-SM15-PUSH` o `TW302412-SM15-PUSH`. En esos casos no se
+agrega un sufijo separado al final.
+
+La clasificación compartida de muebles superiores incluye explícitamente a
+`TW` y todas sus variantes `TW-*`, además de las tipologías determinadas por la
+familia `W`. Toda regla formulada para “muebles superiores” debe usar esta
+clasificación central y contemplar también los TW.
+
+El sufijo se propaga desde la misma fuente de verdad a Simulador, alta y
+recálculo de cotizaciones, persistencia de `codigo_modulo` y buscador HDR.

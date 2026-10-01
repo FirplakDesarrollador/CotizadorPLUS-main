@@ -59,6 +59,14 @@ test('montaje: coordenadas por instancia, giro y validación de expresiones',()=
   assert.throws(()=>validarMontaje({x:'process.exit()'}));assert.throws(()=>validarMontaje({x:'I=1'}));assert.throws(()=>validarMontaje({x:'I++'}));
   assert.throws(()=>validarMontaje({plano:'AB'}));assert.doesNotThrow(()=>validarMontaje({x:'I==0?TC:L-W',version:1}));
 });
+test('montaje: admite el refuerzo diagonal de 45 grados observado en BLS36.iges',()=>{
+  const m=member('BFD');m.calc.piezas=m.calc.piezas.filter(p=>p.nombre==='lateral').slice(0,1);
+  m.calc.piezas[0].visualizacion={...inferirMontaje(m.calc.piezas[0]),giro:-45,confirmado:true};
+  const panel=construirVisualizacion([m],calcularGrupoFisico([m])).paneles[0];
+  assert.equal(panel.giro,-45);
+  assert.doesNotThrow(()=>validarMontaje({giro:-45,version:1}));
+  assert.throws(()=>validarMontaje({giro:361,version:1}));
+});
 // La puerta de un superior con gola se corta más alta que la carcasa (migración
 // 0045 para W). Ese sobrante es el agarre inferior: debe colgar bajo la base, no
 // sobresalir sobre la tapa.
@@ -77,6 +85,45 @@ test('W con gola: el sobrante de la puerta cuelga por debajo, no por encima',()=
     assert.ok(Math.abs(p.z+p.h-alto)<.1,`el canto superior debe quedar a ras de la tapa: ${p.z+p.h}`);
     assert.ok(p.z<-1,`el sobrante debe quedar bajo la base: z=${p.z}`);
   }
+});
+test('WLD: el frente queda 3.2mm bajo la cara exterior de la tapa',()=>{
+  const m=member('WLD');
+  const frente=m.calc.piezas.find(p=>p.nombre==='frente')!;
+  frente.visualizacion={...inferirMontaje(frente),z:'A-3.2-H',confirmado:true};
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const altoExterior=m.calc.dims.A*25.4;
+  const puertas=scene.paneles.filter(p=>p.funcion==='frente');
+  assert.ok(puertas.length>0);
+  for(const puerta of puertas){
+    assert.ok(Math.abs((puerta.z+puerta.h)-(altoExterior-3.2))<.1,'el canto superior debe quedar 3.2mm bajo la tapa');
+  }
+});
+test('superior: entrepano, fondo y refuerzo trasero no se solapan en profundidad',()=>{
+  const m=member('W');
+  for(const pieza of m.calc.piezas){
+    if(pieza.nombre==='fondo') pieza.visualizacion={...inferirMontaje(pieza),y:'P-TC-TB',confirmado:true};
+    if(pieza.nombre==='entrepano') pieza.visualizacion={...inferirMontaje(pieza),y:'P-TC-TB-D',confirmado:true};
+  }
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const fondo=scene.paneles.find(p=>p.funcion==='respaldo')!;
+  const refuerzo=scene.paneles.find(p=>p.funcion==='travesano_posterior')!;
+  const entrepano=scene.paneles.find(p=>p.funcion==='estante')!;
+  assert.ok(fondo&&refuerzo&&entrepano);
+  assert.ok(Math.abs((fondo.y+fondo.d)-refuerzo.y)<.1,'el fondo debe tocar la cara frontal del refuerzo trasero');
+  assert.ok(Math.abs((entrepano.y+entrepano.d)-fondo.y)<.1,'el entrepano debe terminar en la cara frontal del fondo');
+});
+test('UW: el entrepano superior queda alineado con el final inferior de la puerta',()=>{
+  const m=member('UW');
+  m.calc.dims={L:13,A:38.03937,P:12.937};
+  const puerta=m.calc.piezas.find(p=>p.nombre==='frente')!;
+  const superior=m.calc.piezas.find(p=>p.nombre==='entrepano_fijo')!;
+  puerta.visualizacion={...inferirMontaje(puerta),z:'A-H',confirmado:true};
+  superior.visualizacion={...inferirMontaje(superior),z:'7.841732*25.4',confirmado:true};
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const frente=scene.paneles.find(p=>p.nombre==='frente')!;
+  const entrepano=scene.paneles.find(p=>p.nombre==='entrepano_fijo')!;
+  assert.ok(frente&&entrepano);
+  assert.ok(Math.abs(entrepano.z-frente.z)<.1,'el entrepano superior debe iniciar donde termina la puerta');
 });
 test('W sin gola: la puerta sigue apoyada en la base',()=>{
   const alto=30*25.4;

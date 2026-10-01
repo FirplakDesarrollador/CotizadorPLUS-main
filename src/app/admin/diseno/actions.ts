@@ -32,7 +32,7 @@ export async function guardarTipoAgrupacionAction(id: string, row: { pref_imperi
 // Previsualización de costo (sin/with herrajes) con un preset y dimensiones dadas.
 // `overrides` permite forzar variables derivadas (n_cajones, n_cajones_pequenos...),
 // necesario para reproducir una tipología puntual (ej. DB-1S) desde un código.
-export async function previewAction(input: { tipoId: string; largo: number; alto: number; prof: number; unidad: 'in' | 'cm' | 'mm'; preset: Record<string, string>; conHerrajes: boolean; overrides?: Record<string, number> })
+export async function previewAction(input: { tipoId: string; largo: number; alto: number; prof: number; unidad: 'in' | 'cm' | 'mm'; preset: Record<string, string>; conHerrajes: boolean; overrides?: Record<string, number>; door?: number; doorHand?: 'L' | 'R' })
   : Promise<{ ok: true; result: CotizarResult } | { ok: false; error: string }> {
   try {
     await assertAdmin();

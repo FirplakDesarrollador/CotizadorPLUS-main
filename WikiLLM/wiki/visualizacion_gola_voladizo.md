@@ -66,3 +66,23 @@ negativa; y que con `gola=0` la puerta sigue apoyada en `z=0`.
 
 Ver también [w_sm_hoja_real.md](w_sm_hoja_real.md) y
 [variantes_frente_gola_sm.md](variantes_frente_gola_sm.md).
+
+## Alineación superior de WLD
+
+`WLD` presenta otra diferencia entre carcasa y frente: el lateral mide `A - 1"`
+y la puerta `A - 3,2 mm`. La migración
+`0125_wld_alinear_puerta_superior.sql` fija `visualizacion.z = A - 3,2 - H`
+solo en la pieza `frente` de `WLD`. Así el canto superior de la puerta queda
+3,2 mm por debajo de la cara exterior de la tapa. Las medidas de corte,
+cantidades, áreas y costos no cambian.
+
+## Orden posterior en superiores
+
+La migración `0126_superiores_fondo_y_entrepanos_en_profundidad.sql` normaliza
+el montaje de `W`, `WLD`, `W-SM`, `W-SM-PUSH`, `WSM`, `OW`, `TW`,
+`TW-SM-PUSH`, `UW`, `OW-MO` y `W-SM-LOC`. El fondo se ubica en
+`Y = P - TC - TB`, inmediatamente delante de los refuerzos traseros. Cada
+`entrepano`, `entrepano_fijo`, `entrepano_superior`, `shelf` o `shlef` se ubica en
+`Y = P - TC - TB - D`, de modo que su borde posterior termina en la cara
+frontal del fondo. La cantidad continúa gobernada por `n_entrepanos`; tipos sin
+pieza o con cantidad cero no generan estantes. Solo cambia el montaje visual.

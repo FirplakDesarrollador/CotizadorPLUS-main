@@ -1,5 +1,12 @@
 # Visualización y agrupación de familias FE (B-FE, UB-FE, V-FE)
 
+## Ajuste exclusivo de B-FE
+
+Los dos `refuerzo_delantero` de B-FE se distribuyen en la zona superior. El
+primero queda al ras superior (`z=A-H`) y el segundo inmediatamente debajo de
+la gaveta (`z=A-155,6-H`), descontando los 152,4 mm del frente de gaveta y el
+reveal de 3,2 mm. Este ajuste no se extiende a UB-FE ni V-FE.
+
 Esta página documenta la corrección geométrica del visor 3D y la homologación para agrupación física de las tipologías con gaveta de madera y riel Full Extension (`B-FE`, `UB-FE`, `V-FE`).
 
 ## Problemas corregidos en el visor 3D

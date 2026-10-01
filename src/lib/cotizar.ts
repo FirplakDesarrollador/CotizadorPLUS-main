@@ -9,6 +9,7 @@ import { calcularGrupoFisico, type GroupCalculation, type PreparedGroupMember } 
 import { consolidarGrupo, type CotizarGrupoResult } from '@/lib/group-result';
 import { construirVisualizacion } from './visualizacion';
 import { codigoComercial } from './module-groups';
+import { usaHuecoHornoParametrico, usaPuertaParametrica } from './muebles';
 
 export type CotizarInput = {
   tipoId: string;
@@ -115,10 +116,26 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
     ...(inp.door != null ? { door: toInches(inp.door, inp.unidad) } : {}),
     ...(inp.doorHand ? { mano_derecha: inp.doorHand === 'R' ? 1 : 0 } : {}),
   };
-  if (tipo.pref === 'BBLFD') {
-    if (!(inp.door != null && Number.isFinite(inp.door) && inp.door > 0)) throw new Error('Door es obligatorio y debe ser mayor que cero para BBLFD.');
-    if (!inp.doorHand) throw new Error('Selecciona L o R para BBLFD.');
-    if (toInches(inp.door, inp.unidad) >= dims.L) throw new Error('Door debe ser menor que el largo del mueble.');
+  if (usaPuertaParametrica(tipo.pref)) {
+    if (!(inp.door != null && Number.isFinite(inp.door) && inp.door > 0)) throw new Error('Puerta es obligatoria y debe ser mayor que cero para esta tipología.');
+    if (!inp.doorHand) throw new Error('Selecciona L o R para la apertura.');
+    if (toInches(inp.door, inp.unidad) >= dims.L) throw new Error('Puerta debe ser menor que el largo del mueble.');
+  }
+  if (usaHuecoHornoParametrico(tipo.pref)) {
+    const hornoLargo = Number(inp.overrides?.horno_largo);
+    const hornoAlto = Number(inp.overrides?.horno_alto);
+    if (!(Number.isFinite(hornoLargo) && hornoLargo > 0)) {
+      throw new Error('El largo libre del horno es obligatorio y debe ser mayor que cero.');
+    }
+    if (!(Number.isFinite(hornoAlto) && hornoAlto > 0)) {
+      throw new Error('El alto libre del horno es obligatorio y debe ser mayor que cero.');
+    }
+    if (hornoLargo >= dims.L - (3.2 / 25.4)) {
+      throw new Error('El largo libre del horno debe dejar espacio para los frentes izquierdo y derecho.');
+    }
+    if (hornoAlto >= dims.A) {
+      throw new Error('El alto libre del horno debe ser menor que el alto del mueble.');
+    }
   }
 
   for (const key of ['n_puertas', 'n_cajones', 'n_entrepanos', 'n_barras'] as const) {
@@ -186,6 +203,8 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
       sistema: inp.unidad === 'in' ? 'imperial' : 'metrico',
       door: inp.door,
       doorHand: inp.doorHand,
+      espesorCajaMm: tablerosByCode[preset.caja]?.espesor_mm,
+      espesorFrenteMm: tablerosByCode[preset.frente]?.espesor_mm,
     }),
     prefImperial: tipo.pref_imperial || tipo.pref,
     prefMetrico: tipo.pref_metrico || tipo.pref,

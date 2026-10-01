@@ -242,6 +242,10 @@ justo sobre el `refuerzo_delantero` inferior. Laterales, trasero, contraparche
 y base se desplazan conjuntamente y conservan entre sí todas sus relaciones
 de ensamble; la caja grande inferior permanece en su posición.
 
+Las tres `base_gaveta` de `DB-2S-SM-FE` miden 492 mm en profundidad. Este valor
+es exclusivo de esa tipología; `DB-3-SM-FE` y las demás variantes FE no se
+modifican.
+
 La migración fue aplicada al Supabase configurado el 2026-09-28. La lectura
 posterior confirmó 15/11/11 plantillas de piezas, 9/8/8 reglas y tres herrajes
 por tipo. `DB12-2S-SM-FE` reproduce sus 28 piezas físicas y todos los cortes

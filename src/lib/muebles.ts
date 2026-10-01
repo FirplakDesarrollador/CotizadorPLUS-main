@@ -58,7 +58,7 @@ function ordenPiezaDespiece(nombre: string): number {
   if (nombre === 'lateral' || nombre.startsWith('lateral_')) return 30;
   if (nombre === 'refuerzo_delantero' || nombre.startsWith('refuerzo_delantero_') || nombre === 'refuerzo_horizontal') return 40;
   if (nombre === 'refuerzo_trasero' || nombre.startsWith('refuerzo_trasero_')) return 50;
-  if (nombre === 'entrepano' || nombre === 'shelf' || nombre === 'shlef') return 60;
+  if (nombre.startsWith('entrepano') || nombre === 'shelf' || nombre === 'shlef') return 60;
   if (nombre === 'frente' || nombre.startsWith('frente_') || nombre === 'puerta' || nombre.startsWith('puerta_')) return 70;
   if (nombre === 'fondo' || nombre.startsWith('fondo_')) return 80;
   return 999;
@@ -81,12 +81,28 @@ export type FamiliaMaterial = 'inferior' | 'superior';
 // W, leída de izquierda a derecha, determina el juego de materiales del proyecto.
 // Los tipos sin ninguna de las dos letras conservan el bloque inferior como
 // fallback compatible con las cotizaciones anteriores.
-export function familiaMaterialPorPrefijo(pref: string | null | undefined): FamiliaMaterial {
+export function esMuebleSuperior(pref: string | null | undefined): boolean {
   const value = String(pref ?? '').toUpperCase();
+  // TW y todas sus variantes pertenecen explícitamente a muebles superiores.
+  if (value === 'TW' || value.startsWith('TW-')) return true;
   const b = value.indexOf('B');
   const w = value.indexOf('W');
-  if (w >= 0 && (b < 0 || w < b)) return 'superior';
-  return 'inferior';
+  return w >= 0 && (b < 0 || w < b);
+}
+
+export function familiaMaterialPorPrefijo(pref: string | null | undefined): FamiliaMaterial {
+  return esMuebleSuperior(pref) ? 'superior' : 'inferior';
+}
+
+export const PREFS_CON_PUERTA_PARAMETRICA = ['BBLFD', 'WBL-D-L/R-SM'] as const;
+
+export function usaPuertaParametrica(pref: string | null | undefined): boolean {
+  const value = String(pref ?? '').toUpperCase();
+  return (PREFS_CON_PUERTA_PARAMETRICA as readonly string[]).includes(value);
+}
+
+export function usaHuecoHornoParametrico(pref: string | null | undefined): boolean {
+  return String(pref ?? '').toUpperCase() === 'BOMH-1';
 }
 
 // Familias con pares base/removible verificados en las hojas de ruta. Fuera de

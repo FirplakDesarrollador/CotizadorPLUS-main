@@ -28,6 +28,8 @@ export type SimuladorModuloValues = {
   removible: boolean;
   door: string;
   doorHand: 'L' | 'R';
+  hornoLargo: string;
+  hornoAlto: string;
 };
 
 export type SimuladorValues = SimuladorModuloValues & {
@@ -83,6 +85,8 @@ export const initialModuloValues: SimuladorModuloValues = {
   removible: false,
   door: '',
   doorHand: 'R',
+  hornoLargo: '',
+  hornoAlto: '',
 };
 
 const initialStateValues: SimuladorSnapshot = {
@@ -126,6 +130,8 @@ export const getModuloValues = (state: SimuladorModuloValues): SimuladorModuloVa
   removible: state.removible,
   door: state.door,
   doorHand: state.doorHand,
+  hornoLargo: state.hornoLargo,
+  hornoAlto: state.hornoAlto,
 });
 
 const getSnapshot = (state: SimuladorState): SimuladorSnapshot => ({
@@ -211,7 +217,7 @@ export const useSimuladorStore = create<SimuladorState>()(
       // v3: el Breakdown ganó `m2`, `metros` y `desperdicio`. Un `result` guardado con
       // la forma anterior no los trae, así que `migrate` lo descarta (pone `result: null`)
       // y el Simulador pide recalcular en vez de renderizar campos ausentes.
-      version: 3,
+      version: 4,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {
