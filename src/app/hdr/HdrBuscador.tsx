@@ -47,7 +47,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         }
         continue;
       }
-      options.push({ value: t.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS', 'BOMH-1'].includes(t.pref) ? (t.nombre_es ?? t.pref) : `${t.pref} — ${t.nombre_es ?? ''}` });
+      options.push({ value: t.id, label: ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM', 'BLS', 'BLS-RS-SM', 'BOMH-1', 'BOMH-1-FE'].includes(t.pref) ? (t.nombre_es ?? t.pref) : `${t.pref} — ${t.nombre_es ?? ''}` });
     }
     return options;
   }, [tipos]);

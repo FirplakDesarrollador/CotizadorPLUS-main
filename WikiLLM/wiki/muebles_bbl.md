@@ -42,7 +42,7 @@ Piezas vigentes:
 - Dos piezas `refuerzo_trasero`: `(L - 2TC) × 80 mm`, cada una con 4 tarugos (2 por lado).
 - `entrepano`: `(L - 2TC - 1 mm) × (P - 150,8 mm)`.
 - `blind door`: `A × (L - Door - 3,2 mm)`, nombre reservado para la puerta fija.
-- `frente`: `(A - 3,2 mm) × Door`, siempre una unidad.
+- `frente`: `(A - 3,2 mm) × (Door - 3,2 mm)`, siempre una unidad.
 - `fondo`: `(A - 2 mm) × (L - 16 mm)`.
 
 En la visualización, la mano decide qué frente ocupa cada lado. El

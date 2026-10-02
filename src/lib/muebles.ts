@@ -94,7 +94,7 @@ export function familiaMaterialPorPrefijo(pref: string | null | undefined): Fami
   return esMuebleSuperior(pref) ? 'superior' : 'inferior';
 }
 
-export const PREFS_CON_PUERTA_PARAMETRICA = ['BBLFD', 'WBL-D-L/R-SM'] as const;
+export const PREFS_CON_PUERTA_PARAMETRICA = ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM'] as const;
 
 export function usaPuertaParametrica(pref: string | null | undefined): boolean {
   const value = String(pref ?? '').toUpperCase();
@@ -102,7 +102,7 @@ export function usaPuertaParametrica(pref: string | null | undefined): boolean {
 }
 
 export function usaHuecoHornoParametrico(pref: string | null | undefined): boolean {
-  return String(pref ?? '').toUpperCase() === 'BOMH-1';
+  return ['BOMH-1', 'BOMH-1-FE'].includes(String(pref ?? '').toUpperCase());
 }
 
 // Familias con pares base/removible verificados en las hojas de ruta. Fuera de

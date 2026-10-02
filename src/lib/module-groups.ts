@@ -208,7 +208,7 @@ export function codigoComercial(input: CodigoComercialInput): string {
     && input.doorHand
     ? `-D${anchoCodigo(input.door, unidad, sistema)}${input.doorHand}`
     : '';
-  if (prefNormalizado === 'WBL-D-L/R-SM'
+  if ((prefNormalizado === 'WBL-D-L/R-SM' || prefNormalizado === 'BBLFD-D-L/R-SM')
     && input.door != null
     && Number.isFinite(input.door)
     && input.door > 0

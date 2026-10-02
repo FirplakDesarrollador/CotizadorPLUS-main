@@ -218,6 +218,15 @@ L-86 x 80 mm y tres `contraparche_pequeno` de L-86 x 100 mm. Traseros y
 contraparches conservan cuatro tarugos por pieza, dos en cada lado, y la regla
 `n_cajones_pequenos=3` lleva la misma geometría a la visualización.
 
+## Cantos largos de traseros con riel FE
+
+Toda pieza `trasero_gaveta_pequena` o `trasero_gaveta_grande` perteneciente a
+una tipología cuyo herraje de riel sea `RIELFE500` lleva enchape en sus dos
+lados largos (`cantos.largos=2`). La regla se determina por el herraje real y
+actualmente cubre `DB-2S-SM-FE`, `DB-2-SM-FE` y `DB-3-SM-FE`. No modifica las
+versiones DB, UDV o DB-SM con riel Tandem; sus cantos permanecen según sus
+propias hojas y reglas.
+
 La visualización reutiliza el montaje validado de la familia DB-SM: refuerzos
 delanteros verticales, Golas horizontales contra los frentes y el segundo par
 anclado bajo la ultima base del bloque superior. Para las variantes iguales,

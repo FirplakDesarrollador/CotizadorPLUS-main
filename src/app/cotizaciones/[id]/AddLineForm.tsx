@@ -219,7 +219,7 @@ export default function AddLineForm({
         }
         continue;
       }
-      options.push({ value: t.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS', 'BOMH-1'].includes(t.pref) ? (t.nombre_es ?? prefProyecto(t)) : `${prefProyecto(t)} — ${t.nombre_es ?? ''}` });
+      options.push({ value: t.id, label: ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM', 'BLS', 'BLS-RS-SM', 'BOMH-1', 'BOMH-1-FE'].includes(t.pref) ? (t.nombre_es ?? prefProyecto(t)) : `${prefProyecto(t)} — ${t.nombre_es ?? ''}` });
     }
     return options;
   })();
@@ -441,7 +441,7 @@ export default function AddLineForm({
                 <input type="text" required value={hornoAlto} onChange={(e) => setHornoAlto(e.target.value)} placeholder="153.2" className="inp" />
               </L>
             </div>
-            <p className="mt-2 text-xs text-amber-900">Estas son las medidas libres que necesita el horno para quedar empotrado, expresadas en la unidad del proyecto.</p>
+            <p className="mt-2 text-xs text-amber-900">Estas son las medidas libres que necesita el horno. Si el alto supera el vano disponible, los frentes laterales se ajustan entre la gaveta y el refuerzo superior.</p>
           </div>
         )}
 

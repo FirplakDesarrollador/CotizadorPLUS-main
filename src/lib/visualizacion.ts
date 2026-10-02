@@ -30,8 +30,9 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
   };
   members.forEach((member, mi) => {
     const {calc,pref}=member, result=group.lineas[mi];
-    const esBmw1 = pref === 'BMW-1' || pref === 'BMW-1-FE' || pref === 'BOMH-1';
-    const esBBLFD = pref === 'BBLFD';
+    const esBmw1 = pref === 'BMW-1' || pref === 'BMW-1-FE' || pref === 'BOMH-1' || pref === 'BOMH-1-FE';
+    const esBBLFDSm = pref === 'BBLFD-D-L/R-SM';
+    const esBBLFD = pref === 'BBLFD' || esBBLFDSm;
     const esBlindDoorParametrico = esBBLFD || pref === 'WBL-D-L/R-SM';
     const esDbSmEspecial = [
       'DB-2S-SM', 'DB-2-SM', 'DB-3-SM',
@@ -162,7 +163,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     // excepcion confirmada por la hoja BMW36-1.
     if(esBmw1 && drawerSlots[0]) {
       drawerSlots[0].z=3.2;
-      drawerSlots[0].h=pref === 'BOMH-1' ? 332.8 : 220.13;
+      drawerSlots[0].h=pref === 'BOMH-1' || pref === 'BOMH-1-FE' ? 332.8 : 220.13;
     }
     const sequence=new Map<string,number>();
     const totals=new Map<string,number>();
@@ -277,10 +278,25 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'travesano_frontal': {
             if (esBBLFD && p.nombre === 'refuerzo_vertical') {
               const frenteW = mm(Number(vars.door ?? 0));
+              const reveal = mm(Number(vars.RV ?? (3.2 / 25.4)));
               const abreDerecha = Number(vars.mano_derecha ?? 1) === 1;
-              x = (abreDerecha ? L - frenteW : frenteW) - w / 2;
+              const junta = abreDerecha ? L - frenteW - reveal / 4 : frenteW + reveal / 4;
+              x = junta - w / 2;
               y = 0;
               z = TC;
+              break;
+            }
+            if (esBBLFDSm && p.nombre === 'refuerzo_delantero') {
+              const frenteW = mm(Number(vars.door ?? 0));
+              const reveal = mm(Number(vars.RV ?? (3.2 / 25.4)));
+              const abreDerecha = Number(vars.mano_derecha ?? 1) === 1;
+              const junta = abreDerecha ? L - frenteW - reveal / 4 : frenteW + reveal / 4;
+              const ladoPuerta = config.plano === 'XZ';
+              x = ladoPuerta
+                ? (abreDerecha ? junta + TC / 2 : TC)
+                : (abreDerecha ? TC : junta + TC / 2);
+              y = ladoPuerta ? 20 : 0;
+              z = A - h;
               break;
             }
             const cajonSuperior=drawerSlots[0];
@@ -296,7 +312,11 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'frente': {
             const ds=doorSlots.get(`${item.source}:${k}`)!;
             x=ds.x; z=ds.z; y=-d;
-            if (esBlindDoorParametrico && p.nombre === 'frente') x=Number(vars.mano_derecha ?? 1) === 1 ? L-w : 0;
+            if (esBBLFD && p.nombre === 'frente') {
+              const reveal = mm(Number(vars.RV ?? (3.2 / 25.4)));
+              x=Number(vars.mano_derecha ?? 1) === 1 ? L-reveal-w : reveal;
+            }
+            else if (esBlindDoorParametrico && p.nombre === 'frente') x=Number(vars.mano_derecha ?? 1) === 1 ? L-w : 0;
             if (config.z) {
               const explicitZ = Number(evalExpr(config.z, {
                 L, A, P, TC, TF, TB, LP: w, AP: h, EP: d,
@@ -328,7 +348,19 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           }
           case 'lateral_gaveta': x=i%2===0?TC+12:L-TC-12-w; y=10; z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
           case 'frente_interior': x=(L-w)/2; y=10; z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
-          case 'gola': y=80; z=i===0?A-h:(drawerSlots.at(-1)?.z??foot)+ (drawerSlots.at(-1)?.h??innerH/2)-h; break;
+          case 'gola':
+            if (esBBLFDSm && p.nombre === 'gola_madera') {
+              const frenteW = mm(Number(vars.door ?? 0));
+              const reveal = mm(Number(vars.RV ?? (3.2 / 25.4)));
+              const abreDerecha = Number(vars.mano_derecha ?? 1) === 1;
+              const junta = abreDerecha ? L - frenteW - reveal / 4 : frenteW + reveal / 4;
+              x = abreDerecha ? junta + TC / 2 : TC;
+              y = 0;
+              z = A - 80 - h;
+            } else {
+              y=80; z=i===0?A-h:(drawerSlots.at(-1)?.z??foot)+ (drawerSlots.at(-1)?.h??innerH/2)-h;
+            }
+            break;
           case 'zocalo': y=i%2===0?50:P-d; z=0; break;
           case 'panel': x=(L-w)/2; y=-d; z=foot; break;
           case 'suelto': x=L+40+i*(w+20); z=0; warn(`${pref}: ${p.nombre} se muestra aparte hasta definir su montaje.`); break;
@@ -379,7 +411,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           nota:config.nota??'',cajon});
       }
     }
-    if(['BBL','BLS','WER','WBL','SDB','WPC','PCFD'].includes(pref)) warn(`${pref}: interpretación de piezas rectangulares; recortes, ensambles y distribución especial requieren validación de montaje.`);
+    if(['BBL','BLS','BLS-RS-SM','WER','WBL','SDB','WPC','PCFD'].includes(pref)) warn(`${pref}: interpretación de piezas rectangulares; recortes, ensambles y distribución especial requieren validación de montaje.`);
     offset+=L;
   });
   return scene;
