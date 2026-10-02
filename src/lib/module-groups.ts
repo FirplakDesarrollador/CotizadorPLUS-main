@@ -346,3 +346,96 @@ export function obtenerPreciosLinea(linea: {
     herrajes,
   };
 }
+
+export type LineaMargenInput = {
+  cantidad?: number;
+  costo_total_cop?: number;
+  costo_sin_herrajes_cop?: number;
+  costo_herrajes_cop?: number;
+  precio_total_cop?: number;
+  breakdown?: {
+    precioCop?: number;
+    precioConHerrajesCop?: number;
+    costoSinHerrajes?: number;
+    costoConHerrajes?: number;
+    [key: string]: unknown;
+  } | null;
+};
+
+export type CocinaMargenInput = {
+  cantidad?: number;
+  lineas: LineaMargenInput[];
+};
+
+export type MargenGlobalProyecto = {
+  sinHerrajes: number | null;
+  conHerrajes: number | null;
+};
+
+/**
+ * Calcula el margen global (ponderado) del proyecto con y sin herrajes (%):
+ * - sinHerrajes: ((Precio s/H - Costo s/H) / Precio s/H) * 100
+ * - conHerrajes: ((Precio c/H - Costo c/H) / Precio c/H) * 100
+ */
+export function calcularMargenGlobalProyecto(
+  cocinas: CocinaMargenInput[],
+  totalCopCabecera?: number
+): MargenGlobalProyecto {
+  let totalCostoSin = 0;
+  let totalCostoCon = 0;
+  let totalPrecioSin = 0;
+  let totalPrecioCon = 0;
+
+  for (const c of cocinas) {
+    const cantCocina = Math.max(1, Number(c.cantidad || 1));
+    let cocinaCostoSin = 0;
+    let cocinaCostoCon = 0;
+    let cocinaPrecioSin = 0;
+    let cocinaPrecioCon = 0;
+
+    for (const l of c.lineas) {
+      const cantLinea = Number(l.cantidad || 0);
+      const bd = l.breakdown;
+
+      const unitCostoSin = Number(
+        l.costo_sin_herrajes_cop ??
+        bd?.costoSinHerrajes ??
+        (Number(l.costo_total_cop || 0) - Number(l.costo_herrajes_cop || 0))
+      );
+      const unitCostoCon = Number(
+        l.costo_total_cop ??
+        bd?.costoConHerrajes ??
+        (unitCostoSin + Number(l.costo_herrajes_cop || 0))
+      );
+
+      cocinaCostoSin += unitCostoSin * cantLinea;
+      cocinaCostoCon += unitCostoCon * cantLinea;
+
+      const unitPrecioCon = Number(
+        bd?.precioConHerrajesCop ??
+        (l.precio_total_cop != null && cantLinea > 0 ? l.precio_total_cop / cantLinea : 0)
+      );
+      const unitPrecioSin = Number(
+        bd?.precioCop ??
+        (unitCostoCon > 0 && unitCostoSin > 0 && unitCostoSin < unitCostoCon
+          ? unitPrecioCon * (unitCostoSin / unitCostoCon)
+          : unitPrecioCon)
+      );
+
+      cocinaPrecioSin += unitPrecioSin * cantLinea;
+      cocinaPrecioCon += unitPrecioCon * cantLinea;
+    }
+
+    totalCostoSin += cocinaCostoSin * cantCocina;
+    totalCostoCon += cocinaCostoCon * cantCocina;
+    totalPrecioSin += cocinaPrecioSin * cantCocina;
+    totalPrecioCon += cocinaPrecioCon * cantCocina;
+  }
+
+  const precioConFinal = totalCopCabecera != null && totalCopCabecera > 0 ? totalCopCabecera : totalPrecioCon;
+  const sinHerrajes = totalPrecioSin > 0 ? ((totalPrecioSin - totalCostoSin) / totalPrecioSin) * 100 : null;
+  const conHerrajes = precioConFinal > 0 ? ((precioConFinal - totalCostoCon) / precioConFinal) * 100 : null;
+
+  return { sinHerrajes, conHerrajes };
+}
+

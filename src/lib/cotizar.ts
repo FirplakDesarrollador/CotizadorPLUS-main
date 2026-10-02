@@ -4,6 +4,7 @@ import {
   calcularMueble, toInches, normCalibre,
   type Dims, type UnidadDim, type Regla, type Pieza, type HerrajePlantilla,
   type Breakdown, type CalcInput,
+  type Tablero, type Canto, type Herraje,
 } from '@/lib/engine';
 import { calcularGrupoFisico, type GroupCalculation, type PreparedGroupMember } from '@/lib/group-engine';
 import { consolidarGrupo, type CotizarGrupoResult } from '@/lib/group-result';
@@ -47,57 +48,166 @@ export type CotizacionPreparada = PreparedGroupMember & {
   prefMetrico: string;
 };
 
-export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionPreparada> {
+export type CatalogoPrecompilado = {
+  params: Record<string, unknown>;
+  tiposById: Record<string, {
+    id: string;
+    pref: string;
+    pref_imperial: string;
+    pref_metrico: string;
+    permite_agrupacion: boolean;
+    etiquetas_und: number;
+    margen_key: string;
+    usa_carton: boolean;
+    categoria: string;
+  }>;
+  piezasByTipoId: Record<string, unknown[]>;
+  reglasByTipoId: Record<string, unknown[]>;
+  reglasGlobales: unknown[];
+  herrajesPlantByTipoId: Record<string, unknown[]>;
+  cantosByCalibre: Record<string, Canto>;
+  herrajesByCode: Record<string, Herraje>;
+  consumiblesBySelector: Record<string, number>;
+  tablerosByCode: Record<string, Tablero>;
+};
+
+export async function cargarCatalogoPrecompilado(): Promise<CatalogoPrecompilado> {
   const sb = await createClient();
-
-  const [{ data: params }, { data: tipo }] = await Promise.all([
+  const [
+    { data: params },
+    { data: tipos },
+    { data: piezas },
+    { data: reglas },
+    { data: herrajesPlant },
+    { data: cantos },
+    { data: herrajesAll },
+    { data: tableros },
+  ] = await Promise.all([
     sb.from('cot_parametros').select('key,value'),
-    sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,etiquetas_und,margen_key,usa_carton,categoria').eq('id', inp.tipoId).single(),
-  ]);
-  if (!tipo) throw new Error('Tipo de mueble no encontrado');
-  const P = Object.fromEntries((params ?? []).map((r) => [r.key, r.value])) as Record<string, unknown>;
-
-  const [{ data: piezas }, { data: reglas }, { data: herrajesPlant }, { data: cantos }, { data: herrajesAll }] = await Promise.all([
-    sb.from('cot_piezas_plantilla').select('*').eq('tipo_mueble_id', inp.tipoId).order('orden'),
-    sb.from('cot_reglas_config').select('*').or(`tipo_mueble_id.is.null,tipo_mueble_id.eq.${inp.tipoId}`).eq('activo', true),
-    sb.from('cot_herrajes_plantilla').select('*').eq('tipo_mueble_id', inp.tipoId).order('orden'),
+    sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,etiquetas_und,margen_key,usa_carton,categoria'),
+    sb.from('cot_piezas_plantilla').select('*').order('orden'),
+    sb.from('cot_reglas_config').select('*').eq('activo', true),
+    sb.from('cot_herrajes_plantilla').select('*').order('orden'),
     sb.from('cot_cantos').select('calibre,precio'),
     sb.from('cot_herrajes').select('codigo,precio,selector_key,categoria').eq('activo', true),
+    sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato'),
   ]);
 
-  // Preset final: el preset por defecto cubre cualquier rol que el formulario no envíe (p.ej. "refuerzo").
+  const P = Object.fromEntries(((params ?? []) as any[]).map((r: any) => [r.key, r.value])) as Record<string, unknown>;
+  const tiposById = Object.fromEntries(((tipos ?? []) as any[]).map((t: any) => [t.id, t]));
+  const piezasByTipoId: Record<string, unknown[]> = {};
+  for (const p of (piezas ?? []) as Array<{ tipo_mueble_id: string }>) {
+    if (!piezasByTipoId[p.tipo_mueble_id]) piezasByTipoId[p.tipo_mueble_id] = [];
+    piezasByTipoId[p.tipo_mueble_id].push(p);
+  }
+  const reglasGlobales: unknown[] = [];
+  const reglasByTipoId: Record<string, unknown[]> = {};
+  for (const r of (reglas ?? []) as Array<{ tipo_mueble_id?: string | null }>) {
+    if (!r.tipo_mueble_id) reglasGlobales.push(r);
+    else {
+      if (!reglasByTipoId[r.tipo_mueble_id]) reglasByTipoId[r.tipo_mueble_id] = [];
+      reglasByTipoId[r.tipo_mueble_id].push(r);
+    }
+  }
+  const herrajesPlantByTipoId: Record<string, unknown[]> = {};
+  for (const hp of (herrajesPlant ?? []) as Array<{ tipo_mueble_id: string }>) {
+    if (!herrajesPlantByTipoId[hp.tipo_mueble_id]) herrajesPlantByTipoId[hp.tipo_mueble_id] = [];
+    herrajesPlantByTipoId[hp.tipo_mueble_id].push(hp);
+  }
+  const cantosByCalibre = Object.fromEntries(((cantos ?? []) as any[]).map((c: any) => [normCalibre(c.calibre), c as Canto]));
+  const herrajesByCode = Object.fromEntries(((herrajesAll ?? []) as any[]).map((h: any) => [h.codigo, h as Herraje]));
+  const consumiblesBySelector = Object.fromEntries(
+    ((herrajesAll ?? []) as any[]).filter((h: any) => h.categoria === 'consumible' && h.selector_key).map((h: any) => [h.selector_key as string, Number(h.precio)])
+  );
+  const tablerosByCode = Object.fromEntries(((tableros ?? []) as any[]).map((t: any) => [t.codigo, t as Tablero]));
+
+  return {
+    params: P,
+    tiposById,
+    piezasByTipoId,
+    reglasByTipoId,
+    reglasGlobales,
+    herrajesPlantByTipoId,
+    cantosByCalibre,
+    herrajesByCode,
+    consumiblesBySelector,
+    tablerosByCode,
+  };
+}
+
+export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoPrecompilado): Promise<CotizacionPreparada> {
+  let P: Record<string, unknown>;
+  let tipo: any;
+  let piezas: unknown[];
+  let reglas: unknown[];
+  let herrajesPlant: unknown[];
+  let tablerosByCode: Record<string, Tablero>;
+  let cantosByCalibre: Record<string, Canto>;
+  let herrajesByCode: Record<string, Herraje>;
+  let consumiblesBySelector: Record<string, number>;
+
+  if (catalogo) {
+    P = catalogo.params;
+    tipo = catalogo.tiposById[inp.tipoId];
+    if (!tipo) throw new Error('Tipo de mueble no encontrado');
+    piezas = catalogo.piezasByTipoId[inp.tipoId] ?? [];
+    reglas = [...catalogo.reglasGlobales, ...(catalogo.reglasByTipoId[inp.tipoId] ?? [])];
+    herrajesPlant = catalogo.herrajesPlantByTipoId[inp.tipoId] ?? [];
+    tablerosByCode = catalogo.tablerosByCode;
+    cantosByCalibre = catalogo.cantosByCalibre;
+    herrajesByCode = { ...catalogo.herrajesByCode };
+    consumiblesBySelector = catalogo.consumiblesBySelector;
+  } else {
+    const sb = await createClient();
+    const [{ data: params }, { data: tipoDb }] = await Promise.all([
+      sb.from('cot_parametros').select('key,value'),
+      sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,etiquetas_und,margen_key,usa_carton,categoria').eq('id', inp.tipoId).single(),
+    ]);
+    if (!tipoDb) throw new Error('Tipo de mueble no encontrado');
+    tipo = tipoDb;
+    P = Object.fromEntries(((params ?? []) as any[]).map((r: any) => [r.key, r.value])) as Record<string, unknown>;
+
+    const [{ data: piezasDb }, { data: reglasDb }, { data: herrajesPlantDb }, { data: cantosDb }, { data: herrajesAllDb }] = await Promise.all([
+      sb.from('cot_piezas_plantilla').select('*').eq('tipo_mueble_id', inp.tipoId).order('orden'),
+      sb.from('cot_reglas_config').select('*').or(`tipo_mueble_id.is.null,tipo_mueble_id.eq.${inp.tipoId}`).eq('activo', true),
+      sb.from('cot_herrajes_plantilla').select('*').eq('tipo_mueble_id', inp.tipoId).order('orden'),
+      sb.from('cot_cantos').select('calibre,precio'),
+      sb.from('cot_herrajes').select('codigo,precio,selector_key,categoria').eq('activo', true),
+    ]);
+    piezas = piezasDb ?? [];
+    reglas = reglasDb ?? [];
+    herrajesPlant = herrajesPlantDb ?? [];
+
+    const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
+    const preset = { ...presetDefault, ...inp.preset };
+    const codes = [...new Set(Object.values(preset).filter(Boolean))];
+    const { data: tablerosDb } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato').in('codigo', codes);
+
+    tablerosByCode = Object.fromEntries(((tablerosDb ?? []) as any[]).map((t: any) => [t.codigo, t as Tablero]));
+    cantosByCalibre = Object.fromEntries(((cantosDb ?? []) as any[]).map((c: any) => [normCalibre(c.calibre), c as Canto]));
+    herrajesByCode = Object.fromEntries(((herrajesAllDb ?? []) as any[]).map((h: any) => [h.codigo, h as Herraje]));
+    consumiblesBySelector = Object.fromEntries(
+      ((herrajesAllDb ?? []) as any[]).filter((h: any) => h.categoria === 'consumible' && h.selector_key).map((h: any) => [h.selector_key as string, Number(h.precio)])
+    );
+  }
+
+  // Preset final
   const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
   const preset = { ...presetDefault, ...inp.preset };
 
-  // Tableros del preset
-  const codes = [...new Set(Object.values(preset).filter(Boolean))];
-  const { data: tableros } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato').in('codigo', codes);
-
-  const tablerosByCode = Object.fromEntries((tableros ?? []).map((t) => [t.codigo, t]));
-  const cantosByCalibre = Object.fromEntries((cantos ?? []).map((c) => [normCalibre(c.calibre), c]));
-  const herrajesByCode = Object.fromEntries((herrajesAll ?? []).map((h) => [h.codigo, h]));
-  const consumiblesBySelector = Object.fromEntries(
-    (herrajesAll ?? []).filter((h) => h.categoria === 'consumible' && h.selector_key).map((h) => [h.selector_key as string, Number(h.precio)])
-  );
-
-  // Riel override para muebles DB: si el usuario elige un riel distinto al RIELTANDEM (por
-  // defecto en la plantilla), se sustituye el precio en herrajesByCode para el código del riel
-  // real elegido, asignándolo también como RIELTANDEM para que el motor lo encuentre por el
-  // codigo de la plantilla. El nombre visible en el breakdown cambia al código elegido.
+  // Riel override para muebles DB
   if (inp.rielCodigo && inp.rielCodigo !== 'RIELTANDEM') {
     const rielElegido = herrajesByCode[inp.rielCodigo];
     if (rielElegido) {
-      // La plantilla de DB referencia herraje_codigo='RIELTANDEM', así que sobreescribimos
-      // su precio con el del riel elegido. El motor usa herrajesByCode[hp.herraje_codigo].
       herrajesByCode['RIELTANDEM'] = { ...herrajesByCode['RIELTANDEM'], precio: Number(rielElegido.precio) };
     }
   }
 
   const margenes = (P.margenes ?? {}) as Record<string, number>;
-  // Margen del mueble: el override del proyecto aplica solo a la categoría 'muebles';
-  // fillers/paneles/zócalos conservan su margen propio (más bajo).
+  // Margen del elemento: si hay un override explícito (del proyecto o de la línea) aplica a todo;
+  // si no, se usa el margen base de la categoría del elemento.
   const margenBase = Number(margenes[tipo.margen_key] ?? margenes.muebles ?? 0.57);
-  const margen = (inp.margenOverride != null && tipo.margen_key === 'muebles') ? inp.margenOverride : margenBase;
+  const margen = inp.margenOverride != null ? inp.margenOverride : margenBase;
   // Tarifa hardware del proyecto = margen de herraje (margin-on-price). Default global 0.35.
   const margenHerraje = inp.tarifaHerrajes ?? Number(P.margen_herraje ?? 0.35);
   const trm = inp.trm ?? Number((P.trm as { valor?: number })?.valor ?? 4200);
@@ -216,7 +326,10 @@ export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
   return { ...calcularMueble(prepared.calc), trm: prepared.trm, margen: prepared.margen };
 }
 
-export async function cotizarGrupo(inputs: CotizarInput[]): Promise<GroupCalculation & { preparados: CotizacionPreparada[] }> {
+export async function cotizarGrupo(
+  inputs: CotizarInput[],
+  catalogo?: CatalogoPrecompilado
+): Promise<GroupCalculation & { preparados: CotizacionPreparada[] }> {
   // Una estructura físicamente agrupada comparte caja, refuerzos y canto. A1
   // es la fuente de verdad para evitar estados persistidos o cambios de perfil
   // que dejen códigos estructurales distintos entre módulos del mismo grupo.
@@ -230,7 +343,7 @@ export async function cotizarGrupo(inputs: CotizarInput[]): Promise<GroupCalcula
     },
     cantoCaja: first.cantoCaja,
   })) : inputs;
-  const preparados = await Promise.all(normalizados.map(prepararCotizacion));
+  const preparados = await Promise.all(normalizados.map((i) => prepararCotizacion(i, catalogo)));
   return { ...calcularGrupoFisico(preparados), preparados };
 }
 
@@ -257,11 +370,11 @@ export async function getCotizadorData() {
     sb.from('cot_cantos').select('calibre').order('calibre'),
   ]);
   const { data: herrajesPlant } = await sb.from('cot_herrajes_plantilla').select('tipo_mueble_id,rol,herraje_codigo,orden').order('orden');
-  const P = Object.fromEntries((params ?? []).map((r) => [r.key, r.value]));
+  const P = Object.fromEntries(((params ?? []) as Array<{ key: string; value: unknown }>).map((r: any) => [r.key, r.value]));
 
   // Herrajes por tipo (rol + código), para permitir incluir/excluir por línea.
   const herrajesByTipo: Record<string, { rol: string; codigo: string | null }[]> = {};
-  for (const hp of (herrajesPlant ?? [])) {
+  for (const hp of (herrajesPlant ?? []) as Array<{ tipo_mueble_id: string; rol: string; herraje_codigo: string | null }>) {
     const set = (herrajesByTipo[hp.tipo_mueble_id] ||= []);
     if (!set.some((x) => x.rol === hp.rol)) set.push({ rol: hp.rol, codigo: hp.herraje_codigo });
   }
@@ -269,7 +382,7 @@ export async function getCotizadorData() {
   // Roles de tablero por tipo (orden estable caja/refuerzo/frente/fondo)
   const ORD = ['caja', 'refuerzo', 'frente', 'fondo'];
   const rolesByTipo: Record<string, string[]> = {};
-  for (const pr of (piezasRoles ?? [])) {
+  for (const pr of (piezasRoles ?? []) as Array<{ tipo_mueble_id: string; rol_tablero: string | null }>) {
     const set = (rolesByTipo[pr.tipo_mueble_id] ||= []);
     if (pr.rol_tablero && !set.includes(pr.rol_tablero)) set.push(pr.rol_tablero);
   }
@@ -285,7 +398,7 @@ export async function getCotizadorData() {
     tipos: tipos ?? [],
     // recargos: recargos ?? [],
     tableros: tableros ?? [],
-    cantos: (cantos ?? []).map((c) => c.calibre as string),
+    cantos: ((cantos ?? []) as Array<{ calibre: string }>).map((c: any) => c.calibre as string),
     trmDefault: Number((P.trm as { valor?: number })?.valor ?? 4200),
     presetDefault,
     perfiles: perfilesList,

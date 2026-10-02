@@ -1447,6 +1447,15 @@ Auditoría de 252 referencias, cinco por agrupación cuando existen, contra capt
 
 ## [2026-10-02] update | Los buscadores de tableros ahora indexan explícitamente `color_nombre` de Materiales-Parámetros, con búsqueda insensible a mayúsculas y tildes; términos como `constructor` encuentran los tableros Primadera asociados.
 
+## [2026-10-02] update | Etiquetas de margen global ponderado con y sin herrajes en cabecera de cotización
+Se actualizó `calcularMargenGlobalProyecto` en `src/lib/module-groups.ts` y `ProyectoHeader.tsx` para exponer ambos márgenes ponderados del proyecto: sin herrajes (`Margen s/H: XX.X%`) y con herrajes (`Margen c/H: XX.X%`), ubicados debajo del nombre del proyecto y en el panel de edición.
+
+## [2026-10-02] fix | Propagación de margen del proyecto y corrección de margenOverride para paneles, fillers y TK
+Se corrigió la propagación del margen configurado en el proyecto a todas las líneas y tipologías: (1) En `cotizar.ts`, `inp.margenOverride` ahora aplica a cualquier tipología (muebles, paneles PN, fillers F, toe-kicks TK) cuando está especificado, en lugar de restringirse únicamente a `muebles`; (2) en `actualizarCotizacion()` se añadió la detección de cambios en `configDefault.margen` para propagar `margenOverride` a todas las líneas de `cot_cotizacion_lineas`, recalculando automáticamente todos los grupos (`recalcularGrupo`) y totales (`recomputarTotales`); (3) en `ProyectoHeader.tsx` y `CotizacionDetalleClient.tsx` se agregaron manejadores `onMargenBlur` y `onSave` con refresco de datos; (4) se recalculó la cotización `PB SHORE PRUEBA` reflejando exactamente 35.0% de margen s/H y 35.0% c/H.
+
+## [2026-10-02] update | Optimización del recálculo global de cotización en lote (batch) y memoización de catálogos
+Se redujo el tiempo de recálculo masivo de un proyecto (~20 módulos) de >15s a ~2.2s: (1) nueva función `cargarCatalogoPrecompilado()` en `cotizar.ts` que precarga en un solo `Promise.all` parámetros, tipos, piezas, reglas, cantos, herrajes y tableros, eliminando ~160 consultas SQL N+1; (2) ejecución concurrente con `Promise.all` para los updates de líneas y recálculo de grupos en `actualizarCotizacion()`; (3) en `ProyectoHeader.tsx` y `CotizacionDetalleClient.tsx`, el input de margen ahora usa estado local desacoplado y solo despacha a Supabase al confirmar (`onBlur` o presionar `Enter`), eliminando re-ejecuciones por cada tecla.
+
 ## [2026-10-02] fix | Integracion de DEV: fixture resincronizado y tres regresiones reales del catalogo
 
 Fast-forward de `Andrés` a `origin/DEV` (12 commits de LizPalacio31, migraciones 0124-0172). Sin conflictos: la rama venia de un reset a `LIz`, asi que no habia nada propio que mezclar. `origin/LIz` esta contenido en `DEV`, de modo que esto trae ambas.
@@ -1471,3 +1480,17 @@ Fast-forward de `Andrés` a `origin/DEV` (12 commits de LizPalacio31, migracione
 **Deriva pendiente, ajena a este merge**: de los 34 traseros de gaveta de la base, 9 volvieron a 2 aristas largas —probablemente `0168_normalizar_cantos_produccion.sql`—, contradiciendo la regla de una sola arista larga. No se toca aqui porque no formaba parte del encargo. La regla del trasero grande con 2 extremos, en cambio, se cumple en los 8 grandes.
 
 215/215 tests, typecheck, lint y build limpios.
+
+## [2026-10-02] fix | Integracion del release v1.0.3 de DEV: merge limpio, 36 errores de lint ajenos y una version que retrocede
+
+Merge de `origin/DEV` (6 commits: cinco merges de `DEV` en `main` sin contenido propio y el release `b8cb75c` de isazaale con margen global al 35%, recalculo en lote y bump de version). Conflicto unicamente en este log; se conservan las entradas de ambos lados.
+
+**Nada que resincronizar esta vez.** El release no trae migraciones ni toca el fixture, y la comprobacion contra la base confirma que sigue cuadrando: 81 tipos / 650 piezas / 311 reglas / 104 tableros, sin altas ni bajas. **220/220 tests**, incluidos los 5 nuevos de `margen-global`, con typecheck y build limpios. Es la primera integracion de esta serie que no exige saneamiento.
+
+**Dos cosas del release que quedan anotadas y no se tocaron:**
+
+1. **36 errores de lint nuevos**, todos `@typescript-eslint/no-explicit-any`, concentrados exactamente en los cuatro archivos que el release modifica: `cotizar.ts` (27), `cotizaciones.ts` (6), `diseno.ts` (2) y `admin.ts` (1). Antes del release el repo tenia 0 errores y 13 advertencias. Son todos el mismo patron mecanico —resultados de Supabase anotados como `any` en callbacks de `.map()`— y en varios casos el `: any` es redundante porque el array ya lleva su tipo. Se dejan: son 36 cambios de tipos en la ruta de precios de un release ajeno recien publicado, y el riesgo de alterar comportamiento sin poder validarlo contra datos reales no se justifica dentro de un merge. Conviene abordarlo como tarea propia.
+
+2. **La version retrocede.** `b8cb75c` se titula "version bump" pero baja `package.json` de **1.0.4 a 1.0.3**. La 1.0.4 se habia puesto el 2026-08-03 (`f0643b7`) y la 1.0.3 el 2026-08-01 (`42b948c`), asi que el repo queda en un numero anterior al que ya tenia. Se conserva el valor de `DEV`: el numero de release es decision de su autor, no del merge.
+
+**Y una del entorno:** `tsconfig.json` ahora excluye `**/*-isazaale.*`, lo que explica que el typecheck pase mientras el lint sigue reportando esas variantes — eslint no hereda ese `exclude`.
