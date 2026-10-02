@@ -1,7 +1,12 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 
-export type Opt = { value: string; label: string };
+export type Opt = { value: string; label: string; searchText?: string };
+
+const normalizeSearch = (value: string) => value
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase();
 
 // Desplegable con buscador de texto. Filtra las opciones por lo que se escribe.
 export default function Combobox({ value, options, onChange, placeholder = 'Buscar…', allowEmpty = false, emptyLabel = '—' }:
@@ -22,8 +27,10 @@ export default function Combobox({ value, options, onChange, placeholder = 'Busc
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  const q = (query ?? '').trim().toLowerCase();
-  const filtered = q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options;
+  const q = normalizeSearch((query ?? '').trim());
+  const filtered = q
+    ? options.filter((o) => normalizeSearch(`${o.label} ${o.searchText ?? ''}`).includes(q))
+    : options;
 
   function pick(v: string) { onChange(v); setOpen(false); setQuery(null); }
 

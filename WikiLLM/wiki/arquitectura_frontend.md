@@ -59,10 +59,10 @@ El proyecto utiliza el App Router (`app/`) para definir las secciones principale
 
 ## 2. Gestión de Estado (`src/store/simuladorStore.ts`)
 Se utiliza **Zustand** para manejar el estado del simulador del lado del cliente.
-- Mantiene un borrador activo y una lista ordenada de módulos confirmados. Cada módulo conserva tipo, dimensiones, materiales, cantos, modo de frentes y configuración local de herrajes; unidad, TRM y moneda pertenecen a la sesión del conjunto.
+- Mantiene un borrador activo y una lista ordenada de módulos confirmados. Cada módulo conserva tipo, dimensiones, materiales, cantos, modo de frentes y configuración local de herrajes; unidad, TRM y moneda pertenecen a la sesión del conjunto. Las tres dimensiones se almacenan como texto editable para permitir vaciar el campo sin convertirlo inmediatamente en `0`; se validan y convierten a número al construir la entrada de cálculo. Al enfocar cada campo se selecciona su contenido para que la primera escritura reemplace el valor completo.
 - Conserva `editingId` y `pendingDraft` para editar un módulo confirmado sin perder el formulario nuevo que estaba en curso.
 - Retiene el último resultado consolidado generado por el motor (`result`) y guarda instantáneas completas para Undo/Redo.
-- Persiste la sesión a través de recargas con el middleware `persist`, bajo `simulador-storage`. El esquema está versionado en `2`; la migración desde el estado individual conserva el formulario anterior, inicia una lista vacía y descarta resultados incompatibles con el nuevo contrato.
+- Persiste la sesión a través de recargas con el middleware `persist`, bajo `simulador-storage`. El esquema está versionado en `5`; la migración convierte a texto las dimensiones numéricas de sesiones anteriores, conserva los módulos y descarta resultados incompatibles con el contrato actual.
 
 ## 3. Componentes Visuales (`src/components/`)
 La interfaz está altamente componetizada para mantener el código limpio y reusable.
@@ -72,6 +72,7 @@ Ejemplos de componentes destacados:
 - **Layout raíz (`app/layout.tsx`)**: mantiene el renderizado de servidor y usa `suppressHydrationWarning` únicamente en `<body>` para tolerar atributos transitorios inyectados por extensiones del navegador antes de la hidratación (por ejemplo, Grammarly).
 - **Utilidades de UI (`TooltipToggle.tsx`, `GuideButton.tsx`)**: Para presentar información de contexto o ayuda al usuario sin sobrecargar la pantalla principal.
 - **Constructor combinado (`CotizadorForm.tsx`)**: Presenta arriba los módulos confirmados en orden físico, permite editarlos, eliminarlos, arrastrarlos o moverlos con botones. `+ Agregar módulo` valida el formulario activo, lo confirma y abre el siguiente heredando su configuración. La unidad queda bloqueada después del primer módulo. La tarjeta "Desglose de costo" muestra los totales agregados (Tablero/Canto/Consumibles/Herrajes) sin desglosar por rol de tablero ni por herraje individual — el detalle por rol de tablero (`result.maderaPorRol`) vive en la tarjeta "Materiales" más abajo, y el detalle por herraje (`result.herrajes`) en la tarjeta "Herrajes".
+- **Búsqueda de tableros por color:** `Combobox` admite `searchText` adicional a la etiqueta visible. Los selectores de tablero del Simulador, creación y edición de cotizaciones, configuración del proyecto y administración indexan explícitamente `cot_tableros.color_nombre`; por ejemplo, escribir `constructor` encuentra los tableros Primadera asociados a ese color. La normalización ignora mayúsculas y tildes.
 - **Tarjeta de Cocina (`CocinaCard.tsx`)**: Renderiza los módulos de cada cocina con arrastre de grupos, columna de Costo USD, desgloses por línea y una fila de totales superiores alineada exactamente con las columnas de valores (Costo USD, Cant, Unit USD, Total USD, Total COP).
 
 ## 4. Medidas en fracción imperial (`AddLineForm.tsx`)

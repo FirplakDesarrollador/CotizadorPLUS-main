@@ -195,7 +195,11 @@ function PerfilesEditor({ perfiles, tableros }: { perfiles: PresetPerfil[]; tabl
 
   const tableroOptions = useMemo(() => [...tableros]
     .sort((a, b) => String(a.codigo).localeCompare(String(b.codigo)))
-    .map((t) => ({ value: String(t.codigo), label: `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}` })), [tableros]);
+    .map((t) => ({
+      value: String(t.codigo),
+      label: `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}`,
+      searchText: String(t.color_nombre ?? ''),
+    })), [tableros]);
 
   function blank(): PresetPerfil {
     return { id: '', nombre: '', descripcion: '', valores: { caja: '', refuerzo: '', frente: '', fondo: '' }, es_default: false, activo: true, orden: (perfiles.length + 1) * 10 };

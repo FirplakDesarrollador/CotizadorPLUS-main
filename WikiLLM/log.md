@@ -1440,3 +1440,9 @@ Las reglas superiores de `n_entrepanos` ahora asignan dos entrepaños solo cuand
 Auditoría de 252 referencias, cinco por agrupación cuando existen, contra captura de Supabase y motor real. Informe por SKU con piezas, cantos, entrepaños y tipologías sin equivalente; documentadas anomalías del CSV y límites de configuración. Sin cambios de plantillas ni reglas.
 
 ## [2026-10-02] update | Normalizados y aplicados al catálogo activo los traseros de gaveta del tipo DB: eliminada la fila genérica introducida por `0169`; DB-4 usa `trasero_gaveta_pequena` de 68 mm y DB-2/DB-3 usan `trasero_gaveta_grande` de 183 mm, preservando DB-1S/DB-2S. Verificado que solo existen las dos plantillas nominales.
+
+## [2026-10-02] update | Asignados cuatro soportes de entrepaño metálico de 5 mm por cada entrepaño de 300 mm; la regla cubre todas las tipologías actuales y corrige UV, que tenía cero soportes.
+
+## [2026-10-02] update | Los campos Largo, Alto y Prof del simulador admiten vacío sin transformarlo en cero y seleccionan su valor al enfocar para reemplazarlo con la primera escritura; el estado persistido migra las dimensiones anteriores a texto.
+
+## [2026-10-02] update | Los buscadores de tableros ahora indexan explícitamente `color_nombre` de Materiales-Parámetros, con búsqueda insensible a mayúsculas y tildes; términos como `constructor` encuentran los tableros Primadera asociados.

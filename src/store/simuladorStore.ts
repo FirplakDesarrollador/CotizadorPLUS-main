@@ -5,9 +5,9 @@ import type { CotizarGrupoResult } from '@/lib/group-result';
 
 export type SimuladorModuloValues = {
   tipoId: string;
-  largo: number;
-  alto: number;
-  prof: number;
+  largo: string;
+  alto: string;
+  prof: string;
   perfilId: string;
   preset: Record<string, string>;
   cantoFrentes: string;
@@ -63,9 +63,9 @@ interface SimuladorState extends SimuladorSnapshot {
 
 export const initialModuloValues: SimuladorModuloValues = {
   tipoId: '',
-  largo: 33,
-  alto: 30,
-  prof: 24,
+  largo: '33',
+  alto: '30',
+  prof: '24',
   perfilId: '',
   preset: {},
   cantoFrentes: '',
@@ -217,13 +217,21 @@ export const useSimuladorStore = create<SimuladorState>()(
       // v3: el Breakdown ganó `m2`, `metros` y `desperdicio`. Un `result` guardado con
       // la forma anterior no los trae, así que `migrate` lo descarta (pone `result: null`)
       // y el Simulador pide recalcular en vez de renderizar campos ausentes.
-      version: 4,
+      version: 5,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {
           ...initialStateValues,
           ...state,
-          modulos: state.modulos ?? [],
+          largo: state.largo == null ? initialModuloValues.largo : String(state.largo),
+          alto: state.alto == null ? initialModuloValues.alto : String(state.alto),
+          prof: state.prof == null ? initialModuloValues.prof : String(state.prof),
+          modulos: (state.modulos ?? []).map((modulo) => ({
+            ...modulo,
+            largo: String(modulo.largo),
+            alto: String(modulo.alto),
+            prof: String(modulo.prof),
+          })),
           editingId: null,
           pendingDraft: null,
           result: null,

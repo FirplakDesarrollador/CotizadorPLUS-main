@@ -7,8 +7,8 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
-- [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, evaluación de reglas matemáticas e integración backend (`engine.ts` y `cotizar.ts`).
-- [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, gestión de estado Zustand y componentes de interfaz.
+- [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles y soportes metálicos por entrepaño de 300 mm (`engine.ts` y `cotizar.ts`).
+- [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, estado Zustand, edición flexible de dimensiones y búsqueda de tableros por color.
 - [Sistema de Undo/Redo](wiki/sistema_undo_redo.md) - Historial temporal de estados, captura de atajos de teclado y notificaciones.
 - [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes manuales, inmutables, nombre obligatorio, orden cronológico y restauración transaccional limpia sin respaldos automáticos.
 
