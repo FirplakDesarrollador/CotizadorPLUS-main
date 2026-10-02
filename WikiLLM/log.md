@@ -1446,3 +1446,14 @@ Auditoría de 252 referencias, cinco por agrupación cuando existen, contra capt
 ## [2026-10-02] update | Los campos Largo, Alto y Prof del simulador admiten vacío sin transformarlo en cero y seleccionan su valor al enfocar para reemplazarlo con la primera escritura; el estado persistido migra las dimensiones anteriores a texto.
 
 ## [2026-10-02] update | Los buscadores de tableros ahora indexan explícitamente `color_nombre` de Materiales-Parámetros, con búsqueda insensible a mayúsculas y tildes; términos como `constructor` encuentran los tableros Primadera asociados.
+
+## [2026-10-02] update | Etiquetas de margen global ponderado con y sin herrajes en cabecera de cotización
+Se actualizó `calcularMargenGlobalProyecto` en `src/lib/module-groups.ts` y `ProyectoHeader.tsx` para exponer ambos márgenes ponderados del proyecto: sin herrajes (`Margen s/H: XX.X%`) y con herrajes (`Margen c/H: XX.X%`), ubicados debajo del nombre del proyecto y en el panel de edición.
+
+## [2026-10-02] fix | Propagación de margen del proyecto y corrección de margenOverride para paneles, fillers y TK
+Se corrigió la propagación del margen configurado en el proyecto a todas las líneas y tipologías: (1) En `cotizar.ts`, `inp.margenOverride` ahora aplica a cualquier tipología (muebles, paneles PN, fillers F, toe-kicks TK) cuando está especificado, en lugar de restringirse únicamente a `muebles`; (2) en `actualizarCotizacion()` se añadió la detección de cambios en `configDefault.margen` para propagar `margenOverride` a todas las líneas de `cot_cotizacion_lineas`, recalculando automáticamente todos los grupos (`recalcularGrupo`) y totales (`recomputarTotales`); (3) en `ProyectoHeader.tsx` y `CotizacionDetalleClient.tsx` se agregaron manejadores `onMargenBlur` y `onSave` con refresco de datos; (4) se recalculó la cotización `PB SHORE PRUEBA` reflejando exactamente 35.0% de margen s/H y 35.0% c/H.
+
+## [2026-10-02] update | Optimización del recálculo global de cotización en lote (batch) y memoización de catálogos
+Se redujo el tiempo de recálculo masivo de un proyecto (~20 módulos) de >15s a ~2.2s: (1) nueva función `cargarCatalogoPrecompilado()` en `cotizar.ts` que precarga en un solo `Promise.all` parámetros, tipos, piezas, reglas, cantos, herrajes y tableros, eliminando ~160 consultas SQL N+1; (2) ejecución concurrente con `Promise.all` para los updates de líneas y recálculo de grupos en `actualizarCotizacion()`; (3) en `ProyectoHeader.tsx` y `CotizacionDetalleClient.tsx`, el input de margen ahora usa estado local desacoplado y solo despacha a Supabase al confirmar (`onBlur` o presionar `Enter`), eliminando re-ejecuciones por cada tecla.
+
+

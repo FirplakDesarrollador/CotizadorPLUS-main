@@ -1,6 +1,6 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
-import { cotizar, cotizarGrupo, type CotizarInput, type CotizarResult } from '@/lib/cotizar';
+import { cotizar, cotizarGrupo, cargarCatalogoPrecompilado, type CatalogoPrecompilado, type CotizarInput, type CotizarResult } from '@/lib/cotizar';
 import {
   codigoGrupo, codigoComercial, indiceALetras, letrasAIndice, normalizarEtiquetaGrupo,
   distribuirResiduoMoneda, redondearMoneda, precioUnitario,
@@ -77,7 +77,7 @@ export async function getCotizacion(id: string) {
     sb.from('cot_grupos_modulos').select('*').eq('cotizacion_id', id).order('orden'),
     sb.from('cot_cotizacion_lineas').select('*').eq('cotizacion_id', id).order('orden'),
   ]);
-  const gruposById = Object.fromEntries((grupos ?? []).map((g) => [g.id, g]));
+  const gruposById = Object.fromEntries(((grupos ?? []) as Array<{ id: string }>).map((g: any) => [g.id, g]));
   const lineasByCocina: Record<string, unknown[]> = {};
   for (const l of (lineas ?? [])) {
     const k = (l as { cocina_id: string | null }).cocina_id ?? 'sin';
@@ -90,7 +90,7 @@ export async function getCotizacion(id: string) {
     return Number(aa.grupo?.orden ?? aa.orden ?? 0) - Number(bb.grupo?.orden ?? bb.orden ?? 0)
       || Number(aa.posicion_grupo ?? 1) - Number(bb.posicion_grupo ?? 1);
   });
-  const cocinasConLineas = (cocinas ?? []).map((c) => ({ ...c, lineas: lineasByCocina[(c as { id: string }).id] ?? [] }));
+  const cocinasConLineas = ((cocinas ?? []) as Array<{ id: string }>).map((c: any) => ({ ...c, lineas: lineasByCocina[c.id] ?? [] }));
   return { cabecera: cab, cocinas: cocinasConLineas, lineasSinCocina: lineasByCocina['sin'] ?? [] };
 }
 
@@ -271,7 +271,11 @@ async function normalizarGrupos(cocinaId: string) {
   }
 }
 
-async function recalcularGrupo(grupoId: string) {
+async function recalcularGrupo(
+  grupoId: string,
+  catalogoPrefetch?: CatalogoPrecompilado,
+  sistemaPrefetch?: SistemaMedida
+) {
   const sb = await createClient();
   const { data: grupo, error: ge } = await sb.from('cot_grupos_modulos').select('id,cotizacion_id,cocina_id').eq('id', grupoId).single();
   if (ge || !grupo) return;
@@ -287,8 +291,8 @@ async function recalcularGrupo(grupoId: string) {
   }
 
   const inputs = lineas.map(inputDesdeLinea);
-  const sistema = await obtenerSistema(grupo.cotizacion_id);
-  const calculated = await cotizarGrupo(inputs);
+  const sistema = sistemaPrefetch ?? await obtenerSistema(grupo.cotizacion_id);
+  const calculated = await cotizarGrupo(inputs, catalogoPrefetch);
 
   const calculatedRows: { code: string; row: ReturnType<typeof construirFilaLinea> }[] = [];
   for (let i = 0; i < lineas.length; i += 1) {
@@ -326,18 +330,20 @@ async function recalcularGrupo(grupoId: string) {
   const copByLine = distribuirResiduoMoneda(calculatedRows.map(({ row }) => Number(row.precio_total_cop)));
   const usdByLine = distribuirResiduoMoneda(calculatedRows.map(({ row }) => Number(row.precio_total_usd)));
   const codigos = calculatedRows.map(({ code }) => code);
-  for (let i = 0; i < calculatedRows.length; i += 1) {
-    const quantity = Number(calculatedRows[i].row.cantidad || 1);
-    const row = {
-      ...calculatedRows[i].row,
+  
+  await Promise.all(calculatedRows.map(async ({ row, code }, i) => {
+    const quantity = Number(row.cantidad || 1);
+    const finalRow = {
+      ...row,
       precio_unit_cop: redondearMoneda(copByLine[i] / quantity),
       precio_unit_usd: redondearMoneda(usdByLine[i] / quantity),
       precio_total_cop: copByLine[i],
       precio_total_usd: usdByLine[i],
     };
-    const { error: updateError } = await sb.from('cot_cotizacion_lineas').update({ ...row, codigo_modulo: calculatedRows[i].code }).eq('id', lineas[i].id);
+    const { error: updateError } = await sb.from('cot_cotizacion_lineas').update({ ...finalRow, codigo_modulo: code }).eq('id', lineas[i].id);
     if (updateError) throw new Error(updateError.message);
-  }
+  }));
+
   const totalCop = redondearMoneda(copByLine.reduce((sum, value) => sum + value, 0));
   const totalUsd = redondearMoneda(usdByLine.reduce((sum, value) => sum + value, 0));
   const { error: groupError } = await sb.from('cot_grupos_modulos').update({
@@ -447,7 +453,7 @@ export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: str
     .select('id,etiqueta,orden').eq('cocina_id', current.cocina_id).order('orden');
   if (groupsError) throw new Error(groupsError.message);
   const list = grupos ?? [];
-  let target = list.find((g) => g.etiqueta === parsed.letra) ?? null;
+  let target = (list as any[]).find((g: any) => g.etiqueta === parsed.letra) ?? null;
   let createdTargetId: string | null = null;
 
   if (!target) {
@@ -561,6 +567,21 @@ export async function reordenarGruposCocina(cocinaId: string, nuevosGrupoIds: st
 export async function actualizarCotizacion(id: string, patch: { nombre?: string; cliente_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }) {
   const sb = await createClient();
   if (patch.trm !== undefined && (!Number.isFinite(Number(patch.trm)) || Number(patch.trm) <= 0)) throw new Error('La TRM debe ser mayor que cero.');
+
+  let nuevoMargenOverride: number | null | undefined = undefined;
+  if (patch.configDefault !== undefined && patch.configDefault !== null) {
+    if ('margen' in patch.configDefault) {
+      const raw = patch.configDefault.margen;
+      if (raw !== '' && raw != null && Number.isFinite(Number(raw))) {
+        nuevoMargenOverride = Number(raw) / 100;
+      } else {
+        nuevoMargenOverride = null;
+      }
+    }
+  }
+
+  const debeRecalcularLineas = patch.trm !== undefined || nuevoMargenOverride !== undefined;
+
   const upd: Record<string, unknown> = {};
   if (patch.nombre !== undefined) upd.nombre = patch.nombre;
   if (patch.cliente_nombre !== undefined) upd.cliente_nombre = patch.cliente_nombre || null;
@@ -570,17 +591,35 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
   if (patch.configDefault !== undefined) upd.config_default = patch.configDefault;
   const { error } = await sb.from('cot_cotizaciones').update(upd).eq('id', id);
   if (error) throw new Error(error.message);
-  if (patch.trm !== undefined) {
+
+  if (debeRecalcularLineas) {
     const { data: lineas, error: lineasError } = await sb.from('cot_cotizacion_lineas').select('id,grupo_id,config').eq('cotizacion_id', id);
     if (lineasError) throw new Error(lineasError.message);
     const grupos = new Set<string>();
-    for (const linea of lineas ?? []) {
-      const config = { ...((linea.config ?? {}) as Record<string, unknown>), trm: Number(patch.trm), conHerrajes: true, herrajesExcluidos: null };
+
+    await Promise.all(((lineas ?? []) as any[]).map(async (linea: any) => {
+      const currentConfig = ((linea.config ?? {}) as Record<string, unknown>);
+      const configUpdates: Record<string, unknown> = {};
+      if (patch.trm !== undefined) {
+        configUpdates.trm = Number(patch.trm);
+        configUpdates.conHerrajes = true;
+        configUpdates.herrajesExcluidos = null;
+      }
+      if (nuevoMargenOverride !== undefined) {
+        configUpdates.margenOverride = nuevoMargenOverride;
+      }
+      const config = { ...currentConfig, ...configUpdates };
       const { error: configError } = await sb.from('cot_cotizacion_lineas').update({ config }).eq('id', linea.id);
       if (configError) throw new Error(configError.message);
       if (linea.grupo_id) grupos.add(String(linea.grupo_id));
-    }
-    for (const grupoId of grupos) await recalcularGrupo(grupoId);
+    }));
+
+    const [catalogo, sistema] = await Promise.all([
+      cargarCatalogoPrecompilado(),
+      obtenerSistema(id),
+    ]);
+
+    await Promise.all(Array.from(grupos).map((grupoId) => recalcularGrupo(grupoId, catalogo, sistema)));
     await recomputarTotales(id);
   }
 }

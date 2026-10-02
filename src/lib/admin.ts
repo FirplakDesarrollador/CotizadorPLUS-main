@@ -38,7 +38,7 @@ export async function getParametros(): Promise<Record<string, unknown>> {
   const sb = await createClient();
   const { data, error } = await sb.from('cot_parametros').select('key,value');
   if (error) throw new Error(error.message);
-  return Object.fromEntries((data ?? []).map((r) => [r.key, r.value]));
+  return Object.fromEntries((data ?? []).map((r: any) => [r.key, r.value]));
 }
 
 export async function upsertParametros(updates: { key: string; value: unknown }[]) {
