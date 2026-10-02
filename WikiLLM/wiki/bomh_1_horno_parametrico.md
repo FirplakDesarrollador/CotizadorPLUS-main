@@ -47,5 +47,34 @@ entrepano fijo y separados por el hueco paramétrico.
 
 El `refuerzo_delantero` conserva el corte `L-30 mm` × 80 mm, pero se monta de
 canto en el plano frontal `XZ`, entre los laterales y contra la esquina
-superior. `frente_izq` y `frente_der` quedan inmediatamente debajo de su cara
-inferior mediante `z=A-80-H`.
+superior. El borde inferior de `frente_izq` y `frente_der` queda en `z=339,2
+mm`: 3,2 mm de separación sobre el borde superior del `frente_gaveta`, que
+ocupa desde 3,2 hasta 336 mm. Si `horno_alto` cabe en el espacio restante se
+conserva; si lo excede, la fórmula limita el alto de ambos frentes al vano entre
+`z=339,2mm` y la cara inferior del refuerzo superior (`A-80mm`). Esto reproduce
+la fachada continua de referencia sin bloquear el cálculo ni crear solapes.
+
+En planta, ambos frentes quedan dentro de la carcasa: `frente_izq` usa `x=TC`,
+`frente_der` usa `x=L-TC-W` y los dos usan `y=0`. Así respetan el espesor de
+los laterales, alinean su cara exactamente con el borde frontal y permanecen
+debajo del refuerzo delantero.
+
+El `refuerzo_delantero` pertenece al rol de tablero `frente`, no a `refuerzo`.
+Por ello usa el mismo material seleccionado para los frentes y su espesor
+efectivo es 18 mm cuando el tablero frontal configurado es de 18 mm. Su canto
+permanece en calibre `22x1`.
+
+## Variante BOMH-1-FE
+
+`BOMH-1-FE` es una tipología independiente y conserva exactamente la carcasa,
+el hueco paramétrico del horno, los tres frentes, el refuerzo delantero de
+material frontal, el entrepaño y el fondo de `BOMH-1`. Para 36 pulgadas su
+código comercial es `BOMH36-1-FE`.
+
+La única sustitución es la caja de la gaveta inferior, que usa las reglas de
+gaveta grande con riel Full Extension: dos `lateral_gaveta_grande` de 500×200
+mm, `trasero_gaveta_grande` de `L-86 mm` × 180 mm, `contraparche_grande` de
+`L-86 mm` × 200 mm y `base_gaveta` de 508 mm × `L-72 mm` en fondo de 6 mm.
+El trasero lleva enchape en ambos lados largos y seis tarugos; el contraparche
+también lleva seis tarugos. El herraje cambia exclusivamente de `RIELTANDEM` a
+`RIELFE500`; conserva la manija, patas y tornillos de BOMH-1.

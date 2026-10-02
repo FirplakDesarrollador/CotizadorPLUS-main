@@ -9,6 +9,17 @@ reveal de 3,2 mm. Este ajuste no se extiende a UB-FE ni V-FE.
 
 Esta página documenta la corrección geométrica del visor 3D y la homologación para agrupación física de las tipologías con gaveta de madera y riel Full Extension (`B-FE`, `UB-FE`, `V-FE`).
 
+## Largo uniforme de la base de gaveta
+
+La migración `0157_fe_base_gaveta_largo_492mm.sql` normaliza como
+`fondo_gaveta` las piezas llamadas previamente `base_gaveta` y fija en 492 mm
+su `formula_largo` para toda tipología cuyo prefijo termina en `-FE`. La regla
+también revisa los `fondo_gaveta` que ya existían, evitando que conserven otra
+medida. Cuando una plantilla antigua tenía los 492 mm en `formula_ancho`, la
+fórmula variable que estaba en el largo se traslada al ancho para conservar las
+dimensiones físicas con la orientación correcta. Las demás propiedades de la
+pieza se conservan sin cambios.
+
 ## Problemas corregidos en el visor 3D
 
 1. **`fondo_gaveta` suelto fuera del mueble:**

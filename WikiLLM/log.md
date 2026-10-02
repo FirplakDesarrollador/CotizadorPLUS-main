@@ -1358,6 +1358,83 @@ Se comprobó que `BOMH — Base para microondas` tenía cero líneas de cotizaci
 
 El `trasero_gaveta` de BOMH-1 cambió de 68 a 183 mm de alto. El `refuerzo_delantero` conserva 884,4×80 mm en la referencia de 36 pulgadas, pero pasa del plano horizontal XY al plano frontal XZ, montado de canto entre los laterales y contra la esquina superior. `frente_izq` y `frente_der` se ubican inmediatamente debajo del refuerzo con `z=A-80-H`, conservando las dimensiones libres paramétricas del horno.
 
+## [2026-10-01] update | Cantos largos en traseros de gaveta FE
+
+Se auditaron las piezas `trasero_gaveta_pequena` y `trasero_gaveta_grande` según el herraje real de cada tipología. Las cuatro piezas presentes en `DB-2S-SM-FE`, `DB-2-SM-FE` y `DB-3-SM-FE`, todas con `RIELFE500`, pasan a tener enchape en ambos lados largos (`largos=2`). DB, UDV y DB-2S-SM usan RIELTANDEM y permanecen sin cambios.
+
+## [2026-10-01] update | Frentes laterales BOMH-1 separados 3,2 mm de la gaveta
+
+`frente_izq` y `frente_der` de BOMH-1 ahora parten de `z=339,2mm`, exactamente 3,2 mm sobre el borde superior del `frente_gaveta` (3,2+332,8=336mm), por lo que no lo invaden. La validación del alto libre del horno limita además ambos frentes al espacio disponible bajo el refuerzo delantero superior de 80 mm.
+
+## [2026-10-01] update | BOMH-1 ajusta los frentes laterales al vano disponible
+
+Se eliminó el bloqueo que impedía calcular cuando `horno_alto` superaba el espacio físico. `frente_izq` y `frente_der` conservan el alto solicitado cuando cabe; si lo excede, se limitan automáticamente al tramo entre `z=339,2mm` y la cara inferior del refuerzo superior (`A-80mm`). La fachada queda como la referencia: gaveta inferior, separación de 3,2 mm, laterales continuos, hueco central y refuerzo superior, sin solapes.
+
+## [2026-10-01] update | Frentes BOMH-1 dentro de los laterales
+
+`frente_izq` y `frente_der` se retrajeron al interior de la carcasa. Horizontalmente respetan un espesor de caja (`x=TC` y `x=L-TC-W`) y en profundidad quedan en `y=TC`, en vez de sobresalir frente al lateral. Conservan `z=339,2mm` y el alto limitado por `A-80mm`, por lo que siguen debajo del refuerzo delantero.
+
+## [2026-10-01] update | Alineación frontal y material del refuerzo BOMH-1
+
+`frente_izq` y `frente_der` conservan su posición entre los laterales, pero pasan de `y=TC` a `y=0` para alinear su cara exactamente con el borde frontal de estos. El `refuerzo_delantero` cambia de rol `refuerzo` a rol `frente`, por lo que toma el mismo tablero frontal y su espesor de 18 mm; conserva canto `22x1` y su montaje superior en el plano XZ.
+
+## [2026-10-01] ingest | Nueva tipología BOMH-1-FE con gaveta grande
+
+Se creó `BOMH-1-FE` como copia independiente de la BOMH-1 vigente. Carcasa, hueco paramétrico, frentes, refuerzo delantero de material frontal, entrepaño y fondo permanecen iguales. Solo cambia la gaveta: dos laterales grandes de 500×200 mm, trasero L-86×180 mm con enchape en ambos largos, contraparche L-86×200 mm, fondo de 508 mm por L-72 mm y riel `RIELFE500`. Conserva manija, cuatro patas y dieciséis tornillos. El código a 36 pulgadas es `BOMH36-1-FE`.
+
 ## [2026-10-01] update | Recuperación de contraseña con Supabase Auth
 
 Se añadió el flujo PKCE completo desde el login: solicitud de correo, callback seguro para intercambiar el código, validación del enlace, actualización de la contraseña y cierre de la sesión temporal. El proxy permite las pantallas públicas de recuperación sin desproteger el resto de la aplicación.
+
+## [2026-10-02] update | Largo de base_gaveta FE fijado en 492 mm
+
+Se normalizaron como `fondo_gaveta` las piezas `base_gaveta` de todas las tipologías cuyo prefijo termina en `-FE`, y se fijó su `formula_largo` en 492 mm. La misma validación incluye los `fondo_gaveta` ya existentes; cuando estos tenían 492 mm en el ancho, se trasladó al ancho la fórmula variable anterior del largo para conservar las dimensiones físicas con la orientación solicitada. Las demás propiedades permanecen intactas.
+
+## [2026-10-02] update | BOV ajustado a la hoja real BOV24
+
+La plantilla BOV pasó de cuatro renglones ambiguos a cinco renglones y siete piezas físicas: base, dos laterales, dos rails traseros, rail delantero y frente de horno. Se corrigieron medidas, roles, cantos y metadatos 3D; la visualización separa los dos rails traseros entre el nivel inferior y el superior.
+
+## [2026-10-02] update | Frente BOV usa alto menos 3,2 mm
+
+El `formula_largo` del frente de BOV cambió de 124 mm fijos a `A-RV`, donde `RV=3,2 mm`. Para BOV24 con alto de 30 pulgadas, el frente resulta de 758,8×606,4 mm.
+
+## [2026-10-02] ingest | Nueva tipología BBLFD-D-L/R-SM
+
+Se creó una variante independiente de BBLFD-D-L/R que conserva las piezas y reglas de la fuente, eleva el refuerzo vertical a `A-TC`, divide los refuerzos delanteros en las caras del montante, agrega un tramo vertical de 80 mm a 20 mm del frente y una Gola horizontal debajo, ambos con cuatro tarugos. La puerta móvil queda en `A-30 mm`; la variante conserva patas, tornillos y bisagras, pero elimina la manija.
+
+## [2026-10-02] update | Refuerzos y junta frontal BBLFD SM
+
+Todos los refuerzos de `BBLFD-D-L/R-SM` adoptan sección de 80 mm. El montante se centra bajo la separación de 3,2 mm entre puerta y Blind Door; los tramos delantero horizontal, delantero vertical y Gola se recalculan hasta las caras del montante. En BBLFD original y SM, la puerta móvil descuenta 3,2 mm a `Door` y ambos frentes normalizan sus ejes para presentar primero el alto calculado desde `A`.
+
+## [2026-10-02] update | Gola de madera BBLFD SM contra el frente
+
+La `gola_madera` de `BBLFD-D-L/R-SM` se desplazó de `y=20 mm` a `y=0`, apoyando su cara frontal directamente contra la cara interna del frente. Sus dimensiones, altura y relación inferior con el refuerzo delantero permanecen sin cambios.
+
+## [2026-10-02] update | Blind Door BBLFD descuenta 1,6 mm
+
+En `BBLFD` y `BBLFD-D-L/R-SM`, la Blind Door cambió de `L-door-RV` a `L-door-RV/2`: solo descuenta 1,6 mm porque queda alineada con el lateral exterior. La junta entre frentes pasa a 1,6 mm; el montante y los tramos de refuerzo/Gola SM se recentraron bajo esa junta.
+
+## [2026-10-02] ingest | Nueva tipología BLS-RS-SM sin entrepaño
+
+Se creó `BLS-RS-SM` como copia independiente de BLS. Conserva todas sus piezas, fórmulas, cantos, tarugos, reglas, herrajes y montaje visual, excepto la pieza `entrepano`; la regla `n_entrepanos` se fija en cero.
+
+## [2026-10-02] update | Auditoría de tarugos y herrajes del cotizador
+
+Se normalizaron refuerzos y `gola_madera` a cuatro tarugos por pieza, bases y tapas a ocho, se añadió la quinta pata para largos mayores de 36 pulgadas, y BLS/BLS-RS-SM pasaron a seis patas con cuatro tornillos 5/8 por pata y dos bisagras por puerta. Se retiró el herraje PUSH de PCFD.
+
+## [2026-10-02] update | Excluir base_gaveta de tarugos estructurales
+
+`base_gaveta` vuelve a quedar fuera de la regla de ocho tarugos aplicada a bases y tapas: todas sus filas activas se fijan en cero, mientras las bases y tapas estructurales conservan ocho.
+
+## [2026-10-02] update | Normalización final de cantos
+
+Se corrigieron los cantos de bases, tapas, refuerzos, Gola, frentes, laterales, entrepaños, fondos de gaveta y traseros Tandem/FE según la regla de producción. La revisión posterior se limita a estas nueve reglas y confirma las medidas FE de 492 mm.
+
+Las filas condicionales de trasero Tandem de DB se separaron para que el motor aplique un canto largo a 68 mm y un largo más dos anchos a 183 mm.
+
+## [2026-10-02] update | Entrepaños: tres desde 40 pulgadas
+
+Las reglas superiores de `n_entrepanos` ahora asignan dos entrepaños solo cuando `A < 40`; desde `A = 40` pulgadas se asignan tres.
+
+## [2026-10-02] ingest | Comparación Query App 2-10 con catálogo activo
+Auditoría de 252 referencias, cinco por agrupación cuando existen, contra captura de Supabase y motor real. Informe por SKU con piezas, cantos, entrepaños y tipologías sin equivalente; documentadas anomalías del CSV y límites de configuración. Sin cambios de plantillas ni reglas.

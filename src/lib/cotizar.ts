@@ -133,9 +133,6 @@ export async function prepararCotizacion(inp: CotizarInput): Promise<CotizacionP
     if (hornoLargo >= dims.L - (3.2 / 25.4)) {
       throw new Error('El largo libre del horno debe dejar espacio para los frentes izquierdo y derecho.');
     }
-    if (hornoAlto >= dims.A) {
-      throw new Error('El alto libre del horno debe ser menor que el alto del mueble.');
-    }
   }
 
   for (const key of ['n_puertas', 'n_cajones', 'n_entrepanos', 'n_barras'] as const) {
