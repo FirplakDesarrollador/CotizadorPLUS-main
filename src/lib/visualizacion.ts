@@ -24,6 +24,13 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
   let offset=0;
   const totalL=mm(group.largoTotalIn), multi=members.length>1;
   const continuous=new Set<string>();
+  // `group-engine` fusiona tambien las piezas `continua_opcional`, pero solo las
+  // que resultaron compatibles: `group.piezasContinuas` lista las claves que de
+  // verdad se unieron. Sin consultarlo, una opcional fusionada llega con la
+  // cantidad prorrateada (0,5 por modulo) y se descarta por fraccionaria.
+  const esContinuaEnGrupo=(pz:Pieza)=>pz.modo_agrupacion==='continua'
+    ||(pz.modo_agrupacion==='continua_opcional'
+      &&group.piezasContinuas.includes(pz.clave_fusion||pz.nombre));
   const addPanel = (panel: PanelVisual) => {
     if (scene.paneles.length >= 1500) { warn('Se alcanzó el límite de 1.500 piezas visibles.'); return; }
     scene.paneles.push(panel);
@@ -96,7 +103,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       let t=thickness(p.rol_tablero);
       if (!(t>0)) { t=15; warn(`${pref}: espesor de ${p.rol_tablero} no definido; se representan 15 mm.`); }
       let count=r.cant;
-      if(multi && p.modo_agrupacion==='continua') {
+      if(multi && esContinuaEnGrupo(p)) {
         const key=p.clave_fusion||p.nombre;
         if(continuous.has(key)) return;
         continuous.add(key);
@@ -104,7 +111,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         // Aliased names (e.g. refuerzo_horizontal / delantero) share the same fusion key.
         if(Math.abs(count-Math.round(count))>.001) {
           count=members.reduce((s,m,j)=>{
-            const q=m.calc.piezas.find(q=>q.modo_agrupacion==='continua'&&(q.clave_fusion||q.nombre)===key);
+            const q=m.calc.piezas.find(q=>esContinuaEnGrupo(q)&&(q.clave_fusion||q.nombre)===key);
             return s+(q?group.lineas[j].piezas.find(v=>v.pieza===q.nombre)?.cant??0:0);
           },0);
         }
@@ -230,7 +237,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       for(let k=0;k<count;k++) {
         const i=sequence.get(funcion)||0; sequence.set(funcion,i+1);
         const n=totals.get(funcion)||count;
-        const full=multi&&p.modo_agrupacion==='continua', width=full?totalL:L;
+        const full=multi&&esContinuaEnGrupo(p), width=full?totalL:L;
         let x=(width-w)/2, y=0, z=foot, cajon:string|null=null;
         let drawerIndex=i;
         if(funcion==='frente_gaveta') drawerIndex=fronts.findIndex(f=>f.item===item&&f.k===k);

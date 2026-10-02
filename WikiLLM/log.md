@@ -1446,3 +1446,28 @@ Auditoría de 252 referencias, cinco por agrupación cuando existen, contra capt
 ## [2026-10-02] update | Los campos Largo, Alto y Prof del simulador admiten vacío sin transformarlo en cero y seleccionan su valor al enfocar para reemplazarlo con la primera escritura; el estado persistido migra las dimensiones anteriores a texto.
 
 ## [2026-10-02] update | Los buscadores de tableros ahora indexan explícitamente `color_nombre` de Materiales-Parámetros, con búsqueda insensible a mayúsculas y tildes; términos como `constructor` encuentran los tableros Primadera asociados.
+
+## [2026-10-02] fix | Integracion de DEV: fixture resincronizado y tres regresiones reales del catalogo
+
+Fast-forward de `Andrés` a `origin/DEV` (12 commits de LizPalacio31, migraciones 0124-0172). Sin conflictos: la rama venia de un reset a `LIz`, asi que no habia nada propio que mezclar. `origin/LIz` esta contenido en `DEV`, de modo que esto trae ambas.
+
+**El fixture llevaba mucho sin regenerarse y eso ocultaba fallos.** Estaba en 62 tipos / 459 piezas / 84 reglas / 48 tableros cuando la base real tiene **81 / 650 / 311 / 104**. Regenerado desde la base: 22 tipos nuevos (`BMW-1`, `BOMH-1`, `TW-SM-PUSH`, la familia `DB-*-SM`, `W-SM*`, `BBLFD-D-L/R-SM`, `WBL-D-L/R-SM`...) y 3 de baja (`BMW`, `BOMH` y `FL`, reemplazados o eliminados). Al refrescarlo aparecieron 8 fallos que el archivo congelado tapaba, sumados a los 4 que `DEV` ya traia en rojo.
+
+**Regresion real 1 — `0171` perdio la gaveta oculta.** `0171_db_normalizar_nombres_traseros_gaveta.sql` borro la plantilla generica `trasero_gaveta` y parametrizo las cantidades, pero al reescribir las formulas **se dejo la rama `n_cajones_ocultos`**. Efecto: un DB2-1OP pasaba a dar 0 traseros pequenos en vez de 2, y `n_cajones` grandes en vez de 1 — el despiece quedaba sin los traseros de la gaveta oculta. Corregido con `0173`, aditiva: antepone la rama de ocultos y conserva intacta la logica que `0171` introdujo para DB-4 y para las mixtas DB-1S/2S. Ya aplicada en Supabase, con dos `raise` que verifican el resultado.
+
+**Regresion real 2 — `visualizacion.ts` sigue detras de `group-engine.ts`.** Es la misma de la integracion anterior, que un reset de rama se llevo: el motor fusiona las piezas `continua_opcional` pero la visualizacion solo miraba `continua`, asi que una opcional fusionada llegaba con la cantidad prorrateada (0,5 por modulo) y se descartaba por fraccionaria. Reaplicada la correccion via `group.piezasContinuas`.
+
+**Cuatro tests que iban contra el motor, no al contrario:**
+
+- `bloquea incompatibilidades`: la validacion `mismo conjunto` se quito del fuente hace tiempo y existe otro test que afirma lo contrario sobre el mismo par. Se elimina la asercion vieja.
+- `normaliza a 80 mm exactos`: el motor normaliza lo que esta a <=0,05 mm de 80 (la conversion historica `3.14961 in`), y el helper del test armaba los refuerzos con `3.25 in` = 82,55 mm, que no es la medida nominal que el test dice probar.
+- `superiores aplican la regla de entrepanos`: esperaba que una pieza con cantidad 0 desapareciera de `result.piezas`. El motor la deja con `cant: 0` y cada consumidor filtra por `cant > 0` —asi lo hace el resto de la suite—, de modo que se compara la cantidad y no la ausencia de la fila.
+- `B-FE: visualizacion`: fijaba un desfase de 30 mm entre el fondo de gaveta y su frente, pero el motor suma 13 mm cuando la caja lleva laterales de madera. Ahora **deriva** el desfase del propio despiece en vez de fijar el numero.
+
+**Dos tests que el catalogo dejo obsoletos, no roto:** `DB-4` parcheaba a mano el ancho del trasero generico, algo que `0171` ya resuelve de forma parametrica, y `DB-2-SM`/`DB-3-SM` filtraban los traseros `pequena`/`grande` para quedarse con el generico que ya no existe. Los tres pasan a usar el catalogo tal cual.
+
+**`door` ya no se detecta por prefijo.** Tres tipos lo necesitan (`BBLFD`, `BBLFD-D-L/R-SM`, `WBL-D-L/R-SM`) y es un dato que captura el usuario, no una regla del catalogo. El test generico de escena lo deriva de las propias formulas, para que un tipo nuevo con `door` no vuelva a romperlo.
+
+**Deriva pendiente, ajena a este merge**: de los 34 traseros de gaveta de la base, 9 volvieron a 2 aristas largas —probablemente `0168_normalizar_cantos_produccion.sql`—, contradiciendo la regla de una sola arista larga. No se toca aqui porque no formaba parte del encargo. La regla del trasero grande con 2 extremos, en cambio, se cumple en los 8 grandes.
+
+215/215 tests, typecheck, lint y build limpios.

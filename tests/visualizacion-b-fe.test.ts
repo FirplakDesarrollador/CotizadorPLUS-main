@@ -81,8 +81,15 @@ test('B-FE: visualización monta gaveta arriba, puerta abajo y fondo_gaveta aden
   assert.ok(puerta, 'puerta debe existir');
   assert.ok(frenteCajon.z > puerta.z, 'frente_cajon debe estar ubicado arriba de la puerta');
 
-  // 4. El cajón debe estar a la altura del frente_cajon
-  assert.ok(Math.abs(fondoGav.z - frenteCajon.z - 30) < 1, 'fondo_gaveta debe estar alineado con su frente de cajón');
+  // 4. El cajón debe estar a la altura del frente_cajon.
+  // `construirVisualizacion` apoya la caja 30 mm sobre su slot, mas 13 mm cuando
+  // la gaveta lleva laterales de madera, porque esos laterales arrancan debajo de
+  // la base. B-FE es ese caso, asi que el desfase real es 43. Se deriva del propio
+  // despiece en vez de fijar el numero: si el motor cambia la regla, el test la sigue.
+  const tieneLateralesDeMadera = scene.paneles.some((p) => p.funcion === 'lateral_gaveta');
+  const desfase = 30 + (tieneLateralesDeMadera ? 13 : 0);
+  assert.ok(Math.abs(fondoGav.z - frenteCajon.z - desfase) < 1,
+    `fondo_gaveta debe quedar ${desfase} mm sobre su frente de cajón, esta a ${(fondoGav.z - frenteCajon.z).toFixed(1)}`);
 });
 
 test('B-FE y B combinan correctamente compartiendo laterales y bases/fondos continuos', () => {

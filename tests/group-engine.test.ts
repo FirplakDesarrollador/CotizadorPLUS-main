@@ -139,10 +139,14 @@ test('bloquea incompatibilidades antes de transformar el despiece', () => {
     member({ pref: 'DB', width: 10, permiteAgrupacion: false }),
   ]), /no admite agrupación/);
 
-  assert.throws(() => calcularGrupoFisico([
+  // Un conjunto de piezas distinto ya NO bloquea: `calcularGrupoFisico` dejo de
+  // exigirlo y la pieza sobrante se conserva local. Lo cubre el caso
+  // 'agrupa aunque una tipologia tenga una pieza continua adicional', que afirma
+  // justo lo contrario sobre este mismo par.
+  assert.doesNotThrow(() => calcularGrupoFisico([
     member({ pref: 'B', width: 12 }),
     member({ pref: 'DB', width: 10, omitBack: true }),
-  ]), /mismo conjunto/);
+  ]));
 });
 
 test('permite combinar módulos con diferente altura y quita el lateral del módulo menos alto', () => {
@@ -221,6 +225,12 @@ test('omite fondo y descuenta el espesor de caja en la base al agrupar módulos 
 
 test('normaliza a 80 mm exactos los refuerzos y Golas nominales', () => {
   const m = member({ pref: 'BFD-SM', width: 15 });
+  // El helper arma los refuerzos con 3.25 in (82,55 mm), que no es la medida
+  // nominal: el motor normaliza a 80 mm exactos lo que llega de la conversion
+  // historica 3.14961 in, con tolerancia de 0,05 mm. Se usa ese valor.
+  m.calc.piezas = m.calc.piezas.map((x) => /^refuerzo(_|$)/i.test(x.nombre)
+    ? { ...x, formula_ancho: '3.14961' }
+    : x);
   m.calc.piezas.push({
     nombre: 'gola_madera', rol_tablero: 'caja', formula_cantidad: '1',
     formula_largo: 'L-2*TC', formula_ancho: '3.14961', modo_agrupacion: 'local',

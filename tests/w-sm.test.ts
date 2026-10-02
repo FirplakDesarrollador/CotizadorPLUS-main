@@ -101,9 +101,11 @@ test('superiores aplican la regla de entrepanos en todos sus limites', () => {
   for (const { alto, esperado } of casos) {
     const result = calcularMueble({ ...input({ gola: 1 }), dims: { L: 29, A: alto, P: 12 } });
     assert.equal(result.vars.n_entrepanos, esperado, `A=${alto}`);
+    // El motor no retira del despiece una pieza cuya cantidad resulta 0: la deja
+    // con `cant: 0` y cada consumidor filtra por `cant > 0`. Por eso se compara la
+    // cantidad y no la ausencia de la fila.
     const entrepano = result.piezas.find((item) => item.pieza === 'entrepano');
-    if (esperado === 0) assert.equal(entrepano, undefined, `A=${alto}`);
-    else assert.equal(entrepano?.cant, esperado, `A=${alto}`);
+    assert.equal(entrepano?.cant ?? 0, esperado, `A=${alto}`);
   }
 });
 
