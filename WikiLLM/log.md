@@ -1438,3 +1438,5 @@ Las reglas superiores de `n_entrepanos` ahora asignan dos entrepaños solo cuand
 
 ## [2026-10-02] ingest | Comparación Query App 2-10 con catálogo activo
 Auditoría de 252 referencias, cinco por agrupación cuando existen, contra captura de Supabase y motor real. Informe por SKU con piezas, cantos, entrepaños y tipologías sin equivalente; documentadas anomalías del CSV y límites de configuración. Sin cambios de plantillas ni reglas.
+
+## [2026-10-02] update | Normalizados y aplicados al catálogo activo los traseros de gaveta del tipo DB: eliminada la fila genérica introducida por `0169`; DB-4 usa `trasero_gaveta_pequena` de 68 mm y DB-2/DB-3 usan `trasero_gaveta_grande` de 183 mm, preservando DB-1S/DB-2S. Verificado que solo existen las dos plantillas nominales.
