@@ -61,7 +61,9 @@ Test de regresión: `tests/db-gavetas-mixtas.test.ts` (valida DB-1S contra estos
 
 ## Piezas con cantidad 0 no se muestran en el despiece
 
-La tabla "Piezas (despiece)" del Simulador (`CotizadorForm.tsx`) lista todas las filas de `cot_piezas_plantilla` del tipo, incluidas las que dan `cant = 0` (ej. `frente`/`trasero_gaveta` cuando la tipología es mixta, o `frente_gaveta_pequena`/`_grande` cuando no lo es). Como una pieza con cantidad 0 no se produce, esa tabla filtra `p.cant > 0` antes de renderizar — así la fila irrelevante desaparece automáticamente según la tipología elegida, sin necesidad de borrar ninguna fila de la base de datos (que siguen siendo compartidas entre todas las tipologías DB).
+La tabla "Piezas (despiece)" del Simulador (`CotizadorForm.tsx`) lista las filas de `cot_piezas_plantilla` cuya cantidad evaluada es positiva. Los frentes mantienen la plantilla genérica para configuraciones uniformes, pero los traseros DB quedaron normalizados en solo dos plantillas según su medida física: `trasero_gaveta_pequena` (68 mm) y `trasero_gaveta_grande` (183 mm). DB-4 activa cuatro pequeños; DB-2 y DB-3 activan respectivamente dos y tres grandes; DB-1S/DB-2S conservan la mezcla definida por `n_cajones_pequenos`. La plantilla genérica `trasero_gaveta` fue eliminada del tipo `DB`.
+
+La fila adicional provenía de `0169_traseros_tandem_condicionales.sql`, que había separado el trasero condicional conservando el nombre genérico y lo activaba con cantidad 1 cuando `n_cajones != 4`. La migración `0171_db_normalizar_nombres_traseros_gaveta.sql` elimina todas las filas genéricas del tipo `DB` y deja exactamente las dos plantillas nominales anteriores. La migración fue aplicada al catálogo activo y verificada mediante consulta directa.
 
 ## Migración aplicada
 

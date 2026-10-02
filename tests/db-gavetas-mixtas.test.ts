@@ -8,7 +8,8 @@ import {
 } from '../src/lib/engine';
 
 // Réplica exacta de cot_piezas_plantilla para el tipo DB tras las migraciones
-// 0027_db_gavetas_mixtas.sql y 0028_geometria_espesor_reveal.sql.
+// 0027_db_gavetas_mixtas.sql, 0028_geometria_espesor_reveal.sql y
+// 0171_db_normalizar_nombres_traseros_gaveta.sql.
 // Ver WikiLLM/wiki/validacion_hojas_de_ruta.md.
 const piezas: Pieza[] = [
   { nombre: 'lateral', rol_tablero: 'caja', formula_cantidad: '2', formula_largo: 'A', formula_ancho: 'P', cantos: {} },
@@ -17,9 +18,8 @@ const piezas: Pieza[] = [
   { nombre: 'refuerzo_delantero', rol_tablero: 'refuerzo', formula_cantidad: '(n_cajones)-gola', formula_largo: 'L-2*TC', formula_ancho: '3.25', cantos: {} },
   { nombre: 'gola_perfil', rol_tablero: 'caja', formula_cantidad: 'gola*2', formula_largo: 'L-2*TC', formula_ancho: '3.14961', cantos: {} },
   { nombre: 'base_gaveta', rol_tablero: 'refuerzo', formula_cantidad: 'n_cajones', formula_largo: 'L-4.13', formula_ancho: 'P-4.63', cantos: {} },
-  { nombre: 'trasero_gaveta', rol_tablero: 'refuerzo', formula_cantidad: 'n_cajones_pequenos>0?0:n_cajones', formula_largo: 'L-3.427', formula_ancho: 'n_cajones == 4 ? 68/25.4 : 183/25.4', cantos: {} },
-  { nombre: 'trasero_gaveta_pequena', rol_tablero: 'refuerzo', formula_cantidad: 'n_cajones_pequenos', formula_largo: 'L-4.607', formula_ancho: '68/25.4', cantos: {} },
-  { nombre: 'trasero_gaveta_grande', rol_tablero: 'refuerzo', formula_cantidad: 'n_cajones_pequenos>0?n_cajones-n_cajones_pequenos:0', formula_largo: 'L-4.607', formula_ancho: '183/25.4', cantos: {} },
+  { nombre: 'trasero_gaveta_pequena', rol_tablero: 'refuerzo', formula_cantidad: 'n_cajones_pequenos>0?n_cajones_pequenos:(n_cajones==4?n_cajones:0)', formula_largo: 'L-4.607', formula_ancho: '68/25.4', cantos: {} },
+  { nombre: 'trasero_gaveta_grande', rol_tablero: 'refuerzo', formula_cantidad: 'n_cajones_pequenos>0?n_cajones-n_cajones_pequenos:(n_cajones==4?0:n_cajones)', formula_largo: 'L-4.607', formula_ancho: '183/25.4', cantos: {} },
   { nombre: 'frente', rol_tablero: 'frente', formula_cantidad: 'n_cajones_pequenos>0?0:n_cajones', formula_largo: 'L-RV', formula_ancho: 'n_cajones == 4 && !gola ? (A-0.440945)/4 : (A-n_cajones*RV-gola*2.11024)/n_cajones', cantos: { calibre: '22x1', largos: 2, anchos: 2 } },
   { nombre: 'frente_gaveta_pequena', rol_tablero: 'frente', formula_cantidad: 'n_cajones_pequenos', formula_largo: 'L-RV', formula_ancho: 'alto_frente_pequeno', cantos: { calibre: '22x1', largos: 2, anchos: 2 } },
   { nombre: 'frente_gaveta_grande', rol_tablero: 'frente', formula_cantidad: 'n_cajones_pequenos>0?n_cajones-n_cajones_pequenos:0', formula_largo: 'L-RV', formula_ancho: '(n_cajones-n_cajones_pequenos)>0 ? (A-n_cajones*RV-gola*2.11024-n_cajones_pequenos*alto_frente_pequeno)/(n_cajones-n_cajones_pequenos) : 0', cantos: { calibre: '22x1', largos: 2, anchos: 2 } },
@@ -104,7 +104,7 @@ test('DB-1S (15x30x24): frentes y traseros de gaveta reproducen la lista de cort
   assert.equal(traseroGde.cant, 2);
   assertMm(traseroGde.anchoIn, 183, 0.1, 'ancho trasero grande');
 
-  assert.equal(piece(result, 'trasero_gaveta').cant, 0);
+  assert.equal(result.piezas.some((item) => item.pieza === 'trasero_gaveta'), false);
 
   // El fondo de cada cajón (base_gaveta) es igual en los 3.
   const fondoGaveta = piece(result, 'base_gaveta');
@@ -147,7 +147,8 @@ test('DB-3 y DB-4 (tipologías parejas) reparten con reveal', () => {
   assert.equal(piece(db3, 'frente').cant, 3);
   assert.equal(piece(db3, 'frente_gaveta_pequena').cant, 0);
   assert.equal(piece(db3, 'frente_gaveta_grande').cant, 0);
-  assert.equal(piece(db3, 'trasero_gaveta').cant, 3);
+  assert.equal(piece(db3, 'trasero_gaveta_grande').cant, 3);
+  assert.equal(piece(db3, 'trasero_gaveta_pequena').cant, 0);
   // Hoja real DB15-3 / DB30-3: 250.8mm (antes daba 254.0 sin reveal).
   assertMm(piece(db3, 'frente').anchoIn, 250.8, 0.5, 'ancho frente DB-3');
   assertMm(piece(db3, 'frente').largoIn, 377.8, 0.5, 'largo frente DB-3');
@@ -155,12 +156,16 @@ test('DB-3 y DB-4 (tipologías parejas) reparten con reveal', () => {
   // DB-2: hoja real 377.8 x2.
   const db2 = calcularMueble(input({ n_cajones: 2 }));
   assertMm(piece(db2, 'frente').anchoIn, 377.8, 0.5, 'ancho frente DB-2');
+  assert.equal(piece(db2, 'trasero_gaveta_grande').cant, 2);
+  assert.equal(piece(db2, 'trasero_gaveta_pequena').cant, 0);
+  assertMm(piece(db2, 'trasero_gaveta_grande').anchoIn, 183, 0.1, 'DB-2 usa traseros grandes de 183mm');
 
   // DB33-4: hoja real 187.7mm de alto por frente.
   const db4 = calcularMueble(input({ n_cajones: 4 }));
   assertMm(piece(db4, 'frente').anchoIn, 187.7, 0.1, 'ancho frente DB-4');
-  assert.equal(piece(db4, 'trasero_gaveta').cant, 4);
-  assertMm(piece(db4, 'trasero_gaveta').anchoIn, 68, 0.1, 'DB-4 usa traseros bajos de 68mm');
+  assert.equal(piece(db4, 'trasero_gaveta_pequena').cant, 4);
+  assert.equal(piece(db4, 'trasero_gaveta_grande').cant, 0);
+  assertMm(piece(db4, 'trasero_gaveta_pequena').anchoIn, 68, 0.1, 'DB-4 usa traseros bajos de 68mm');
 });
 
 // ---------------------------------------------------------------------------
