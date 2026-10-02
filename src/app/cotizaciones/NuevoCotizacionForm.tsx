@@ -90,7 +90,11 @@ export default function NuevoCotizacionForm({
   }
 
   const tableroOptions = useMemo(
-    () => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({ value: t.codigo, label: tableroLabel(t) })),
+    () => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({
+      value: t.codigo,
+      label: tableroLabel(t),
+      searchText: t.color_nombre ?? '',
+    })),
     [tableros]
   );
 

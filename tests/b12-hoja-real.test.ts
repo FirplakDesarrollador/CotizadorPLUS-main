@@ -12,7 +12,7 @@ const piezas: Pieza[] = [
   { nombre: 'lateral', rol_tablero: 'caja', formula_cantidad: '2', formula_largo: 'A', formula_ancho: 'P', cantos: { calibre: '19x0,45', largos: 2, anchos: 2 } },
   { nombre: 'refuerzo_horizontal', rol_tablero: 'refuerzo', formula_cantidad: '2', formula_largo: 'L-2*TC', formula_ancho: '3.14961', cantos: { calibre: '19x0,45', largos: 2, anchos: 0 } },
   { nombre: 'refuerzo_trasero', rol_tablero: 'refuerzo', formula_cantidad: '2', formula_largo: 'L-2*TC', formula_ancho: '3.14961', cantos: { calibre: '19x0,45', largos: 2, anchos: 0 } },
-  { nombre: 'entrepano', rol_tablero: 'refuerzo', formula_cantidad: '1', formula_largo: 'L-2*TC-0.03937', formula_ancho: '11.81102', cantos: { calibre: '19x0,45', largos: 2, anchos: 2 } },
+  { nombre: 'entrepano', rol_tablero: 'refuerzo', formula_cantidad: '1', formula_largo: 'L-2*TC-0.03937', formula_ancho: '11.81102', cantos: { calibre: '19x0,45', largos: 2, anchos: 2 }, soportes: 4 },
   { nombre: 'base_gaveta', rol_tablero: 'refuerzo', formula_cantidad: '1', formula_largo: 'L-4.13386', formula_ancho: 'P-4.63', cantos: { calibre: '19x0,45', largos: 2, anchos: 0 } },
   { nombre: 'trasero_gaveta', rol_tablero: 'refuerzo', formula_cantidad: '1', formula_largo: 'L-4.607', formula_ancho: '2.67717', cantos: { calibre: '19x0,45', largos: 1, anchos: 0 } },
   { nombre: 'frente', rol_tablero: 'frente', formula_cantidad: 'n_puertas', formula_largo: '(L-n_puertas*RV)/n_puertas', formula_ancho: 'A-n_cajones*alto_frente_gaveta-(n_cajones+1)*RV', cantos: { calibre: '22x1', largos: 2, anchos: 2 } },
@@ -70,6 +70,7 @@ test('B12 reproduce la hoja real de producción', () => {
   assertPieza(r, 'frente', 1, 603.2, 301.6);             // DOOR
   assertPieza(r, 'frente_cajon', 1, 152.4, 301.6);       // FRENTE GAVETA
   assertPieza(r, 'fondo', 1, 760, 288.8);                // BACKING
+  assert.equal(r.cantidadesConsumibles.soportes, 4, 'cada entrepano de 300mm usa cuatro soportes metalicos');
 });
 
 test('las tres medidas que 0052 corrigió no vuelven a su valor anterior', () => {

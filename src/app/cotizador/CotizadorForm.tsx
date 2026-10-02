@@ -78,13 +78,13 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const setUnidad = (v: 'in' | 'cm' | 'mm') => setStore({ unidad: v });
   
   const largo = store.largo;
-  const setLargo = (v: number | ((prev: number) => number)) => setStore({ largo: typeof v === 'function' ? v(largo) : v });
+  const setLargo = (v: string | ((prev: string) => string)) => setStore({ largo: typeof v === 'function' ? v(largo) : v });
   
   const alto = store.alto;
-  const setAlto = (v: number | ((prev: number) => number)) => setStore({ alto: typeof v === 'function' ? v(alto) : v });
+  const setAlto = (v: string | ((prev: string) => string)) => setStore({ alto: typeof v === 'function' ? v(alto) : v });
   
   const prof = store.prof;
-  const setProf = (v: number | ((prev: number) => number)) => setStore({ prof: typeof v === 'function' ? v(prof) : v });
+  const setProf = (v: string | ((prev: string) => string)) => setStore({ prof: typeof v === 'function' ? v(prof) : v });
   
   const perfilId = store.perfilId || perfilDefaultId;
   const setPerfilId = (v: string) => setStore({ perfilId: v });
@@ -197,7 +197,11 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     }
     return options;
   }, [tipos]);
-  const tableroOptions = useMemo(() => sortedTableros.map((t) => ({ value: t.codigo, label: tableroLabel(t) })), [sortedTableros]);
+  const tableroOptions = useMemo(() => sortedTableros.map((t) => ({
+    value: t.codigo,
+    label: tableroLabel(t),
+    searchText: t.color_nombre ?? '',
+  })), [sortedTableros]);
 
   if (!isMounted) return null;
 
@@ -242,8 +246,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       setHornoLargo('');
       setHornoAlto('');
     }
-    if (tipoSeleccionado.pref === 'W') setProf(convertir(12, 'in', unidad));
-    if (tipoSeleccionado.pref === 'WSM') setProf(convertir(14, 'in', unidad));
+    if (tipoSeleccionado.pref === 'W') setProf(String(convertir(12, 'in', unidad)));
+    if (tipoSeleccionado.pref === 'WSM') setProf(String(convertir(14, 'in', unidad)));
     if (tipoSeleccionado.pref === 'F' || tipoSeleccionado.pref === 'DB') setSistemaFrente('manija');
   }
   function aplicarDbSmTipo(pref: string) {
@@ -268,9 +272,9 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   function changeUnidad(nu: 'in' | 'cm' | 'mm') {
     if (nu === unidad) return;
-    setLargo((v) => convertir(v, unidad, nu));
-    setAlto((v) => convertir(v, unidad, nu));
-    setProf((v) => convertir(v, unidad, nu));
+    setLargo((v) => v === '' ? '' : String(convertir(parseMedida(v), unidad, nu)));
+    setAlto((v) => v === '' ? '' : String(convertir(parseMedida(v), unidad, nu)));
+    setProf((v) => v === '' ? '' : String(convertir(parseMedida(v), unidad, nu)));
     if (door !== '' && Number.isFinite(parseMedida(door))) setDoor(String(convertir(parseMedida(door), unidad, nu)));
     if (hornoLargo !== '' && Number.isFinite(parseMedida(hornoLargo))) setHornoLargo(String(convertir(parseMedida(hornoLargo), unidad, nu)));
     if (hornoAlto !== '' && Number.isFinite(parseMedida(hornoAlto))) setHornoAlto(String(convertir(parseMedida(hornoAlto), unidad, nu)));
@@ -287,6 +291,18 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   });
 
   const modulePatch = (values: SimuladorModuloValues) => ({ ...values });
+
+  const dimensionesValidas = (values: Pick<SimuladorModuloValues, 'largo' | 'alto' | 'prof'>) =>
+    [values.largo, values.alto, values.prof].every((value) => {
+      const parsed = parseMedida(value);
+      return value.trim() !== '' && Number.isFinite(parsed) && parsed > 0;
+    });
+
+  function validarDimensionesActivas() {
+    if (dimensionesValidas({ largo, alto, prof })) return true;
+    setError('Completa Largo, Alto y Prof con valores mayores que cero.');
+    return false;
+  }
 
   function inputFromModule(modulo: SimuladorModulo): CotizarInput {
     const overrides: Record<string, number> = {};
@@ -314,9 +330,9 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (permiteRemovible(pref)) overrides.removible = modulo.removible ? 1 : 0;
     return {
       tipoId: modulo.tipoId,
-      largo: modulo.largo,
-      alto: modulo.alto,
-      prof: modulo.prof,
+      largo: parseMedida(modulo.largo),
+      alto: parseMedida(modulo.alto),
+      prof: parseMedida(modulo.prof),
       unidad,
       preset: modulo.preset,
       conHerrajes: modulo.conHerrajes,
@@ -359,6 +375,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!validarDimensionesActivas()) return;
     if (store.modulos.length === 0) {
       // Modo individual: cotizar únicamente el módulo actual sin agregarlo a una lista de combinación
       setLoading(true);
@@ -382,6 +399,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   }
 
   async function onAddModule() {
+    if (!validarDimensionesActivas()) return;
     if (store.modulos.length === 0) {
       // Iniciar modo combinado: el módulo actual pasa a ser Módulo 1 y preparamos Módulo 2
       const mod1Id = globalThis.crypto.randomUUID();
@@ -520,9 +538,9 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (!pref) return '';
     return codigoComercial({
       pref,
-      largo: valores.largo,
-      alto: valores.alto,
-      prof: valores.prof,
+      largo: parseMedida(valores.largo),
+      alto: parseMedida(valores.alto),
+      prof: parseMedida(valores.prof),
       unidad,
       sistema: sistemaCodigo,
       sistemaFrente: valores.sistemaFrente,
@@ -651,9 +669,9 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         </div>
 
         <div data-tour="dims" className="grid grid-cols-4 gap-2 items-end">
-          <Field label="Largo"><input type="number" step="any" value={largo} onChange={(e) => setLargo(+e.target.value)} className="inp" /></Field>
-          <Field label="Alto"><input type="number" step="any" value={alto} onChange={(e) => setAlto(+e.target.value)} className="inp" /></Field>
-          <Field label="Prof"><input type="number" step="any" value={prof} onChange={(e) => setProf(+e.target.value)} className="inp" /></Field>
+          <Field label="Largo"><input type="number" required min="0" step="any" value={largo} onFocus={(e) => e.currentTarget.select()} onClick={(e) => e.currentTarget.select()} onChange={(e) => setLargo(e.target.value)} className="inp" /></Field>
+          <Field label="Alto"><input type="number" required min="0" step="any" value={alto} onFocus={(e) => e.currentTarget.select()} onClick={(e) => e.currentTarget.select()} onChange={(e) => setAlto(e.target.value)} className="inp" /></Field>
+          <Field label="Prof"><input type="number" required min="0" step="any" value={prof} onFocus={(e) => e.currentTarget.select()} onClick={(e) => e.currentTarget.select()} onChange={(e) => setProf(e.target.value)} className="inp" /></Field>
           <Field label="Unidad">
             <select value={unidad} disabled={store.modulos.length > 0} onChange={(e) => changeUnidad(e.target.value as 'in' | 'cm' | 'mm')} className="inp disabled:bg-slate-100" title={store.modulos.length > 0 ? 'La unidad se hereda del primer módulo' : undefined}>
               <option value="in">in</option><option value="cm">cm</option><option value="mm">mm</option>
