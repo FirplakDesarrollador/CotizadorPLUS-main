@@ -1,0 +1,1296 @@
+{
+  "unique": 510,
+  "typologies": 110,
+  "sampled": 252,
+  "statuses": {
+    "evaluado": 201,
+    "dimensiones_incompletas": 1,
+    "sin_equivalencia": 50
+  },
+  "coverage": [
+    {
+      "typology": "BBLFD-D-L/R-SM",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "BBLFD-D-L/R-SM"
+      ],
+      "examples": [
+        "BBLFD45 D19-R SM",
+        "BBLFD45 D19-L SM"
+      ]
+    },
+    {
+      "typology": "BOMH",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "BOMH-1"
+      ],
+      "examples": [
+        "BOMH36-1"
+      ]
+    },
+    {
+      "typology": "DB-2S-SM-FE",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "DB-2S-SM-FE"
+      ],
+      "examples": [
+        "DB12-2S-SM-FE",
+        "DB19-2S-FE-SM-15MM"
+      ]
+    },
+    {
+      "typology": "B-FE",
+      "available": 9,
+      "sampled": 5,
+      "mapped": [
+        "B-FE"
+      ],
+      "examples": [
+        "B10-FE",
+        "B12-FE",
+        "B18-FE",
+        "B17-FE",
+        "B16-FE"
+      ]
+    },
+    {
+      "typology": "BMW",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "BMW-1"
+      ],
+      "examples": [
+        "BMW36-1"
+      ]
+    },
+    {
+      "typology": "KF-W",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [
+        "W"
+      ],
+      "examples": [
+        "KF-W3634",
+        "KF-W2836-L",
+        "KF-W2836-R"
+      ]
+    },
+    {
+      "typology": "SB-SM",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "SB-SM"
+      ],
+      "examples": [
+        "SB30-SM"
+      ]
+    },
+    {
+      "typology": "KF-UDV",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "UDV"
+      ],
+      "examples": [
+        "KF-UDV1228 3/4-1S"
+      ]
+    },
+    {
+      "typology": "BFD",
+      "available": 17,
+      "sampled": 5,
+      "mapped": [
+        "BFD"
+      ],
+      "examples": [
+        "BFD17",
+        "BFD22",
+        "BFD21",
+        "BFD20",
+        "BFD8"
+      ]
+    },
+    {
+      "typology": "USVFD-NR",
+      "available": 9,
+      "sampled": 5,
+      "mapped": [
+        "USVFD"
+      ],
+      "examples": [
+        "USVFD NR5028 3/4 3B",
+        "USVFD NR5028 3/4",
+        "USVFD NR4028 3/4",
+        "USVFD NR3428 3/4",
+        "USVFD NR3228 3/4"
+      ]
+    },
+    {
+      "typology": "OW",
+      "available": 7,
+      "sampled": 5,
+      "mapped": [
+        "OW"
+      ],
+      "examples": [
+        "OW3018",
+        "OW1636",
+        "OW29 3/449 1/217 1/4",
+        "OW2436",
+        "OW33 7/836"
+      ]
+    },
+    {
+      "typology": "VPC",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "VPC"
+      ],
+      "examples": [
+        "VPC1886 TK4 1/2",
+        "VPC1786 TK4 1/2"
+      ]
+    },
+    {
+      "typology": "OUVFD",
+      "available": 4,
+      "sampled": 4,
+      "mapped": [
+        "UVFD"
+      ],
+      "examples": [
+        "OUVFD7 1/228 3/4-3S-18MM",
+        "OUVFD7 28 3/4-3S-18MM",
+        "OUVFD8 1/428 3/4-3S-18MM",
+        "OUVFD8 1/228 3/4-3S-18MM"
+      ]
+    },
+    {
+      "typology": "W-SM",
+      "available": 33,
+      "sampled": 5,
+      "mapped": [
+        "W-SM"
+      ],
+      "examples": [
+        "W3436-SM",
+        "W2736-SM",
+        "W2636-SM",
+        "W2036-SM",
+        "W2336-SM"
+      ]
+    },
+    {
+      "typology": "UBFD-F9",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "UBFD"
+      ],
+      "examples": [
+        "UBFD1228 3/4-F9"
+      ]
+    },
+    {
+      "typology": "UB",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [
+        "UB"
+      ],
+      "examples": [
+        "UB1228 3/4",
+        "UB1028 3/4",
+        "UB2828 3/4"
+      ]
+    },
+    {
+      "typology": "B",
+      "available": 10,
+      "sampled": 5,
+      "mapped": [
+        "B"
+      ],
+      "examples": [
+        "B30",
+        "B12",
+        "B18",
+        "B27",
+        "B39"
+      ]
+    },
+    {
+      "typology": "WLD",
+      "available": 6,
+      "sampled": 5,
+      "mapped": [
+        "WLD"
+      ],
+      "examples": [
+        "WLD3614",
+        "WLD3013",
+        "WLD3330",
+        "WLD2730",
+        "WLD2430"
+      ]
+    },
+    {
+      "typology": "UVFD",
+      "available": 8,
+      "sampled": 5,
+      "mapped": [
+        "UVFD"
+      ],
+      "examples": [
+        "UVFD2628 3/412",
+        "UVFD2628 3/4",
+        "UVFD928 3/4",
+        "UVFD828 3/4",
+        "UVFD728 3/4"
+      ]
+    },
+    {
+      "typology": "PN",
+      "available": 109,
+      "sampled": 5,
+      "mapped": [
+        "PN"
+      ],
+      "examples": [
+        "PN22 1/285 1/2",
+        "PN21 7/828 3/4",
+        "PN25 1/289",
+        "PN24 7/830",
+        "PN12 7/836"
+      ]
+    },
+    {
+      "typology": "F",
+      "available": 28,
+      "sampled": 5,
+      "mapped": [
+        "F"
+      ],
+      "examples": [
+        "F685 1/2",
+        "F836",
+        "F636",
+        "F621",
+        "F617 1/2"
+      ]
+    },
+    {
+      "typology": "W-SM-PUSH",
+      "available": 10,
+      "sampled": 5,
+      "mapped": [
+        "W-SM-PUSH"
+      ],
+      "examples": [
+        "W3817 1/224-SM-PUSH",
+        "W3617 1/224-SM-PUSH",
+        "W332124-SM-PUSH",
+        "W322124-SM-PUSH",
+        "W3017 1/2-SM-PUSH"
+      ]
+    },
+    {
+      "typology": "SBFD",
+      "available": 4,
+      "sampled": 4,
+      "mapped": [
+        "SBFD"
+      ],
+      "examples": [
+        "SBFD30",
+        "SBFD36",
+        "SBFD33",
+        "SBFD36 PRUEBA"
+      ]
+    },
+    {
+      "typology": "W",
+      "available": 36,
+      "sampled": 5,
+      "mapped": [
+        "W"
+      ],
+      "examples": [
+        "W3634",
+        "W2134",
+        "W1834",
+        "W1534",
+        "W302024-18MM"
+      ]
+    },
+    {
+      "typology": "USVFDR",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [
+        "USVFD"
+      ],
+      "examples": [
+        "USVFDR3628 3/4",
+        "USVFDR3328 3/4",
+        "USVFDR3628 1/219 1/2"
+      ]
+    },
+    {
+      "typology": "BOV-SMG",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [
+        "BOV"
+      ],
+      "examples": [
+        "BOV24 SMG",
+        "BOV36-SMG18",
+        "BOV30-SMG"
+      ]
+    },
+    {
+      "typology": "BFD-GC-SMG",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [],
+      "examples": [
+        "BFD16-GC SMG",
+        "BFD14-GC SMG"
+      ]
+    },
+    {
+      "typology": "DB-2-INT-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "DB22-2+INT SMG"
+      ]
+    },
+    {
+      "typology": "TK",
+      "available": 5,
+      "sampled": 5,
+      "mapped": [
+        "TK"
+      ],
+      "examples": [
+        "TK496",
+        "TK4 96-15MM",
+        "TK4 1/296-15MM",
+        "TK596",
+        "TK4 1/496"
+      ]
+    },
+    {
+      "typology": "PC-SMG",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "PC"
+      ],
+      "examples": [
+        "PC2296 TK4 SMG",
+        "PC1894 TK4-R SMG"
+      ]
+    },
+    {
+      "typology": "DB-1S",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "DB"
+      ],
+      "examples": [
+        "DB15-1S",
+        "DB12-1S"
+      ]
+    },
+    {
+      "typology": "SVFD",
+      "available": 5,
+      "sampled": 5,
+      "mapped": [
+        "SVFD"
+      ],
+      "examples": [
+        "SVFD36",
+        "SVFD42-S18MM-D DER",
+        "SVFD42-S18MM-L IZQ",
+        "SVFD35-S18MM",
+        "SVFD30-S18MM"
+      ]
+    },
+    {
+      "typology": "UDV",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [
+        "UDV"
+      ],
+      "examples": [
+        "UDV1228 3/4-2S",
+        "UDV1528 3/4-1S",
+        "UDV1228 3/4-1S"
+      ]
+    },
+    {
+      "typology": "CLV",
+      "available": 6,
+      "sampled": 5,
+      "mapped": [
+        "CLV"
+      ],
+      "examples": [
+        "CLV12024050 DER 3E-1BC-2C",
+        "CLV7024050 3E-2C",
+        "CLV11624050 DER 3E-1BC-2C",
+        "CLV11624050 IZQ 3E-1BC-2C",
+        "CLV9024050 1E-2BC"
+      ]
+    },
+    {
+      "typology": "W-ZR",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "W ZR"
+      ]
+    },
+    {
+      "typology": "OW-ZR",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "OW ZR"
+      ]
+    },
+    {
+      "typology": "BASE-ZR",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "BASE ZR"
+      ]
+    },
+    {
+      "typology": "WSM-PUSH",
+      "available": 4,
+      "sampled": 4,
+      "mapped": [
+        "WSM"
+      ],
+      "examples": [
+        "WSM32 7/8 1324-PUSH-18MM",
+        "WSM32 7/82424-PUSH-18MM",
+        "WSM3019 1/214-PUSH-18MM",
+        "WSM308 1/214-PUSH-18MM"
+      ]
+    },
+    {
+      "typology": "SV-SM",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "SV"
+      ],
+      "examples": [
+        "SV30-SM"
+      ]
+    },
+    {
+      "typology": "WSM",
+      "available": 19,
+      "sampled": 5,
+      "mapped": [
+        "WSM"
+      ],
+      "examples": [
+        "WSM243614-1P-18MM",
+        "WSM92514-18MM",
+        "WSM93614-18MM",
+        "WSM242514-1P-18MM",
+        "WSM303614-18MM"
+      ]
+    },
+    {
+      "typology": "TW-HOOD-SM",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "TW2212 3/415-TW248-HOOD-SM"
+      ]
+    },
+    {
+      "typology": "WBL-D-L/R-HOOD-SM",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "WBL2212 3/415 D18 5/8-TW248-HOOD-W9 5/8-SM"
+      ]
+    },
+    {
+      "typology": "POD",
+      "available": 4,
+      "sampled": 4,
+      "mapped": [
+        "POD"
+      ],
+      "examples": [
+        "POD29 3/414 3/814",
+        "POD23",
+        "POD26",
+        "POD32615 3/4"
+      ]
+    },
+    {
+      "typology": "SDB-POD-SK-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "SDB45-1SK-2-POD21-SMG"
+      ]
+    },
+    {
+      "typology": "BBLDBFD-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "BBLDBFD57 5/8-2D9 5/8-2-SMG"
+      ]
+    },
+    {
+      "typology": "TW-SM",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [
+        "TW"
+      ],
+      "examples": [
+        "TW5412 3/415-1D24-1D30-SM",
+        "TW4612 3/424-1D22-1D24-SM",
+        "TW43 1/412 3/424-2D9 5/8-1D24TW-SM"
+      ]
+    },
+    {
+      "typology": "TWBL-SM",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "TWBL6112 3/424-1D24-1D21BL-SM"
+      ]
+    },
+    {
+      "typology": "WPC-PUSH",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "WPC"
+      ],
+      "examples": [
+        "WPC24 3/44924-PUSH-2S"
+      ]
+    },
+    {
+      "typology": "ODB-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "DB"
+      ],
+      "examples": [
+        "ODB29 3/429 3/816 1/2-2-SMG"
+      ]
+    },
+    {
+      "typology": "CC",
+      "available": 23,
+      "sampled": 5,
+      "mapped": [
+        "CC"
+      ],
+      "examples": [
+        "CC34 1/48420 5/8 TK4 1/2-2D-1S",
+        "CC36 3/48422 TK4 1/2-2D-1S",
+        "CC22 3/48422 TK4 1/2-2D-1S",
+        "CC249622 1/2 TK4 1/2 3S-R + DFE - C601",
+        "CC249622 1/2 TK4 1/2 3S-R + DFE - C501"
+      ]
+    },
+    {
+      "typology": "WD",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "WD24 3/435"
+      ]
+    },
+    {
+      "typology": "SDB-SK-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "SDB46-1SK-2-SMG"
+      ]
+    },
+    {
+      "typology": "TW-PUSH",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "TW"
+      ],
+      "examples": [
+        "TW24 1/213 1/224-PUSH"
+      ]
+    },
+    {
+      "typology": "PC-PUSH",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "PC"
+      ],
+      "examples": [
+        "PC2484 TK4 1/2-PUSH"
+      ]
+    },
+    {
+      "typology": "SBFD-POD-SMG",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [],
+      "examples": [
+        "SBFD33-SMG-POD",
+        "SBFD33-SMG-POD2"
+      ]
+    },
+    {
+      "typology": "SBFD-SMG",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "SBFD-SM"
+      ],
+      "examples": [
+        "SBFD33-SMG",
+        "SBFD38 SMG"
+      ]
+    },
+    {
+      "typology": "DB-2S-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "DB-2S-SM"
+      ],
+      "examples": [
+        "DB22-2S-SMG"
+      ]
+    },
+    {
+      "typology": "BFD-SMG",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [
+        "BFD-SM"
+      ],
+      "examples": [
+        "BFD16 SMG",
+        "BFD24-SMG",
+        "BFD14-SMG"
+      ]
+    },
+    {
+      "typology": "DB-2-SMG",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [
+        "DB-2-SM"
+      ],
+      "examples": [
+        "DB22-2 SMG",
+        "DB30-2 SMG",
+        "DB28-2 SMG"
+      ]
+    },
+    {
+      "typology": "BK-PC",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "BK-PC2196-L TK4 3/4-SMG18"
+      ]
+    },
+    {
+      "typology": "WPC",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "WPC"
+      ],
+      "examples": [
+        "WPC2461 1/2-18MM"
+      ]
+    },
+    {
+      "typology": "DFE",
+      "available": 6,
+      "sampled": 5,
+      "mapped": [
+        "DFE"
+      ],
+      "examples": [
+        "DFE22 1/2618-R - C601 X4",
+        "DFE22 1/2618-R - C501 X4",
+        "DFE22 1/2618-R - C401 X4",
+        "DFE22 1/2618-R - C301 X4",
+        "DFE22 1/2618-R - C201 X4"
+      ]
+    },
+    {
+      "typology": "BMW-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "BMW36-1-SMG18"
+      ]
+    },
+    {
+      "typology": "UW",
+      "available": 6,
+      "sampled": 5,
+      "mapped": [
+        "UW"
+      ],
+      "examples": [
+        "UW1636",
+        "UW25 1/236",
+        "UW24 3/436",
+        "UW30 3/436",
+        "UW1336"
+      ]
+    },
+    {
+      "typology": "FL",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "FL61065"
+      ]
+    },
+    {
+      "typology": "BFD-SM",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "BFD-SM"
+      ],
+      "examples": [
+        "BFD16-SM-15MM",
+        "BFD24 SM-15MM"
+      ]
+    },
+    {
+      "typology": "SBFD-SM",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "SBFD-SM"
+      ],
+      "examples": [
+        "SBFD25-SM-15MM",
+        "SBFD40 SM-15MM"
+      ]
+    },
+    {
+      "typology": "OW-MO",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "OW-MO"
+      ],
+      "examples": [
+        "OW2425-MO-15MM",
+        "OW3018-MO18MM"
+      ]
+    },
+    {
+      "typology": "VPC-SM",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "VPC"
+      ],
+      "examples": [
+        "VPC188418 TK4-SM-15MM"
+      ]
+    },
+    {
+      "typology": "BOV",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "BOV"
+      ],
+      "examples": [
+        "BOV26-15MM",
+        "BOV32"
+      ]
+    },
+    {
+      "typology": "KF-WSM",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "WSM"
+      ],
+      "examples": [
+        "KF-WSM32 7/81324-18MM",
+        "KF-WSM308 1/214-18MM"
+      ]
+    },
+    {
+      "typology": "USVFDR-F9",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "USVFD"
+      ],
+      "examples": [
+        "USVFDR3328 3/4-F9"
+      ]
+    },
+    {
+      "typology": "USVFD-NR-F9",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "USVFD"
+      ],
+      "examples": [
+        "USVFD NR3028 3/4-F9"
+      ]
+    },
+    {
+      "typology": "USBFDR",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [],
+      "examples": [
+        "USBFDR3028 3/4",
+        "USBFDR3028 1/2"
+      ]
+    },
+    {
+      "typology": "UDV-F9",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "UDV"
+      ],
+      "examples": [
+        "UDV1528 3/4-1S-F9"
+      ]
+    },
+    {
+      "typology": "UDB",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "UDB"
+      ],
+      "examples": [
+        "UDB1228 3/4-1S"
+      ]
+    },
+    {
+      "typology": "UBFDR",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "UBFD"
+      ],
+      "examples": [
+        "UBFDR3028 3/4"
+      ]
+    },
+    {
+      "typology": "UBFD",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "UBFD"
+      ],
+      "examples": [
+        "UBFD3028 3/4"
+      ]
+    },
+    {
+      "typology": "B-MBB-SHK",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [],
+      "examples": [
+        "B12-MBB-SHK",
+        "B15-MBB-SHK",
+        "B30-MBB-SHK"
+      ]
+    },
+    {
+      "typology": "DV-MBB-SHK",
+      "available": 4,
+      "sampled": 4,
+      "mapped": [],
+      "examples": [
+        "DV12-1S-MBB-SHK",
+        "DV14-1S-MBB-SHK",
+        "DV18-1S-MBB-SHK",
+        "DV24-1S-MBB-SHK"
+      ]
+    },
+    {
+      "typology": "SB-SHK",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "SB36-SHK"
+      ]
+    },
+    {
+      "typology": "SV-SHK",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [],
+      "examples": [
+        "SV30-SHK",
+        "SV33-SHK",
+        "SV36-SHK"
+      ]
+    },
+    {
+      "typology": "W-SHK",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [],
+      "examples": [
+        "W3630-SHK",
+        "W3012-SHK"
+      ]
+    },
+    {
+      "typology": "TABLERO",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "TABLERO COMPUESTO -"
+      ]
+    },
+    {
+      "typology": "CLCOR",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "CLCOR74 2H- 4SH-2DR CON DIVISIÓN Y CAJÓN ADICIONAL"
+      ]
+    },
+    {
+      "typology": "WER-SM",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "WER"
+      ],
+      "examples": [
+        "WER2440-SM"
+      ]
+    },
+    {
+      "typology": "W-PUSH",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [
+        "W"
+      ],
+      "examples": [
+        "W3023-PUSH",
+        "W332424-PUSH",
+        "W3030-PUSH"
+      ]
+    },
+    {
+      "typology": "BLS-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "BLS"
+      ],
+      "examples": [
+        "BLS36-SMG"
+      ]
+    },
+    {
+      "typology": "BBLFD-D-L/R-SMG",
+      "available": 3,
+      "sampled": 3,
+      "mapped": [
+        "BBLFD-D-L/R-SM"
+      ],
+      "examples": [
+        "BBLFD45-D19 1/2-SMG",
+        "BBLFD45 D19-R SMG",
+        "BBLFD45 D19-L SMG"
+      ]
+    },
+    {
+      "typology": "WBL-D-L/R-SM",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "WBL-D-L/R-SM"
+      ],
+      "examples": [
+        "WBL3840 D22 7/8L-SM"
+      ]
+    },
+    {
+      "typology": "TW-SM-PUSH",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "TW-SM-PUSH"
+      ],
+      "examples": [
+        "TW3334 1/4-PUSH-SM"
+      ]
+    },
+    {
+      "typology": "IP",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "IP75"
+      ]
+    },
+    {
+      "typology": "DB-2-RNG-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "DB38-2 RNG SMG"
+      ]
+    },
+    {
+      "typology": "WSMMD",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "WSMMD18285 1/2-18MM"
+      ]
+    },
+    {
+      "typology": "ALA",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "ALA70240-1 Z10"
+      ]
+    },
+    {
+      "typology": "IHFC",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "IHFC80"
+      ]
+    },
+    {
+      "typology": "DB-2S-SM",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "DB-2S-SM"
+      ],
+      "examples": [
+        "DB30-2S SM-15MM",
+        "DB32-2S SM-15MM"
+      ]
+    },
+    {
+      "typology": "OVPC-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "OVPC"
+      ],
+      "examples": [
+        "OVPC3494-1 TK4 SMG"
+      ]
+    },
+    {
+      "typology": "DB-2S",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "DB"
+      ],
+      "examples": [
+        "DB18-2S-S18MM"
+      ]
+    },
+    {
+      "typology": "BFD-B-SMG",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "BFD14-B SMG"
+      ]
+    },
+    {
+      "typology": "PL",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "PL441065PANEL"
+      ]
+    },
+    {
+      "typology": "AL",
+      "available": 6,
+      "sampled": 5,
+      "mapped": [
+        "AL"
+      ],
+      "examples": [
+        "AL100240 Z10",
+        "AL53183 Z10",
+        "AL120240 Z10",
+        "AL61240 Z10",
+        "AL75240 Z10"
+      ]
+    },
+    {
+      "typology": "R",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "R"
+      ],
+      "examples": [
+        "R30 3 1/8"
+      ]
+    },
+    {
+      "typology": "ACCESORIOS",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [],
+      "examples": [
+        "ACCESORIOS PN-FILLER DISWASHER 35 1/2"
+      ]
+    },
+    {
+      "typology": "PC",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "PC"
+      ],
+      "examples": [
+        "PC188425 1/2 TK5 1/4",
+        "PC128425 1/2 TK4 1/2"
+      ]
+    },
+    {
+      "typology": "UBR",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "UB"
+      ],
+      "examples": [
+        "UBR3028 1/2"
+      ]
+    },
+    {
+      "typology": "SMO",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [
+        "SMO"
+      ],
+      "examples": [
+        "SMO60,571,533",
+        "SMO709033"
+      ]
+    },
+    {
+      "typology": "S",
+      "available": 1,
+      "sampled": 1,
+      "mapped": [
+        "S"
+      ],
+      "examples": [
+        "S909033"
+      ]
+    },
+    {
+      "typology": "ALTH",
+      "available": 2,
+      "sampled": 2,
+      "mapped": [],
+      "examples": [
+        "ALTH67240-1P-2C Z10",
+        "ALTH53240-1P-2C Z10"
+      ]
+    },
+    {
+      "typology": "IC",
+      "available": 5,
+      "sampled": 5,
+      "mapped": [],
+      "examples": [
+        "IC53-2P",
+        "IC45-2P",
+        "IC60-2P",
+        "IC61-2P",
+        "IC40-2P"
+      ]
+    }
+  ]
+}

@@ -18,6 +18,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Cajoneras DB con gavetas mixtas](wiki/db_gavetas_mixtas.md) - Piezas diferenciadas por posición (pequeña/grande) para tipologías `DB-1S`/`DB-2S` y `DB2-1OP` (gaveta oculta interior), fórmulas de frentes exteriores/interiores y variables `n_cajones_pequenos`/`n_cajones_ocultos`.
 - [Interpretación espacial DB en tres vistas](wiki/interpretacion_espacial_db.md) - Reconstrucción de siete referencias reales, nombres y planos de piezas, fórmulas contrastadas, gaveta interior y límites de las hipótesis de montaje.
 - [Muebles esquineros ciegos BBL](wiki/muebles_bbl.md) - Análisis del Excel CEMA y plantillas paramétricas `BBLFD`/`BBL` disponibles en Supabase.
+- [BBLFD-D-L/R-SM](wiki/bblfd_d_lr_sm.md) - Variante Blind Door inferior con montante A−TC, refuerzos delanteros divididos y Gola de madera.
 - [Torres PCFD con gavetas ocultas](wiki/muebles_pcfd_gavetas_ocultas.md) - Variantes `STANDARD`/`2OP`/`4OP`, fórmulas CEMA y uso paramétrico de cajones y entrepaños.
 - [Variantes de frente Gola SM](wiki/variantes_frente_gola_sm.md) - Investigación de códigos `SM`/`SMG`, refuerzos por familia y modelo recomendado como opción transversal de frentes.
 - [W2936-SM desde hoja real](wiki/w_sm_hoja_real.md) - Integracion verificada de `W` con sistema de frente `SM`: formulas condicionales, ausencia de manijas, HDR y carga en Supabase.
@@ -27,8 +28,10 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [DB18-1S desde hoja real](wiki/db_hoja_real.md) - Cruce de  contra la hoja: la estructura ya era correcta; solo la base de gaveta estaba 0.1mm larga.
 - [B12 desde hoja real](wiki/b_hoja_real.md) - Cruce de las 10 piezas de `B` contra la hoja de producción: tres medidas corregidas cuyo valor correcto ya estaba en las variantes FE.
 - [BLS36 desde hoja real](wiki/bls36_hoja_real.md) - Reconstrucción del esquinero Lazy Susan: once piezas, dos puertas, un entrepaño y respaldos de 15 mm.
+- [BLS-RS-SM sin entrepaño](wiki/bls_rs_sm.md) - Variante del esquinero Lazy Susan que conserva el despiece BLS excepto por la eliminación del entrepaño.
 - [BMW-1 y BMW-1-FE](wiki/bmw_1_hoja_real.md) - Mueble inferior para microondas y su variante con caja de gaveta de madera y riel full extension.
-- [BOMH-1 con horno paramétrico](wiki/bomh_1_horno_parametrico.md) - Mueble inferior para medio horno y una gaveta, con largo y alto libres configurables para empotrar el equipo.
+- [BOMH-1 y BOMH-1-FE](wiki/bomh_1_horno_parametrico.md) - Mueble inferior para medio horno con hueco paramétrico y variantes de gaveta Tandem o grande Full Extension.
+- [BOV24 desde hoja real](wiki/bov24_hoja_real.md) - Despiece paramétrico de siete piezas y montaje 3D con dos rails traseros independientes.
 - [Consumo de materiales: unidades y merma](wiki/consumo_materiales.md) - Tablero en m² y canto en metros lineales; por qué sus mermas son distintas y cómo se reconstruye el consumo desde el despiece.
 - [Holgura de 1mm sobre la estructura](wiki/holgura_1mm_estructura.md) - Por qué entrepaños y fondos se cortan 1mm más pequeños, qué tipos ya la tenían y el alcance aplicado en `0049`.
 - [Ejes del fondo (backing)](wiki/ejes_fondo_backing.md) - `largo`/`ancho` son ejes geométricos atados a `intercambiar`, no "el mayor primero": el defecto que giraba 90° el backing de `W` con gola y la auditoría de los 44 tipos.
@@ -54,3 +57,5 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Tipologías Prueba Gola de madera](wiki/tipologias_prueba_gola_madera.md) - Cuatro tipologías paramétricas independientes y sus reglas exclusivas.
 
 - [Comparativo PB SHORE PRUEBA frente a HDR](wiki/comparativo_pb_shore_prueba.md) - Auditoría de 20 módulos: piezas, tablero y canto netos frente a las HDR PDF y consumos con suplementos.
+
+- [Comparación Query App 2-10](wiki/comparacion_query_app_2_10.md) - Muestra por tipología y variantes: cantidades de piezas, cantos, entrepaños superiores y cobertura frente al catálogo activo.

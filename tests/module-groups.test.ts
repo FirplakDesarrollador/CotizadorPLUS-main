@@ -26,6 +26,7 @@ test('clasifica materiales por la primera B o W del prefijo', () => {
   assert.equal(esMuebleSuperior('TW-SM-PUSH'), true);
   assert.equal(esMuebleSuperior('WBL-D-L/R-SM'), true);
   assert.equal(usaPuertaParametrica('WBL-D-L/R-SM'), true);
+  assert.equal(usaPuertaParametrica('BBLFD-D-L/R-SM'), true);
   assert.equal(familiaMaterialPorPrefijo('B-W'), 'inferior');
   assert.equal(familiaMaterialPorPrefijo('PN'), 'inferior');
 });
@@ -87,6 +88,7 @@ test('en prefijos con sufijo (FE) la medida va después de la letra base, no al 
   assert.equal(codigoModulo('B-FE', 12, 'in', 'imperial'), 'B12-FE');
   assert.equal(codigoModulo('UB-FE', 12, 'in', 'imperial'), 'UB12-FE');
   assert.equal(codigoModulo('V-FE', 30, 'in', 'imperial'), 'V30-FE');
+  assert.equal(codigoModulo('BLS-RS-SM', 36, 'in', 'imperial'), 'BLS36-RS-SM');
   assert.equal(codigoModulo('B-FE', 30.48, 'cm', 'metrico'), 'B30.48-FE');
   // Los prefijos sin guion conservan la medida al final: cotizaciones.ts les
   // concatena después el alto (W/PN) o la tipología (DB).
@@ -135,6 +137,8 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'BBLFD', largo: 42, alto: 30, prof: 24, door: Number.NaN, doorHand: 'R' }), 'BBLFD42');
   assert.equal(codigoComercial({ ...base, pref: 'WBL-D-L/R-SM', largo: 38, alto: 40, prof: 12, door: 22.875, doorHand: 'L' }), 'WBL3840-D22 7/8L-SM');
   assert.equal(codigoComercial({ ...base, pref: 'WBL-D-L/R-SM', largo: 38, alto: 40, prof: 12, door: 22.875, doorHand: 'R' }), 'WBL3840-D22 7/8R-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'BBLFD-D-L/R-SM', largo: 42, alto: 30, prof: 24, door: 17.875, doorHand: 'L' }), 'BBLFD42-D17 7/8L-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'BBLFD-D-L/R-SM', largo: 42, alto: 30, prof: 24, door: 17.875, doorHand: 'R' }), 'BBLFD42-D17 7/8R-SM');
   assert.equal(codigoComercial({ ...base, pref: 'WSM', largo: 9, alto: 36, prof: 14 }), 'WSM93614');
   assert.equal(codigoComercial({ ...base, pref: 'WER', largo: 24, alto: 36, sistemaFrente: 'gola' }), 'WER2436-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UW', largo: 12, alto: 36 }), 'UW1236');

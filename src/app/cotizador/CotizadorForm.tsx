@@ -193,7 +193,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         }
         continue;
       }
-      options.push({ value: tipo.id, label: ['BBLFD', 'WBL-D-L/R-SM', 'BLS', 'BOMH-1'].includes(tipo.pref) ? (tipo.nombre_es ?? tipo.pref) : `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
+      options.push({ value: tipo.id, label: ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM', 'BLS', 'BLS-RS-SM', 'BOMH-1', 'BOMH-1-FE'].includes(tipo.pref) ? (tipo.nombre_es ?? tipo.pref) : `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
     }
     return options;
   }, [tipos]);
@@ -671,7 +671,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
                 <input type="text" required value={hornoAlto} onChange={(e) => setHornoAlto(e.target.value)} placeholder="153.2" className="inp" />
               </Field>
             </div>
-            <p className="text-xs text-amber-900">Ingresa las medidas libres que necesita el horno para quedar empotrado, en la unidad seleccionada.</p>
+            <p className="text-xs text-amber-900">Ingresa las medidas libres que necesita el horno para quedar empotrado. Si el alto supera el vano disponible, los frentes laterales se ajustan entre la gaveta y el refuerzo superior.</p>
           </div>
         )}
 
