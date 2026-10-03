@@ -1494,3 +1494,17 @@ Merge de `origin/DEV` (6 commits: cinco merges de `DEV` en `main` sin contenido 
 2. **La version retrocede.** `b8cb75c` se titula "version bump" pero baja `package.json` de **1.0.4 a 1.0.3**. La 1.0.4 se habia puesto el 2026-08-03 (`f0643b7`) y la 1.0.3 el 2026-08-01 (`42b948c`), asi que el repo queda en un numero anterior al que ya tenia. Se conserva el valor de `DEV`: el numero de release es decision de su autor, no del merge.
 
 **Y una del entorno:** `tsconfig.json` ahora excluye `**/*-isazaale.*`, lo que explica que el typecheck pase mientras el lint sigue reportando esas variantes — eslint no hereda ese `exclude`.
+
+## [2026-10-02] fix | El cliente de Supabase ya no puede saltarse RLS por un error ajeno
+
+Correccion del `try/catch` que el release `v1.0.3` (`b8cb75c`) introdujo en `src/lib/supabase/server.ts`.
+
+**El defecto.** La rama que construye el cliente elevado —clave de servicio, **ignora RLS**— estaba cubierta por un `catch` que envolvia **todo** el cuerpo de la funcion, incluido `createServerClient()`. Cualquier error ajeno al caso previsto hacia que `createClient()` devolviera en silencio un cliente sin RLS, en una funcion cuyo propio comentario dice que la respeta. No era teorico: `SUPABASE_SERVICE_ROLE_KEY` esta configurada, asi que el fallback resolvia a una clave real, y la funcion la usan **17 modulos** entre `src/app` y `src/lib`, no solo scripts. Ademas, el `|| KEY` degradaba a la clave anonima cuando faltaba la de servicio, convirtiendo un problema de configuracion en fallos de RLS difusos y lejanos a la causa.
+
+**El arreglo.** El `try` envuelve ahora **solo** `await cookies()`, que es exactamente la condicion a detectar —fuera de un request de Next lanza, y eso significa que no hay sesion que respetar—. Todo lo demas se propaga, de modo que la unica via a la rama elevada es la prevista. Y `createElevatedClient()` lanza si falta la clave en vez de caer a la anonima. El camino normal no cambia: dentro de un request sigue siendo el mismo cliente con cookies y la misma clave anonima.
+
+**Cobertura.** `tests/supabase-server-client.test.ts` corre fuera de Next, donde `cookies()` lanza, asi que ejerce la rama elevada: sin clave de servicio exige que lance nombrando la variable, y con clave que construya un cliente real. Comprobado que el primer caso falla con el codigo del release. El otro lado del arreglo —que un fallo de `createServerClient` se propague— no se puede cubrir por esa via porque exigiria un request de Next real; ahi la garantia es estructural, el `try` envuelve una sola linea.
+
+**Deuda anotada.** El privilegio sigue sin verse en el sitio de llamada: `createClient()` puede devolver un cliente elevado y quien la invoca no lo distingue. Lo limpio seria exportar dos funciones y que cada llamador declare lo que necesita, pero obliga a revisar los 17 consumidores uno por uno. Este cambio cierra la via accidental, no rediseña la API.
+
+222/222 tests, typecheck, lint y build limpios. Documentado en [clientes_supabase_rls.md](wiki/clientes_supabase_rls.md).

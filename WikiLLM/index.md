@@ -14,6 +14,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 
 ## Infraestructura de Datos
 - [Esquema de Base de Datos](wiki/esquema_base_datos.md) - Estructura de tablas y políticas en Supabase (prefijo `cot_`).
+- [Clientes de Supabase y la frontera de RLS](wiki/clientes_supabase_rls.md) - Cuándo `createClient()` respeta RLS y cuándo devuelve el cliente elevado; el `catch` demasiado ancho de v1.0.3 y su corrección.
 - [Rieles de Cajón DB](wiki/rieles_db.md) - Catálogo de tipos de riel para muebles DB, mecanismo de override y archivos modificados.
 - [Cajoneras DB con gavetas mixtas](wiki/db_gavetas_mixtas.md) - Normalización de traseros por medida (`pequena` 68 mm / `grande` 183 mm) para DB-1S, DB-2S, DB-2, DB-3 y DB-4; incluye `DB2-1OP`, frentes y variables de configuración.
 - [Interpretación espacial DB en tres vistas](wiki/interpretacion_espacial_db.md) - Reconstrucción de siete referencias reales, nombres y planos de piezas, fórmulas contrastadas, gaveta interior y límites de las hipótesis de montaje.
