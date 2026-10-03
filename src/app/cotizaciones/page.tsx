@@ -10,7 +10,7 @@ import NuevoCotizacionForm from './NuevoCotizacionForm';
 
 const GUIA_LISTA = [
   { title: 'Cotizaciones', description: 'Aquí creas y consultas tus proyectos (cotizaciones). Cada proyecto tendrá sus cocinas y módulos.' },
-  { selector: '[data-tour="nuevo"]', title: 'Nuevo proyecto', description: 'Dale un nombre (ej. el apto/cliente), elige cliente, moneda y TRM, y crea el proyecto para empezar a agregar muebles.' },
+  { selector: '[data-tour="nuevo"]', title: 'Nuevo proyecto', description: 'Dale un nombre, registra constructora y comprador, elige moneda, TRM, materiales y herrajes, y crea el proyecto para empezar a agregar muebles.' },
   { selector: '[data-tour="lista"]', title: 'Tus proyectos', description: 'La lista con totales en COP y USD. Haz clic en un proyecto para abrirlo, agregar muebles y exportar.' },
 ];
 
@@ -25,11 +25,14 @@ export default async function CotizacionesPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <AppHeader email={user?.email} rol={rol} active="cotizaciones" />
-      <div className="mx-auto max-w-6xl px-4 pt-4 flex justify-end gap-2">
+      <div className="cotizador-tab-content px-4 pt-4 flex justify-end gap-2">
         <GuideButton steps={GUIA_LISTA} label="Guía de uso" />
         <TooltipToggle />
       </div>
-      <main className="mx-auto max-w-6xl px-4 pb-6 grid lg:grid-cols-[320px_1fr] gap-6">
+      <main
+        className="cotizador-tab-content px-4 pb-6"
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', alignItems: 'start', gap: 24 }}
+      >
         <NuevoCotizacionForm
           tableros={data.tableros}
           cantos={data.cantos}
@@ -37,14 +40,17 @@ export default async function CotizacionesPage() {
           trmDefault={data.trmDefault}
           perfiles={data.perfiles}
           perfilDefaultId={data.perfilDefaultId}
+          tipos={data.tipos}
+          herrajesByTipo={data.herrajesByTipo}
         />
 
-        <div data-tour="lista" className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-fit">
-          <table className="w-full text-sm">
+        <section data-tour="lista" style={{ borderLeft: '2px solid #e2e8f0', paddingLeft: 24 }}>
+        <div className="h-fit overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+          <table className="w-full text-sm" style={{ minWidth: 720 }}>
             <thead>
               <tr className="text-left text-slate-400 border-b border-slate-100">
                 <th className="px-4 py-2">Cotización</th>
-                <th>Cliente</th>
+                <th>Constructora</th>
                 <th>Estado</th>
                 <th className="text-right">Total USD</th>
                 <th className="text-right px-4">Total COP</th>
@@ -71,6 +77,7 @@ export default async function CotizacionesPage() {
             </tbody>
           </table>
         </div>
+        </section>
       </main>
     </div>
   );

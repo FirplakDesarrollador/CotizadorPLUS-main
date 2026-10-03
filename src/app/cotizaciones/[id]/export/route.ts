@@ -45,7 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   ws.mergeCells(1, 1, 1, Math.max(1, header.length));
   ws.getCell('A1').value = 'COTIZACIÓN — Cotizador PLUS';
   ws.getCell('A1').font = { bold: true, size: 16 };
-  ws.addRow([]); ws.addRow(['Proyecto', cabecera.nombre || '']); ws.addRow(['Cliente', cabecera.cliente_nombre || '']); ws.addRow(['Estado', cabecera.estado]); ws.addRow(['TRM', trm]); ws.addRow(['Fecha', new Date().toLocaleDateString('es-CO')]); ws.addRow([]);
+  ws.addRow([]); ws.addRow(['Proyecto', cabecera.nombre || '']); ws.addRow(['Constructora', cabecera.cliente_nombre || '']); ws.addRow(['Comprador', cabecera.comprador_nombre || '']); ws.addRow(['Estado', cabecera.estado]); ws.addRow(['TRM', trm]); ws.addRow(['Fecha', new Date().toLocaleDateString('es-CO')]); ws.addRow([]);
   for (let r = 3; r <= 7; r++) ws.getCell(`A${r}`).font = { bold: true };
 
   const totals = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 };

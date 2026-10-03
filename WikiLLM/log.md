@@ -1447,6 +1447,47 @@ Auditoría de 252 referencias, cinco por agrupación cuando existen, contra capt
 
 ## [2026-10-02] update | Los buscadores de tableros ahora indexan explícitamente `color_nombre` de Materiales-Parámetros, con búsqueda insensible a mayúsculas y tildes; términos como `constructor` encuentran los tableros Primadera asociados.
 
+## [2026-10-02] update | Normalizados los traseros de gaveta de la familia DB-SM Tandem: eliminadas las filas genéricas y el remanente incorrecto de 68 mm en DB-2-SM/DB-3-SM; 68 mm usa `trasero_gaveta_pequena` y 183 mm usa `trasero_gaveta_grande`, con cantidades 2S, 2 y 3 según la tipología. Las variantes FE conservan sus reglas propias.
+
+## [2026-10-02] update | Agregado el selector global de unidad `in/cm/mm` en Características del proyecto de Cotizaciones. La elección se persiste en `config_default`, convierte las dimensiones predeterminadas y se hereda automáticamente en todos los módulos nuevos sin modificar líneas existentes.
+
+## [2026-10-02] update | El alta de cotizaciones ahora separa Constructora y Comprador, elimina la captura inicial de margen y permite activar o excluir individualmente herrajes globales para módulos inferiores B/V y superiores W/TW. La selección se hereda por familia; `comprador_nombre` fue agregado y aplicado en Supabase.
+
+## [2026-10-02] update | Reemplazado el logo de FIRPLAK en los encabezados HDR por `Logo-Firplak-Positivo.png`. Se conserva el espacio visual anterior de 193×48 px y se ajusta el nuevo lienzo con cobertura centrada para retirar visualmente su margen transparente sin deformar la marca.
+
+## [2026-10-02] update | Reorganizado el encabezado global: logo FIRPLAK externo a la izquierda, nombre Cotizador PLUS completo con versión inferior, navegación central y menú accesible de usuario con correo, rol y cierre de sesión. Retirados Undo/Redo del encabezado global.
+
+## [2026-10-02] update | Corregida la visibilidad del logo y del icono de usuario en el encabezado. La versión ahora ocupa solo el ancho de sus caracteres, comparte el color del nombre y no usa borde ni fondo resaltado.
+
+## [2026-10-02] update | El encabezado adopta una cuadrícula de tres zonas para mantener centrados Cotizador PLUS, versión y menús, sin desplazar el logo ni el usuario fuera del viewport. El logo usa carga estática directa y el botón de usuario dimensiones/colores explícitos para garantizar su visibilidad.
+
+## [2026-10-02] update | Retirado el logo del encabezado global. Cotizador PLUS y su versión ocupan ahora la columna izquierda, la navegación permanece centrada y la información de usuario se despliega desde un botón hamburguesa a la derecha.
+
+## [2026-10-02] update | Corregido el apilamiento vertical del encabezado mediante columnas CSS explícitas. Marca, navegación y usuario quedan alineados arriba en una franja compacta; nombre y versión aumentan 2 px y el botón hamburguesa adopta el color de la marca.
+
+## [2026-10-02] update | Reorganizada la pantalla de Cotizaciones: el formulario de nuevo proyecto ocupa arriba todo el ancho con campos horizontales y materiales inferiores/superiores en paralelo; la lista de cotizaciones queda debajo, separada por espacio y divisor visual.
+
+## [2026-10-02] update | Ampliado aproximadamente 10 % el ancho útil de la pantalla de Cotizaciones (1152 a 1280 px), reduciendo los márgenes laterales y dando más espacio al formulario y al listado.
+
+## [2026-10-02] update | Ajustado el ancho máximo de la pantalla de Cotizaciones de 1280 a 1200 px, tanto para las acciones superiores como para el contenido principal.
+
+## [2026-10-02] update | Nuevo proyecto y cotizaciones existentes vuelven a compartir la misma fila en proporción 50/50: formulario a la izquierda y listado a la derecha, con divisor vertical y tabla desplazable para conservar la legibilidad.
+
+## [2026-10-02] update | Fijada la distribución 50/50 de Cotizaciones con CSS explícito para evitar que una variante responsiva de Tailwind en caché impida reflejar el cambio. También se fijaron divisor y ancho mínimo de tabla.
+
+## [2026-10-02] update | Materiales globales del alta de proyectos distribuye módulos inferiores B/V y superiores W/TW lado a lado en dos columnas CSS de igual proporción.
+
+## [2026-10-02] update | El menú de usuario del encabezado deja de abrirse por hover: ahora usa un desplegable nativo activado por clic y el control muestra explícitamente `User`.
+
+## [2026-10-02] update | El control `User` se fija al extremo derecho del encabezado y su panel se ancla por la derecha para desplegar toda la información hacia la izquierda.
+
+## [2026-10-02] update | Unificado en 1280 px el ancho máximo de las vistas principales de Simulador, Cotizaciones, Materiales-Parámetros, Diseño, HDR y Manual para reducir moderadamente sus márgenes laterales.
+
+## [2026-10-02] update | Las seis pestañas principales reservan 700 px de margen a izquierda y derecha en ventanas mayores de 1400 px mediante la clase compartida `cotizador-tab-content`, con fallback adaptable en ventanas menores.
+
+## [2026-10-02] update | Ajustados los márgenes compartidos a 350 px por lado; el Simulador usa una cuadrícula centrada 1:2 para que Configurar módulo sea menor que el panel de resultados.
+
+## [2026-10-02] update | El detalle interno de Cotizaciones reserva 250 px a cada lado mediante un contenedor centrado específico, con fallback adaptable en pantallas estrechas.
 ## [2026-10-02] update | Etiquetas de margen global ponderado con y sin herrajes en cabecera de cotización
 Se actualizó `calcularMargenGlobalProyecto` en `src/lib/module-groups.ts` y `ProyectoHeader.tsx` para exponer ambos márgenes ponderados del proyecto: sin herrajes (`Margen s/H: XX.X%`) y con herrajes (`Margen c/H: XX.X%`), ubicados debajo del nombre del proyecto y en el panel de edición.
 
@@ -1461,7 +1502,4 @@ Se diseñó e implementó el sistema de calidad modular: (1) `quality/manifest.j
 
 ## [2026-10-02] ingest | Creación del workflow de calidad /quality y /calidad para automatización de compuertas
 Se crearon los workflows interactivos `.agents/workflows/quality.md` y `.agents/workflows/calidad.md` invocables mediante comandos slash (`/quality` o `/calidad`). Guían el flujo integral de validación: (1) inspección dry-run de impacto con `quality:plan`; (2) compuertas obligatorias `quality:gate` o `quality:gate:full` con exit code 0; (3) diagnóstico de cobertura y riesgos con `quality:learn`; (4) congelamiento de mejoras de deuda con `quality:baseline:update`.
-
-
-
 
