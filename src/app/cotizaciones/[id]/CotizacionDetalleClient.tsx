@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import ProyectoHeader from './ProyectoHeader';
 import CocinaCard from './CocinaCard';
 import AddCocina from './AddCocina';
@@ -10,6 +11,7 @@ import { eliminarCotizacionAction, actualizarCotizacionAction } from '../actions
 import VersionesCotizacion from './VersionesCotizacion';
 import type { CotizacionVersion } from '@/lib/cotizaciones';
 import type { FamiliaMaterial } from '@/lib/muebles';
+import { calcularMargenGlobalProyecto } from '@/lib/module-groups';
 
 type LineaConfig = {
   preset?: Record<string, string>;
@@ -158,6 +160,13 @@ export default function CotizacionDetalleClient({
   const [showCharacteristics, setShowCharacteristics] = useState(false);
   const [columnasPrecio, setColumnasPrecio] = useState<ColumnasPrecio>({ sinHerrajes: true, conHerrajes: true, usd: true, cop: true });
 
+  const router = useRouter();
+
+  const margenGlobal = useMemo(
+    () => calcularMargenGlobalProyecto(cocinas, cabecera.total_cop),
+    [cocinas, cabecera.total_cop]
+  );
+
   function handleProjectDefaultsChange(next: ProjectDefaults) {
     setProjectDefaults(next);
     actualizarCotizacionAction(cotizacionId, { configDefault: next }).catch(() => {});
@@ -173,6 +182,11 @@ export default function CotizacionDetalleClient({
       alto: convertirMedidaProyecto(projectDefaults.alto, unidadAnterior, unidad),
       prof: convertirMedidaProyecto(projectDefaults.prof, unidadAnterior, unidad),
     });
+  }
+
+  async function handleMargenBlur() {
+    await actualizarCotizacionAction(cotizacionId, { configDefault: projectDefaults });
+    router.refresh();
   }
 
   // Al agregar un mueble, sus materiales y cantos quedan como default del proyecto
@@ -191,7 +205,7 @@ export default function CotizacionDetalleClient({
     <>
       <div className="flex items-start justify-between gap-2" data-tour="proyecto">
         <div className="flex-1">
-          <ProyectoHeader cab={cabecera} />
+          <ProyectoHeader cab={cabecera} margenGlobal={margenGlobal} />
         </div>
         <div className="flex gap-2">
           <GuideButton steps={GUIA_PROYECTO} label="Guía" />
@@ -215,7 +229,14 @@ export default function CotizacionDetalleClient({
             editing
             onClose={() => setShowCharacteristics(false)}
             margen={projectDefaults.margen}
-            onMargenChange={(margen) => handleProjectDefaultsChange({ ...projectDefaults, margen })}
+            onMargenChange={(margen) => setProjectDefaults((prev) => ({ ...prev, margen }))}
+            onMargenBlur={handleMargenBlur}
+            onSave={async () => {
+              await actualizarCotizacionAction(cotizacionId, { configDefault: projectDefaults });
+              router.refresh();
+              return { ok: true };
+            }}
+            margenGlobal={margenGlobal}
           >
             <ProjectConfigPanel
               tableros={tableros}

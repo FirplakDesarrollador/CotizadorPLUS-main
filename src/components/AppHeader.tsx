@@ -13,7 +13,7 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
       >
         <div className="flex flex-col justify-self-start leading-none">
           <span className="whitespace-nowrap font-semibold text-slate-900" style={{ fontSize: 18 }}>Cotizador PLUS</span>
-          <span className="mt-1 inline-block self-start whitespace-nowrap font-medium text-slate-900" style={{ fontSize: 12 }}>v1.0.2</span>
+          <span className="mt-1 inline-block self-start whitespace-nowrap font-medium text-slate-900" style={{ fontSize: 12 }}>v1.0.3</span>
         </div>
         <div className="flex min-w-0 items-center justify-center">
           <nav className="flex items-center gap-1" aria-label="Navegación principal">

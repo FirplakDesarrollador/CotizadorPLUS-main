@@ -65,8 +65,12 @@ aplica **solo a la parte de mueble, nunca al herraje**. Ese 10% es el recargo de
 4. **El override de margen del proyecto solo mueve una categoría** (`cotizar.ts:94`, solo
    `margen_key === 'muebles'`). Es fiel al Excel (cambiar `$T$1` mueve las 5.733 filas de muebles
    y nada más), no es un defecto.
-5. **No se calcula el margen efectivo** (`Y`/`AB` del Excel), que es el margen real de la venta
-   una vez mezclados mueble (57%) y herraje (35%).
+5. **Margen global (ponderado) con y sin herrajes implementado en Cotizaciones:**
+   Se calcula mediante `calcularMargenGlobalProyecto(cocinas, totalCopCabecera)` en `src/lib/module-groups.ts`, entregando:
+   - **Margen s/H (sin herrajes):** $\frac{\text{Precio s/H} - \text{Costo s/H}}{\text{Precio s/H}} \times 100\%$
+   - **Margen c/H (con herrajes):** $\frac{\text{Precio c/H} - \text{Costo c/H}}{\text{Precio c/H}} \times 100\%$
+   Se exponen ambas etiquetas bajo el nombre del proyecto en `ProyectoHeader` (`Margen s/H: XX.X%` y `Margen c/H: XX.X%`).
+   Pondera cantidades y márgenes propios de cada módulo (muebles, paneles `pn_tk`, fillers y herrajes al 35%).
 
 ## 5. Dos defectos del app
 
@@ -120,3 +124,14 @@ para Infinitum (25%) ni CEFI (25%). La solución limpia es reactivar `recF` por 
 - El 10% quemado en `W` y `Z` obliga a editar 7.027 fórmulas para cotizar otro cliente; debería
   vivir en una celda (`$T$28`).
 - `$T$25`/`$T$26`/`$T$27` están definidos y no los usa ninguna fila.
+
+## 8. Margen global ponderado y propagación de margen del proyecto
+
+El margen global del proyecto en el módulo de Cotizaciones se calcula ponderando precios y costos totales reales en COP:
+- **Margen s/H (sin herrajes):** `(Precio s/H - Costo s/H) / Precio s/H * 100`
+- **Margen c/H (con herrajes):** `(Precio c/H - Costo c/H) / Precio c/H * 100`
+
+Cuando se define un margen de proyecto en `config_default.margen`:
+1. `actualizarCotizacion()` detecta el cambio de margen, propaga `margenOverride` a todas las líneas (`cot_cotizacion_lineas`), recalcula cada grupo (`recalcularGrupo()`) y recomputa totales del proyecto (`recomputarTotales()`).
+2. En `src/lib/cotizar.ts`, `inp.margenOverride` aplica a todas las tipologías (muebles, paneles `PN`, fillers `F`, zócalos `TK`), permitiendo uniformidad completa. Si todos los elementos y herrajes tienen el mismo margen (ej. 35%), ambos indicadores ponderados (s/H y c/H) convergen con exactitud matemática a dicho margen.
+

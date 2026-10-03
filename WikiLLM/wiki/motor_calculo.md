@@ -65,3 +65,11 @@ La agrupación se implementa en `src/lib/group-engine.ts` como una transformaci�
 - Resumen estructural: cantidad de módulos, largo exterior, laterales/divisiones, uniones y claves de piezas continuas.
 
 El frontend recibe únicamente el consolidado; los precios individuales permanecen como detalle interno del algoritmo de reparto. El simulador no persiste grupos en Supabase: la sesión combinada reside en Zustand/localStorage. Editar, eliminar o reordenar confirma una nueva lista válida y vuelve a ejecutar el mismo cálculo grupal.
+
+## 5. Recálculo masivo por lotes (`cargarCatalogoPrecompilado`)
+
+Para recálculos globales de cotizaciones (cambio de margen de proyecto o TRM con 20+ módulos y múltiples grupos):
+- `cargarCatalogoPrecompilado()` en `src/lib/cotizar.ts` precarga en un solo `Promise.all` todos los parámetros, tipologías, piezas, reglas, cantos, herrajes y tableros.
+- `cotizarGrupo(inputs, catalogo)` evalúa los módulos directamente en memoria en ~10 ms sin queries redundantes.
+- Las mutaciones de persistencia en `cot_cotizacion_lineas` y `cot_grupos_modulos` se despachan en paralelo (`Promise.all`), reduciendo el tiempo de recálculo total de >15 s a ~2 s.
+

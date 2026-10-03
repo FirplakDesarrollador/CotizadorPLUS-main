@@ -7,8 +7,8 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
-- [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles y soportes metálicos por entrepaño de 300 mm (`engine.ts` y `cotizar.ts`).
-- [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, encabezado y menú de usuario, cotizaciones con constructora/comprador, materiales y herrajes globales, unidades y dimensiones editables.
+- [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles, soportes por entrepaño, cálculo grupal y recálculo masivo por lotes con precarga de catálogo (`engine.ts` y `cotizar.ts`).
+- [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, encabezado y menú de usuario, Zustand, cotizaciones con constructora/comprador, materiales, herrajes, unidades, dimensiones y búsqueda por color.
 - [Sistema de Undo/Redo](wiki/sistema_undo_redo.md) - Historial temporal de estados, captura de atajos de teclado y notificaciones.
 - [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes manuales, inmutables, nombre obligatorio, orden cronológico y restauración transaccional limpia sin respaldos automáticos.
 
@@ -39,7 +39,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Auditoría de precio SBFD30](wiki/auditoria_precio_sbfd30.md) - Conciliación Excel CEMA vs Cotizador PLUS: dónde viven margen/TRM en el Excel, efecto del `config_default` del proyecto sobre el preset, y método para correr `engine.ts` fuera de la app.
 - [Validación contra hojas de ruta](wiki/validacion_hojas_de_ruta.md) - Estudio de 1.937 hojas de ruta reales: DSL de fórmulas de producción, constante interior por espesor, reglas de reparto de frentes DB, modificadores transversales (`O`/`R`/`SM`/`F9`), tipologías sin mapear y errores detectados en la fuente.
 - [Auditoría del catálogo activo](wiki/auditoria_catalogo_activo.md) - Barrido end-to-end de los 60 tipos activos con el motor real: dimensiones negativas que restaban tablero, 20 tipos que cotizan sin herrajes, herrajes duplicados en UW y qué anomalías son falsos positivos.
-- [Cadena de precio: Excel CEMA vs. app](wiki/cadena_precio_excel_vs_app.md) - Correspondencia fórmula por fórmula de la hoja `Precio` contra `engine.ts`/`cotizar.ts`: parámetros de la columna T, recargo del 10% de CEMA, márgenes equivalentes y defectos de ambos lados.
+- [Cadena de precio: Excel CEMA vs. app](wiki/cadena_precio_excel_vs_app.md) - Correspondencia fórmula por fórmula de la hoja `Precio` contra `engine.ts`/`cotizar.ts`: parámetros de la columna T, margen global ponderado del proyecto y defectos resueltos.
 
 - [Patron para integrar nuevas tipologias](wiki/patron_integracion_tipologias.md) - Protocolo permanente basado en `B-FE`: crear tipos independientes desde hojas reales, validar geometria/precio, respetar codigos comerciales y documentar migraciones.
 - [Visualización y agrupación de familias FE](wiki/visualizacion_familias_fe.md) - Corrección geométrica 3D (fondo de gaveta, frentes mixtos y cajón superior) y homologación continua para B-FE, UB-FE y V-FE.

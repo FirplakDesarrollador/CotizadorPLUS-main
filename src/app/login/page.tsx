@@ -28,7 +28,7 @@ export default function LoginPage() {
         <div>
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-semibold text-slate-900">Cotizador PLUS</h1>
-            <span className="text-[10px] font-medium bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">v1.0.0</span>
+            <span className="text-[10px] font-medium bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">v1.0.3</span>
           </div>
           <p className="text-sm text-slate-500">Inicia sesión para continuar</p>
         </div>
