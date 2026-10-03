@@ -1,0 +1,128 @@
+{
+  "$schema": "./manifest.schema.json",
+  "version": "1.0.0",
+  "lanes": [
+    {
+      "id": "lane:grouping",
+      "name": "Estructura Agrupada y Márgenes",
+      "description": "Lógica física de módulos agrupados, continuidad de caja/golas y márgenes globales",
+      "patterns": [
+        "src/lib/group-engine.ts",
+        "src/lib/group-result.ts",
+        "src/lib/module-groups.ts"
+      ],
+      "tests": [
+        "tests/module-groups.test.ts",
+        "tests/group-engine.test.ts",
+        "tests/group-result.test.ts",
+        "tests/margen-global.test.ts"
+      ]
+    },
+    {
+      "id": "lane:visualization",
+      "name": "Motor de Visualización y Ensambles",
+      "description": "Cálculo de posiciones 3D, IGES y despiece visual de piezas",
+      "patterns": [
+        "src/lib/visualizacion.ts",
+        "src/lib/visualizacion-config.ts"
+      ],
+      "tests": [
+        "tests/visualizacion.test.ts",
+        "tests/visualizacion-b-fe.test.ts"
+      ]
+    },
+    {
+      "id": "lane:pricing-db",
+      "name": "Servicios de Cotización y Persistencia",
+      "description": "Preparación de cotizaciones, tarifas, overrides, consultas a Supabase y catálogo precompilado",
+      "patterns": [
+        "src/lib/cotizar.ts",
+        "src/lib/cotizaciones.ts",
+        "src/lib/diseno.ts",
+        "src/lib/admin.ts",
+        "src/lib/supabase/**"
+      ],
+      "tests": [
+        "tests/margen-global.test.ts",
+        "tests/group-result.test.ts",
+        "tests/precio-herrajes.test.ts",
+        "tests/consumo-materiales.test.ts",
+        "tests/module-groups.test.ts"
+      ]
+    },
+    {
+      "id": "lane:engine",
+      "name": "Motor Paramétrico de Despiece",
+      "description": "Fórmulas de corte, cantos, herrajes, reglas de tipologías y piezas individuales",
+      "patterns": [
+        "src/lib/engine.ts",
+        "src/lib/muebles.ts"
+      ],
+      "tests": [
+        "tests/b12-hoja-real.test.ts",
+        "tests/barras-estabilizadoras.test.ts",
+        "tests/bbl.test.ts",
+        "tests/bblfd-sm.test.ts",
+        "tests/bov24-hoja-real.test.ts",
+        "tests/carton-abierto.test.ts",
+        "tests/consumo-materiales.test.ts",
+        "tests/db-backing.test.ts",
+        "tests/db-gavetas-mixtas.test.ts",
+        "tests/db-sin-herrajes.test.ts",
+        "tests/db18-hoja-real.test.ts",
+        "tests/db2-1op.test.ts",
+        "tests/desperdicio-tablero.test.ts",
+        "tests/despiece-presentacion.test.ts",
+        "tests/dimension-negativa.test.ts",
+        "tests/ow3018-hoja-real.test.ts",
+        "tests/pcfd-op.test.ts",
+        "tests/precio-herrajes.test.ts",
+        "tests/reveal-puertas.test.ts",
+        "tests/sbfd-sm.test.ts",
+        "tests/svfd36-hoja-real.test.ts",
+        "tests/tarugos-base-tapa.test.ts",
+        "tests/udv1228-2s-hoja-real.test.ts",
+        "tests/versiones.test.ts",
+        "tests/w-sm.test.ts",
+        "tests/wld-frentes.test.ts",
+        "tests/wsm.test.ts"
+      ]
+    },
+    {
+      "id": "lane:frontend",
+      "name": "Frontend y Vistas App Router",
+      "description": "Componentes de interfaz de usuario, formularios de cotizador y páginas Next.js",
+      "patterns": [
+        "src/app/**",
+        "src/components/**"
+      ],
+      "tests": [
+        "tests/margen-global.test.ts",
+        "tests/module-groups.test.ts"
+      ]
+    },
+    {
+      "id": "lane:core-transversal",
+      "name": "Configuraciones Core y Dependencias",
+      "description": "Configuraciones globales del repositorio, tsconfig, package.json y sistema de calidad",
+      "patterns": [
+        ".gitignore",
+        "package.json",
+        "tsconfig.json",
+        "eslint.config.mjs",
+        "next.config.ts",
+        "quality/**",
+        "scripts/quality/**"
+      ],
+      "escalatesToFull": true,
+      "tests": [
+        "tests/*.test.ts"
+      ]
+    }
+  ],
+  "thresholds": {
+    "testDurationWarningMs": 500,
+    "testDurationCriticalMs": 1500,
+    "maxNewErrorsAllowed": 0
+  }
+}

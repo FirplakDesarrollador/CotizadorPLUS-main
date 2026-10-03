@@ -1456,4 +1456,12 @@ Se corrigió la propagación del margen configurado en el proyecto a todas las l
 ## [2026-10-02] update | Optimización del recálculo global de cotización en lote (batch) y memoización de catálogos
 Se redujo el tiempo de recálculo masivo de un proyecto (~20 módulos) de >15s a ~2.2s: (1) nueva función `cargarCatalogoPrecompilado()` en `cotizar.ts` que precarga en un solo `Promise.all` parámetros, tipos, piezas, reglas, cantos, herrajes y tableros, eliminando ~160 consultas SQL N+1; (2) ejecución concurrente con `Promise.all` para los updates de líneas y recálculo de grupos en `actualizarCotizacion()`; (3) en `ProyectoHeader.tsx` y `CotizacionDetalleClient.tsx`, el input de margen ahora usa estado local desacoplado y solo despacha a Supabase al confirmar (`onBlur` o presionar `Enter`), eliminando re-ejecuciones por cada tecla.
 
+## [2026-10-02] ingest | Implementación del Sistema de Calidad Modular, Trinquete de Deuda (Ratchet) y módulo consultivo quality:learn
+Se diseñó e implementó el sistema de calidad modular: (1) `quality/manifest.json` segmentado en lanes de impacto; (2) `docs/quality/baseline.json` con trinquete de deuda histórica (36 errores lint congelados, 0 de tipos, 4 tests conocidos); (3) comandos `quality:plan`, `quality:impact`, `quality:gate`, `quality:gate:full`, `quality:baseline:update` en `package.json`; (4) módulo consultivo continuo `quality:learn` que audita el `git diff`, telemetría de latencias y recibos `.tmp/quality/last-run.json` detectando brechas de cobertura, mapeo o riesgos arquitectónicos; (5) políticas inviolables de Safe Change integradas en `AGENTS.md`.
+
+## [2026-10-02] ingest | Creación del workflow de calidad /quality y /calidad para automatización de compuertas
+Se crearon los workflows interactivos `.agents/workflows/quality.md` y `.agents/workflows/calidad.md` invocables mediante comandos slash (`/quality` o `/calidad`). Guían el flujo integral de validación: (1) inspección dry-run de impacto con `quality:plan`; (2) compuertas obligatorias `quality:gate` o `quality:gate:full` con exit code 0; (3) diagnóstico de cobertura y riesgos con `quality:learn`; (4) congelamiento de mejoras de deuda con `quality:baseline:update`.
+
+
+
 

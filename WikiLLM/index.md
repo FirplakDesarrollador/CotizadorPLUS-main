@@ -11,6 +11,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, estado Zustand, edición flexible de dimensiones y búsqueda de tableros por color.
 - [Sistema de Undo/Redo](wiki/sistema_undo_redo.md) - Historial temporal de estados, captura de atajos de teclado y notificaciones.
 - [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes manuales, inmutables, nombre obligatorio, orden cronológico y restauración transaccional limpia sin respaldos automáticos.
+- [Sistema de Calidad y Trinquete (Ratchet)](wiki/sistema_calidad_ratchet.md) - Sistema de calidad modular basado en impacto (lanes), compuerta de trinquete de deuda (Ratchet) y módulo consultivo continuo quality:learn.
 
 ## Infraestructura de Datos
 - [Esquema de Base de Datos](wiki/esquema_base_datos.md) - Estructura de tablas y políticas en Supabase (prefijo `cot_`).
