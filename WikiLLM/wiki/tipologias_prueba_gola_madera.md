@@ -89,16 +89,23 @@ está aplicada en el proyecto Supabase conectado desde el 25 de septiembre de
 `0101_db_2_sm_frente_unico.sql` elimina las plantillas especializadas
 `frente_*`: como ambas gavetas son iguales, el despiece muestra únicamente
 `frente`, con cantidad 2.
-`0102_db_2_sm_trasero_unico.sql` aplica el mismo criterio a los traseros: deja
-solo `trasero_gaveta`, cantidad 2 y 183 mm de alto, conservando el canto de la
-pieza grande (1 largo y 2 anchos).
+`0102_db_2_sm_trasero_unico.sql` unificó originalmente los traseros. La
+migración `0173_db_sm_normalizar_nombres_traseros_gaveta.sql` homologa después
+la nomenclatura con DB: deja solo `trasero_gaveta_grande`, cantidad 2 y 183 mm
+de alto, conservando el canto de la pieza grande (1 largo y 2 anchos).
 
 `0103_db_3_sm.sql` deriva `DB-3-SM` de la variante unificada: mantiene una
-sola fila `frente`, `base_gaveta` y `trasero_gaveta`, cada una con cantidad 3.
-Los tres frentes se reparten por igual y los traseros miden 183 mm. El segundo
+sola fila `frente`, `base_gaveta` y `trasero_gaveta_grande`, cada una con
+cantidad 3. Los tres frentes se reparten por igual y los traseros miden 183 mm. El segundo
 par refuerzo/Gola se ancla bajo la segunda base, entre la segunda y tercera
 gaveta. La migración está aplicada en el proyecto Supabase conectado desde el
 25 de septiembre de 2026.
+
+En toda la familia Tandem DB-SM, `0173` elimina el nombre genérico
+`trasero_gaveta`. `DB-2S-SM` conserva dos `trasero_gaveta_pequena` de 68 mm y
+un `trasero_gaveta_grande` de 183 mm; `DB-2-SM` y `DB-3-SM` usan únicamente
+`trasero_gaveta_grande` de 183 mm, con cantidades 2 y 3. Las variantes FE ya
+tenían nombres explícitos y mantienen sus medidas propias de 80/180 mm.
 
 En el Simulador, `DB-2S-SM`, `DB-2-SM` y `DB-3-SM` aparecen agrupadas bajo
 `DB-SM — Cajoneras con Gola de madera`. El selector `Tipología DB-SM` cambia

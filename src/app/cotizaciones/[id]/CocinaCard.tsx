@@ -91,7 +91,7 @@ export default function CocinaCard({
   trm: number;
   sistemaMedida: 'imperial' | 'metrico';
   projectDefaults?: ProjectDefaults;
-  onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string }) => void;
+  onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] }) => void;
   columnasPrecio: ColumnasPrecio;
 }) {
   const router = useRouter();
@@ -618,6 +618,7 @@ export default function CocinaCard({
         {showAdd ? (
           <div className="space-y-2">
             <AddLineForm
+              key={`nuevo-${projectDefaults?.unidad ?? sistemaMedida}`}
               cocinaId={cocina.id}
               tipos={tipos}
               tableros={tableros}

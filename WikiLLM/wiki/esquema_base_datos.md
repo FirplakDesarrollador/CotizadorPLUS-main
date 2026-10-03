@@ -66,6 +66,11 @@ La migración `0026_config_default_cotizacion.sql` añade `config_default jsonb`
 - Cada cambio en el panel "Materiales del proyecto" (`ProjectConfigPanel` dentro de `CotizacionDetalleClient`) se persiste vía `actualizarCotizacionAction` con `configDefault`.
 - Al abrir `/cotizaciones/[id]`, el servidor prioriza `cabecera.config_default`; el parámetro `?cfg=` queda solo como respaldo del primer render justo después de crear el proyecto.
 - Cada vez que se agrega un mueble (no al editar), `AddLineForm` reporta sus tableros y cantos usados vía `onMaterialesUsados`; `CotizacionDetalleClient` los mezcla en `config_default` y los persiste. Así el próximo mueble que se agregue (misma pestaña, otra pestaña o al día siguiente) arranca con los materiales del último mueble agregado, no con los del momento de creación del proyecto.
+
+La migración `0174_cotizaciones_comprador.sql` agrega `comprador_nombre` a la
+cabecera. `cliente_nombre` permanece como nombre técnico para la constructora,
+evitando una migración destructiva de datos históricos. Comprador y
+constructora se guardan, editan y exportan por separado.
 - `conFondo` se fija al crear el proyecto y se copia también a `cot_cotizacion_lineas.config`, de modo que edición, duplicado, agrupación y recálculo conserven la decisión estructural.
 - `materialesInferiores` y `materialesSuperiores` guardan, cada uno, perfil, preset de tableros y cantos. Al agregar un mueble se busca la primera `B` o `W` de su prefijo: `B` primero usa inferiores y `W` primero usa superiores (`WBL` usa superiores). Los prefijos sin ambas letras usan inferiores como fallback compatible. Las claves planas antiguas se conservan como alias del bloque inferior para abrir proyectos previos sin migración.
 

@@ -644,7 +644,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         </section>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+      <div className="simulador-main-grid">
       {/* ---- Formulario ---- */}
       <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 h-fit">
         <div className="flex flex-wrap items-center justify-between gap-2">
