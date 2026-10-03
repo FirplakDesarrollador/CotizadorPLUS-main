@@ -1,5 +1,31 @@
 # Arquitectura del Frontend
 
+El encabezado global presenta `Cotizador PLUS` en la columna izquierda, en una
+sola línea y con la versión debajo. La navegación ocupa el centro y la
+información del usuario se abre desde un control rotulado `User`; un clic
+despliega o cierra el menú con correo, rol y cierre de sesión. Los
+controles globales Undo/Redo fueron retirados del encabezado, aunque el
+Simulador conserva sus controles compactos asociados al historial local.
+La versión usa ancho de contenido, el mismo color del nombre y no tiene borde
+ni fondo independiente. La distribución usa una cuadrícula de tres columnas
+estables: marca a la izquierda, navegación centrada y menú de usuario a la
+derecha. El logo fue retirado completamente del encabezado global.
+Las columnas se definen con `gridTemplateColumns` explícito para evitar que
+Tailwind omita una clase arbitraria y apile los bloques en tres filas. Todo se
+alinea al borde superior con padding vertical compacto; nombre y versión usan
+18 px y 12 px, y el control `User` comparte el azul oscuro de la marca.
+El control se alinea explícitamente con el extremo derecho del contenedor y el
+panel se ancla por su borde derecho para desplegarse hacia la izquierda sin
+salirse de la ventana.
+Las vistas principales de Simulador, Cotizaciones, Materiales-Parámetros,
+Diseño, HDR y Manual comparten la clase `cotizador-tab-content`. En ventanas
+mayores de 700 px reserva 350 px a cada lado mediante un ancho calculado; en
+ventanas de hasta 700 px conserva 16 px por lado para que el contenido siga
+siendo accesible.
+El Simulador distribuye su contenido principal en una proporción 1:2: el panel
+`Configurar módulo` ocupa un tercio y los resultados de precio dos tercios. Si
+la ventana no ofrece suficiente espacio, ambos paneles se apilan centrados.
+
 En el detalle de una cotización, el resumen de `ProyectoHeader` no contiene un
 enlace `editar`. Debajo del resumen y antes de las acciones de exportación se
 muestra el control plegable **CARACTERÍSTICAS DEL PROYECTO**. Al desplegarlo,
@@ -7,6 +33,40 @@ un segundo `ProyectoHeader` en modo `editing` presenta los datos de cabecera y
 compone `ProjectConfigPanel` para perfil, materiales inferiores y superiores y
 cantos. Al cerrarlo, el listado de muebles sigue visible sin ocupar
 espacio adicional.
+El contenedor del detalle usa `cotizacion-detail-content`, que reserva 250 px
+a izquierda y derecha y centra el encabezado, las características y las cajas
+de cocinas. En ventanas de hasta 500 px conserva 16 px por lado.
+
+La misma franja muestra un selector global de unidad `in/cm/mm`. El valor se
+guarda en `cot_cotizaciones.config_default.unidad` y lo heredan los formularios
+de todos los módulos nuevos, incluso en cocinas distintas o después de reabrir
+el proyecto. Al cambiarlo se convierten los valores predeterminados de largo,
+alto y profundidad y se reinicia solamente el formulario de alta que esté
+abierto. Las líneas ya guardadas conservan su `unidad_dim` y sus medidas para
+no alterar cotizaciones históricas.
+
+El formulario **Nuevo proyecto / cotización** distingue `Constructora`
+(`cliente_nombre`, conservado por compatibilidad) de `Comprador`
+(`comprador_nombre`). La selección global de materiales incorpora listas
+independientes de herrajes para módulos inferiores B/V y superiores W/TW; cada
+rol puede activarse o excluirse y la decisión se guarda dentro del set de
+materiales de su familia para los módulos nuevos. El margen no se solicita en
+este formulario: se mantiene la configuración general del sistema.
+En `/cotizaciones`, el alta de proyecto y el listado de cotizaciones comparten
+la fila principal en dos columnas de igual proporción: creación a la izquierda
+y consulta a la derecha. Una línea vertical separa ambas zonas en escritorio;
+en pantallas pequeñas vuelven a apilarse con división horizontal. El formulario
+usa dos columnas internas y la tabla conserva un ancho mínimo con desplazamiento
+horizontal para no comprimir fechas, estados ni valores.
+La proporción principal 50/50 y el divisor se declaran como estilos CSS
+explícitos, no mediante variantes responsivas de Tailwind, para garantizar que
+el servidor de desarrollo los aplique aunque su hoja de utilidades esté en caché.
+Dentro del formulario, `Materiales globales` también usa una cuadrícula CSS
+explícita de dos columnas iguales: módulos inferiores B/V a la izquierda y
+módulos superiores W/TW a la derecha.
+El contenedor de esta pantalla usa 1200 px de ancho máximo, reduciendo el
+espacio lateral libre frente al diseño original y dando más área a los campos,
+selectores de materiales y columnas del listado.
 
 En el editor desplegado, nombre y cliente forman la primera fila; moneda, TRM
 y margen comparten la segunda. Los materiales aparecen a continuación y el
@@ -149,7 +209,7 @@ Los módulos **agrupados** (`grupo_id` compartido — laterales físicamente uni
 
 La construcción de la tabla (`construirFilas`, nombres de producción, regla Color/Blanco) se extrajo a `HdrTabla.tsx` para reusarla en ambos modos sin duplicar código.
 
-**Logo FIRPLAK**: el usuario dejó el archivo en `public/firplak-logo.jpg`, con mucho margen blanco alrededor de la marca (lienzo 1376×768px, contenido real solo 960×239px) — se recortó con `sharp().trim()` (sin tocar un píxel de la marca) y se guardó como `public/firplak-logo.png`. Se agregó al header de `HdrTabla.tsx` con `next/image` (`width={960} height={239}`, `className="h-12 w-auto"`), se retiró a pedido del usuario, y se volvió a agregar (mismo archivo, sin reprocesarlo — el usuario reconfirmó el mismo logo dos veces más y coincidía byte a byte con lo ya guardado) — estado final: **presente**, arriba a la derecha del header de cada tarjeta HDR.
+**Logo FIRPLAK**: el encabezado de `HdrTabla.tsx` usa `public/Logo-Firplak-Positivo.png`. Conserva el recuadro histórico de aproximadamente 193×48 px mediante un contenedor fijo y `next/image` con `object-cover`; así se recorta únicamente el margen transparente del lienzo 1920×700, la marca queda centrada y no se deforma. El recurso anterior `firplak-logo.png` permanece disponible como antecedente, pero ya no se renderiza.
 
 ### 5.3 Exportar a PDF (2026-09-10)
 

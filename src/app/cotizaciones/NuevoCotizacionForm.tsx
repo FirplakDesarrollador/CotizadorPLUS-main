@@ -6,6 +6,8 @@ import Combobox from '@/components/Combobox';
 
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; valores: Record<string, string> };
+type Tipo = { id: string; pref: string; categoria?: string | null };
+type HerrajeOpcion = { rol: string; codigo: string | null };
 
 interface Props {
   tableros: Tablero[];
@@ -14,6 +16,8 @@ interface Props {
   trmDefault: number;
   perfiles: Perfil[];
   perfilDefaultId: string;
+  tipos: Tipo[];
+  herrajesByTipo: Record<string, HerrajeOpcion[]>;
 }
 
 const tableroLabel = (t: Tablero) =>
@@ -25,7 +29,7 @@ const getCantoMatch = (cantos: string[], target: string) =>
   target;
 
 export default function NuevoCotizacionForm({
-  tableros, cantos, presetDefault, trmDefault, perfiles, perfilDefaultId,
+  tableros, cantos, presetDefault, trmDefault, perfiles, perfilDefaultId, tipos, herrajesByTipo,
 }: Props) {
   const router = useRouter();
 
@@ -49,9 +53,10 @@ export default function NuevoCotizacionForm({
   const [cantoFrentesSuperior, setCantoFrentesSuperior] = useState(cantoFrentes);
   const [cantoCajaSuperior, setCantoCajaSuperior] = useState(cantoCaja);
 
-  const [margen, setMargen] = useState('');
   const [perfilId, setPerfilId] = useState(perfilDefaultId);
   const [perfilSuperiorId, setPerfilSuperiorId] = useState(perfilDefaultId);
+  const [herrajesExclInferiores, setHerrajesExclInferiores] = useState<string[]>([]);
+  const [herrajesExclSuperiores, setHerrajesExclSuperiores] = useState<string[]>([]);
 
   function aplicarPerfil(id: string) {
     setPerfilId(id);
@@ -98,18 +103,40 @@ export default function NuevoCotizacionForm({
     [tableros]
   );
 
+  const herrajesPorFamilia = useMemo(() => {
+    const obtener = (familia: 'inferior' | 'superior') => {
+      const porRol = new Map<string, HerrajeOpcion>();
+      for (const tipo of tipos) {
+        const pertenece = familia === 'inferior'
+          ? /^(B|V)/.test(tipo.pref)
+          : /^(W|TW)/.test(tipo.pref);
+        if (!pertenece) continue;
+        for (const herraje of herrajesByTipo[tipo.id] ?? []) {
+          if (!porRol.has(herraje.rol)) porRol.set(herraje.rol, herraje);
+        }
+      }
+      return [...porRol.values()].sort((a, b) => a.rol.localeCompare(b.rol));
+    };
+    return { inferior: obtener('inferior'), superior: obtener('superior') };
+  }, [tipos, herrajesByTipo]);
+
+  function toggleHerraje(rol: string, familia: 'inferior' | 'superior') {
+    const setter = familia === 'inferior' ? setHerrajesExclInferiores : setHerrajesExclSuperiores;
+    setter((actual) => actual.includes(rol) ? actual.filter((item) => item !== rol) : [...actual, rol]);
+  }
+
   const configObj = useMemo(() => ({
     preset: { ...preset, refuerzo: preset['caja'] ?? '' },
-    cantoFrentes, cantoCaja, margen, perfilId, conFondo,
+    cantoFrentes, cantoCaja, perfilId, conFondo,
     materialesInferiores: {
       preset: { ...preset, refuerzo: preset['caja'] ?? '' },
-      cantoFrentes, cantoCaja, perfilId,
+      cantoFrentes, cantoCaja, perfilId, herrajesExcl: herrajesExclInferiores,
     },
     materialesSuperiores: {
       preset: { ...presetSuperior, refuerzo: presetSuperior['caja'] ?? '' },
-      cantoFrentes: cantoFrentesSuperior, cantoCaja: cantoCajaSuperior, perfilId: perfilSuperiorId,
+      cantoFrentes: cantoFrentesSuperior, cantoCaja: cantoCajaSuperior, perfilId: perfilSuperiorId, herrajesExcl: herrajesExclSuperiores,
     },
-  }), [preset, cantoFrentes, cantoCaja, margen, perfilId, conFondo, presetSuperior, cantoFrentesSuperior, cantoCajaSuperior, perfilSuperiorId]);
+  }), [preset, cantoFrentes, cantoCaja, perfilId, conFondo, presetSuperior, cantoFrentesSuperior, cantoCajaSuperior, perfilSuperiorId, herrajesExclInferiores, herrajesExclSuperiores]);
 
   const configEncoded = useMemo(
     () => btoa(encodeURIComponent(JSON.stringify(configObj))),
@@ -125,16 +152,20 @@ export default function NuevoCotizacionForm({
   }, [state, configEncoded, router]);
 
   return (
-    <form action={formAction} data-tour="nuevo" className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 h-fit">
+    <form action={formAction} data-tour="nuevo" className="h-fit space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
       <input type="hidden" name="config_default" value={JSON.stringify(configObj)} />
       <h2 className="font-semibold text-slate-900">Nuevo proyecto / cotización</h2>
 
       {/* ── Datos del proyecto ── */}
+      <section className="grid gap-3 md:grid-cols-2 md:items-start">
       <F label="Nombre del proyecto *">
         <input name="nombre" required placeholder="Ej. Cocina Torre A — Apto 502" className="inp" />
       </F>
-      <F label="Cliente">
-        <input name="cliente_nombre" placeholder="Cliente" className="inp" />
+      <F label="Constructora">
+        <input name="cliente_nombre" placeholder="Constructora" className="inp" />
+      </F>
+      <F label="Comprador">
+        <input name="comprador_nombre" placeholder="Comprador" className="inp" />
       </F>
       <div className="grid grid-cols-2 gap-2">
         <F label="Moneda">
@@ -173,12 +204,17 @@ export default function NuevoCotizacionForm({
         </div>
         <span className="mt-1 block text-[11px] text-slate-400">Sin fondo elimina esa pieza y deja la profundidad de la base en Profundidad menos un espesor de caja.</span>
       </fieldset>
+      </section>
 
       {/* ── Materiales globales ── */}
-      <div className="border-t border-slate-100 pt-2 space-y-2">
-        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Materiales globales</p>
+      <div
+        className="border-t border-slate-200 pt-4"
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400" style={{ gridColumn: '1 / -1' }}>Materiales globales</p>
 
-        <p className="text-xs font-semibold text-slate-700">Módulos inferiores (B)</p>
+        <section className="space-y-2 rounded-xl border border-slate-200 p-4">
+        <p className="text-xs font-semibold text-slate-700">Módulos inferiores (B y V)</p>
 
         {perfiles.length > 0 && (
           <F label="Perfil de material">
@@ -214,7 +250,15 @@ export default function NuevoCotizacionForm({
           </F>
         </div>
 
-        <div className="border-t border-slate-200 pt-3 mt-3 space-y-2">
+        <SelectorHerrajes
+          titulo="Herrajes inferiores (B/V)"
+          opciones={herrajesPorFamilia.inferior}
+          excluidos={herrajesExclInferiores}
+          onToggle={(rol) => toggleHerraje(rol, 'inferior')}
+        />
+        </section>
+
+        <section className="space-y-2 rounded-xl border border-slate-200 p-4">
           <p className="text-xs font-semibold text-slate-700">Muebles superiores (W y TW)</p>
 
           {perfiles.length > 0 && (
@@ -250,12 +294,14 @@ export default function NuevoCotizacionForm({
               </select>
             </F>
           </div>
-        </div>
 
-        <F label="Margen (%)">
-          <input type="number" min={0} max={100} step={0.5} placeholder="Auto (usa margen del sistema)"
-            value={margen} onChange={(e) => setMargen(e.target.value)} className="inp" />
-        </F>
+          <SelectorHerrajes
+            titulo="Herrajes superiores (W/TW)"
+            opciones={herrajesPorFamilia.superior}
+            excluidos={herrajesExclSuperiores}
+            onToggle={(rol) => toggleHerraje(rol, 'superior')}
+          />
+        </section>
       </div>
 
       {state && !state.ok && (
@@ -269,6 +315,39 @@ export default function NuevoCotizacionForm({
 
       <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.35rem .5rem;font-size:.8rem}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}`}</style>
     </form>
+  );
+}
+
+function SelectorHerrajes({ titulo, opciones, excluidos, onToggle }: {
+  titulo: string;
+  opciones: HerrajeOpcion[];
+  excluidos: string[];
+  onToggle: (rol: string) => void;
+}) {
+  return (
+    <fieldset className="rounded-lg border border-slate-200 p-3">
+      <legend className="px-1 text-xs font-semibold text-slate-700">{titulo}</legend>
+      {opciones.length === 0 ? (
+        <p className="text-xs text-slate-400">No hay herrajes configurados.</p>
+      ) : (
+        <div className="space-y-2">
+          {opciones.map((herraje) => (
+            <label key={herraje.rol} className="flex cursor-pointer items-start gap-2 text-xs text-slate-700">
+              <input
+                type="checkbox"
+                checked={!excluidos.includes(herraje.rol)}
+                onChange={() => onToggle(herraje.rol)}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="font-medium capitalize">{herraje.rol.replaceAll('_', ' ')}</span>
+                {herraje.codigo ? <span className="block text-[11px] text-slate-400">{herraje.codigo}</span> : null}
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+    </fieldset>
   );
 }
 

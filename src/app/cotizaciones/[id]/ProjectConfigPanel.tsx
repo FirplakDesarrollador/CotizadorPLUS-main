@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
 type Perfil = { id: string; nombre: string; valores: Record<string, string> };
-export type MaterialDefaults = { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string };
+export type MaterialDefaults = { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] };
 
 export type ProjectDefaults = {
   preset: Record<string, string>;
@@ -50,6 +50,7 @@ export default function ProjectConfigPanel({ tableros, cantos, perfiles, default
     cantoFrentes: defaults.cantoFrentes,
     cantoCaja: defaults.cantoCaja,
     perfilId: defaults.perfilId,
+    herrajesExcl: defaults.herrajesExcl,
   };
   const materialesInferiores = defaults.materialesInferiores ?? legacyMaterials;
   const materialesSuperiores = defaults.materialesSuperiores ?? legacyMaterials;

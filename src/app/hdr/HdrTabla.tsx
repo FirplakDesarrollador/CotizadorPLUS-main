@@ -185,13 +185,13 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tabl
             </label>
           </div>
         </div>
-        <div className="flex items-center justify-end">
+        <div className="relative h-12 w-[193px] shrink-0 overflow-hidden">
           <Image
-            src="/firplak-logo.png"
-            alt="Firplak - Inspirando Hogares"
-            width={960}
-            height={239}
-            className="h-12 w-auto object-contain"
+            src="/Logo-Firplak-Positivo.png"
+            alt="Firplak"
+            fill
+            sizes="193px"
+            className="object-cover object-center"
             priority
           />
         </div>

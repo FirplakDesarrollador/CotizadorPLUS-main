@@ -341,6 +341,10 @@ test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',(
   m.pref='DB-2-SM';
   m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('frente_'));
   m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('trasero_gaveta_'));
+  const traseroGrande=m.calc.piezas.find(p=>p.nombre==='trasero_gaveta')!;
+  traseroGrande.nombre='trasero_gaveta_grande';
+  traseroGrande.formula_cantidad='2';
+  traseroGrande.formula_ancho='183/25.4';
   const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
   refuerzo.formula_cantidad='2';
   const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
@@ -359,7 +363,7 @@ test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',(
   assert.equal(refuerzos.length,2);
   assert.equal(golas.length,2);
   assert.equal(traseros.length,2);
-  assert.ok(traseros.every(p=>p.nombre==='trasero_gaveta'&&Math.abs(p.h-183)<.1),'debe haber solo dos traseros genéricos de 183 mm');
+  assert.ok(traseros.every(p=>p.nombre==='trasero_gaveta_grande'&&Math.abs(p.h-183)<.1),'debe haber solo dos traseros grandes de 183 mm');
   assert.ok(Math.abs(refuerzos[1].z+refuerzos[1].h-bases[0].z)<.1,'el segundo refuerzo debe quedar bajo la base de la gaveta superior');
   assert.ok(Math.abs(golas[1].z-(refuerzos[1].z-golas[1].h))<1,'la Gola intermedia debe quedar debajo del segundo refuerzo');
 });
@@ -368,6 +372,10 @@ test('DB-3-SM: tres gavetas iguales y el segundo par de Gola queda entre la segu
   const m=member('DB',{n_cajones:3,n_cajones_pequenos:0,gola:1});
   m.pref='DB-3-SM';
   m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('frente_')&&!p.nombre.startsWith('trasero_gaveta_'));
+  const traseroGrande=m.calc.piezas.find(p=>p.nombre==='trasero_gaveta')!;
+  traseroGrande.nombre='trasero_gaveta_grande';
+  traseroGrande.formula_cantidad='3';
+  traseroGrande.formula_ancho='183/25.4';
   const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
   refuerzo.formula_cantidad='2';
   const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
@@ -384,7 +392,7 @@ test('DB-3-SM: tres gavetas iguales y el segundo par de Gola queda entre la segu
   assert.equal(bases.length,3);
   assert.ok(bases.every(p=>Math.abs(p.w-bases[0].w)<.1&&Math.abs(p.d-bases[0].d)<.1),'las tres bases deben ser iguales');
   assert.equal(traseros.length,3);
-  assert.ok(traseros.every(p=>p.nombre==='trasero_gaveta'&&Math.abs(p.h-183)<.1),'los tres traseros deben ser iguales y medir 183 mm');
+  assert.ok(traseros.every(p=>p.nombre==='trasero_gaveta_grande'&&Math.abs(p.h-183)<.1),'los tres traseros grandes deben ser iguales y medir 183 mm');
   assert.equal(refuerzos.length,2);
   assert.equal(golas.length,2);
   assert.ok(Math.abs(refuerzos[1].z+refuerzos[1].h-bases[1].z)<.1,'el segundo refuerzo debe quedar bajo la segunda gaveta');

@@ -8,7 +8,7 @@ import UndoRedoButtons from '@/components/UndoRedoButtons';
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida?: 'imperial' | 'metrico' };
+type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida?: 'imperial' | 'metrico' };
 
 export default function ProyectoHeader({
   cab,
@@ -34,6 +34,7 @@ export default function ProyectoHeader({
   const router = useRouter();
   const [nombre, setNombre] = useState(cab.nombre ?? '');
   const [cliente, setCliente] = useState(cab.cliente_nombre ?? '');
+  const [comprador, setComprador] = useState(cab.comprador_nombre ?? '');
   const [moneda, setMoneda] = useState<'COP' | 'USD'>((cab.moneda as 'COP' | 'USD') ?? 'USD');
   const [trm, setTrm] = useState(Number(cab.trm));
   const [estado, setEstado] = useState(cab.estado);
@@ -75,7 +76,7 @@ export default function ProyectoHeader({
         return;
       }
     }
-    const res = await actualizarCotizacionAction(cab.id, { nombre, cliente_nombre: cliente, moneda, trm, estado });
+    const res = await actualizarCotizacionAction(cab.id, { nombre, cliente_nombre: cliente, comprador_nombre: comprador, moneda, trm, estado });
     setSaving(false);
     if (!res.ok) { setError(res.error ?? 'Error'); return; }
     onClose?.(); router.refresh();
@@ -87,8 +88,10 @@ export default function ProyectoHeader({
         <div className="grid sm:grid-cols-2 gap-3">
           <label className="block"><span className="block text-xs text-slate-500 mb-1">Nombre del proyecto *</span>
             <input value={nombre} onChange={(e) => setNombre(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
-          <label className="block"><span className="block text-xs text-slate-500 mb-1">Cliente</span>
+          <label className="block"><span className="block text-xs text-slate-500 mb-1">Constructora</span>
             <input value={cliente} onChange={(e) => setCliente(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+          <label className="block"><span className="block text-xs text-slate-500 mb-1">Comprador</span>
+            <input value={comprador} onChange={(e) => setComprador(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
         </div>
         <div className="grid sm:grid-cols-3 gap-3">
           <label className="block"><span className="block text-xs text-slate-500 mb-1">Moneda</span>
@@ -140,7 +143,8 @@ export default function ProyectoHeader({
           <UndoRedoButtons />
         </div>
         <p className="text-sm text-slate-500 flex flex-wrap items-center gap-1.5 mt-1">
-          <span>{cab.cliente_nombre || 'Sin cliente'}</span>
+          <span>{cab.cliente_nombre || 'Sin constructora'}</span>
+          {cab.comprador_nombre ? <span>· Comprador: {cab.comprador_nombre}</span> : null}
           <span>·</span>
           <span>TRM {Number(cab.trm).toLocaleString('es-CO')}</span>
           <span>·</span>

@@ -57,8 +57,18 @@ type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metr
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
+type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
 export type ColumnasPrecio = { sinHerrajes: boolean; conHerrajes: boolean; usd: boolean; cop: boolean };
+type UnidadProyecto = 'in' | 'cm' | 'mm';
+
+const FACTOR_MM: Record<UnidadProyecto, number> = { in: 25.4, cm: 10, mm: 1 };
+
+function convertirMedidaProyecto(valor: string | undefined, origen: UnidadProyecto, destino: UnidadProyecto) {
+  if (valor == null || valor.trim() === '') return valor;
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return valor;
+  return String(Math.round((numero * FACTOR_MM[origen] / FACTOR_MM[destino]) * 1e6) / 1e6);
+}
 
 const GUIA_PROYECTO = [
   { title: 'Proyecto / cotización', description: 'Un proyecto agrupa cocinas, y cada cocina agrupa módulos (muebles). Así se arma una cotización completa.' },
@@ -88,6 +98,7 @@ interface Props {
 export default function CotizacionDetalleClient({
   cabecera, cocinas, cotizacionId, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo, versiones
 }: Props) {
+  const unidadInicial: UnidadProyecto = cabecera.sistema_medida === 'metrico' ? 'cm' : 'in';
   // Estado global del proyecto: si viene initialConfig del query param ?cfg, úsalo;
   // si no, inicializar con el presetDefault del sistema.
   const [projectDefaults, setProjectDefaults] = useState<ProjectDefaults>(() => {
@@ -110,7 +121,7 @@ export default function CotizacionDetalleClient({
         largo: initialConfig.largo,
         alto: initialConfig.alto,
         prof: initialConfig.prof,
-        unidad: initialConfig.unidad,
+        unidad: initialConfig.unidad ?? unidadInicial,
         perfilId: initialConfig.perfilId,
         modoFrentes: initialConfig.modoFrentes,
         conHerrajes: initialConfig.conHerrajes,
@@ -131,6 +142,7 @@ export default function CotizacionDetalleClient({
       // recargoId: '',
       margen: '',
       conFondo: true,
+      unidad: unidadInicial,
       materialesInferiores: {
         preset: { ...presetDefault },
         cantoFrentes: frenteBoard?.espesor_mm === 18 ? getCantoMatch('22x1') : '',
@@ -160,6 +172,18 @@ export default function CotizacionDetalleClient({
     actualizarCotizacionAction(cotizacionId, { configDefault: next }).catch(() => {});
   }
 
+  function handleUnidadProyectoChange(unidad: UnidadProyecto) {
+    const unidadAnterior = projectDefaults.unidad ?? unidadInicial;
+    if (unidad === unidadAnterior) return;
+    handleProjectDefaultsChange({
+      ...projectDefaults,
+      unidad,
+      largo: convertirMedidaProyecto(projectDefaults.largo, unidadAnterior, unidad),
+      alto: convertirMedidaProyecto(projectDefaults.alto, unidadAnterior, unidad),
+      prof: convertirMedidaProyecto(projectDefaults.prof, unidadAnterior, unidad),
+    });
+  }
+
   async function handleMargenBlur() {
     await actualizarCotizacionAction(cotizacionId, { configDefault: projectDefaults });
     router.refresh();
@@ -167,9 +191,9 @@ export default function CotizacionDetalleClient({
 
   // Al agregar un mueble, sus materiales y cantos quedan como default del proyecto
   // para que el próximo mueble (incluso en otra pestaña o al día siguiente) arranque con los mismos valores.
-  function handleMaterialesUsados(materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string }) {
+  function handleMaterialesUsados(materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] }) {
     const key = materiales.familia === 'superior' ? 'materialesSuperiores' : 'materialesInferiores';
-    const materialSet = { preset: materiales.preset, cantoFrentes: materiales.cantoFrentes, cantoCaja: materiales.cantoCaja, perfilId: materiales.perfilId };
+    const materialSet = { preset: materiales.preset, cantoFrentes: materiales.cantoFrentes, cantoCaja: materiales.cantoCaja, perfilId: materiales.perfilId, herrajesExcl: materiales.herrajesExcl };
     handleProjectDefaultsChange({
       ...projectDefaults,
       [key]: materialSet,
@@ -243,6 +267,20 @@ export default function CotizacionDetalleClient({
         <label className="flex items-center gap-1.5">
           <input type="checkbox" checked={columnasPrecio.cop} onChange={(e) => setColumnasPrecio((value) => ({ ...value, cop: e.target.checked || !value.usd }))} />
           Pesos colombianos (COP)
+        </label>
+        <span className="h-5 border-l border-slate-300" aria-hidden="true" />
+        <label className="flex items-center gap-2 font-semibold text-slate-700">
+          Unidad de medidas:
+          <select
+            value={projectDefaults.unidad ?? unidadInicial}
+            onChange={(e) => handleUnidadProyectoChange(e.target.value as UnidadProyecto)}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-normal text-slate-700 focus:outline-2 focus:outline-slate-400"
+            aria-label="Unidad de medidas para módulos nuevos"
+          >
+            <option value="in">Pulgadas (in)</option>
+            <option value="cm">Centímetros (cm)</option>
+            <option value="mm">Milímetros (mm)</option>
+          </select>
         </label>
       </div>
 
