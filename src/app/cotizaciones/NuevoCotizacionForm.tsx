@@ -167,17 +167,12 @@ export default function NuevoCotizacionForm({
       <F label="Comprador">
         <input name="comprador_nombre" placeholder="Comprador" className="inp" />
       </F>
-      <div className="grid grid-cols-2 gap-2">
-        <F label="Moneda">
-          <select name="moneda" value={moneda} onChange={(e) => setMoneda(e.target.value as 'USD' | 'COP')} className="inp">
-            <option value="USD">USD</option>
-            <option value="COP">COP</option>
-          </select>
-        </F>
-        <F label="TRM">
-          <input name="trm" type="number" step="any" defaultValue={trmDefault} className="inp" />
-        </F>
-      </div>
+      <F label="Cotizado">
+        <select name="cotizador_por" defaultValue="FIRPLAK" className="inp">
+          <option value="FIRPLAK">FIRPLAK</option>
+          <option value="CEMA">CEMA</option>
+        </select>
+      </F>
 
       <label className="block">
         <span className="block text-xs text-slate-500 mb-1">Sistema de medidas y nomenclatura</span>
@@ -204,6 +199,18 @@ export default function NuevoCotizacionForm({
         </div>
         <span className="mt-1 block text-[11px] text-slate-400">Sin fondo elimina esa pieza y deja la profundidad de la base en Profundidad menos un espesor de caja.</span>
       </fieldset>
+
+      <div className="grid grid-cols-2 gap-2 md:col-start-2">
+        <F label="Moneda">
+          <select name="moneda" value={moneda} onChange={(e) => setMoneda(e.target.value as 'USD' | 'COP')} className="inp">
+            <option value="USD">USD</option>
+            <option value="COP">COP</option>
+          </select>
+        </F>
+        <F label="TRM">
+          <input name="trm" type="number" step="any" defaultValue={trmDefault} className="inp" />
+        </F>
+      </div>
       </section>
 
       {/* ── Materiales globales ── */}

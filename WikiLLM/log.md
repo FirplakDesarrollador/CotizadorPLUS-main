@@ -1,5 +1,9 @@
 # Registro Cronológico (Log)
 
+## [2026-10-04] fix | La barra de acciones de las plantillas CEMA y FIRPLAK permite salto de línea y mantiene visibles Volver, Guardar y Guardar e imprimir / PDF en ventanas angostas.
+
+## [2026-10-04] ingest | Analizado `FPK cotizacion.xlsx` e implementada la plantilla FIRPLAK editable y autoseleccionada al imprimir, con resumen calculado, especificaciones, programación de módulos e imágenes originales; migración 0178 aplicada.
+
 Registro de ingestión, consultas y cambios en la wiki.
 
 ## [2026-07-08] ingest | Inicialización de WikiLLM
@@ -1488,6 +1492,10 @@ Auditoría de 252 referencias, cinco por agrupación cuando existen, contra capt
 ## [2026-10-02] update | Ajustados los márgenes compartidos a 350 px por lado; el Simulador usa una cuadrícula centrada 1:2 para que Configurar módulo sea menor que el panel de resultados.
 
 ## [2026-10-02] update | El detalle interno de Cotizaciones reserva 250 px a cada lado mediante un contenedor centrado específico, con fallback adaptable en pantallas estrechas.
+
+## [2026-10-02] update | Unificados en 250 px los márgenes izquierdo y derecho de todas las pestañas y del detalle de Cotizaciones; el Simulador mantiene columnas centradas 1:2 desde 1400 px de viewport.
+
+## [2026-10-02] update | Retirados únicamente los botones Undo/Redo ubicados junto al nombre del proyecto en el detalle de Cotizaciones; se conserva el resto del encabezado.
 ## [2026-10-02] update | Etiquetas de margen global ponderado con y sin herrajes en cabecera de cotización
 Se actualizó `calcularMargenGlobalProyecto` en `src/lib/module-groups.ts` y `ProyectoHeader.tsx` para exponer ambos márgenes ponderados del proyecto: sin herrajes (`Margen s/H: XX.X%`) y con herrajes (`Margen c/H: XX.X%`), ubicados debajo del nombre del proyecto y en el panel de edición.
 
@@ -1496,4 +1504,24 @@ Se corrigió la propagación del margen configurado en el proyecto a todas las l
 
 ## [2026-10-02] update | Optimización del recálculo global de cotización en lote (batch) y memoización de catálogos
 Se redujo el tiempo de recálculo masivo de un proyecto (~20 módulos) de >15s a ~2.2s: (1) nueva función `cargarCatalogoPrecompilado()` en `cotizar.ts` que precarga en un solo `Promise.all` parámetros, tipos, piezas, reglas, cantos, herrajes y tableros, eliminando ~160 consultas SQL N+1; (2) ejecución concurrente con `Promise.all` para los updates de líneas y recálculo de grupos en `actualizarCotizacion()`; (3) en `ProyectoHeader.tsx` y `CotizacionDetalleClient.tsx`, el input de margen ahora usa estado local desacoplado y solo despacha a Supabase al confirmar (`onBlur` o presionar `Enter`), eliminando re-ejecuciones por cada tecla.
+
+## [2026-10-04] update | Se agregó el selector “Cotizador por” (Firplak/CEMA) al alta de proyectos, se persistió en la cabecera y se mostró entre el nombre y la fecha del listado; Moneda/TRM se desplazó a la fila inferior del formulario.
+
+## [2026-10-04] update | Se renombró la etiqueta “Cotizador por” a “Cotizado” y se normalizó el valor Firplak a `FIRPLAK` en UI, validación, datos existentes, valor por defecto y restricción de base de datos.
+
+## [2026-10-04] update | Aplicadas en Supabase las migraciones 0175/0176: las 11 cotizaciones existentes quedaron con `cotizador_por = FIRPLAK`; se verificaron cero valores vacíos, columna obligatoria y valor predeterminado `FIRPLAK`.
+
+## [2026-10-04] update | El encabezado interno de cada cotización muestra el valor seleccionado en “Cotizado” (`FIRPLAK`/`CEMA`) en lugar del nombre de la constructora.
+
+## [2026-10-04] ingest | Analizada la propuesta `CEMA cotizacion.pdf` de ocho páginas e implementada una plantilla CEMA editable, persistente y seleccionada automáticamente al imprimir cotizaciones marcadas como CEMA; migración 0177 aplicada y build de producción verificado.
+
+## [2026-10-04] fix | El botón “Volver” de la plantilla CEMA navega explícitamente al detalle de la cotización y deja de depender de `history.back()`, que no funcionaba al abrir la impresión en una pestaña nueva.
+
+## [2026-10-04] update | “Imprimir / PDF” abre en la misma pestaña y “Volver” retorna mediante historial al detalle y posición anterior de trabajo, con navegación directa al proyecto como respaldo.
+
+## [2026-10-02] ingest | Implementación del Sistema de Calidad Modular, Trinquete de Deuda (Ratchet) y módulo consultivo quality:learn
+Se diseñó e implementó el sistema de calidad modular: (1) `quality/manifest.json` segmentado en lanes de impacto; (2) `docs/quality/baseline.json` con trinquete de deuda histórica (36 errores lint congelados, 0 de tipos, 4 tests conocidos); (3) comandos `quality:plan`, `quality:impact`, `quality:gate`, `quality:gate:full`, `quality:baseline:update` en `package.json`; (4) módulo consultivo continuo `quality:learn` que audita el `git diff`, telemetría de latencias y recibos `.tmp/quality/last-run.json` detectando brechas de cobertura, mapeo o riesgos arquitectónicos; (5) políticas inviolables de Safe Change integradas en `AGENTS.md`.
+
+## [2026-10-02] ingest | Creación del workflow de calidad /quality y /calidad para automatización de compuertas
+Se crearon los workflows interactivos `.agents/workflows/quality.md` y `.agents/workflows/calidad.md` invocables mediante comandos slash (`/quality` o `/calidad`). Guían el flujo integral de validación: (1) inspección dry-run de impacto con `quality:plan`; (2) compuertas obligatorias `quality:gate` o `quality:gate:full` con exit code 0; (3) diagnóstico de cobertura y riesgos con `quality:learn`; (4) congelamiento de mejoras de deuda con `quality:baseline:update`.
 

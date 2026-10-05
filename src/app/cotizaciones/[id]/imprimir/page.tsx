@@ -1,6 +1,10 @@
 import { notFound } from 'next/navigation';
 import { getCotizacion } from '@/lib/cotizaciones';
 import PrintButton from './PrintButton';
+import CemaPrintEditor, { type CemaScheduleRow } from './CemaPrintEditor';
+import { normalizarCemaTemplate, type CemaTemplate } from '@/lib/cema-template';
+import FirplakPrintEditor, { type FirplakKitchenRow, type FirplakScheduleRow } from './FirplakPrintEditor';
+import { normalizarFirplakTemplate, type FirplakTemplate } from '@/lib/firplak-template';
 
 const fmtCOP = (n: number) => Number(n || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -11,6 +15,52 @@ function precios(l: Linea, trm: number) { const b = l.breakdown ?? {}; const can
 export default async function ImprimirPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params; const query = await searchParams;
   const { cabecera, cocinas } = await getCotizacion(id); if (!cabecera) notFound();
+  if (cabecera.cotizador_por === 'CEMA') {
+    const stored = normalizarCemaTemplate(cabecera.plantilla_cema as Partial<CemaTemplate> | null);
+    const created = new Date(cabecera.created_at);
+    const template: CemaTemplate = {
+      ...stored,
+      quoteReference: stored.quoteReference || cabecera.codigo || id.slice(0, 8).toUpperCase(),
+      proposalDate: stored.proposalDate || created.toISOString().slice(0, 10),
+    };
+    const scheduleMap = new Map<string, CemaScheduleRow>();
+    let kitchens = 0;
+    for (const cocina of cocinas as Cocina[]) {
+      const multiplier = Number(cocina.cantidad ?? 1);
+      kitchens += multiplier;
+      for (const line of cocina.lineas) {
+        const sku = line.codigo_modulo ?? line.pref ?? 'SIN SKU';
+        const current = scheduleMap.get(sku);
+        const quantity = Number(line.cantidad || 0) * multiplier;
+        if (current) current.quantity += quantity;
+        else scheduleMap.set(sku, { sku, description: line.descripcion_es ?? '', quantity });
+      }
+    }
+    return <CemaPrintEditor initialData={{
+      id,
+      projectName: cabecera.nombre || 'Untitled Project',
+      preparedFor: cabecera.cliente_nombre || '—',
+      contact: cabecera.comprador_nombre || '',
+      kitchens,
+      totalUsd: Number(cabecera.total_usd || 0),
+      template,
+      schedule: [...scheduleMap.values()].sort((a, b) => a.sku.localeCompare(b.sku)),
+    }} />;
+  }
+  if (cabecera.cotizador_por === 'FIRPLAK') {
+    const stored = normalizarFirplakTemplate(cabecera.plantilla_firplak as Partial<FirplakTemplate> | null);
+    const template: FirplakTemplate = { ...stored, proposalDate: stored.proposalDate || new Date(cabecera.created_at).toISOString().slice(0, 10) };
+    const scheduleMap = new Map<string, FirplakScheduleRow>();
+    const kitchenRows: FirplakKitchenRow[] = (cocinas as Cocina[]).map((cocina) => {
+      const quantity = Number(cocina.cantidad ?? 1);
+      const unitUsd = cocina.lineas.reduce((sum, line) => { const p=precios(line,Number(cabecera.trm||0)); return sum+p.conUsd*p.cant; },0);
+      for (const line of cocina.lineas) { const sku=line.codigo_modulo??line.pref??'SIN SKU'; const lineQuantity=Number(line.cantidad||0)*quantity; const current=scheduleMap.get(sku); if(current) current.quantity+=lineQuantity; else scheduleMap.set(sku,{sku,description:line.descripcion_es??'',quantity:lineQuantity}); }
+      return { name:cocina.nombre, quantity, unitUsd, totalUsd:unitUsd*quantity };
+    });
+    const config = (cabecera.config_default ?? {}) as Record<string, unknown>;
+    const projectMaterials = Object.entries(config).filter(([,v])=>typeof v==='string' || typeof v==='number').slice(0,16).map(([k,v])=>`${k}: ${String(v)}`).join('\n');
+    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||'Proyecto sin nombre', builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:cabecera.codigo||id.slice(0,8).toUpperCase(), totalUsd:kitchenRows.reduce((sum,row)=>sum+row.totalUsd,0), template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), projectMaterials }} />;
+  }
   const mostrarSin = query.sinHerrajes !== '0'; const mostrarCon = query.conHerrajes !== '0'; const mostrarUsd = query.usd !== '0'; const mostrarCop = query.cop !== '0'; const trm = Number(cabecera.trm || 0);
   const proyecto = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 };
   const cocinasCalculadas = (cocinas as Cocina[]).map((c) => { const sub = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 }; c.lineas.forEach((l) => { const p = precios(l, trm); sub.sinUsd += p.sinUsd * p.cant; sub.sinCop += p.sinCop * p.cant; sub.conUsd += p.conUsd * p.cant; sub.conCop += p.conCop * p.cant; }); const mult = Number(c.cantidad ?? 1); proyecto.sinUsd += sub.sinUsd * mult; proyecto.sinCop += sub.sinCop * mult; proyecto.conUsd += sub.conUsd * mult; proyecto.conCop += sub.conCop * mult; return { c, sub, mult }; });

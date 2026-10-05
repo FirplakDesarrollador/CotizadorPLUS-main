@@ -6,10 +6,12 @@ import {
   distribuirResiduoMoneda, redondearMoneda, precioUnitario,
   type SistemaMedida,
 } from '@/lib/module-groups';
+import type { CemaTemplate } from '@/lib/cema-template';
+import type { FirplakTemplate } from '@/lib/firplak-template';
 
 export type CotizacionHeader = {
   id: string; codigo: string | null; nombre: string | null;
-  cliente_nombre: string | null; comprador_nombre: string | null; moneda: string; trm: number; estado: string;
+  cliente_nombre: string | null; comprador_nombre: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string;
   sistema_medida: SistemaMedida;
   total_cop: number; total_usd: number; created_at: string;
 };
@@ -26,7 +28,7 @@ export type CotizacionVersion = {
 export async function listarCotizaciones(): Promise<CotizacionHeader[]> {
   const sb = await createClient();
   const { data } = await sb.from('cot_cotizaciones')
-    .select('id,codigo,nombre,cliente_nombre,comprador_nombre,moneda,trm,estado,total_cop,total_usd,created_at')
+    .select('id,codigo,nombre,cliente_nombre,comprador_nombre,cotizador_por,moneda,trm,estado,total_cop,total_usd,created_at')
     .order('created_at', { ascending: false });
   return (data ?? []) as CotizacionHeader[];
 }
@@ -94,7 +96,7 @@ export async function getCotizacion(id: string) {
   return { cabecera: cab, cocinas: cocinasConLineas, lineasSinCocina: lineasByCocina['sin'] ?? [] };
 }
 
-export async function crearCotizacion(input: { nombre: string; cliente_nombre?: string; comprador_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; sistema_medida?: SistemaMedida; configDefault?: Record<string, unknown> | null }) {
+export async function crearCotizacion(input: { nombre: string; cliente_nombre?: string; comprador_nombre?: string; cotizador_por?: 'FIRPLAK' | 'CEMA'; moneda?: 'COP' | 'USD'; trm?: number; sistema_medida?: SistemaMedida; configDefault?: Record<string, unknown> | null }) {
   const sb = await createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) throw new Error('No autenticado');
@@ -102,6 +104,7 @@ export async function crearCotizacion(input: { nombre: string; cliente_nombre?: 
     nombre: input.nombre,
     cliente_nombre: input.cliente_nombre || null,
     comprador_nombre: input.comprador_nombre || null,
+    cotizador_por: input.cotizador_por ?? 'FIRPLAK',
     moneda: input.moneda ?? 'USD',
     trm: input.trm ?? 4200,
     sistema_medida: input.sistema_medida ?? 'imperial',
@@ -565,7 +568,7 @@ export async function reordenarGruposCocina(cocinaId: string, nuevosGrupoIds: st
 
 
 
-export async function actualizarCotizacion(id: string, patch: { nombre?: string; cliente_nombre?: string; comprador_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }) {
+export async function actualizarCotizacion(id: string, patch: { nombre?: string; cliente_nombre?: string; comprador_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null; plantillaCema?: CemaTemplate; plantillaFirplak?: FirplakTemplate }) {
   const sb = await createClient();
   if (patch.trm !== undefined && (!Number.isFinite(Number(patch.trm)) || Number(patch.trm) <= 0)) throw new Error('La TRM debe ser mayor que cero.');
 
@@ -591,6 +594,8 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
   if (patch.trm !== undefined) upd.trm = patch.trm;
   if (patch.estado !== undefined) upd.estado = patch.estado;
   if (patch.configDefault !== undefined) upd.config_default = patch.configDefault;
+  if (patch.plantillaCema !== undefined) upd.plantilla_cema = patch.plantillaCema;
+  if (patch.plantillaFirplak !== undefined) upd.plantilla_firplak = patch.plantillaFirplak;
   const { error } = await sb.from('cot_cotizaciones').update(upd).eq('id', id);
   if (error) throw new Error(error.message);
 
