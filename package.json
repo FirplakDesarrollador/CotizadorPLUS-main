@@ -7,7 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:groups": "tsx --test tests/module-groups.test.ts tests/group-engine.test.ts tests/group-result.test.ts"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx scripts/quality/gate.ts --only-impact",
+    "test:all": "tsx --test tests/*.test.ts",
+    "test:groups": "tsx --test tests/module-groups.test.ts tests/group-engine.test.ts tests/group-result.test.ts",
+    "quality:plan": "tsx scripts/quality/plan.ts",
+    "quality:impact": "tsx scripts/quality/gate.ts --only-impact",
+    "quality:gate": "tsx scripts/quality/gate.ts",
+    "quality:gate:full": "tsx scripts/quality/gate.ts --full",
+    "quality:baseline:update": "tsx scripts/quality/baseline-update.ts",
+    "quality:learn": "tsx scripts/quality/learn.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

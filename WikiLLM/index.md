@@ -12,6 +12,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Sistema de Undo/Redo](wiki/sistema_undo_redo.md) - Historial temporal de estados, captura de atajos de teclado y notificaciones.
 - [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes manuales, inmutables, nombre obligatorio, orden cronológico y restauración transaccional limpia sin respaldos automáticos.
 - [Plantilla de propuesta CEMA](wiki/plantilla_propuesta_cema.md) - Selección automática, campos precargados/editables, persistencia y composición imprimible basada en la propuesta comercial CEMA.
+- [Sistema de Calidad y Trinquete (Ratchet)](wiki/sistema_calidad_ratchet.md) - Sistema de calidad modular basado en impacto (lanes), compuerta de trinquete de deuda (Ratchet) y módulo consultivo continuo quality:learn.
 
 ## Infraestructura de Datos
 - [Esquema de Base de Datos](wiki/esquema_base_datos.md) - Tablas, políticas, comprador y configuración persistente de cotizaciones en Supabase.

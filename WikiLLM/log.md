@@ -1519,3 +1519,9 @@ Se redujo el tiempo de recálculo masivo de un proyecto (~20 módulos) de >15s a
 
 ## [2026-10-04] update | “Imprimir / PDF” abre en la misma pestaña y “Volver” retorna mediante historial al detalle y posición anterior de trabajo, con navegación directa al proyecto como respaldo.
 
+## [2026-10-02] ingest | Implementación del Sistema de Calidad Modular, Trinquete de Deuda (Ratchet) y módulo consultivo quality:learn
+Se diseñó e implementó el sistema de calidad modular: (1) `quality/manifest.json` segmentado en lanes de impacto; (2) `docs/quality/baseline.json` con trinquete de deuda histórica (36 errores lint congelados, 0 de tipos, 4 tests conocidos); (3) comandos `quality:plan`, `quality:impact`, `quality:gate`, `quality:gate:full`, `quality:baseline:update` en `package.json`; (4) módulo consultivo continuo `quality:learn` que audita el `git diff`, telemetría de latencias y recibos `.tmp/quality/last-run.json` detectando brechas de cobertura, mapeo o riesgos arquitectónicos; (5) políticas inviolables de Safe Change integradas en `AGENTS.md`.
+
+## [2026-10-02] ingest | Creación del workflow de calidad /quality y /calidad para automatización de compuertas
+Se crearon los workflows interactivos `.agents/workflows/quality.md` y `.agents/workflows/calidad.md` invocables mediante comandos slash (`/quality` o `/calidad`). Guían el flujo integral de validación: (1) inspección dry-run de impacto con `quality:plan`; (2) compuertas obligatorias `quality:gate` o `quality:gate:full` con exit code 0; (3) diagnóstico de cobertura y riesgos con `quality:learn`; (4) congelamiento de mejoras de deuda con `quality:baseline:update`.
+

@@ -58,3 +58,31 @@ Este flujo de trabajo define los pasos exactos a seguir para garantizar que la b
 - Comprobar que todas las referencias cruzadas entre páginas usen rutas relativas adecuadas.
 - Validar que el formato se mantenga técnico, conciso y libre de fragmentos excesivamente grandes de código puro (a menos que sean esenciales para explicar un patrón).
 
+---
+
+# Sistema de Calidad Modular, Trinquete de Deuda y Safe Change
+
+El repositorio cuenta con un sistema de calidad basado en impacto, trinquete de deuda histórica (*Ratchet*) y auditoría consultiva continua.
+
+### 1. Comandos Operativos Obligatorios
+- `npm run quality:plan`: Inspecciona el `git diff` e imprime las capacidades/lanes afectados y pruebas requeridas (dry-run, costo 0).
+- `npm run quality:impact`: Ejecuta únicamente las pruebas unitarias/integración de los lanes modificados.
+- `npm run quality:gate`: Valida el impacto + trinquete de TypeScript, ESLint y pruebas unitarias. Debe terminar con **exit code 0** antes de cualquier commit, PR o entrega.
+- `npm run quality:gate:full`: Suite exhaustiva para releases y CI.
+- `npm run quality:baseline:update`: Asienta y congela mejoras cuando se reduce deuda técnica histórica.
+- `npm run quality:learn`: Auditoría consultiva post-ejecución que identifica brechas de cobertura, mapeo, riesgos de latencia y arquitectura.
+
+### 2. Reglas Inviolables de Gobernanza para Agentes (Safe Change)
+1. **Planificar Primero**: Ejecuta siempre `npm run quality:plan` antes de correr comandos costosos o entregar código.
+2. **Prohibido Relajar Aserciones o Saltar Pruebas**:
+   - Queda estrictamente prohibido usar `.skip`, comentar pruebas o debilitar aserciones para forzar el paso de un test.
+   - Si un test falla debido a una regresión, se debe corregir el código productivo, no la prueba.
+3. **Inviolabilidad de la Línea Base (Trinquete / Ratchet)**:
+   - `docs/quality/baseline.json` congela la deuda histórica permitida.
+   - Ningún agente o desarrollador puede incrementar el número de errores de linter, tipos o tests fallidos. La deuda solo puede bajar, jamás subir.
+   - Solo se ejecutará `quality:baseline:update` para registrar disminuciones verificadas de deuda.
+4. **Gobernanza de `quality:learn`**:
+   - **Estrictamente consultivo**: NUNCA debe modificar automáticamente pruebas, baselines, mapas ni código de producción.
+   - **Criterio de resolución**: Ninguna tarea de desarrollo se considerará terminada si existen hallazgos de severidad `HIGH` sin resolver (creando la prueba correspondiente) o sin justificación técnica documentada.
+
+

@@ -53,3 +53,7 @@ next-env.d.ts
 # Python (scripts de análisis)
 __pycache__/
 *.pyc
+
+# Quality system temporary files
+/.tmp/
+
