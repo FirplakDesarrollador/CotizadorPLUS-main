@@ -18,24 +18,24 @@ El control se alinea explícitamente con el extremo derecho del contenedor y el
 panel se ancla por su borde derecho para desplegarse hacia la izquierda sin
 salirse de la ventana.
 Las vistas principales de Simulador, Cotizaciones, Materiales-Parámetros,
-Diseño, HDR y Manual comparten la clase `cotizador-tab-content`. En ventanas
-mayores de 700 px reserva 350 px a cada lado mediante un ancho calculado; en
-ventanas de hasta 700 px conserva 16 px por lado para que el contenido siga
-siendo accesible.
+Diseño, HDR y Manual comparten la clase `cotizador-tab-content`. Tanto estas
+vistas como el detalle de Cotizaciones reservan 250 px a cada lado mediante un
+ancho calculado y centrado automático; en ventanas de hasta 500 px conservan
+16 px por lado para que el contenido siga siendo accesible.
 El Simulador distribuye su contenido principal en una proporción 1:2: el panel
 `Configurar módulo` ocupa un tercio y los resultados de precio dos tercios. Si
 la ventana no ofrece suficiente espacio, ambos paneles se apilan centrados.
 
 En el detalle de una cotización, el resumen de `ProyectoHeader` no contiene un
-enlace `editar`. Debajo del resumen y antes de las acciones de exportación se
+enlace `editar` ni controles Undo/Redo junto al nombre. Debajo del resumen y antes de las acciones de exportación se
 muestra el control plegable **CARACTERÍSTICAS DEL PROYECTO**. Al desplegarlo,
 un segundo `ProyectoHeader` en modo `editing` presenta los datos de cabecera y
 compone `ProjectConfigPanel` para perfil, materiales inferiores y superiores y
 cantos. Al cerrarlo, el listado de muebles sigue visible sin ocupar
 espacio adicional.
-El contenedor del detalle usa `cotizacion-detail-content`, que reserva 250 px
-a izquierda y derecha y centra el encabezado, las características y las cajas
-de cocinas. En ventanas de hasta 500 px conserva 16 px por lado.
+El contenedor del detalle usa `cotizacion-detail-content`, con la misma medida
+centrada de 250 px por lado que las demás pestañas, para alinear encabezado,
+características y cajas de cocinas.
 
 La misma franja muestra un selector global de unidad `in/cm/mm`. El valor se
 guarda en `cot_cotizaciones.config_default.unidad` y lo heredan los formularios

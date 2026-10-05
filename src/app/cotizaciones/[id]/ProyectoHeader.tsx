@@ -3,12 +3,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { actualizarCotizacionAction } from '../actions';
-import UndoRedoButtons from '@/components/UndoRedoButtons';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida?: 'imperial' | 'metrico' };
+type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida?: 'imperial' | 'metrico' };
 
 export default function ProyectoHeader({
   cab,
@@ -140,10 +139,9 @@ export default function ProyectoHeader({
         <Link href="/cotizaciones" className="text-sm text-slate-500 hover:underline">← Cotizaciones</Link>
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-slate-900">{cab.nombre || 'Proyecto sin nombre'}</h1>
-          <UndoRedoButtons />
         </div>
         <p className="text-sm text-slate-500 flex flex-wrap items-center gap-1.5 mt-1">
-          <span>{cab.cliente_nombre || 'Sin constructora'}</span>
+          <span>{cab.cotizador_por}</span>
           {cab.comprador_nombre ? <span>· Comprador: {cab.comprador_nombre}</span> : null}
           <span>·</span>
           <span>TRM {Number(cab.trm).toLocaleString('es-CO')}</span>
