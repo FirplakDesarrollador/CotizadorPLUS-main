@@ -1,5 +1,9 @@
 # Registro Cronológico (Log)
 
+## [2026-10-04] fix | La barra de acciones de las plantillas CEMA y FIRPLAK permite salto de línea y mantiene visibles Volver, Guardar y Guardar e imprimir / PDF en ventanas angostas.
+
+## [2026-10-04] ingest | Analizado `FPK cotizacion.xlsx` e implementada la plantilla FIRPLAK editable y autoseleccionada al imprimir, con resumen calculado, especificaciones, programación de módulos e imágenes originales; migración 0178 aplicada.
+
 Registro de ingestión, consultas y cambios en la wiki.
 
 ## [2026-07-08] ingest | Inicialización de WikiLLM
@@ -1447,6 +1451,51 @@ Auditoría de 252 referencias, cinco por agrupación cuando existen, contra capt
 
 ## [2026-10-02] update | Los buscadores de tableros ahora indexan explícitamente `color_nombre` de Materiales-Parámetros, con búsqueda insensible a mayúsculas y tildes; términos como `constructor` encuentran los tableros Primadera asociados.
 
+## [2026-10-02] update | Normalizados los traseros de gaveta de la familia DB-SM Tandem: eliminadas las filas genéricas y el remanente incorrecto de 68 mm en DB-2-SM/DB-3-SM; 68 mm usa `trasero_gaveta_pequena` y 183 mm usa `trasero_gaveta_grande`, con cantidades 2S, 2 y 3 según la tipología. Las variantes FE conservan sus reglas propias.
+
+## [2026-10-02] update | Agregado el selector global de unidad `in/cm/mm` en Características del proyecto de Cotizaciones. La elección se persiste en `config_default`, convierte las dimensiones predeterminadas y se hereda automáticamente en todos los módulos nuevos sin modificar líneas existentes.
+
+## [2026-10-02] update | El alta de cotizaciones ahora separa Constructora y Comprador, elimina la captura inicial de margen y permite activar o excluir individualmente herrajes globales para módulos inferiores B/V y superiores W/TW. La selección se hereda por familia; `comprador_nombre` fue agregado y aplicado en Supabase.
+
+## [2026-10-02] update | Reemplazado el logo de FIRPLAK en los encabezados HDR por `Logo-Firplak-Positivo.png`. Se conserva el espacio visual anterior de 193×48 px y se ajusta el nuevo lienzo con cobertura centrada para retirar visualmente su margen transparente sin deformar la marca.
+
+## [2026-10-02] update | Reorganizado el encabezado global: logo FIRPLAK externo a la izquierda, nombre Cotizador PLUS completo con versión inferior, navegación central y menú accesible de usuario con correo, rol y cierre de sesión. Retirados Undo/Redo del encabezado global.
+
+## [2026-10-02] update | Corregida la visibilidad del logo y del icono de usuario en el encabezado. La versión ahora ocupa solo el ancho de sus caracteres, comparte el color del nombre y no usa borde ni fondo resaltado.
+
+## [2026-10-02] update | El encabezado adopta una cuadrícula de tres zonas para mantener centrados Cotizador PLUS, versión y menús, sin desplazar el logo ni el usuario fuera del viewport. El logo usa carga estática directa y el botón de usuario dimensiones/colores explícitos para garantizar su visibilidad.
+
+## [2026-10-02] update | Retirado el logo del encabezado global. Cotizador PLUS y su versión ocupan ahora la columna izquierda, la navegación permanece centrada y la información de usuario se despliega desde un botón hamburguesa a la derecha.
+
+## [2026-10-02] update | Corregido el apilamiento vertical del encabezado mediante columnas CSS explícitas. Marca, navegación y usuario quedan alineados arriba en una franja compacta; nombre y versión aumentan 2 px y el botón hamburguesa adopta el color de la marca.
+
+## [2026-10-02] update | Reorganizada la pantalla de Cotizaciones: el formulario de nuevo proyecto ocupa arriba todo el ancho con campos horizontales y materiales inferiores/superiores en paralelo; la lista de cotizaciones queda debajo, separada por espacio y divisor visual.
+
+## [2026-10-02] update | Ampliado aproximadamente 10 % el ancho útil de la pantalla de Cotizaciones (1152 a 1280 px), reduciendo los márgenes laterales y dando más espacio al formulario y al listado.
+
+## [2026-10-02] update | Ajustado el ancho máximo de la pantalla de Cotizaciones de 1280 a 1200 px, tanto para las acciones superiores como para el contenido principal.
+
+## [2026-10-02] update | Nuevo proyecto y cotizaciones existentes vuelven a compartir la misma fila en proporción 50/50: formulario a la izquierda y listado a la derecha, con divisor vertical y tabla desplazable para conservar la legibilidad.
+
+## [2026-10-02] update | Fijada la distribución 50/50 de Cotizaciones con CSS explícito para evitar que una variante responsiva de Tailwind en caché impida reflejar el cambio. También se fijaron divisor y ancho mínimo de tabla.
+
+## [2026-10-02] update | Materiales globales del alta de proyectos distribuye módulos inferiores B/V y superiores W/TW lado a lado en dos columnas CSS de igual proporción.
+
+## [2026-10-02] update | El menú de usuario del encabezado deja de abrirse por hover: ahora usa un desplegable nativo activado por clic y el control muestra explícitamente `User`.
+
+## [2026-10-02] update | El control `User` se fija al extremo derecho del encabezado y su panel se ancla por la derecha para desplegar toda la información hacia la izquierda.
+
+## [2026-10-02] update | Unificado en 1280 px el ancho máximo de las vistas principales de Simulador, Cotizaciones, Materiales-Parámetros, Diseño, HDR y Manual para reducir moderadamente sus márgenes laterales.
+
+## [2026-10-02] update | Las seis pestañas principales reservan 700 px de margen a izquierda y derecha en ventanas mayores de 1400 px mediante la clase compartida `cotizador-tab-content`, con fallback adaptable en ventanas menores.
+
+## [2026-10-02] update | Ajustados los márgenes compartidos a 350 px por lado; el Simulador usa una cuadrícula centrada 1:2 para que Configurar módulo sea menor que el panel de resultados.
+
+## [2026-10-02] update | El detalle interno de Cotizaciones reserva 250 px a cada lado mediante un contenedor centrado específico, con fallback adaptable en pantallas estrechas.
+
+## [2026-10-02] update | Unificados en 250 px los márgenes izquierdo y derecho de todas las pestañas y del detalle de Cotizaciones; el Simulador mantiene columnas centradas 1:2 desde 1400 px de viewport.
+
+## [2026-10-02] update | Retirados únicamente los botones Undo/Redo ubicados junto al nombre del proyecto en el detalle de Cotizaciones; se conserva el resto del encabezado.
 ## [2026-10-02] update | Etiquetas de margen global ponderado con y sin herrajes en cabecera de cotización
 Se actualizó `calcularMargenGlobalProyecto` en `src/lib/module-groups.ts` y `ProyectoHeader.tsx` para exponer ambos márgenes ponderados del proyecto: sin herrajes (`Margen s/H: XX.X%`) y con herrajes (`Margen c/H: XX.X%`), ubicados debajo del nombre del proyecto y en el panel de edición.
 
@@ -1456,13 +1505,33 @@ Se corrigió la propagación del margen configurado en el proyecto a todas las l
 ## [2026-10-02] update | Optimización del recálculo global de cotización en lote (batch) y memoización de catálogos
 Se redujo el tiempo de recálculo masivo de un proyecto (~20 módulos) de >15s a ~2.2s: (1) nueva función `cargarCatalogoPrecompilado()` en `cotizar.ts` que precarga en un solo `Promise.all` parámetros, tipos, piezas, reglas, cantos, herrajes y tableros, eliminando ~160 consultas SQL N+1; (2) ejecución concurrente con `Promise.all` para los updates de líneas y recálculo de grupos en `actualizarCotizacion()`; (3) en `ProyectoHeader.tsx` y `CotizacionDetalleClient.tsx`, el input de margen ahora usa estado local desacoplado y solo despacha a Supabase al confirmar (`onBlur` o presionar `Enter`), eliminando re-ejecuciones por cada tecla.
 
+## [2026-10-04] update | Se agregó el selector “Cotizador por” (Firplak/CEMA) al alta de proyectos, se persistió en la cabecera y se mostró entre el nombre y la fecha del listado; Moneda/TRM se desplazó a la fila inferior del formulario.
+
+## [2026-10-04] update | Se renombró la etiqueta “Cotizador por” a “Cotizado” y se normalizó el valor Firplak a `FIRPLAK` en UI, validación, datos existentes, valor por defecto y restricción de base de datos.
+
+## [2026-10-04] update | Aplicadas en Supabase las migraciones 0175/0176: las 11 cotizaciones existentes quedaron con `cotizador_por = FIRPLAK`; se verificaron cero valores vacíos, columna obligatoria y valor predeterminado `FIRPLAK`.
+
+## [2026-10-04] update | El encabezado interno de cada cotización muestra el valor seleccionado en “Cotizado” (`FIRPLAK`/`CEMA`) en lugar del nombre de la constructora.
+
+## [2026-10-04] ingest | Analizada la propuesta `CEMA cotizacion.pdf` de ocho páginas e implementada una plantilla CEMA editable, persistente y seleccionada automáticamente al imprimir cotizaciones marcadas como CEMA; migración 0177 aplicada y build de producción verificado.
+
+## [2026-10-04] fix | El botón “Volver” de la plantilla CEMA navega explícitamente al detalle de la cotización y deja de depender de `history.back()`, que no funcionaba al abrir la impresión en una pestaña nueva.
+
+## [2026-10-04] update | “Imprimir / PDF” abre en la misma pestaña y “Volver” retorna mediante historial al detalle y posición anterior de trabajo, con navegación directa al proyecto como respaldo.
+
+## [2026-10-02] ingest | Implementación del Sistema de Calidad Modular, Trinquete de Deuda (Ratchet) y módulo consultivo quality:learn
+Se diseñó e implementó el sistema de calidad modular: (1) `quality/manifest.json` segmentado en lanes de impacto; (2) `docs/quality/baseline.json` con trinquete de deuda histórica (36 errores lint congelados, 0 de tipos, 4 tests conocidos); (3) comandos `quality:plan`, `quality:impact`, `quality:gate`, `quality:gate:full`, `quality:baseline:update` en `package.json`; (4) módulo consultivo continuo `quality:learn` que audita el `git diff`, telemetría de latencias y recibos `.tmp/quality/last-run.json` detectando brechas de cobertura, mapeo o riesgos arquitectónicos; (5) políticas inviolables de Safe Change integradas en `AGENTS.md`.
+
+## [2026-10-02] ingest | Creación del workflow de calidad /quality y /calidad para automatización de compuertas
+Se crearon los workflows interactivos `.agents/workflows/quality.md` y `.agents/workflows/calidad.md` invocables mediante comandos slash (`/quality` o `/calidad`). Guían el flujo integral de validación: (1) inspección dry-run de impacto con `quality:plan`; (2) compuertas obligatorias `quality:gate` o `quality:gate:full` con exit code 0; (3) diagnóstico de cobertura y riesgos con `quality:learn`; (4) congelamiento de mejoras de deuda con `quality:baseline:update`.
+
 ## [2026-10-02] fix | Integracion de DEV: fixture resincronizado y tres regresiones reales del catalogo
 
 Fast-forward de `Andrés` a `origin/DEV` (12 commits de LizPalacio31, migraciones 0124-0172). Sin conflictos: la rama venia de un reset a `LIz`, asi que no habia nada propio que mezclar. `origin/LIz` esta contenido en `DEV`, de modo que esto trae ambas.
 
 **El fixture llevaba mucho sin regenerarse y eso ocultaba fallos.** Estaba en 62 tipos / 459 piezas / 84 reglas / 48 tableros cuando la base real tiene **81 / 650 / 311 / 104**. Regenerado desde la base: 22 tipos nuevos (`BMW-1`, `BOMH-1`, `TW-SM-PUSH`, la familia `DB-*-SM`, `W-SM*`, `BBLFD-D-L/R-SM`, `WBL-D-L/R-SM`...) y 3 de baja (`BMW`, `BOMH` y `FL`, reemplazados o eliminados). Al refrescarlo aparecieron 8 fallos que el archivo congelado tapaba, sumados a los 4 que `DEV` ya traia en rojo.
 
-**Regresion real 1 — `0171` perdio la gaveta oculta.** `0171_db_normalizar_nombres_traseros_gaveta.sql` borro la plantilla generica `trasero_gaveta` y parametrizo las cantidades, pero al reescribir las formulas **se dejo la rama `n_cajones_ocultos`**. Efecto: un DB2-1OP pasaba a dar 0 traseros pequenos en vez de 2, y `n_cajones` grandes en vez de 1 — el despiece quedaba sin los traseros de la gaveta oculta. Corregido con `0173`, aditiva: antepone la rama de ocultos y conserva intacta la logica que `0171` introdujo para DB-4 y para las mixtas DB-1S/2S. Ya aplicada en Supabase, con dos `raise` que verifican el resultado.
+**Regresion real 1 — `0171` perdio la gaveta oculta.** `0171_db_normalizar_nombres_traseros_gaveta.sql` borro la plantilla generica `trasero_gaveta` y parametrizo las cantidades, pero al reescribir las formulas **se dejo la rama `n_cajones_ocultos`**. Efecto: un DB2-1OP pasaba a dar 0 traseros pequenos en vez de 2, y `n_cajones` grandes en vez de 1 — el despiece quedaba sin los traseros de la gaveta oculta. Corregido con `0179` (escrita como `0173` y renumerada al integrar DEV, que traia su propia 0173), aditiva: antepone la rama de ocultos y conserva intacta la logica que `0171` introdujo para DB-4 y para las mixtas DB-1S/2S. Ya aplicada en Supabase, con dos `raise` que verifican el resultado.
 
 **Regresion real 2 — `visualizacion.ts` sigue detras de `group-engine.ts`.** Es la misma de la integracion anterior, que un reset de rama se llevo: el motor fusiona las piezas `continua_opcional` pero la visualizacion solo miraba `continua`, asi que una opcional fusionada llegaba con la cantidad prorrateada (0,5 por modulo) y se descartaba por fraccionaria. Reaplicada la correccion via `group.piezasContinuas`.
 
@@ -1508,3 +1577,21 @@ Correccion del `try/catch` que el release `v1.0.3` (`b8cb75c`) introdujo en `src
 **Deuda anotada.** El privilegio sigue sin verse en el sitio de llamada: `createClient()` puede devolver un cliente elevado y quien la invoca no lo distingue. Lo limpio seria exportar dos funciones y que cada llamador declare lo que necesita, pero obliga a revisar los 17 consumidores uno por uno. Este cambio cierra la via accidental, no rediseña la API.
 
 222/222 tests, typecheck, lint y build limpios. Documentado en [clientes_supabase_rls.md](wiki/clientes_supabase_rls.md).
+
+## [2026-10-05] fix | Integracion de DEV: conflicto de tests resuelto contra el catalogo real y compuerta de calidad en verde
+
+Merge de `origin/DEV` (8 commits: plantillas CEMA/FIRPLAK y selector "Cotizado" de LizPalacio31, sistema de calidad modular de isazaale, migraciones 0173-0178). Tres conflictos: `WikiLLM/index.md`, `WikiLLM/log.md` y `tests/visualizacion.test.ts`.
+
+**El conflicto que importaba.** Ambas ramas habian arreglado el mismo problema —la plantilla generica `DB.trasero_gaveta` que `0171` borro— por caminos opuestos. `DEV` seguia filtrando los traseros `pequena`/`grande` y renombraba la **generica** a `trasero_gaveta_grande`; esta rama habia quitado el filtro para que el catalogo los aportara. Verificado contra la base: **la generica no existe**, asi que la version de `DEV` lanzaria (`find(...)!` sobre `undefined`) y solo pasa contra su fixture congelado. Se conserva la resolucion de esta rama y la redaccion del mensaje de `DEV`.
+
+**Mi migracion renumerada.** `DEV` traia su propia `0173` (`db_sm_normalizar_nombres_traseros_gaveta`), asi que la mia pasa a **`0179`**. Es solo el numero: ya estaba aplicada en Supabase y su contenido no cambia.
+
+**Falsa alarma verificada, no corregida a ciegas.** La `0173` de `DEV` quita la rama `n_cajones_ocultos` de los traseros de `DB-2S-SM`, el mismo patron del defecto que `0179` repara en `DB`. Pero **aqui no es defecto**: la migracion que creo la tipologia (`0093`) fija `n_cajones_ocultos = 0` con la nota "Sin gavetas ocultas", de modo que quitarla es coherente con su diseno. Las piezas `frente_gaveta_exterior`/`frente_gaveta_interior` que aun ramifican sobre esa variable son clones inertes de la plantilla `DB`. Se deja constancia para no volver a levantar la alarma.
+
+**La compuerta de calidad que trae DEV pasa, y mejora el baseline.** `npm test` ahora apunta a `scripts/quality/gate.ts`. La corrida completa da **exit 0** y reporta que **los 4 tests que el baseline listaba como fallos conocidos ahora pasan** — son exactamente los que esta rama arreglo en la integracion anterior: `bloquea incompatibilidades`, `normaliza a 80 mm`, `B-FE: visualizacion` y `superiores aplican la regla de entrepanos`. Se ejecuto `quality:baseline:update`, que vacia `knownFailingTests` y aprieta `maxFailingTests` de **4 a 0**, de modo que esos cuatro no pueden volver a romperse en silencio.
+
+El trinquete deja los **36 errores de lint** del release v1.0.3 en el baseline (`maxLintErrors: 36`), que es por lo que la compuerta aprueba pese a ellos. Siguen pendientes y siguen siendo ajenos a este trabajo. Las advertencias suben de 13 a 17: las cuatro nuevas estan todas en `FirplakPrintEditor.tsx`, archivo nuevo de `DEV`.
+
+Migraciones `0173`-`0178` de `DEV` verificadas como aplicadas en Supabase (columnas `comprador_nombre`, `cotizador_por`, `plantilla_cema`, `plantilla_firplak`, y cero traseros genericos en la familia DB-SM). Fixture resincronizado: 81 tipos / 650 piezas / 311 reglas / 104 tableros, con solo dos valores de deriva.
+
+222/222 tests, typecheck, build y compuerta de calidad limpios.

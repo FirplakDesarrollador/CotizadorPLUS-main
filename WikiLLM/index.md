@@ -7,13 +7,15 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
-- [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, cálculo grupal y recálculo masivo por lotes con precarga de catálogo (`engine.ts` y `cotizar.ts`).
-- [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, estado Zustand, edición flexible de dimensiones y búsqueda de tableros por color.
+- [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles, soportes por entrepaño, cálculo grupal y recálculo masivo por lotes con precarga de catálogo (`engine.ts` y `cotizar.ts`).
+- [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, encabezado y menú de usuario, Zustand, cotizaciones con constructora/comprador, materiales, herrajes, unidades, dimensiones y búsqueda por color.
 - [Sistema de Undo/Redo](wiki/sistema_undo_redo.md) - Historial temporal de estados, captura de atajos de teclado y notificaciones.
 - [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes manuales, inmutables, nombre obligatorio, orden cronológico y restauración transaccional limpia sin respaldos automáticos.
+- [Plantilla de propuesta CEMA](wiki/plantilla_propuesta_cema.md) - Selección automática, campos precargados/editables, persistencia y composición imprimible basada en la propuesta comercial CEMA.
+- [Sistema de Calidad y Trinquete (Ratchet)](wiki/sistema_calidad_ratchet.md) - Sistema de calidad modular basado en impacto (lanes), compuerta de trinquete de deuda (Ratchet) y módulo consultivo continuo quality:learn.
 
 ## Infraestructura de Datos
-- [Esquema de Base de Datos](wiki/esquema_base_datos.md) - Estructura de tablas y políticas en Supabase (prefijo `cot_`).
+- [Esquema de Base de Datos](wiki/esquema_base_datos.md) - Tablas, políticas, comprador y configuración persistente de cotizaciones en Supabase.
 - [Clientes de Supabase y la frontera de RLS](wiki/clientes_supabase_rls.md) - Cuándo `createClient()` respeta RLS y cuándo devuelve el cliente elevado; el `catch` demasiado ancho de v1.0.3 y su corrección.
 - [Rieles de Cajón DB](wiki/rieles_db.md) - Catálogo de tipos de riel para muebles DB, mecanismo de override y archivos modificados.
 - [Cajoneras DB con gavetas mixtas](wiki/db_gavetas_mixtas.md) - Normalización de traseros por medida (`pequena` 68 mm / `grande` 183 mm) para DB-1S, DB-2S, DB-2, DB-3 y DB-4; incluye `DB2-1OP`, frentes y variables de configuración.
@@ -45,6 +47,8 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Patron para integrar nuevas tipologias](wiki/patron_integracion_tipologias.md) - Protocolo permanente basado en `B-FE`: crear tipos independientes desde hojas reales, validar geometria/precio, respetar codigos comerciales y documentar migraciones.
 - [Visualización y agrupación de familias FE](wiki/visualizacion_familias_fe.md) - Corrección geométrica 3D (fondo de gaveta, frentes mixtos y cajón superior) y homologación continua para B-FE, UB-FE y V-FE.
 
+- [Plantilla de propuesta FIRPLAK](wiki/plantilla_propuesta_firplak.md) - Selección automática, datos de cotización, campos editables, imágenes originales y documento imprimible FIRPLAK.
+
 ## Entorno de Desarrollo
 - [Dependencias del Proyecto](wiki/dependencias_proyecto.md) - Stack tecnológico (Next.js, React, Zustand, Supabase client).
 
@@ -55,7 +59,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 
 - [Precios CEMA 23_09 frente a PLUS](wiki/precios_cema2309.md) - Comparación de tableros, cantos, herrajes y referencias sin equivalencia exacta.
 - [Sincronización Mat_2309](wiki/sincronizacion_mat_2309.md) - Catálogo de tableros sincronizado con Mat_2309 y verificación de precios.
-- [Tipologías Prueba Gola de madera](wiki/tipologias_prueba_gola_madera.md) - Cuatro tipologías paramétricas independientes y sus reglas exclusivas.
+- [Tipologías Prueba Gola de madera](wiki/tipologias_prueba_gola_madera.md) - Tipologías paramétricas SM, familias DB-SM/FE y nomenclatura de traseros por altura.
 
 - [Comparativo PB SHORE PRUEBA frente a HDR](wiki/comparativo_pb_shore_prueba.md) - Auditoría de 20 módulos: piezas, tablero y canto netos frente a las HDR PDF y consumos con suplementos.
 

@@ -1,4 +1,4 @@
--- 0173 — Restaura la rama de gaveta oculta en los traseros de DB
+-- 0179 — Restaura la rama de gaveta oculta en los traseros de DB
 --
 -- `0171_db_normalizar_nombres_traseros_gaveta.sql` borro la plantilla generica
 -- `trasero_gaveta` y parametrizo las cantidades de `pequena` y `grande`, pero al

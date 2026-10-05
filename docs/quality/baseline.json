@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-10-05T13:40:55.300Z",
+  "branch": "Andrés",
+  "metrics": {
+    "typeErrors": 0,
+    "lintErrors": 36,
+    "lintWarnings": 17,
+    "totalTests": 222,
+    "passingTests": 222,
+    "failingTests": 0
+  },
+  "knownFailingTests": [],
+  "rules": {
+    "failOnNewTestFailure": true,
+    "maxFailingTests": 0,
+    "maxLintErrors": 36,
+    "maxTypeErrors": 0
+  }
+}

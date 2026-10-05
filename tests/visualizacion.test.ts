@@ -351,9 +351,10 @@ test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',(
   const m=member('DB',{n_cajones:2,n_cajones_pequenos:0,gola:1});
   m.pref='DB-2-SM';
   m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('frente_'));
-  // `0171` sustituyo la plantilla generica por `pequena`/`grande`. Con
-  // n_cajones_pequenos=0 el catalogo da 0 pequenos y n grandes, que es justo lo
-  // que esta tipologia necesita, asi que ya no se filtran.
+  // `0171` borro la plantilla generica `trasero_gaveta` de DB, asi que no se puede
+  // renombrar: el catalogo ya entrega `pequena`/`grande` parametrizados y con
+  // n_cajones_pequenos=0 da 0 pequenos y n grandes, que es justo lo que esta
+  // tipologia necesita.
   const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
   refuerzo.formula_cantidad='2';
   const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
@@ -397,7 +398,7 @@ test('DB-3-SM: tres gavetas iguales y el segundo par de Gola queda entre la segu
   assert.equal(bases.length,3);
   assert.ok(bases.every(p=>Math.abs(p.w-bases[0].w)<.1&&Math.abs(p.d-bases[0].d)<.1),'las tres bases deben ser iguales');
   assert.equal(traseros.length,3);
-  assert.ok(traseros.every(p=>p.nombre==='trasero_gaveta_grande'&&Math.abs(p.h-183)<.1),'los tres traseros deben ser iguales y medir 183 mm');
+  assert.ok(traseros.every(p=>p.nombre==='trasero_gaveta_grande'&&Math.abs(p.h-183)<.1),'los tres traseros grandes deben ser iguales y medir 183 mm');
   assert.equal(refuerzos.length,2);
   assert.equal(golas.length,2);
   assert.ok(Math.abs(refuerzos[1].z+refuerzos[1].h-bases[1].z)<.1,'el segundo refuerzo debe quedar bajo la segunda gaveta');

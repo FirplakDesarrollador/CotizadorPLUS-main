@@ -12,7 +12,7 @@ type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metr
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
-type MaterialDefaults = { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string };
+type MaterialDefaults = { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] };
 
 export type ProjectDefaults = {
   preset: Record<string, string>;
@@ -99,13 +99,12 @@ export default function AddLineForm({
   onDone?: () => void;
   // Se dispara al agregar un mueble (no al editar) con los materiales y cantos usados,
   // para que el próximo mueble de la cocina arranque con esos mismos valores por defecto.
-  onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string }) => void;
+  onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] }) => void;
 }) {
   const router = useRouter();
   const esEdicion = !!initial;
   const sbfd = tipos.find((t) => t.pref === 'SBFD');
   const ov = initial?.overrides ?? null;
-  const projectUnit: 'in' | 'cm' = sistemaMedida === 'metrico' ? 'cm' : 'in';
   const tipoInicialId = initial?.tipoId ?? projectDefaults?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '';
   const tipoInicialPref = tipos.find((t) => t.id === tipoInicialId)?.pref ?? '';
   const materialProyecto = (pref: string): MaterialDefaults | undefined =>
@@ -118,10 +117,13 @@ export default function AddLineForm({
   const [tipoId, setTipoId] = useState(tipoInicialId);
   // La unidad se fija al crear el proyecto (ver el <select disabled> más abajo) — no hay setter.
   const [unidad] = useState<'in' | 'cm' | 'mm'>(initial?.unidad ?? projectDefaults?.unidad ?? 'in');
-  const [largo, setLargo] = useState(initial?.largo != null ? String(initial.largo) : (projectDefaults?.largo ?? '33'));
-  const [alto, setAlto] = useState(initial?.alto != null ? String(initial.alto) : (projectDefaults?.alto ?? '30'));
-  const [prof, setProf] = useState(initial?.prof != null ? String(initial.prof) : (projectDefaults?.prof ?? '24'));
+  const [largo, setLargo] = useState(initial?.largo != null ? String(initial.largo) : (projectDefaults?.largo ?? String(convertir(33, 'in', unidad))));
+  const [alto, setAlto] = useState(initial?.alto != null ? String(initial.alto) : (projectDefaults?.alto ?? String(convertir(30, 'in', unidad))));
+  const [prof, setProf] = useState(initial?.prof != null ? String(initial.prof) : (projectDefaults?.prof ?? String(convertir(24, 'in', unidad))));
   const [perfilId, setPerfilId] = useState(initial ? '' : (materialInicial?.perfilId ?? projectDefaults?.perfilId ?? perfilDefaultId));
+  const [herrajesExcl, setHerrajesExcl] = useState<string[]>(
+    initial?.herrajesExcluidos ?? materialInicial?.herrajesExcl ?? projectDefaults?.herrajesExcl ?? [],
+  );
   const [preset, setPreset] = useState<Record<string, string>>(() => {
     if (initial?.preset) return initial.preset;
     if (materialInicial?.preset) return materialInicial.preset;
@@ -265,6 +267,7 @@ export default function AddLineForm({
       setCantoFrentesSel(materiales.cantoFrentes);
       setCantoCajaSel(materiales.cantoCaja);
       setPerfilId(materiales.perfilId ?? '');
+      setHerrajesExcl(materiales.herrajesExcl ?? []);
     }
     // Los muebles superiores de pared (W) siempre parten de 12 de fondo por defecto.
     const nuevoPref = prefProyecto(nuevoTipo);
@@ -372,7 +375,7 @@ export default function AddLineForm({
       sistemaFrente: esDbTradicional ? 'manija' : sistemaFrente,
       removible: permiteRemovible(prefTipo) ? removible : undefined,
       overrides: Object.keys(overrides).length ? overrides : undefined,
-      herrajesExcluidos: undefined,
+      herrajesExcluidos: herrajesExcl.length ? herrajesExcl : undefined,
       // Andrés overrides
       margenOverride: margenInput !== '' ? Number(margenInput) / 100 : undefined,
       cantoFrentes: cantoFrentesSel !== '' ? cantoFrentesSel : undefined,
@@ -395,7 +398,7 @@ export default function AddLineForm({
     if (!esEdicion) {
       onMaterialesUsados?.({
         familia: familiaMaterialPorPrefijo(prefTipo),
-        preset, cantoFrentes: cantoFrentesSel, cantoCaja: cantoCajaSel, perfilId,
+        preset, cantoFrentes: cantoFrentesSel, cantoCaja: cantoCajaSel, perfilId, herrajesExcl,
       });
     }
     router.refresh();
@@ -430,7 +433,9 @@ export default function AddLineForm({
           </L>
           <L label="Un">
             <select value={unidad} disabled className="inp bg-slate-100" title="La unidad se fija al crear el proyecto">
-              <option>{projectUnit}</option>
+              <option value="in">in</option>
+              <option value="cm">cm</option>
+              <option value="mm">mm</option>
             </select>
           </L>
         </div>
@@ -627,10 +632,15 @@ export default function AddLineForm({
             <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes del módulo</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {herrajesTipo.map((h) => (
-                <span key={h.rol} className="rounded-full bg-slate-100 px-2.5 py-1 text-sm text-slate-700 capitalize">
+                <label key={h.rol} className="flex cursor-pointer items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-sm text-slate-700 capitalize">
+                  <input
+                    type="checkbox"
+                    checked={!herrajesExcl.includes(h.rol)}
+                    onChange={() => setHerrajesExcl((actual) => actual.includes(h.rol) ? actual.filter((rol) => rol !== h.rol) : [...actual, h.rol])}
+                  />
                   {h.rol}
                   {h.codigo ? <span className="text-slate-400 normal-case">· {h.codigo}</span> : null}
-                </span>
+                </label>
               ))}
             </div>
           </div>

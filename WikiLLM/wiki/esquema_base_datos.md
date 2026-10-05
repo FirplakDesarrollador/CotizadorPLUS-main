@@ -66,10 +66,31 @@ La migración `0026_config_default_cotizacion.sql` añade `config_default jsonb`
 - Cada cambio en el panel "Materiales del proyecto" (`ProjectConfigPanel` dentro de `CotizacionDetalleClient`) se persiste vía `actualizarCotizacionAction` con `configDefault`.
 - Al abrir `/cotizaciones/[id]`, el servidor prioriza `cabecera.config_default`; el parámetro `?cfg=` queda solo como respaldo del primer render justo después de crear el proyecto.
 - Cada vez que se agrega un mueble (no al editar), `AddLineForm` reporta sus tableros y cantos usados vía `onMaterialesUsados`; `CotizacionDetalleClient` los mezcla en `config_default` y los persiste. Así el próximo mueble que se agregue (misma pestaña, otra pestaña o al día siguiente) arranca con los materiales del último mueble agregado, no con los del momento de creación del proyecto.
+
+La migración `0174_cotizaciones_comprador.sql` agrega `comprador_nombre` a la
+cabecera. `cliente_nombre` permanece como nombre técnico para la constructora,
+evitando una migración destructiva de datos históricos. Comprador y
+constructora se guardan, editan y exportan por separado.
+
+La migración `0175_cotizaciones_cotizador_por.sql` agrega `cotizador_por` a la
+cabecera. La migración incremental `0176_cotizaciones_firplak_mayusculas.sql`
+normaliza el catálogo a los únicos valores permitidos `FIRPLAK` y `CEMA`,
+actualiza registros previos y fija `FIRPLAK` como valor por defecto. El selector
+“Cotizado” se muestra en “Nuevo proyecto / cotización” y el listado presenta el
+valor entre el nombre del proyecto y su fecha de creación.
+
+Las migraciones `0175` y `0176` fueron aplicadas al Supabase conectado el
+2026-10-04. Se verificaron 11 cotizaciones con `cotizador_por = 'FIRPLAK'`,
+ningún valor vacío, columna `NOT NULL` y valor predeterminado `FIRPLAK`.
+En el encabezado del detalle de una cotización, el primer dato bajo el nombre
+del proyecto muestra `cotizador_por` (`FIRPLAK` o `CEMA`) en vez de la
+constructora; esta última continúa disponible como dato comercial editable.
 - `conFondo` se fija al crear el proyecto y se copia también a `cot_cotizacion_lineas.config`, de modo que edición, duplicado, agrupación y recálculo conserven la decisión estructural.
 - `materialesInferiores` y `materialesSuperiores` guardan, cada uno, perfil, preset de tableros y cantos. Al agregar un mueble se busca la primera `B` o `W` de su prefijo: `B` primero usa inferiores y `W` primero usa superiores (`WBL` usa superiores). Los prefijos sin ambas letras usan inferiores como fallback compatible. Las claves planas antiguas se conservan como alias del bloque inferior para abrir proyectos previos sin migración.
 
 La migración 0026 fue aplicada y verificada en Supabase **I+D** el 2026-08-10 (columna `config_default` de tipo `jsonb` confirmada en `information_schema.columns`). Nota: el número 0025 ya estaba tomado por `0025_pcfd_gavetas_parametricas.sql` (rama paralela); esta migración se renombró a 0026 al integrar ambas ramas en DEV.
+
+La migración `0178_cotizaciones_plantilla_firplak.sql` añade `plantilla_firplak jsonb not null default '{}'`. Guarda los campos editables de la propuesta FIRPLAK; proyecto, comprador, constructora, precios, cantidades y programación se regeneran desde la cotización vigente.
 
 ## 3. Seguridad y Triggers
 - Todos los registros cuentan con auditoría automática de fecha de modificación conectada al trigger `cot_touch_updated_at`.

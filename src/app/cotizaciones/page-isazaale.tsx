@@ -33,6 +33,8 @@ export default async function CotizacionesPage() {
           trmDefault={data.trmDefault}
           perfiles={data.perfiles}
           perfilDefaultId={data.perfilDefaultId}
+          tipos={data.tipos}
+          herrajesByTipo={data.herrajesByTipo}
         />
 
         <div data-tour="lista" className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-fit">
