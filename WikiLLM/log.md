@@ -1595,3 +1595,23 @@ El trinquete deja los **36 errores de lint** del release v1.0.3 en el baseline (
 Migraciones `0173`-`0178` de `DEV` verificadas como aplicadas en Supabase (columnas `comprador_nombre`, `cotizador_por`, `plantilla_cema`, `plantilla_firplak`, y cero traseros genericos en la familia DB-SM). Fixture resincronizado: 81 tipos / 650 piezas / 311 reglas / 104 tableros, con solo dos valores de deriva.
 
 222/222 tests, typecheck, build y compuerta de calidad limpios.
+
+## [2026-10-05] fix | Devuelto el ancho original de las paginas: la regla `calc(100% - 500px)` estrechaba siete vistas
+
+El merge de `DEV` trajo en `globals.css` una regla que aplicaba `width: calc(100% - 500px)` a `.cotizador-tab-content` y `.cotizacion-detail-content`, usadas por **siete paginas**: Simulador, Cotizaciones (lista y detalle), Materiales-Parametros, Diseno, HDR y Manual.
+
+**El efecto crecia al reducir la ventana**, que es lo contrario de lo deseable: a 1920 px dejaba 1420 px de contenido, a 1366 px —un portatil corriente— **866 px**, y a 1024 px solo **524 px**. El media query de rescate estaba en `max-width: 500px`, un punto en el que `calc(100% - 500px)` ya es cero o negativo, asi que no cubria ninguno de los anchos intermedios.
+
+**La restauracion es por pagina, no un ancho comun.** Antes del merge cada vista tenia su propio maximo, y recuperarlos uno a uno era la unica forma de volver a lo que habia:
+
+| Pagina | Ancho restaurado |
+| --- | --- |
+| Simulador, Cotizaciones (lista), Materiales-Parametros, Diseno, HDR | `mx-auto max-w-6xl` |
+| Manual | `mx-auto max-w-3xl` (es texto corrido) |
+| Detalle de cotizacion | `mx-auto w-full max-w-[1600px]` |
+
+Retirada la regla de ancho de `globals.css`; **se conservan** `.simulador-main-grid` y las de `.no-print`, que no tienen que ver con el ancho de pagina. Las clases `.cotizador-tab-content` y `.cotizacion-detail-content` quedan sin referencias.
+
+**Lo que no se toco, por decision del usuario** (el encargo fue solo el ancho): el encabezado rediseñado con el desplegable "User", y la rejilla de la lista de cotizaciones, que `DEV` cambio de `lg:grid-cols-[320px_1fr]` a dos columnas iguales por estilo inline.
+
+Verificado comparando clase por clase contra `e2183d0`: las siete coinciden con su estado previo. 8 archivos, 8 inserciones y 21 eliminaciones. Build y compuerta de calidad limpios; no hay prueba visual automatizada, la comprobacion es estructural.

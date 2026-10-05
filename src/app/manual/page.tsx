@@ -16,7 +16,7 @@ export default async function ManualPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <AppHeader email={user?.email} rol={rol} active="manual" />
-      <main className="cotizador-tab-content px-4 py-8">
+      <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8">
           <ManualView content={content} />
         </div>
