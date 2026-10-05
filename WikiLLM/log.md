@@ -1615,3 +1615,30 @@ Retirada la regla de ancho de `globals.css`; **se conservan** `.simulador-main-g
 **Lo que no se toco, por decision del usuario** (el encargo fue solo el ancho): el encabezado rediseñado con el desplegable "User", y la rejilla de la lista de cotizaciones, que `DEV` cambio de `lg:grid-cols-[320px_1fr]` a dos columnas iguales por estilo inline.
 
 Verificado comparando clase por clase contra `e2183d0`: las siete coinciden con su estado previo. 8 archivos, 8 inserciones y 21 eliminaciones. Build y compuerta de calidad limpios; no hay prueba visual automatizada, la comprobacion es estructural.
+
+## [2026-10-05] fix | La tabla de Cotizaciones deja de necesitar barra horizontal
+
+La lista de cotizaciones obligaba a desplazarse en horizontal para leer las columnas de la derecha. **Eran dos causas sumadas**, no una:
+
+1. La vista topaba en `max-w-6xl` (1152 px), asi que no aprovechaba pantallas anchas.
+2. `DEV` cambio la rejilla de `lg:grid-cols-[320px_1fr]` a **dos columnas iguales** (`minmax(0,1fr) minmax(0,1fr)`) por estilo inline. La tabla pasaba de recibir ~776 px a ~548 px, y como ella misma declara `min-width: 720px`, aparecia su barra.
+
+Antes del merge no salia: con `[320px_1fr]` la tabla tenia 776 px, justo por encima de su minimo.
+
+**Reparto nuevo**: la vista sube a `max-w-[1600px]` —el mismo tope que ya usa el detalle de cotizacion, asi que no se inventa un valor— y la rejilla pasa a `minmax(480px, 560px) minmax(0, 1fr)`: el formulario queda acotado y la tabla se lleva el resto. El formulario no baja de 480 px porque lleva dentro dos tarjetas de materiales lado a lado que no colapsan.
+
+**El punto de quiebre importa.** La rejilla vive ahora en `globals.css` y no en un estilo inline, porque hacia falta un media query. Las dos columnas solo entran desde **1300 px**, que es el ancho en que caben formulario (480) + tabla (720) + separaciones (48); por debajo se apila y la tabla usa el ancho completo. Un primer intento con el quiebre en 1180 px dejaba una franja entre 1180 y 1280 donde la tabla seguia quedandose en 620 px y la barra reaparecia.
+
+Ancho resultante de la tabla, calculado en toda la escala:
+
+| Viewport | Antes | Ahora |
+| ---: | ---: | ---: |
+| 1024 | 524 px (con barra) | 992 px apilado |
+| 1280 | 548 px (con barra) | 1248 px apilado |
+| 1366 | 548 px (con barra) | 726 px |
+| 1830 | 548 px (con barra) | 992 px |
+| 2560 | 548 px (con barra) | 992 px |
+
+La separacion vertical entre columnas (`border-left`) se movio al media query: apilado no tenia sentido.
+
+Verificado contra el CSS que sirve el servidor de desarrollo, no solo en el fuente: `.cotizaciones-main-grid`, el `@media (min-width: 1300px)` y `.max-w-[1600px] { max-width: 1600px }` estan en la hoja compilada. Build y compuerta de calidad limpios.
