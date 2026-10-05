@@ -10,7 +10,7 @@ import NuevoCotizacionForm from './NuevoCotizacionForm';
 
 const GUIA_LISTA = [
   { title: 'Cotizaciones', description: 'Aquí creas y consultas tus proyectos (cotizaciones). Cada proyecto tendrá sus cocinas y módulos.' },
-  { selector: '[data-tour="nuevo"]', title: 'Nuevo proyecto', description: 'Dale un nombre, registra constructora y comprador, elige moneda, TRM, materiales y herrajes, y crea el proyecto para empezar a agregar muebles.' },
+  { selector: '[data-tour="nuevo"]', title: 'Nuevo proyecto', description: 'Dale un nombre, registra constructora y comprador, indica si cotiza FIRPLAK o CEMA, elige moneda, TRM, materiales y herrajes, y crea el proyecto para empezar a agregar muebles.' },
   { selector: '[data-tour="lista"]', title: 'Tus proyectos', description: 'La lista con totales en COP y USD. Haz clic en un proyecto para abrirlo, agregar muebles y exportar.' },
 ];
 
@@ -65,6 +65,7 @@ export default async function CotizacionesPage() {
                     <Link href={`/cotizaciones/${c.id}`} className="text-slate-900 font-medium hover:underline">
                       {c.nombre || 'Sin nombre'}
                     </Link>
+                    <div className="text-xs font-medium text-slate-600">{c.cotizador_por}</div>
                     <div className="text-xs text-slate-400">{new Date(c.created_at).toLocaleDateString('es-CO')}</div>
                   </td>
                   <td className="text-slate-600">{c.cliente_nombre || '—'}</td>

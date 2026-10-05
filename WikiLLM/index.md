@@ -11,6 +11,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, encabezado y menú de usuario, Zustand, cotizaciones con constructora/comprador, materiales, herrajes, unidades, dimensiones y búsqueda por color.
 - [Sistema de Undo/Redo](wiki/sistema_undo_redo.md) - Historial temporal de estados, captura de atajos de teclado y notificaciones.
 - [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes manuales, inmutables, nombre obligatorio, orden cronológico y restauración transaccional limpia sin respaldos automáticos.
+- [Plantilla de propuesta CEMA](wiki/plantilla_propuesta_cema.md) - Selección automática, campos precargados/editables, persistencia y composición imprimible basada en la propuesta comercial CEMA.
 - [Sistema de Calidad y Trinquete (Ratchet)](wiki/sistema_calidad_ratchet.md) - Sistema de calidad modular basado en impacto (lanes), compuerta de trinquete de deuda (Ratchet) y módulo consultivo continuo quality:learn.
 
 ## Infraestructura de Datos
@@ -44,6 +45,8 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 
 - [Patron para integrar nuevas tipologias](wiki/patron_integracion_tipologias.md) - Protocolo permanente basado en `B-FE`: crear tipos independientes desde hojas reales, validar geometria/precio, respetar codigos comerciales y documentar migraciones.
 - [Visualización y agrupación de familias FE](wiki/visualizacion_familias_fe.md) - Corrección geométrica 3D (fondo de gaveta, frentes mixtos y cajón superior) y homologación continua para B-FE, UB-FE y V-FE.
+
+- [Plantilla de propuesta FIRPLAK](wiki/plantilla_propuesta_firplak.md) - Selección automática, datos de cotización, campos editables, imágenes originales y documento imprimible FIRPLAK.
 
 ## Entorno de Desarrollo
 - [Dependencias del Proyecto](wiki/dependencias_proyecto.md) - Stack tecnológico (Next.js, React, Zustand, Supabase client).
