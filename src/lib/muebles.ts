@@ -94,23 +94,35 @@ export function familiaMaterialPorPrefijo(pref: string | null | undefined): Fami
   return esMuebleSuperior(pref) ? 'superior' : 'inferior';
 }
 
-// Prefijos que en la descripción de una línea se escriben con su nombre de
-// producción en lugar de la letra. `F` es la única tipología de categoría
-// `filler` del catálogo, y producción la lee como FILLER.
-const ETIQUETA_DESCRIPCION: Record<string, string> = { F: 'FILLER' };
-
-// La etiqueta con la que empieza `descripcion_es`. Recibe lo que haya en
-// `prefLabel`, que al agregar la línea es el código completo (`F636`) y tras el
-// primer recálculo es solo el prefijo base (`F`) — ambos deben dar FILLER.
+// Elementos planos: tipologías de **una sola pieza**, sin puertas, gavetas ni
+// entrepaños. Cada una es la única de su categoría en el catálogo (`filler`,
+// `panel`, `zocalo`), y producción las lee por su nombre, no por la letra.
 //
-// Se compara contra las letras iniciales, no contra el valor entero, para que
-// `F636` resuelva pero un prefijo distinto que empiece por F (p. ej. `FPK`) no
-// se vea arrastrado.
+// La tabla gobierna dos cosas a la vez, y a propósito: con qué texto empieza la
+// descripción y que esta no lleve contadores. Los `· N puerta(s)` y
+// `· N entrepaño(s)` que arrastraban salían de reglas **globales** de
+// `n_puertas`/`n_entrepanos`, que aplican a todo tipo sin excepción; para un
+// panel de relleno no significan nada.
+const ELEMENTOS_PLANOS: Record<string, string> = { F: 'FILLER', PN: 'PANEL', TK: 'TOEKICK' };
+
+// Las letras iniciales de `prefLabel`, que al agregar la línea es el código
+// completo (`F636`, `TK5 1/496`) y tras el primer recálculo es solo el prefijo
+// base (`F`). Se compara contra las letras y no contra el valor entero para que
+// ambos resuelvan, sin arrastrar un prefijo distinto que empiece igual (`FPK`).
+function letrasIniciales(prefLabel: string | null | undefined): string {
+  return String(prefLabel ?? '').trim().toUpperCase().match(/^[A-Z]+/)?.[0] ?? '';
+}
+
+// La etiqueta con la que empieza `descripcion_es`.
 export function etiquetaDescripcion(prefLabel: string | null | undefined): string {
   const value = String(prefLabel ?? '').trim();
   if (!value) return '';
-  const letras = value.toUpperCase().match(/^[A-Z]+/)?.[0] ?? '';
-  return ETIQUETA_DESCRIPCION[letras] ?? value;
+  return ELEMENTOS_PLANOS[letrasIniciales(value)] ?? value;
+}
+
+// Si la descripción debe omitir los contadores de puertas, gavetas y entrepaños.
+export function esElementoPlano(prefLabel: string | null | undefined): boolean {
+  return letrasIniciales(prefLabel) in ELEMENTOS_PLANOS;
 }
 
 // Solo los campos que la regla necesita, para no atar este módulo —que es de

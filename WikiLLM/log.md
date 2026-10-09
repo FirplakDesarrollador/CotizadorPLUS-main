@@ -1739,3 +1739,21 @@ DB-4 va bien: sus cuatro cajones son **pequenos** (el catalogo le da cuatro `tra
 **Las lineas ya guardadas NO se tocaron.** Hay 3 lineas DB-3 en 2 cotizaciones, con `n_barras` persistido en sus overrides; conservan su valor hasta que se reediten. Una de ellas pertenece a "Prueba Uno", en estado **enviada**: recotizarla por cuenta propia cambiaria el precio de algo ya entregado. Queda a decision del usuario.
 
 `quality:gate` en exit 0, `quality:learn` sin hallazgos HIGH ni MED. Build y typecheck limpios.
+
+## [2026-10-09] update | F, PN y TK se describen por su nombre y sin contadores
+
+Los tres son elementos de **una sola pieza** y cada uno es el unico de su categoria en el catalogo (`filler`, `panel`, `zocalo`). Su descripcion arrastraba `· N puerta(s)` y `· N entrepaño(s)`, que salen de reglas **globales** de `n_puertas`/`n_entrepanos` —aplican a todo tipo sin excepcion— y no significan nada para un relleno, un panel o un zocalo.
+
+| Antes | Ahora |
+| --- | --- |
+| `F 6x36x24 in · 1 puerta(s) · 2 entrepaño(s)` | `FILLER 6x36x24 in` |
+| `PN 24x86x18 in · 2 puerta(s) · 3 entrepaño(s)` | `PANEL 24x86x18 in` |
+| `TK 4.5x96x0.75 in · 1 puerta(s) · 3 entrepaño(s)` | `TOEKICK 4.5x96x0.75 in` |
+
+**Una sola tabla gobierna las dos cosas**, a proposito: `ELEMENTOS_PLANOS` en `muebles.ts` define con que texto empieza la descripcion (`etiquetaDescripcion`) y que esta no lleve contadores (`esElementoPlano`). Asi no pueden divergir, que es como se llego al estado anterior. Las tres etiquetas comparten grafia: mayusculas, sin parentesis ni acentos.
+
+La comparacion es contra **las letras iniciales** de `prefLabel`, no contra el valor entero: ese campo es el codigo completo al agregar la linea (`TK5 1/496`) y el prefijo base tras el primer recalculo (`TK`), y ambos deben resolver; a la vez, `FPK` no cae en la regla de `F` ni `PCFD` en la de `PN`.
+
+**Backfill**: `0182_descripcion_elementos_planos.sql`, sobre 36 lineas (18 F, 13 PN, 5 TK). Completa la `0181`, que habia puesto FILLER pero dejado los contadores y no cubria PN ni TK. **Reconstruye la descripcion desde las columnas** `largo`/`alto`/`prof`/`unidad_dim` en lugar de parsear el texto: es exactamente como la arma `construirFilaLinea()` y no depende de si lo guardado empieza por el prefijo base o por el codigo completo. Solo descripcion: no toca precio, cantidades ni codigo de modulo. Idempotente, con un `raise` que lo verifica. Ya aplicada: 0 lineas con contadores.
+
+`tests/muebles.test.ts` sube a 22 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.

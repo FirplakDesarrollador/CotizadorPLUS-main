@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ajustarPiezasSinFondo, DB_TIPOLOGIAS, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
+import { ajustarPiezasSinFondo, DB_TIPOLOGIAS, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
 
 // `muebles.ts` es el modulo de dominio compartido por formularios y motor. Las
 // dos piezas que se prueban aqui deciden cosas con efecto en el precio, asi que
@@ -125,25 +125,47 @@ test('una base sin P en ninguna formula se deja intacta', () => {
 // etiquetaDescripcion: con que texto empieza `descripcion_es` de una linea.
 // ---------------------------------------------------------------------------
 
-test('etiquetaDescripcion: los fillers se describen FILLER, no F', () => {
-  // `F` es la unica tipologia de categoria `filler` del catalogo, y produccion
-  // la lee escrita.
-  assert.equal(etiquetaDescripcion('F'), 'FILLER', 'prefijo base, como queda tras recalcular');
-  assert.equal(etiquetaDescripcion('F636'), 'FILLER', 'codigo completo, como queda al agregar la linea');
-  assert.equal(etiquetaDescripcion('F6 3/4 30'), 'FILLER', 'codigo con fraccion imperial');
+test('etiquetaDescripcion: los elementos planos llevan su nombre de produccion', () => {
+  // Las tres son la unica tipologia de su categoria (`filler`, `panel`,
+  // `zocalo`) y produccion las lee escritas. Misma grafia para las tres:
+  // mayusculas, sin parentesis ni acentos.
+  const casos: [string, string][] = [
+    ['F', 'FILLER'], ['PN', 'PANEL'], ['TK', 'TOEKICK'],
+  ];
+  for (const [pref, etiqueta] of casos) assert.equal(etiquetaDescripcion(pref), etiqueta, pref);
+});
+
+test('etiquetaDescripcion: resuelve igual el codigo completo que el prefijo base', () => {
+  // `prefLabel` es el codigo completo al agregar la linea y el prefijo base tras
+  // el primer recalculo; ambos deben dar lo mismo.
+  assert.equal(etiquetaDescripcion('F636'), 'FILLER');
+  assert.equal(etiquetaDescripcion('PN2486'), 'PANEL');
+  assert.equal(etiquetaDescripcion('TK5 1/496'), 'TOEKICK', 'codigo con fraccion imperial');
   assert.equal(etiquetaDescripcion('f636'), 'FILLER', 'no debe depender de la caja');
 });
 
-test('etiquetaDescripcion: no arrastra otros prefijos que empiecen por F', () => {
-  // Compara contra las letras iniciales completas, de modo que un `FPK` no cae
-  // en la regla de `F`.
-  assert.equal(etiquetaDescripcion('FPK'), 'FPK');
-  assert.equal(etiquetaDescripcion('FPK12'), 'FPK12');
+test('etiquetaDescripcion: no arrastra otros prefijos que empiecen igual', () => {
+  // Compara contra las letras iniciales completas, de modo que `FPK` no cae en
+  // la regla de `F` ni `PCFD` en la de `PN`.
+  for (const pref of ['FPK', 'FPK12', 'PC', 'PCFD12', 'TW', 'TW-SM-PUSH']) {
+    assert.equal(etiquetaDescripcion(pref), pref, pref);
+  }
 });
 
 test('etiquetaDescripcion: cualquier otro prefijo se devuelve tal cual', () => {
-  for (const pref of ['B', 'B12', 'W2936-SM', 'DB18-1S', 'TK4 1/436 1/2', 'PCFD12-2OP-PUSH']) {
+  for (const pref of ['B', 'B12', 'W2936-SM', 'DB18-1S', 'PCFD12-2OP-PUSH']) {
     assert.equal(etiquetaDescripcion(pref), pref, pref);
+  }
+});
+
+test('esElementoPlano: solo F, PN y TK omiten los contadores', () => {
+  // Son de una sola pieza: los `· N puerta(s)` y `· N entrepaño(s)` que
+  // arrastraban venian de reglas globales y no significan nada para ellas.
+  for (const pref of ['F', 'F636', 'PN', 'PN2486', 'TK', 'TK5 1/496', 'tk5']) {
+    assert.equal(esElementoPlano(pref), true, pref);
+  }
+  for (const pref of ['B', 'B22', 'W2936-SM', 'DB18-1S', 'FPK', 'PCFD12', 'TW', null, undefined, '']) {
+    assert.equal(esElementoPlano(pref), false, String(pref));
   }
 });
 
