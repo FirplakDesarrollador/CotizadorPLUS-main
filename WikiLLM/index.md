@@ -7,6 +7,8 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
+- [Descripción de una línea contra el despiece](wiki/descripcion_linea_vs_despiece.md) - Por qué `n_entrepanos` no describe el mueble: 47 de 81 tipos no coincidían, y la deuda equivalente en puertas y gavetas.
+- [Líneas de material suelto](wiki/lineas_material_suelto.md) - Tablero, canto o herraje cobrados sin módulo: unidades, margen por tipo y el guardia que impide que tumben el recálculo.
 - [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles, soportes por entrepaño, cálculo grupal y recálculo masivo por lotes con precarga de catálogo (`engine.ts` y `cotizar.ts`).
 - [Optimizador de corte](wiki/optimizador_corte.md) - Plan de corte de una cotización: condiciones de planta, lista de piezas y fases pendientes.
 - [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, encabezado y menú de usuario, Zustand, cotizaciones con constructora/comprador, materiales, herrajes, unidades, dimensiones y búsqueda por color.

@@ -1698,3 +1698,241 @@ Se anade un aviso bajo el par de campos explicando por que el valor se conserva,
 **Sin prueba automatizada, y es deliberado**: la regla es una condicion en el JSX (`moneda === 'COP'`), no una funcion con logica propia, y el repositorio no tiene infraestructura de pruebas de componentes —ni `@testing-library` ni entorno DOM—. Montarla para este caso no se justifica; el riesgo real que tenia este cambio era el del envio del formulario, y se evito por diseño, no por logica que se pueda afirmar en un test.
 
 `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH (persiste el MED de `cotizar.ts`, ya justificado en la entrada anterior). Build y typecheck limpios.
+
+## [2026-10-09] update | Las lineas de filler se describen FILLER, no F
+
+La descripcion de una linea arranca con su prefijo, de modo que un filler quedaba como `F 6x36x24 in`. Produccion lo lee escrito: **FILLER**. El codigo del modulo (`F636`) no cambia; solo la descripcion.
+
+La regla vive en `etiquetaDescripcion()` (`muebles.ts`), junto al resto de helpers de dominio y, como aquel modulo no importa `server-only`, con prueba propia. `construirFilaLinea()` la usa, y como es el unico sitio donde se arma `descripcion_es`, cubre tanto el alta de una linea como el recalculo masivo.
+
+**Compara contra las letras iniciales, no contra el valor entero.** `prefLabel` llega como codigo completo al agregar la linea (`F636`) y como prefijo base tras el primer recalculo (`F`), y ambos deben dar FILLER; a la vez, un prefijo distinto que empiece por F no debe arrastrarse. Hoy `F` es la unica tipologia de categoria `filler` del catalogo, verificado antes de escribir la regla.
+
+**Backfill**: `0181_descripcion_filler.sql` pone al dia las lineas ya guardadas, que si no conservarian la forma vieja hasta recalcular su cotizacion. 17 lineas en 5 cotizaciones, todas con `pref = 'F'`. Idempotente, con un `raise` que verifica que no quede ninguna. Ya aplicada en Supabase: 17/17, 0 pendientes.
+
+**Hallazgo adjunto, NO corregido**: la descripcion de un filler sigue diciendo "1 puerta(s) · 2 entrepaño(s)". El tipo `F` tiene **una sola pieza** y su unica regla propia es `n_patas=0`; esos valores los hereda de las reglas **globales** de `n_puertas` y `n_entrepanos`, que aplican a todo tipo sin excepcion. Para un panel de relleno no significan nada. Queda anotado para decidir si se suprimen esos sufijos cuando la tipologia no tiene puertas ni entrepaños reales.
+
+`tests/muebles.test.ts` sube a 16 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.
+
+## [2026-10-09] fix | DB-3 lleva tres pares de barra, no cero
+
+El selector de tipologia DB mostraba "DB-3 · 3 cajones iguales · **sin barras**". El usuario precisa que deben ser tres pares.
+
+**No era un error de texto, sino del dato.** `DB_TIPOLOGIAS` tenia `nb: 0` para DB-3, y ese campo alimenta el override `n_barras` del motor, que a su vez fija la cantidad del herraje `BARRAEST` (9.800 COP cada una). La descripcion decia la verdad: el modulo se cotizaba **sin barras estabilizadoras**. Cambiar solo la etiqueta la habria vuelto mentira.
+
+**El catalogo confirma que 3 es lo correcto.** La regla documentada es que las barras van en los cajones grandes. Cruzando `nb` contra la cantidad de `trasero_gaveta_grande` que el catalogo da a cada configuracion:
+
+| Tipologia | Cajones | Grandes | `nb` antes | Segun la regla |
+| --- | ---: | ---: | ---: | ---: |
+| DB-1S | 3 | 2 | 2 | 2 |
+| DB-2S | 3 | 1 | 1 | 1 |
+| DB-2 | 2 | 2 | 2 | 2 |
+| **DB-3** | 3 | **3** | **0** | **3** |
+| DB-4 | 4 | 0 | 0 | 0 |
+| DB2-1OP | 3 | 3 | 1 | 3 |
+
+DB-4 va bien: sus cuatro cajones son **pequenos** (el catalogo le da cuatro `trasero_gaveta_pequena` y ningun grande), asi que 0 barras es correcto y su "sin barras" se queda.
+
+**Segunda discrepancia, NO corregida**: `DB2-1OP` tiene 1 par donde la cuenta de grandes daria 3. Lleva un cajon oculto y no se sabe si eso cambia el conteo, asi que no se asume una respuesta; el test la excluye explicitamente en vez de taparla.
+
+**Cobertura**: `tests/muebles.test.ts` sube a 20 casos. El principal no fija un numero suelto sino la **regla** —`nb` igual a la cantidad de cajones grandes— de modo que una tipologia nueva que la incumpla se detecta sola. Otro verifica que la descripcion de cada entrada concuerde con su `nb`, que es justo lo que habia fallado aqui.
+
+**Las lineas ya guardadas NO se tocaron.** Hay 3 lineas DB-3 en 2 cotizaciones, con `n_barras` persistido en sus overrides; conservan su valor hasta que se reediten. Una de ellas pertenece a "Prueba Uno", en estado **enviada**: recotizarla por cuenta propia cambiaria el precio de algo ya entregado. Queda a decision del usuario.
+
+`quality:gate` en exit 0, `quality:learn` sin hallazgos HIGH ni MED. Build y typecheck limpios.
+
+## [2026-10-09] update | F, PN y TK se describen por su nombre y sin contadores
+
+Los tres son elementos de **una sola pieza** y cada uno es el unico de su categoria en el catalogo (`filler`, `panel`, `zocalo`). Su descripcion arrastraba `· N puerta(s)` y `· N entrepaño(s)`, que salen de reglas **globales** de `n_puertas`/`n_entrepanos` —aplican a todo tipo sin excepcion— y no significan nada para un relleno, un panel o un zocalo.
+
+| Antes | Ahora |
+| --- | --- |
+| `F 6x36x24 in · 1 puerta(s) · 2 entrepaño(s)` | `FILLER 6x36x24 in` |
+| `PN 24x86x18 in · 2 puerta(s) · 3 entrepaño(s)` | `PANEL 24x86x18 in` |
+| `TK 4.5x96x0.75 in · 1 puerta(s) · 3 entrepaño(s)` | `TOEKICK 4.5x96x0.75 in` |
+
+**Una sola tabla gobierna las dos cosas**, a proposito: `ELEMENTOS_PLANOS` en `muebles.ts` define con que texto empieza la descripcion (`etiquetaDescripcion`) y que esta no lleve contadores (`esElementoPlano`). Asi no pueden divergir, que es como se llego al estado anterior. Las tres etiquetas comparten grafia: mayusculas, sin parentesis ni acentos.
+
+La comparacion es contra **las letras iniciales** de `prefLabel`, no contra el valor entero: ese campo es el codigo completo al agregar la linea (`TK5 1/496`) y el prefijo base tras el primer recalculo (`TK`), y ambos deben resolver; a la vez, `FPK` no cae en la regla de `F` ni `PCFD` en la de `PN`.
+
+**Backfill**: `0182_descripcion_elementos_planos.sql`, sobre 36 lineas (18 F, 13 PN, 5 TK). Completa la `0181`, que habia puesto FILLER pero dejado los contadores y no cubria PN ni TK. **Reconstruye la descripcion desde las columnas** `largo`/`alto`/`prof`/`unidad_dim` en lugar de parsear el texto: es exactamente como la arma `construirFilaLinea()` y no depende de si lo guardado empieza por el prefijo base o por el codigo completo. Solo descripcion: no toca precio, cantidades ni codigo de modulo. Idempotente, con un `raise` que lo verifica. Ya aplicada: 0 lineas con contadores.
+
+`tests/muebles.test.ts` sube a 22 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.
+
+## [2026-10-09] update | La linea U y Sink Vanity cargan 28,75" de alto por defecto
+
+Al elegir una de estas tipologias, el campo **Alto** se rellena con 28,75 pulgadas. Se aplica en los dos formularios donde se arma un modulo: el Simulador y el de agregar linea a una cotizacion.
+
+**Diez tipologias**, definidas en `PREFS_ALTO_LINEA_U` (`muebles.ts`): `UB`, `UB-FE`, `UBFD`, `UDB`, `UDV`, `USVFD`, `UV`, `UVFD`, `SV` y `SVFD`.
+
+**La lista es explicita y no una regla sobre el prefijo**, por dos razones que se verificaron contra el catalogo:
+
+- `UW` empieza por U pero es de **categoria superior**, y 28,75" es alto de mueble inferior. Una regla "empieza por U" lo habria arrastrado.
+- `SV` y `SVFD` **no** empiezan por U —son Sink Vanity, categoria vanity— pero pertenecen a la misma familia de alto. El usuario los nombro explicitamente.
+
+Quedaron fuera `SBFD`, `SB-SM` y `SDB`: empiezan por S y son inferiores, pero no se nombraron y no hay dato que respalde incluirlos. Al anadir una tipologia de esta familia hay que agregarla a la lista a proposito.
+
+**El alto se carga, no se fija**: el campo sigue editable, igual que la profundidad de 12" que `W` ya cargaba. Es una comodidad, no una restriccion, de modo que se puede seguir cotizando otra altura.
+
+**Cobertura**: `tests/muebles.test.ts` sube a 28 casos. Fijan los diez prefijos, la exclusion de `UW`, que el resto del catalogo no reciba nada, la tolerancia a minusculas/nulo, y que la coincidencia sea exacta (`UV` si, `U` y `UVX` no). Uno mas ata las conversiones por unidad que `AddLineForm` escribe a mano —73,025 cm y 730,25 mm— al mismo valor en pulgadas, para que no puedan derivar.
+
+`quality:gate` en exit 0 y `quality:learn` **sin hallazgos en ninguna severidad**. Build y typecheck limpios.
+
+## [2026-10-09] update | Alto por defecto de los muebles inferiores: 30", y 28,75" la linea U
+
+Completa la entrada anterior. `altoPorDefectoIn()` pasa a recibir tambien la **categoria** del tipo y resuelve tres reglas, en este orden:
+
+1. Linea U y Sink Vanity (10 prefijos) -> **28,75"**
+2. Torres y alacenas -> **sin valor**
+3. Cualquier otra de categoria `inferior` -> **30"**
+
+**El orden no es casual.** Los inferiores de la linea U (`UB`, `UB-FE`, `UBFD`, `UDB`) son de categoria `inferior`: si la regla general se evaluara primero, recibirian 30" en vez de 28,75". Hay un test dedicado a esa prioridad.
+
+**Las torres quedan fuera a proposito.** `AL` (alacena), `PC` y `PCFD` (torres) y `OVPC` (alacena para horno) estan clasificadas como `inferior` en el catalogo, pero se arman a la altura de un mueble alto. Ponerles 30" habria sido peor que no ponerles nada, asi que se quedan sin valor por defecto. La unica clasificacion de "torre" que existia estaba en un helper de `tests/visualizacion.test.ts`; ahora vive en `muebles.ts` como `PREFS_TORRE`.
+
+**Deuda anotada**: las vanities fuera de la linea U —`V`, `DV`, `DVE`, `V-FE`, `VFD`, `VPC`— no reciben alto por defecto. Son categoria `vanity` y no se nombraron al definir la regla; no se les asigna una altura sin dato que la respalde. Hay un test que fija ese comportamiento para que sea una decision visible y no un olvido.
+
+`AddLineForm` no declaraba `categoria` en su tipo local aunque `getCotizadorData()` si la trae —ambas pantallas usan ese mismo cargador—, asi que bastó con ampliar el tipo. Su conversion por unidad pasa a derivarse del valor en pulgadas en lugar de escribirse a mano, que con dos alturas distintas ya no era sostenible.
+
+`tests/muebles.test.ts` sube a 30 casos. `quality:gate` en exit 0 y `quality:learn` **sin hallazgos en ninguna severidad**.
+
+## [2026-10-09] update | El selector de tipologia se rotula con el tipo elegido, no siempre "DB"
+
+El selector lo comparten tres tipos (`PREFS_CON_TIPOLOGIA_DB`: `DB`, `UDB`, `UDV`), pero se rotulaba siempre "Tipología DB" y ofrecia `DB-1S`, `DB-2S`… incluso con un `UDV` seleccionado. Ahora el rotulo y las opciones siguen al tipo: un UDV ofrece **`UDV-1S`**, **`UDV-2S`**, **`UDV2-1OP`**, y el campo se titula "Tipología UDV".
+
+**La clave NO cambia, y es lo importante del cambio.** `DB-1S` es el identificador que se persiste en `config.dbTipo` y del que sale el sufijo del codigo comercial (`DB-1S` -> `-1S`, que produce `UDV36-1S`). Tocarla habria roto las lineas ya guardadas y el codigo de modulo. `etiquetaTipologiaDb()` transforma **solo** lo que se muestra; el `value` del `<option>` sigue siendo la clave original.
+
+Aplicado en los dos formularios: Simulador y agregar linea.
+
+**Cobertura**: cinco casos en `tests/muebles.test.ts`, que sube a 35. Uno recorre `PREFS_CON_TIPOLOGIA_DB` x `DB_TIPOLOGIAS` y exige que toda combinacion empiece por su prefijo, de modo que si se anade un cuarto tipo al selector su rotulo sale solo y queda cubierto. Otros fijan que un `DB` se quede igual, que sin tipo elegido la clave vuelva intacta y que la sustitucion sea solo del `DB` inicial.
+
+`quality:gate` en exit 0 y `quality:learn` sin hallazgos en ninguna severidad.
+
+## [2026-10-09] fix | La descripcion de una linea cuenta los entrepanos del despiece, no la variable de regla
+
+El usuario reporta que la cantidad de entrepanos en las descripciones de la pestana Cotizaciones no cuadra. Se evaluaron los **81 tipos activos** con el motor real sobre nueve juegos de medidas, comparando lo que decia la descripcion contra las piezas que se cortan.
+
+**No cuadraba en 47 de los 81.** La descripcion usaba `res.vars.n_entrepanos`, que no describe el mueble: es una **regla global por altura** (`A<=16`->0, `A<=24`->1, `A<=36`->2, resto 3) que aplica a todo tipo. Una tipologia la usa solo si su pieza `entrepano` la declara en `formula_cantidad`, y muchas no lo hacen.
+
+| Tipo | Decia | Tiene | Por que |
+| --- | ---: | ---: | --- |
+| `B`, `BFD` | 2 | **1** | su entrepano es `formula_cantidad: '1'`, fijo |
+| `SBFD`, `BOV`, `BT`, `UVFD` | 2-3 | **0** | no tienen la pieza |
+| `AL` | 2 | **5** | alacena |
+| `WPC` | 2 | **6** | torre |
+| `UW` | 0 | **1** | lleva `entrepano_fijo`, que la variable ignora |
+| `WLD` | 2 | 2 | **correcto**: su pieza si declara `n_entrepanos` |
+
+**36 tipos no tienen pieza de entrepano y 25 de ellos igual anunciaban 2 o 3.** `WLD` es la excepcion que explicaba la confusion: sus filas si cuadraban, lo que hacia parecer que el contador funcionaba.
+
+**Correccion**: `contarEntrepanos()` (`muebles.ts`) suma las piezas `entrepano*` del despiece recien calculado. Verificado tras el cambio: **0 discrepancias en los 81 tipos**. Cuenta tambien `entrepano_fijo` (UW, BMW-1, BOMH-1 y sus FE), que es una pieza mas de la hoja de corte. El contador se omite cuando es cero, en vez de anunciar "0 entrepano(s)".
+
+**Deuda detectada y NO corregida**: el mismo defecto afecta a `n_puertas` (**45 tipos**) y `n_cajones` (**12 tipos**). No se tocaron porque, a diferencia de los entrepanos, "que pieza es una puerta" no es evidente —el motor usa el mismo nombre `frente` para una puerta y para la cara de una gaveta— y definirlo bien es su propio analisis.
+
+**Las lineas guardadas** conservan el texto anterior hasta que se edite la linea o se recalcule la cotizacion. No se hizo migracion: aqui el valor correcto no se puede derivar en SQL, hay que correr el motor por linea.
+
+`tests/muebles.test.ts` sube a 41 casos. Documentado en [descripcion_linea_vs_despiece.md](wiki/descripcion_linea_vs_despiece.md). `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.
+
+## [2026-10-09] fix | La propuesta FIRPLAK deja de volcar la configuracion interna del proyecto
+
+El bloque **"Materiales configurados en el proyecto"** del PDF mostraba un volcado crudo de `config_default`:
+
+```
+margen: 60
+unidad: in
+perfilId: d479ef4b-21e3-457b-95b1-8c4f31156a8b
+cantoCaja: 19x0,45
+cantoFrentes: 22x1
+```
+
+Lo generaba `imprimir/page.tsx` recorriendo las claves de la configuracion y quedandose con las 16 primeras que fueran texto o numero. No es informacion de cliente: son claves internas, un identificador tecnico y el margen comercial, que **no deberia salir en una propuesta**.
+
+**El bloque se conserva y pasa a ser editable.** `projectMaterials` deja de calcularse y se convierte en un campo mas de `FirplakTemplate`, vacio por defecto y con su `<textarea>` en "Editar informacion de la propuesta", a la espera del contenido definitivo. Mientras este vacio, la propuesta muestra el texto de respaldo que ya existia ("Los materiales se detallan en los modulos de la cotizacion").
+
+**Sin migracion**: `normalizarFirplakTemplate()` fusiona los valores por defecto sobre lo guardado, de modo que las dos cotizaciones que ya tienen plantilla leen el campo como cadena vacia. Verificado en la base antes de decidirlo.
+
+De paso se elimina el `const config` de `imprimir/page.tsx`, que quedaba sin uso.
+
+`quality:gate` en exit 0, build y typecheck limpios. Las 4 advertencias de lint que quedan en `FirplakPrintEditor.tsx` son `no-img-element` preexistentes del release v1.0.3, ajenas a este cambio.
+
+## [2026-10-09] update | La propuesta FIRPLAK nombra el proveedor de cada tablero
+
+Las tablas de especificaciones de muebles superiores e inferiores decian el material pero no de quien era. Ahora cada fila lleva el proveedor del tablero realmente seleccionado en el proyecto: **ECOFORT**, **PRIMADERA**, **DURATEX**, **CHINO**, etc.
+
+```
+Tablero    Tablero STANDARD · ECOFORT
+Espaldar   MDF 5.5 mm, blanco · PRIMADERA
+Caja       Tablero 15 mm, canto 0.45 mm, blanco · ECOFORT
+Puertas    Puerta plana 18 mm... · ECOFORT
+Rellenos   18 mm · ECOFORT
+```
+
+**El texto de la fila sigue viniendo de la plantilla** (editable); lo que se añade es el proveedor, que sale del catalogo. Los 80 tableros activos tienen proveedor registrado, verificado antes de implementarlo.
+
+**El mapeo de fila a rol se acordo con el usuario**, porque no era evidente: "Tablero" y "Caja" toman el tablero de **caja**, "Puertas" y "Rellenos/paneles y zocalos" el de **frente**, y "Espaldar" el de **fondo**. La fila "Tablero" no corresponde a ningun rol —su texto es "Tablero STANDARD"/"Tablero RH", una linea de producto— y se decidio darle el de caja por ser el tablero principal.
+
+**Detalle que se corrigio sobre la marcha**: con la configuracion "Sin fondo", los muebles inferiores no llevan espaldar, de modo que su fila habria dicho "Sin espaldar · PRIMADERA", anunciando el proveedor de una pieza que no existe. Se ata a la bandera `conFondo`: los inferiores pierden el proveedor y **los superiores lo conservan**, porque siempre llevan fondo (ver `ajustarPiezasSinFondo`).
+
+Si un proyecto no trae presets, o un tablero no tiene proveedor, la fila se renderiza como antes: `conProveedor()` devuelve el texto intacto en vez de dejar un separador huerfano.
+
+**Mapeo de calidad**: `quality:learn` señalo que `firplak-template.ts` no estaba en ningun lane del manifiesto. Se añadio —junto con `cema-template.ts`, que tenia el mismo hueco— a `lane:pricing-db`, el que ya cubre `cotizaciones.ts`, con su suite asociada.
+
+`tests/firplak-template.test.ts`, 7 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH; persiste el MED de `cotizaciones.ts`, ya justificado (su `server-only` impide cargarlo desde una prueba unitaria).
+
+## [2026-10-09] update | La forma de pago de la propuesta FIRPLAK se redacta completa
+
+El recuadro **FORMA DE PAGO** del resumen decia `50% / 50%`. Ahora dice **"50% de anticipo y 50% antes del despacho"**, que es la redaccion que la propia propuesta ya usaba mas abajo, en la lista de terminos.
+
+**Se extrajo a `formaDePago()`** (`firplak-template.ts`) porque la frase aparece en dos sitios —el recuadro y los terminos— y escribirla dos veces invita a que acaben diciendo cosas distintas. Sigue los porcentajes de la plantilla, que son editables.
+
+**Ajuste de maquetacion necesario**: el recuadro es uno de tres en una rejilla, junto a "30 dias" y "90 dias", compuestos en `text-lg`. Una frase larga en ese cuerpo desbordaba su tercio, asi que la casilla de pago se compone en `text-[11px]` con interlineado ajustado, y las tres pasan a `flex` con el valor centrado para que conserven la misma altura pese al texto de distinto tamano.
+
+`tests/firplak-template.test.ts` sube a 9 casos. `quality:gate` en exit 0, build y typecheck limpios.
+
+## [2026-10-09] update | Las tres casillas del resumen FIRPLAK comparten tipografia y cuerpo
+
+VIGENCIA, FORMA DE PAGO y PLAZO ESTIMADO quedan con el mismo `<b>` y el mismo `text-lg`, en negrita. La casilla de pago habia quedado en `text-[11px]` al redactarse completa, y se veia de otra familia aunque no lo fuera.
+
+**No habia diferencia de fuente**, solo de tamano: ninguna casilla declara familia propia, las tres heredan la del `body` (`Arial, Helvetica, sans-serif`). Verificado en el componente y en `globals.css`.
+
+**Por que `text-lg` y no un cuerpo menor**: calculado el ancho util de cada columna —8,1in de pagina menos los margenes, entre tres, menos el `p-3`: unos **203 px**— la frase "50% de anticipo y 50% antes del despacho" ocupa **dos lineas tanto a `text-base` como a `text-lg`**. Achicarla no ahorraba un renglon, asi que se usa el cuerpo mayor, que ademas es el que ya tenian las otras dos casillas: no se degrada ninguna para igualar.
+
+El `flex` con el valor centrado, que se habia introducido para el texto de distinto tamano, se conserva: ahora sirve para que las tres mantengan la misma altura pese a que la de pago ocupe dos renglones.
+
+`quality:gate` en exit 0, build y typecheck limpios.
+
+## [2026-10-09] ingest | Boton "Agregar herrajes": lineas de material suelto en una cotizacion
+
+Nuevo boton junto a "+ Agregar modulo", con su misma estetica, que permite cobrar un **tablero, canto o herraje sin pasar por un modulo**. El catalogo que ofrece es el de Materiales-Parametros (`cot_tableros`, `cot_cantos`, `cot_herrajes`, solo activos).
+
+**Dos decisiones se acordaron con el usuario** porque afectaban al precio y no se podian inferir:
+
+- **Cantidad en la unidad natural de cada catalogo**: tablero en m2, canto en metros lineales, herraje en unidades. Su tarifa ya esta en esa unidad, asi que no hay conversion que inventar.
+- **Margen segun lo que se agregue**: herraje con `margen_herraje`, tablero y canto con `margen_muebles`, igual que dentro de un modulo. Se aplica con la misma cadena que `engine.ts` —`costo / (1 - margen)`— y el descuento del proyecto despues, solo sobre el USD.
+
+**Lo mas delicado fue el recalculo, no el precio.** Una linea sin `tipo_mueble_id` pasada por el motor lanza "Tipo de mueble no encontrado", y **todas** las rutas de recalculo (editar, agrupar, mover, recalcular la cotizacion entera) pasan por `recalcularGrupo()`: una sola linea de material habria tumbado el recalculo completo de la cotizacion. `grupoSeSaltaElMotor()` lo evita, comprobando con `some` y no con `every` para fallar del lado seguro si alguna quedara mezclada con modulos. Como contrapartida, el precio de una linea de material **no se recalcula**: queda fijado al agregarla.
+
+**Verificado en la base antes de insertar**: `tipo_mueble_id` es nullable, su clave foranea no aplica sobre nulos y el `CHECK` de `unidad_dim` acepta el valor usado. Ninguna de las 153 lineas existentes usaba ese camino.
+
+La logica vive en `materiales-linea.ts` y no en `cotizaciones.ts` para poder probarse; aquel solo tiene el acceso a datos. El formulario pide los catalogos con una accion al montarse en vez de enhebrarlos como props por toda la jerarquia.
+
+**`quality:learn` deja un HIGH con justificacion documentada**: `cotizaciones.ts` cambio 112 lineas sin suite propia. Toda su logica se extrajo ya al modulo probado; lo que queda es acceso a datos, y el archivo **no es importable desde un test** —empieza con `import 'server-only'` y el intento falla, comprobado—. Cubrirlo exigiria pruebas de integracion contra Supabase, que el repositorio no tiene.
+
+`tests/materiales-linea.test.ts`, 15 casos. `quality:gate` en exit 0, build y typecheck limpios. **Sin verificar en pantalla**: la cotizacion esta tras login y no hay credenciales. Documentado en [lineas_material_suelto.md](wiki/lineas_material_suelto.md).
+
+## [2026-10-09] fix | El selector de herrajes salia vacio: columna mal nombrada y error tragado
+
+El formulario de "Agregar herrajes" mostraba **"Herraje · 0 en catalogo"** aunque la tabla tiene 19 activos. Los tableros y los cantos si cargaban.
+
+**La consulta pedia `cot_herrajes.descripcion`, columna que no existe**: la tabla la llama `nombre`. Supabase devolvia error, el codigo hacia `data ?? []` y el resultado era indistinguible de un catalogo vacio de verdad.
+
+**El defecto de fondo era tragarse el error**, no el nombre de la columna. `getMaterialesDisponibles()` ahora lanza indicando que catalogo fallo y por que, en vez de devolver una lista vacia que parece un dato legitimo.
+
+Se ofrecen los **19 activos**, incluidos los 5 de categoria `consumible` (tarugo, soporte metalico, grapas, carton, etiqueta): tambien se cobran sueltos, y filtrarlos habria sido una decision que nadie pidio. La categoria se muestra en la etiqueta y entra en el texto de busqueda, asi que escribir "riel" encuentra los seis rieles sin saberse los codigos. El proveedor hace lo mismo en los tableros.
+
+`quality:gate` en exit 0, build y typecheck limpios. Los 6 errores de lint de `cotizaciones.ts` siguen siendo los `no-explicit-any` preexistentes del release v1.0.3.
+
+## [2026-10-09] update | El boton pasa a llamarse "Agregar herrajes/otros"
+
+Renombrado a peticion del usuario: el selector ofrece tableros y cantos ademas de herrajes, y el nombre anterior sugeria que solo lo segundo. Se actualiza tambien la mencion en [lineas_material_suelto.md](wiki/lineas_material_suelto.md) para que la documentacion no quede desfasada.
+
+Solo la etiqueta del boton. El titulo del formulario ya decia "Agregar herrajes y materiales" y se deja como estaba.

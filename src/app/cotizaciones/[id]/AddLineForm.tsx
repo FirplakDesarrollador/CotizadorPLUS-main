@@ -5,10 +5,10 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
-type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
+type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
@@ -271,6 +271,12 @@ export default function AddLineForm({
     }
     // Los muebles superiores de pared (W) siempre parten de 12 de fondo por defecto.
     const nuevoPref = prefProyecto(nuevoTipo);
+    // Mismo criterio que el Simulador: 28,75" la linea U y Sink Vanity, 30" el
+    // resto de los inferiores. Editable.
+    const altoDefecto = altoPorDefectoIn(nuevoPref, tipos.find((t) => t.pref === nuevoPref)?.categoria);
+    if (altoDefecto != null) {
+      setAlto(String(unidad === 'in' ? altoDefecto : unidad === 'cm' ? altoDefecto * 2.54 : altoDefecto * 25.4));
+    }
     if (nuevoPref === 'W') setProf(unidad === 'in' ? '12' : unidad === 'cm' ? '30.48' : '304.8');
     if (nuevoPref === 'WSM') setProf(unidad === 'in' ? '14' : unidad === 'cm' ? '35.56' : '355.6');
     if (['F', 'DB'].includes(tipos.find((t) => t.id === resolvedId)?.pref ?? '')) setSistemaFrente('manija');
@@ -523,10 +529,10 @@ export default function AddLineForm({
 
         {esDB && (
           <div className="grid grid-cols-2 gap-1">
-            <L label="Tipología DB">
+            <L label={`Tipología ${prefTipo || 'DB'}`}>
               <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
                 <option value="">— manual —</option>
-                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{t.key}</option>)}
+                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{etiquetaTipologiaDb(t.key, prefTipo)}</option>)}
               </select>
             </L>
             <L label="Nº barras (pares)">

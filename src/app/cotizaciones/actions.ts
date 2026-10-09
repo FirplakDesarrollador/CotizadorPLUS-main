@@ -1,11 +1,13 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import type { TipoMaterial } from '@/lib/materiales-linea';
 import { redirect } from 'next/navigation';
 import {
   crearCotizacion, agregarLinea, editarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
   crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
   reordenarGruposCocina,
   guardarVersionCotizacion, restaurarVersionCotizacion,
+  agregarLineaMaterial, getMaterialesDisponibles, type MaterialDisponible,
   type AgregarLineaInput,
 } from '@/lib/cotizaciones';
 import type { CemaTemplate } from '@/lib/cema-template';
@@ -64,6 +66,25 @@ export async function desagruparGrupoAction(grupoId: string): Promise<{ ok: bool
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'No se pudo desagrupar el grupo' };
+  }
+}
+
+// El formulario pide los catalogos al abrirse, en vez de enhebrarlos como props
+// por toda la jerarquia de la cotizacion.
+export async function getMaterialesDisponiblesAction(): Promise<Record<TipoMaterial, MaterialDisponible[]>> {
+  return getMaterialesDisponibles();
+}
+
+export async function agregarLineaMaterialAction(
+  cocinaId: string,
+  entrada: { tipo: TipoMaterial; codigo: string; cantidad: number },
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const cotizacionId = await agregarLineaMaterial(cocinaId, entrada);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error' };
   }
 }
 

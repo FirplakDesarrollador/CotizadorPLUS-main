@@ -94,6 +94,90 @@ export function familiaMaterialPorPrefijo(pref: string | null | undefined): Fami
   return esMuebleSuperior(pref) ? 'superior' : 'inferior';
 }
 
+// Elementos planos: tipologías de **una sola pieza**, sin puertas, gavetas ni
+// entrepaños. Cada una es la única de su categoría en el catálogo (`filler`,
+// `panel`, `zocalo`), y producción las lee por su nombre, no por la letra.
+//
+// La tabla gobierna dos cosas a la vez, y a propósito: con qué texto empieza la
+// descripción y que esta no lleve contadores. Los `· N puerta(s)` y
+// `· N entrepaño(s)` que arrastraban salían de reglas **globales** de
+// `n_puertas`/`n_entrepanos`, que aplican a todo tipo sin excepción; para un
+// panel de relleno no significan nada.
+const ELEMENTOS_PLANOS: Record<string, string> = { F: 'FILLER', PN: 'PANEL', TK: 'TOEKICK' };
+
+// Las letras iniciales de `prefLabel`, que al agregar la línea es el código
+// completo (`F636`, `TK5 1/496`) y tras el primer recálculo es solo el prefijo
+// base (`F`). Se compara contra las letras y no contra el valor entero para que
+// ambos resuelvan, sin arrastrar un prefijo distinto que empiece igual (`FPK`).
+function letrasIniciales(prefLabel: string | null | undefined): string {
+  return String(prefLabel ?? '').trim().toUpperCase().match(/^[A-Z]+/)?.[0] ?? '';
+}
+
+// La etiqueta con la que empieza `descripcion_es`.
+export function etiquetaDescripcion(prefLabel: string | null | undefined): string {
+  const value = String(prefLabel ?? '').trim();
+  if (!value) return '';
+  return ELEMENTOS_PLANOS[letrasIniciales(value)] ?? value;
+}
+
+// Si la descripción debe omitir los contadores de puertas, gavetas y entrepaños.
+export function esElementoPlano(prefLabel: string | null | undefined): boolean {
+  return letrasIniciales(prefLabel) in ELEMENTOS_PLANOS;
+}
+
+// Cuántos entrepaños tiene **realmente** el módulo, contados sobre el despiece.
+//
+// La descripción de una línea usaba la variable de regla `n_entrepanos`, que es
+// una regla global por altura (0/1/2/3) y **no** describe el mueble: en 47 de
+// los 81 tipos del catálogo no coincide con las piezas que se cortan. `B` y
+// `BFD` llevan el entrepaño fijo en 1 y la descripción decía 2; `SBFD`, `BOV` y
+// otros 23 tipos no tienen ninguno y decía 2 o 3; `AL` tiene 5 y `WPC` 6.
+//
+// Cuenta también `entrepano_fijo` (UW, BMW-1, BOMH-1 y sus FE): es una pieza
+// más de la hoja de corte, con su material y su canto.
+export function contarEntrepanos(piezas: readonly { pieza: string; cant: number }[]): number {
+  return piezas
+    .filter((p) => /^entrepano/i.test(p.pieza))
+    .reduce((total, p) => total + Math.max(0, Math.round(p.cant)), 0);
+}
+
+// Alto estándar de la línea U y de la pareja Sink Vanity: 28,75 pulgadas.
+export const ALTO_LINEA_U_IN = 28.75;
+
+// La lista es explícita y no una regla sobre el prefijo. "Empieza por U" dejaría
+// entrar a `UW`, que es un superior, y un tipo nuevo de la línea heredaría el
+// alto sin que nadie lo decidiera. Al añadir una tipología de esta familia hay
+// que agregarla aquí.
+const PREFS_ALTO_LINEA_U = [
+  'UB', 'UB-FE', 'UBFD', 'UDB', 'UDV', 'USVFD', 'UV', 'UVFD',
+  'SV', 'SVFD',
+] as const;
+
+// Alto estándar del resto de los muebles inferiores.
+export const ALTO_INFERIOR_IN = 30;
+
+// Torres y alacenas. El catálogo las clasifica como `inferior`, pero se arman a
+// la altura de un mueble alto, no a 30", así que se quedan **sin** alto por
+// defecto en lugar de recibir uno equivocado.
+const PREFS_TORRE = ['AL', 'OVPC', 'PC', 'PCFD'] as const;
+
+// Alto que el formulario carga al elegir el tipo, en pulgadas, o `null` si esa
+// tipología no tiene uno. Se carga como valor inicial y sigue siendo editable:
+// es una comodidad, no una restricción.
+//
+// El orden de las tres reglas importa: los inferiores de la línea U (`UB`,
+// `UDB`…) son de categoría `inferior`, así que su 28,75" tiene que resolverse
+// antes de la regla general.
+export function altoPorDefectoIn(
+  pref: string | null | undefined,
+  categoria?: string | null,
+): number | null {
+  const value = String(pref ?? '').toUpperCase();
+  if ((PREFS_ALTO_LINEA_U as readonly string[]).includes(value)) return ALTO_LINEA_U_IN;
+  if ((PREFS_TORRE as readonly string[]).includes(value)) return null;
+  return categoria === 'inferior' ? ALTO_INFERIOR_IN : null;
+}
+
 // Solo los campos que la regla necesita, para no atar este módulo —que es de
 // cliente— a la forma completa de `Pieza`.
 type PiezaAjustable = {
@@ -157,7 +241,11 @@ export const DB_TIPOLOGIAS: DbTipologia[] = [
   { key: 'DB-1S', nc: 3, nb: 2, npeq: 1, desc: '1 cajón pequeño + 2 grandes · 2 pares de barra' },
   { key: 'DB-2S', nc: 3, nb: 1, npeq: 2, desc: '2 cajones pequeños + 1 grande · 1 par de barra' },
   { key: 'DB-2', nc: 2, nb: 2, npeq: 0, desc: '2 cajones iguales (grandes) · 2 pares de barra' },
-  { key: 'DB-3', nc: 3, nb: 0, npeq: 0, desc: '3 cajones iguales · sin barras' },
+  // DB-3 son tres cajones GRANDES (el catálogo le da tres `trasero_gaveta_grande`
+  // y ningún pequeño), y las barras van en los cajones grandes: le corresponden
+  // tres pares. Estaba en 0, que es lo que hacía que el selector dijera
+  // "sin barras" y que el módulo se cotizara sin las barras estabilizadoras.
+  { key: 'DB-3', nc: 3, nb: 3, npeq: 0, desc: '3 cajones iguales · 3 pares de barra' },
   { key: 'DB-4', nc: 4, nb: 0, npeq: 0, desc: '4 cajones iguales · sin barras' },
   { key: 'DB2-1OP', nc: 3, nb: 1, npeq: 0, noculto: 1, desc: '2 cajones + 1 oculto · 1 par de barra' },
 ];
@@ -170,6 +258,20 @@ export const PREFS_CON_TIPOLOGIA_DB = ['DB', 'UDB', 'UDV'] as const;
 export function permiteTipologiaDb(pref: string | null | undefined): boolean {
   const p = String(pref ?? '').toUpperCase();
   return (PREFS_CON_TIPOLOGIA_DB as readonly string[]).includes(p);
+}
+
+// Cómo se **muestra** una tipología en el selector, según el tipo elegido: un
+// `UDV` ofrece `UDV-1S`, no `DB-1S`.
+//
+// La `key` no cambia. Es el identificador que se persiste en `config.dbTipo` y
+// del que sale el sufijo del código comercial (`DB-1S` → `-1S`, que produce
+// `UDV36-1S`): tocarla rompería las líneas ya guardadas y el código de módulo.
+// Esto es presentación y nada más.
+export function etiquetaTipologiaDb(key: string, pref: string | null | undefined): string {
+  const base = String(pref ?? '').toUpperCase();
+  if (!base || base === 'DB') return key;
+  // `DB-1S` → `UDV-1S`; `DB2-1OP` → `UDV2-1OP`.
+  return key.replace(/^DB/, base);
 }
 
 // Las tipologias DB con Gola de madera son tipos independientes en base de

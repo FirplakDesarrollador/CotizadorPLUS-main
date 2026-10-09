@@ -6,6 +6,8 @@ import {
   distribuirResiduoMoneda, redondearMoneda, precioUnitario,
   type SistemaMedida,
 } from '@/lib/module-groups';
+import { contarEntrepanos, esElementoPlano, etiquetaDescripcion } from '@/lib/muebles';
+import { calcularPrecioMaterial, descripcionMaterial, grupoSeSaltaElMotor, type TipoMaterial } from '@/lib/materiales-linea';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
 
@@ -163,10 +165,21 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
   // ("lógica unificada"), se guardaba precioCop a secas sin importar conHerrajes
   // — un módulo con herrajes y uno sin herrajes quedaban costando lo mismo.
   const { cop: precioUnitCop, usd: precioUnitUsd } = precioUnitario(input.conHerrajes, res);
-  const desc = `${input.prefLabel ?? ''} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim()
+  // Los elementos planos (F, PN, TK) se describen con su nombre de producción
+  // —FILLER, PANEL, TOEKICK— y **sin** contadores: son una sola pieza, y los
+  // `n_puertas`/`n_entrepanos` que arrastraban venían de reglas globales que
+  // aplican a todo tipo. Ver `esElementoPlano` en `muebles.ts`. El campo `pref`
+  // de la fila conserva el valor original, que alimenta el código comercial.
+  const medidas = `${etiquetaDescripcion(input.prefLabel)} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim();
+  // Los entrepaños se cuentan sobre el **despiece**, no sobre `n_entrepanos`:
+  // esa variable es una regla global por altura y no describe el mueble. Ver
+  // `contarEntrepanos`. Se omite el contador cuando es cero, igual que ya se
+  // hacía con puertas y gavetas, en vez de anunciar "0 entrepaño(s)".
+  const entrepanos = contarEntrepanos(res.piezas);
+  const desc = esElementoPlano(input.prefLabel) ? medidas : medidas
     + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '')
     + (res.vars.n_cajones ? ` · ${res.vars.n_cajones} gaveta(s)` : '')
-    + (res.vars.n_entrepanos != null ? ` · ${res.vars.n_entrepanos} entrepaño(s)` : '');
+    + (entrepanos ? ` · ${entrepanos} entrepaño(s)` : '');
   return {
     tipo_mueble_id: input.tipoId,
     pref: input.prefLabel ?? null,
@@ -209,7 +222,7 @@ export type LineaPersistida = {
   cocina_id: string;
   grupo_id: string;
   posicion_grupo: number;
-  tipo_mueble_id: string;
+  tipo_mueble_id: string | null;
   pref: string | null;
   largo: number;
   alto: number;
@@ -224,7 +237,7 @@ export type LineaPersistida = {
 export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
   const c = linea.config ?? {};
   return {
-    tipoId: linea.tipo_mueble_id,
+    tipoId: linea.tipo_mueble_id as string,
     largo: Number(linea.largo), alto: Number(linea.alto), prof: Number(linea.prof),
     unidad: linea.unidad_dim,
     preset: (c.preset ?? {}) as Record<string, string>,
@@ -293,6 +306,13 @@ async function recalcularGrupo(
   if (lineas.length > 1 && lineas.some((l) => Number(l.cantidad) !== 1)) {
     throw new Error('Para agrupar módulos, cada línea debe tener cantidad 1.');
   }
+
+  // Las lineas de material suelto no pasan por el motor: no tienen modulo que
+  // recalcular. Siempre van solas en su grupo (ver `agregarLineaMaterial`), y se
+  // comprueba con `some` para fallar del lado seguro: si alguna vez quedara una
+  // mezclada con modulos, se deja el grupo intacto en vez de reventar el
+  // recalculo de toda la cotizacion.
+  if (grupoSeSaltaElMotor(lineas)) return;
 
   const inputs = lineas.map(inputDesdeLinea);
   const sistema = sistemaPrefetch ?? await obtenerSistema(grupo.cotizacion_id);
@@ -724,4 +744,141 @@ async function recomputarTotales(cotizacionId: string) {
 
   // Proyecto
   await sb.from('cot_cotizaciones').update({ total_cop, total_usd }).eq('id', cotizacionId);
+}
+
+// Proveedor de cada codigo de tablero, para la propuesta FIRPLAK: sus tablas de
+// especificaciones nombran el material y produccion pide ver de quien es
+// (PRIMADERA, DURATEX, CHINO...). Devuelve un mapa codigo -> proveedor; un
+// codigo sin proveedor registrado simplemente no aparece.
+export async function proveedoresDeTableros(codigos: readonly string[]): Promise<Record<string, string>> {
+  const unicos = [...new Set(codigos.filter(Boolean))];
+  if (!unicos.length) return {};
+  const sb = await createClient();
+  const { data } = await sb.from('cot_tableros').select('codigo,proveedor').in('codigo', unicos);
+  return Object.fromEntries(
+    ((data ?? []) as { codigo: string; proveedor: string | null }[])
+      .filter((t) => t.proveedor)
+      .map((t) => [t.codigo, String(t.proveedor)]),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Lineas de material suelto: tablero, canto o herraje cobrados sin pasar por un
+// modulo. La logica de precio vive en `materiales-linea.ts`, que si es
+// testeable; aqui solo esta el acceso a datos.
+// ---------------------------------------------------------------------------
+
+export type MaterialDisponible = {
+  codigo: string;
+  etiqueta: string;
+  precio: number;
+  /** Texto adicional por el que tambien se puede buscar (categoria, proveedor). */
+  busqueda?: string;
+};
+
+/** Catalogos de Materiales-Parametros, para el selector de la cotizacion. */
+export async function getMaterialesDisponibles(): Promise<Record<TipoMaterial, MaterialDisponible[]>> {
+  const sb = await createClient();
+  const [tableros, cantos, herrajes] = await Promise.all([
+    sb.from('cot_tableros').select('codigo,precio_m2,proveedor,espesor_mm').eq('activo', true).order('codigo'),
+    sb.from('cot_cantos').select('calibre,precio').eq('activo', true).order('calibre'),
+    // `cot_herrajes` nombra esa columna `nombre`, no `descripcion`.
+    sb.from('cot_herrajes').select('codigo,precio,nombre,categoria,unidad').eq('activo', true).order('categoria').order('codigo'),
+  ]);
+  // Un error de consulta devolvia antes una lista vacia, y el formulario decia
+  // "0 en catalogo" sin explicar nada. Pedir una columna inexistente se veia
+  // igual que un catalogo vacio de verdad.
+  for (const [nombre, r] of [['tableros', tableros], ['cantos', cantos], ['herrajes', herrajes]] as const) {
+    if (r.error) throw new Error(`No se pudo leer el catalogo de ${nombre}: ${r.error.message}`);
+  }
+  return {
+    tablero: ((tableros.data ?? []) as { codigo: string; precio_m2: number; proveedor: string | null; espesor_mm: number | null }[])
+      .map((t) => ({ codigo: t.codigo, precio: Number(t.precio_m2), etiqueta: [t.codigo, t.espesor_mm ? `${t.espesor_mm}mm` : '', t.proveedor ?? ''].filter(Boolean).join(' · '), busqueda: t.proveedor ?? '' })),
+    canto: ((cantos.data ?? []) as { calibre: string; precio: number }[])
+      .map((c) => ({ codigo: c.calibre, precio: Number(c.precio), etiqueta: `calibre ${c.calibre}` })),
+    // Se ofrecen los 19 del catalogo, incluidos los de categoria `consumible`
+    // (tarugos, soportes, grapas): tambien se cobran sueltos. La categoria va en
+    // la etiqueta y en la busqueda para poder distinguirlos de un vistazo.
+    herraje: ((herrajes.data ?? []) as { codigo: string; precio: number; nombre: string | null; categoria: string | null; unidad: string | null }[])
+      .map((h) => ({
+        codigo: h.codigo,
+        precio: Number(h.precio),
+        etiqueta: [h.codigo, h.nombre ?? '', h.categoria ? `(${h.categoria})` : ''].filter(Boolean).join(' · '),
+        busqueda: [h.categoria ?? '', h.nombre ?? ''].filter(Boolean).join(' '),
+      })),
+  };
+}
+
+/**
+ * Agrega a una cocina una linea de material suelto. Va siempre sola en su
+ * grupo: `recalcularGrupo` salta los grupos que contienen material, de modo que
+ * mezclarla con modulos dejaria esos modulos sin recalcular.
+ */
+export async function agregarLineaMaterial(
+  cocinaId: string,
+  entrada: { tipo: TipoMaterial; codigo: string; cantidad: number },
+) {
+  if (!(Number.isFinite(entrada.cantidad) && entrada.cantidad > 0)) {
+    throw new Error('La cantidad debe ser mayor que cero.');
+  }
+  const sb = await createClient();
+  const { data: cocina, error: ce } = await sb.from('cot_cocinas').select('id,cotizacion_id').eq('id', cocinaId).single();
+  if (ce || !cocina) throw new Error('Cocina no encontrada');
+  const cotizacionId = (cocina as { cotizacion_id: string }).cotizacion_id;
+
+  const catalogo = await getMaterialesDisponibles();
+  const item = catalogo[entrada.tipo].find((m) => m.codigo === entrada.codigo);
+  if (!item) throw new Error(`No se encontro ${entrada.tipo} con codigo ${entrada.codigo}.`);
+
+  const { data: cab } = await sb.from('cot_cotizaciones').select('trm,config_default').eq('id', cotizacionId).single();
+  const cfg = ((cab as { config_default?: Record<string, unknown> } | null)?.config_default ?? {}) as Record<string, unknown>;
+  const { data: params } = await sb.from('cot_parametros').select('key,value');
+  const P = Object.fromEntries(((params ?? []) as { key: string; value: unknown }[]).map((r) => [r.key, r.value]));
+  const num = (v: unknown, d: number) => (v == null || Number.isNaN(Number(v)) ? d : Number(v));
+
+  const precios = calcularPrecioMaterial(
+    { ...entrada, precioUnitarioCop: item.precio },
+    {
+      margenMuebles: num(cfg.margen ?? P.margen_muebles, 0.6),
+      margenHerraje: num(cfg.margenHerraje ?? P.margen_herraje, 0.35),
+      trm: num((cab as { trm?: number } | null)?.trm, 0),
+      descuento: num(cfg.descuento, 0),
+    },
+  );
+
+  const { count } = await sb.from('cot_cotizacion_lineas')
+    .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
+  const { count: groupCount } = await sb.from('cot_grupos_modulos')
+    .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
+  const { data: grupo, error: groupError } = await sb.from('cot_grupos_modulos').insert({
+    cotizacion_id: cotizacionId, cocina_id: cocinaId,
+    orden: groupCount ?? 0, etiqueta: `MAT-${crypto.randomUUID()}`,
+  }).select('id').single();
+  if (groupError || !grupo) throw new Error(groupError?.message ?? 'No se pudo crear el bloque del material');
+
+  const { error } = await sb.from('cot_cotizacion_lineas').insert({
+    cotizacion_id: cotizacionId, cocina_id: cocinaId, grupo_id: grupo.id,
+    posicion_grupo: 1, orden: count ?? 0,
+    tipo_mueble_id: null, pref: null, sku: entrada.codigo,
+    codigo_modulo: entrada.codigo,
+    largo: 0, alto: 0, prof: 0, unidad_dim: 'in',
+    cantidad: 1,  // el "cuantos" vive en la cantidad del material, no en la linea
+    config: { material: { ...entrada, precioUnitarioCop: item.precio } },
+    costo_sin_herrajes_cop: precios.costoSinHerrajes,
+    costo_herrajes_cop: precios.costoHerrajes,
+    costo_total_cop: precios.costoConHerrajes,
+    precio_unit_cop: precios.precioConHerrajesCop,
+    precio_unit_usd: precios.precioConHerrajesUsd,
+    precio_total_cop: precios.precioConHerrajesCop,
+    precio_total_usd: precios.precioConHerrajesUsd,
+    descripcion_es: descripcionMaterial(entrada),
+    breakdown: precios,
+  });
+  if (error) {
+    await sb.from('cot_grupos_modulos').delete().eq('id', grupo.id);
+    throw new Error(error.message);
+  }
+  await normalizarGrupos(cocinaId);
+  await recomputarTotales(cotizacionId);
+  return cotizacionId;
 }
