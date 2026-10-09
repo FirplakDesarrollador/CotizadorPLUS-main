@@ -1525,3 +1525,176 @@ Se diseñó e implementó el sistema de calidad modular: (1) `quality/manifest.j
 ## [2026-10-02] ingest | Creación del workflow de calidad /quality y /calidad para automatización de compuertas
 Se crearon los workflows interactivos `.agents/workflows/quality.md` y `.agents/workflows/calidad.md` invocables mediante comandos slash (`/quality` o `/calidad`). Guían el flujo integral de validación: (1) inspección dry-run de impacto con `quality:plan`; (2) compuertas obligatorias `quality:gate` o `quality:gate:full` con exit code 0; (3) diagnóstico de cobertura y riesgos con `quality:learn`; (4) congelamiento de mejoras de deuda con `quality:baseline:update`.
 
+## [2026-10-02] fix | Integracion de DEV: fixture resincronizado y tres regresiones reales del catalogo
+
+Fast-forward de `Andrés` a `origin/DEV` (12 commits de LizPalacio31, migraciones 0124-0172). Sin conflictos: la rama venia de un reset a `LIz`, asi que no habia nada propio que mezclar. `origin/LIz` esta contenido en `DEV`, de modo que esto trae ambas.
+
+**El fixture llevaba mucho sin regenerarse y eso ocultaba fallos.** Estaba en 62 tipos / 459 piezas / 84 reglas / 48 tableros cuando la base real tiene **81 / 650 / 311 / 104**. Regenerado desde la base: 22 tipos nuevos (`BMW-1`, `BOMH-1`, `TW-SM-PUSH`, la familia `DB-*-SM`, `W-SM*`, `BBLFD-D-L/R-SM`, `WBL-D-L/R-SM`...) y 3 de baja (`BMW`, `BOMH` y `FL`, reemplazados o eliminados). Al refrescarlo aparecieron 8 fallos que el archivo congelado tapaba, sumados a los 4 que `DEV` ya traia en rojo.
+
+**Regresion real 1 — `0171` perdio la gaveta oculta.** `0171_db_normalizar_nombres_traseros_gaveta.sql` borro la plantilla generica `trasero_gaveta` y parametrizo las cantidades, pero al reescribir las formulas **se dejo la rama `n_cajones_ocultos`**. Efecto: un DB2-1OP pasaba a dar 0 traseros pequenos en vez de 2, y `n_cajones` grandes en vez de 1 — el despiece quedaba sin los traseros de la gaveta oculta. Corregido con `0179` (escrita como `0173` y renumerada al integrar DEV, que traia su propia 0173), aditiva: antepone la rama de ocultos y conserva intacta la logica que `0171` introdujo para DB-4 y para las mixtas DB-1S/2S. Ya aplicada en Supabase, con dos `raise` que verifican el resultado.
+
+**Regresion real 2 — `visualizacion.ts` sigue detras de `group-engine.ts`.** Es la misma de la integracion anterior, que un reset de rama se llevo: el motor fusiona las piezas `continua_opcional` pero la visualizacion solo miraba `continua`, asi que una opcional fusionada llegaba con la cantidad prorrateada (0,5 por modulo) y se descartaba por fraccionaria. Reaplicada la correccion via `group.piezasContinuas`.
+
+**Cuatro tests que iban contra el motor, no al contrario:**
+
+- `bloquea incompatibilidades`: la validacion `mismo conjunto` se quito del fuente hace tiempo y existe otro test que afirma lo contrario sobre el mismo par. Se elimina la asercion vieja.
+- `normaliza a 80 mm exactos`: el motor normaliza lo que esta a <=0,05 mm de 80 (la conversion historica `3.14961 in`), y el helper del test armaba los refuerzos con `3.25 in` = 82,55 mm, que no es la medida nominal que el test dice probar.
+- `superiores aplican la regla de entrepanos`: esperaba que una pieza con cantidad 0 desapareciera de `result.piezas`. El motor la deja con `cant: 0` y cada consumidor filtra por `cant > 0` —asi lo hace el resto de la suite—, de modo que se compara la cantidad y no la ausencia de la fila.
+- `B-FE: visualizacion`: fijaba un desfase de 30 mm entre el fondo de gaveta y su frente, pero el motor suma 13 mm cuando la caja lleva laterales de madera. Ahora **deriva** el desfase del propio despiece en vez de fijar el numero.
+
+**Dos tests que el catalogo dejo obsoletos, no roto:** `DB-4` parcheaba a mano el ancho del trasero generico, algo que `0171` ya resuelve de forma parametrica, y `DB-2-SM`/`DB-3-SM` filtraban los traseros `pequena`/`grande` para quedarse con el generico que ya no existe. Los tres pasan a usar el catalogo tal cual.
+
+**`door` ya no se detecta por prefijo.** Tres tipos lo necesitan (`BBLFD`, `BBLFD-D-L/R-SM`, `WBL-D-L/R-SM`) y es un dato que captura el usuario, no una regla del catalogo. El test generico de escena lo deriva de las propias formulas, para que un tipo nuevo con `door` no vuelva a romperlo.
+
+**Deriva pendiente, ajena a este merge**: de los 34 traseros de gaveta de la base, 9 volvieron a 2 aristas largas —probablemente `0168_normalizar_cantos_produccion.sql`—, contradiciendo la regla de una sola arista larga. No se toca aqui porque no formaba parte del encargo. La regla del trasero grande con 2 extremos, en cambio, se cumple en los 8 grandes.
+
+215/215 tests, typecheck, lint y build limpios.
+
+## [2026-10-02] fix | Integracion del release v1.0.3 de DEV: merge limpio, 36 errores de lint ajenos y una version que retrocede
+
+Merge de `origin/DEV` (6 commits: cinco merges de `DEV` en `main` sin contenido propio y el release `b8cb75c` de isazaale con margen global al 35%, recalculo en lote y bump de version). Conflicto unicamente en este log; se conservan las entradas de ambos lados.
+
+**Nada que resincronizar esta vez.** El release no trae migraciones ni toca el fixture, y la comprobacion contra la base confirma que sigue cuadrando: 81 tipos / 650 piezas / 311 reglas / 104 tableros, sin altas ni bajas. **220/220 tests**, incluidos los 5 nuevos de `margen-global`, con typecheck y build limpios. Es la primera integracion de esta serie que no exige saneamiento.
+
+**Dos cosas del release que quedan anotadas y no se tocaron:**
+
+1. **36 errores de lint nuevos**, todos `@typescript-eslint/no-explicit-any`, concentrados exactamente en los cuatro archivos que el release modifica: `cotizar.ts` (27), `cotizaciones.ts` (6), `diseno.ts` (2) y `admin.ts` (1). Antes del release el repo tenia 0 errores y 13 advertencias. Son todos el mismo patron mecanico —resultados de Supabase anotados como `any` en callbacks de `.map()`— y en varios casos el `: any` es redundante porque el array ya lleva su tipo. Se dejan: son 36 cambios de tipos en la ruta de precios de un release ajeno recien publicado, y el riesgo de alterar comportamiento sin poder validarlo contra datos reales no se justifica dentro de un merge. Conviene abordarlo como tarea propia.
+
+2. **La version retrocede.** `b8cb75c` se titula "version bump" pero baja `package.json` de **1.0.4 a 1.0.3**. La 1.0.4 se habia puesto el 2026-08-03 (`f0643b7`) y la 1.0.3 el 2026-08-01 (`42b948c`), asi que el repo queda en un numero anterior al que ya tenia. Se conserva el valor de `DEV`: el numero de release es decision de su autor, no del merge.
+
+**Y una del entorno:** `tsconfig.json` ahora excluye `**/*-isazaale.*`, lo que explica que el typecheck pase mientras el lint sigue reportando esas variantes — eslint no hereda ese `exclude`.
+
+## [2026-10-02] fix | El cliente de Supabase ya no puede saltarse RLS por un error ajeno
+
+Correccion del `try/catch` que el release `v1.0.3` (`b8cb75c`) introdujo en `src/lib/supabase/server.ts`.
+
+**El defecto.** La rama que construye el cliente elevado —clave de servicio, **ignora RLS**— estaba cubierta por un `catch` que envolvia **todo** el cuerpo de la funcion, incluido `createServerClient()`. Cualquier error ajeno al caso previsto hacia que `createClient()` devolviera en silencio un cliente sin RLS, en una funcion cuyo propio comentario dice que la respeta. No era teorico: `SUPABASE_SERVICE_ROLE_KEY` esta configurada, asi que el fallback resolvia a una clave real, y la funcion la usan **17 modulos** entre `src/app` y `src/lib`, no solo scripts. Ademas, el `|| KEY` degradaba a la clave anonima cuando faltaba la de servicio, convirtiendo un problema de configuracion en fallos de RLS difusos y lejanos a la causa.
+
+**El arreglo.** El `try` envuelve ahora **solo** `await cookies()`, que es exactamente la condicion a detectar —fuera de un request de Next lanza, y eso significa que no hay sesion que respetar—. Todo lo demas se propaga, de modo que la unica via a la rama elevada es la prevista. Y `createElevatedClient()` lanza si falta la clave en vez de caer a la anonima. El camino normal no cambia: dentro de un request sigue siendo el mismo cliente con cookies y la misma clave anonima.
+
+**Cobertura.** `tests/supabase-server-client.test.ts` corre fuera de Next, donde `cookies()` lanza, asi que ejerce la rama elevada: sin clave de servicio exige que lance nombrando la variable, y con clave que construya un cliente real. Comprobado que el primer caso falla con el codigo del release. El otro lado del arreglo —que un fallo de `createServerClient` se propague— no se puede cubrir por esa via porque exigiria un request de Next real; ahi la garantia es estructural, el `try` envuelve una sola linea.
+
+**Deuda anotada.** El privilegio sigue sin verse en el sitio de llamada: `createClient()` puede devolver un cliente elevado y quien la invoca no lo distingue. Lo limpio seria exportar dos funciones y que cada llamador declare lo que necesita, pero obliga a revisar los 17 consumidores uno por uno. Este cambio cierra la via accidental, no rediseña la API.
+
+222/222 tests, typecheck, lint y build limpios. Documentado en [clientes_supabase_rls.md](wiki/clientes_supabase_rls.md).
+
+## [2026-10-05] fix | Integracion de DEV: conflicto de tests resuelto contra el catalogo real y compuerta de calidad en verde
+
+Merge de `origin/DEV` (8 commits: plantillas CEMA/FIRPLAK y selector "Cotizado" de LizPalacio31, sistema de calidad modular de isazaale, migraciones 0173-0178). Tres conflictos: `WikiLLM/index.md`, `WikiLLM/log.md` y `tests/visualizacion.test.ts`.
+
+**El conflicto que importaba.** Ambas ramas habian arreglado el mismo problema —la plantilla generica `DB.trasero_gaveta` que `0171` borro— por caminos opuestos. `DEV` seguia filtrando los traseros `pequena`/`grande` y renombraba la **generica** a `trasero_gaveta_grande`; esta rama habia quitado el filtro para que el catalogo los aportara. Verificado contra la base: **la generica no existe**, asi que la version de `DEV` lanzaria (`find(...)!` sobre `undefined`) y solo pasa contra su fixture congelado. Se conserva la resolucion de esta rama y la redaccion del mensaje de `DEV`.
+
+**Mi migracion renumerada.** `DEV` traia su propia `0173` (`db_sm_normalizar_nombres_traseros_gaveta`), asi que la mia pasa a **`0179`**. Es solo el numero: ya estaba aplicada en Supabase y su contenido no cambia.
+
+**Falsa alarma verificada, no corregida a ciegas.** La `0173` de `DEV` quita la rama `n_cajones_ocultos` de los traseros de `DB-2S-SM`, el mismo patron del defecto que `0179` repara en `DB`. Pero **aqui no es defecto**: la migracion que creo la tipologia (`0093`) fija `n_cajones_ocultos = 0` con la nota "Sin gavetas ocultas", de modo que quitarla es coherente con su diseno. Las piezas `frente_gaveta_exterior`/`frente_gaveta_interior` que aun ramifican sobre esa variable son clones inertes de la plantilla `DB`. Se deja constancia para no volver a levantar la alarma.
+
+**La compuerta de calidad que trae DEV pasa, y mejora el baseline.** `npm test` ahora apunta a `scripts/quality/gate.ts`. La corrida completa da **exit 0** y reporta que **los 4 tests que el baseline listaba como fallos conocidos ahora pasan** — son exactamente los que esta rama arreglo en la integracion anterior: `bloquea incompatibilidades`, `normaliza a 80 mm`, `B-FE: visualizacion` y `superiores aplican la regla de entrepanos`. Se ejecuto `quality:baseline:update`, que vacia `knownFailingTests` y aprieta `maxFailingTests` de **4 a 0**, de modo que esos cuatro no pueden volver a romperse en silencio.
+
+El trinquete deja los **36 errores de lint** del release v1.0.3 en el baseline (`maxLintErrors: 36`), que es por lo que la compuerta aprueba pese a ellos. Siguen pendientes y siguen siendo ajenos a este trabajo. Las advertencias suben de 13 a 17: las cuatro nuevas estan todas en `FirplakPrintEditor.tsx`, archivo nuevo de `DEV`.
+
+Migraciones `0173`-`0178` de `DEV` verificadas como aplicadas en Supabase (columnas `comprador_nombre`, `cotizador_por`, `plantilla_cema`, `plantilla_firplak`, y cero traseros genericos en la familia DB-SM). Fixture resincronizado: 81 tipos / 650 piezas / 311 reglas / 104 tableros, con solo dos valores de deriva.
+
+222/222 tests, typecheck, build y compuerta de calidad limpios.
+
+## [2026-10-05] fix | Devuelto el ancho original de las paginas: la regla `calc(100% - 500px)` estrechaba siete vistas
+
+El merge de `DEV` trajo en `globals.css` una regla que aplicaba `width: calc(100% - 500px)` a `.cotizador-tab-content` y `.cotizacion-detail-content`, usadas por **siete paginas**: Simulador, Cotizaciones (lista y detalle), Materiales-Parametros, Diseno, HDR y Manual.
+
+**El efecto crecia al reducir la ventana**, que es lo contrario de lo deseable: a 1920 px dejaba 1420 px de contenido, a 1366 px —un portatil corriente— **866 px**, y a 1024 px solo **524 px**. El media query de rescate estaba en `max-width: 500px`, un punto en el que `calc(100% - 500px)` ya es cero o negativo, asi que no cubria ninguno de los anchos intermedios.
+
+**La restauracion es por pagina, no un ancho comun.** Antes del merge cada vista tenia su propio maximo, y recuperarlos uno a uno era la unica forma de volver a lo que habia:
+
+| Pagina | Ancho restaurado |
+| --- | --- |
+| Simulador, Cotizaciones (lista), Materiales-Parametros, Diseno, HDR | `mx-auto max-w-6xl` |
+| Manual | `mx-auto max-w-3xl` (es texto corrido) |
+| Detalle de cotizacion | `mx-auto w-full max-w-[1600px]` |
+
+Retirada la regla de ancho de `globals.css`; **se conservan** `.simulador-main-grid` y las de `.no-print`, que no tienen que ver con el ancho de pagina. Las clases `.cotizador-tab-content` y `.cotizacion-detail-content` quedan sin referencias.
+
+**Lo que no se toco, por decision del usuario** (el encargo fue solo el ancho): el encabezado rediseñado con el desplegable "User", y la rejilla de la lista de cotizaciones, que `DEV` cambio de `lg:grid-cols-[320px_1fr]` a dos columnas iguales por estilo inline.
+
+Verificado comparando clase por clase contra `e2183d0`: las siete coinciden con su estado previo. 8 archivos, 8 inserciones y 21 eliminaciones. Build y compuerta de calidad limpios; no hay prueba visual automatizada, la comprobacion es estructural.
+
+## [2026-10-05] fix | La tabla de Cotizaciones deja de necesitar barra horizontal
+
+La lista de cotizaciones obligaba a desplazarse en horizontal para leer las columnas de la derecha. **Eran dos causas sumadas**, no una:
+
+1. La vista topaba en `max-w-6xl` (1152 px), asi que no aprovechaba pantallas anchas.
+2. `DEV` cambio la rejilla de `lg:grid-cols-[320px_1fr]` a **dos columnas iguales** (`minmax(0,1fr) minmax(0,1fr)`) por estilo inline. La tabla pasaba de recibir ~776 px a ~548 px, y como ella misma declara `min-width: 720px`, aparecia su barra.
+
+Antes del merge no salia: con `[320px_1fr]` la tabla tenia 776 px, justo por encima de su minimo.
+
+**Reparto nuevo**: la vista sube a `max-w-[1600px]` —el mismo tope que ya usa el detalle de cotizacion, asi que no se inventa un valor— y la rejilla pasa a `minmax(480px, 560px) minmax(0, 1fr)`: el formulario queda acotado y la tabla se lleva el resto. El formulario no baja de 480 px porque lleva dentro dos tarjetas de materiales lado a lado que no colapsan.
+
+**El punto de quiebre importa.** La rejilla vive ahora en `globals.css` y no en un estilo inline, porque hacia falta un media query. Las dos columnas solo entran desde **1300 px**, que es el ancho en que caben formulario (480) + tabla (720) + separaciones (48); por debajo se apila y la tabla usa el ancho completo. Un primer intento con el quiebre en 1180 px dejaba una franja entre 1180 y 1280 donde la tabla seguia quedandose en 620 px y la barra reaparecia.
+
+Ancho resultante de la tabla, calculado en toda la escala:
+
+| Viewport | Antes | Ahora |
+| ---: | ---: | ---: |
+| 1024 | 524 px (con barra) | 992 px apilado |
+| 1280 | 548 px (con barra) | 1248 px apilado |
+| 1366 | 548 px (con barra) | 726 px |
+| 1830 | 548 px (con barra) | 992 px |
+| 2560 | 548 px (con barra) | 992 px |
+
+La separacion vertical entre columnas (`border-left`) se movio al media query: apilado no tenia sentido.
+
+Verificado contra el CSS que sirve el servidor de desarrollo, no solo en el fuente: `.cotizaciones-main-grid`, el `@media (min-width: 1300px)` y `.max-w-[1600px] { max-width: 1600px }` estan en la hoja compilada. Build y compuerta de calidad limpios.
+
+## [2026-10-06] ingest | Plan del optimizador de corte
+
+Se documentó el plan de desarrollo en docs/plan_optimizador_corte.md y una página resumen en la wiki. Sin cambios de código.
+
+## [2026-10-07] update | Condiciones de planta del optimizador de corte
+
+Se registraron los parámetros de la seccionadora Holz-Her, refilado, sobrantes, formatos, veta y criterio de optimización.
+
+## [2026-10-07] update | Pestaña Optimizador (fase 1: datos de entrada)
+
+Nueva ruta /optimizador con proyecto desde cotización, resumen por material, lista de corte, piezas por día y días de producción, y parámetros de planta editables (migración 0180 aplicada). Gate de calidad y build en verde.
+
+## [2026-10-08] update | "Sin fondo" deshabilita los dos campos de Tablero fondo
+
+Al elegir **Sin fondo** en la configuracion de proyecto, los campos *Tablero fondo* seguian habilitados aunque el tablero que se escogiera ahi no se fuera a consumir.
+
+**Se deshabilitan los dos, no uno.** `conFondo=false` pone en cantidad cero **toda** pieza con rol `fondo` (`cotizar.ts`), sin distinguir inferiores de superiores, asi que tanto el campo de "Modulos inferiores (B y V)" como el de "Muebles superiores (W y TW)" quedan sin efecto. Verificado en el motor antes de tocar la UI.
+
+**Alcance acotado**: solo `NuevoCotizacionForm` tiene el radio junto a los campos. `ProjectConfigPanel` y `AddLineForm` tienen *Tablero fondo* pero no el selector de configuracion, asi que no habia nada que deshabilitar ahi.
+
+`Combobox` no soportaba `disabled`; se le anadio. El estado abierto pasa a derivarse (`open && !disabled`) en lugar de guardarse, de modo que si el campo se deshabilita con la lista desplegada esta se cierra sola, sin necesitar un efecto. La etiqueta tambien se atenua para que se lea que el campo no aplica.
+
+**Es solo presentacion**: el valor del preset no se borra, asi que volver a "Con fondo" recupera la seleccion anterior.
+
+`quality:gate` en exit 0 (35 suites, sin regresion frente al baseline) y `quality:learn` sin hallazgos en ninguna severidad.
+
+## [2026-10-08] fix | "Sin fondo" ya no deja sin respaldo a los muebles superiores
+
+Correccion de la entrada anterior, que estaba equivocada en el alcance. El usuario precisa que **los muebles superiores SIEMPRE llevan fondo**: la opcion "Sin fondo" del proyecto describe los modulos inferiores.
+
+**Era un defecto de precio, no solo de interfaz.** `conFondo=false` anulaba **toda** pieza con rol `fondo` sin distinguir familia, de modo que elegir esa opcion dejaba un `W` sin respaldo y lo cotizaba de menos. Nadie lo cubria: no habia un solo test sobre `conFondo` en toda la suite.
+
+**La regla se movio de `cotizar.ts` a `ajustarPiezasSinFondo()` en `muebles.ts`.** No es un capricho de organizacion: `cotizar.ts` importa `server-only` y **no se puede cargar desde una prueba** —el intento falla con "This module cannot be imported from a Client Component module"—, que es exactamente por lo que esta regla llevaba tanto sin cubrir. `muebles.ts` es el modulo de dominio seguro para cliente y ya lo usan otros tests.
+
+El guardia usa `esMuebleSuperior()`, **el mismo clasificador que reparte los materiales en el formulario**. Eso importa: si la UI y el motor divergieran sobre que es un superior, el formulario pediria un tablero que el precio no consume, o al reves. `esMuebleSuperior` lee la primera B o W del prefijo, asi que `WBL` es superior y `BBL` inferior, con `TW*` como excepcion explicita.
+
+**En la interfaz** queda deshabilitado solo el campo *Tablero fondo* de modulos inferiores; el de superiores sigue activo. El texto de ayuda del selector ahora dice a quien aplica.
+
+**Cobertura**: `tests/muebles.test.ts`, 12 casos. Cubre los bordes de `esMuebleSuperior` (primera letra, excepcion TW, nulo/vacio/minusculas) y la regla de fondo (superior conserva, inferior pierde, `conFondo` sin definir se trata como "Con fondo", y la base solo se recalcula en el eje donde aparece la profundidad). Comprobado que 2 de los casos fallan si se quita el guardia.
+
+`quality:gate` en exit 0 (36 suites) y `quality:learn` **sin hallazgos HIGH**. Queda un MED: "cambio en `cotizar.ts` sin `tests/cotizar.test.ts`". **Justificacion tecnica**: ese modulo no es cargable desde un test por su `server-only`, y es justamente la razon de haber extraido la logica a un modulo que si lo es; cubrirlo exigiria un entorno de servidor de Next, no una prueba unitaria.
+
+## [2026-10-08] update | La TRM solo se edita con moneda USD, sin perder el valor
+
+A peticion del usuario, al elegir **COP** el campo *TRM* deja de ser editable. Aplicado en los dos sitios donde conviven ambos controles: el formulario de nueva cotizacion y la cabecera del proyecto (`ProyectoHeader`).
+
+**Se usa `readOnly`, no `disabled`, y la diferencia no es cosmetica.** Un `<input disabled>` **no se envia con el formulario**: `crearCotizacionAction` hace `Number(formData.get('trm') || 4200)`, de modo que deshabilitarlo guardaria el proyecto con TRM **4200** en lugar de la que el usuario tuviera, cambiando todos los totales en USD sin avisar. `readOnly` bloquea la edicion y conserva el dato.
+
+**Y el dato sigue haciendo falta aunque la moneda sea COP.** El motor calcula siempre en COP y divide por la TRM para obtener los USD (`precioUsd = precioCop / inp.trm` en `engine.ts`), y el listado de cotizaciones muestra **ambas** columnas, Total USD y Total COP, para toda cotizacion. Anular el valor habria vaciado o disparado esa columna.
+
+Se anade un aviso bajo el par de campos explicando por que el valor se conserva, mas `aria-disabled` y `title` para que la razon tambien llegue por lectores de pantalla y al pasar el cursor.
+
+**Sin prueba automatizada, y es deliberado**: la regla es una condicion en el JSX (`moneda === 'COP'`), no una funcion con logica propia, y el repositorio no tiene infraestructura de pruebas de componentes —ni `@testing-library` ni entorno DOM—. Montarla para este caso no se justifica; el riesgo real que tenia este cambio era el del envio del formulario, y se evito por diseño, no por logica que se pueda afirmar en un test.
+
+`quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH (persiste el MED de `cotizar.ts`, ya justificado en la entrada anterior). Build y typecheck limpios.

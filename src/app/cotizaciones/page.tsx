@@ -25,14 +25,11 @@ export default async function CotizacionesPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <AppHeader email={user?.email} rol={rol} active="cotizaciones" />
-      <div className="cotizador-tab-content px-4 pt-4 flex justify-end gap-2">
+      <div className="mx-auto w-full max-w-[1600px] px-4 pt-4 flex justify-end gap-2">
         <GuideButton steps={GUIA_LISTA} label="Guía de uso" />
         <TooltipToggle />
       </div>
-      <main
-        className="cotizador-tab-content px-4 pb-6"
-        style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', alignItems: 'start', gap: 24 }}
-      >
+      <main className="cotizaciones-main-grid mx-auto w-full max-w-[1600px] px-4 pb-6">
         <NuevoCotizacionForm
           tableros={data.tableros}
           cantos={data.cantos}
@@ -44,7 +41,7 @@ export default async function CotizacionesPage() {
           herrajesByTipo={data.herrajesByTipo}
         />
 
-        <section data-tour="lista" style={{ borderLeft: '2px solid #e2e8f0', paddingLeft: 24 }}>
+        <section data-tour="lista" className="cotizaciones-lista">
         <div className="h-fit overflow-x-auto rounded-2xl border border-slate-200 bg-white">
           <table className="w-full text-sm" style={{ minWidth: 720 }}>
             <thead>

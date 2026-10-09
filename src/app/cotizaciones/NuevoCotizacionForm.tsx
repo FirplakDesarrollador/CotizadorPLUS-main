@@ -197,7 +197,7 @@ export default function NuevoCotizacionForm({
             </label>
           ))}
         </div>
-        <span className="mt-1 block text-[11px] text-slate-400">Sin fondo elimina esa pieza y deja la profundidad de la base en Profundidad menos un espesor de caja.</span>
+        <span className="mt-1 block text-[11px] text-slate-400">Aplica solo a los módulos inferiores: elimina esa pieza y deja la profundidad de la base en Profundidad menos un espesor de caja. Los muebles superiores siempre llevan fondo.</span>
       </fieldset>
 
       <div className="grid grid-cols-2 gap-2 md:col-start-2">
@@ -207,10 +207,26 @@ export default function NuevoCotizacionForm({
             <option value="COP">COP</option>
           </select>
         </F>
-        <F label="TRM">
-          <input name="trm" type="number" step="any" defaultValue={trmDefault} className="inp" />
+        {/* En COP la TRM no se edita, pero NO se deshabilita: un input deshabilitado
+            no se envía con el formulario y `crearCotizacionAction` caería a su
+            valor por omisión (4200), cambiando los totales USD. `readOnly` lo
+            bloquea y conserva el dato, que el motor sigue necesitando: calcula en
+            COP y divide por la TRM para la columna USD del listado. */}
+        <F label="TRM" disabled={moneda === 'COP'}>
+          <input
+            name="trm" type="number" step="any" defaultValue={trmDefault}
+            readOnly={moneda === 'COP'}
+            aria-disabled={moneda === 'COP'}
+            title={moneda === 'COP' ? 'Solo se edita con moneda USD' : undefined}
+            className={`inp ${moneda === 'COP' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+          />
         </F>
       </div>
+      {moneda === 'COP' && (
+        <span className="mt-1 block text-[11px] text-slate-400 md:col-start-2">
+          La TRM solo se edita con moneda USD. Se conserva porque el total en USD del listado se calcula con ella.
+        </span>
+      )}
       </section>
 
       {/* ── Materiales globales ── */}
@@ -237,8 +253,8 @@ export default function NuevoCotizacionForm({
           <Combobox value={preset['frente'] ?? ''} options={tableroOptions}
             onChange={(v) => handleTablero('frente', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
         </F>
-        <F label="Tablero fondo">
-          <Combobox value={preset['fondo'] ?? ''} options={tableroOptions}
+        <F label="Tablero fondo" disabled={!conFondo}>
+          <Combobox value={preset['fondo'] ?? ''} options={tableroOptions} disabled={!conFondo}
             onChange={(v) => handleTablero('fondo', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
         </F>
 
@@ -358,10 +374,10 @@ function SelectorHerrajes({ titulo, opciones, excluidos, onToggle }: {
   );
 }
 
-function F({ label, children }: { label: string; children: React.ReactNode }) {
+function F({ label, children, disabled = false }: { label: string; children: React.ReactNode; disabled?: boolean }) {
   return (
     <label className="block">
-      <span className="block text-xs text-slate-500 mb-0.5">{label}</span>
+      <span className={`block text-xs mb-0.5 ${disabled ? 'text-slate-300' : 'text-slate-500'}`}>{label}</span>
       {children}
     </label>
   );

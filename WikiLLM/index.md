@@ -8,6 +8,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 
 ## Arquitectura Técnica
 - [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles, soportes por entrepaño, cálculo grupal y recálculo masivo por lotes con precarga de catálogo (`engine.ts` y `cotizar.ts`).
+- [Optimizador de corte](wiki/optimizador_corte.md) - Plan de corte de una cotización: condiciones de planta, lista de piezas y fases pendientes.
 - [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, encabezado y menú de usuario, Zustand, cotizaciones con constructora/comprador, materiales, herrajes, unidades, dimensiones y búsqueda por color.
 - [Sistema de Undo/Redo](wiki/sistema_undo_redo.md) - Historial temporal de estados, captura de atajos de teclado y notificaciones.
 - [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes manuales, inmutables, nombre obligatorio, orden cronológico y restauración transaccional limpia sin respaldos automáticos.
@@ -16,6 +17,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 
 ## Infraestructura de Datos
 - [Esquema de Base de Datos](wiki/esquema_base_datos.md) - Tablas, políticas, comprador y configuración persistente de cotizaciones en Supabase.
+- [Clientes de Supabase y la frontera de RLS](wiki/clientes_supabase_rls.md) - Cuándo `createClient()` respeta RLS y cuándo devuelve el cliente elevado; el `catch` demasiado ancho de v1.0.3 y su corrección.
 - [Rieles de Cajón DB](wiki/rieles_db.md) - Catálogo de tipos de riel para muebles DB, mecanismo de override y archivos modificados.
 - [Cajoneras DB con gavetas mixtas](wiki/db_gavetas_mixtas.md) - Normalización de traseros por medida (`pequena` 68 mm / `grande` 183 mm) para DB-1S, DB-2S, DB-2, DB-3 y DB-4; incluye `DB2-1OP`, frentes y variables de configuración.
 - [Interpretación espacial DB en tres vistas](wiki/interpretacion_espacial_db.md) - Reconstrucción de siete referencias reales, nombres y planos de piezas, fórmulas contrastadas, gaveta interior y límites de las hipótesis de montaje.

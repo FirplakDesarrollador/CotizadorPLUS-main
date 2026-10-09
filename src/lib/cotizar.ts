@@ -10,7 +10,7 @@ import { calcularGrupoFisico, type GroupCalculation, type PreparedGroupMember } 
 import { consolidarGrupo, type CotizarGrupoResult } from '@/lib/group-result';
 import { construirVisualizacion } from './visualizacion';
 import { codigoComercial } from './module-groups';
-import { usaHuecoHornoParametrico, usaPuertaParametrica } from './muebles';
+import { ajustarPiezasSinFondo, usaHuecoHornoParametrico, usaPuertaParametrica } from './muebles';
 
 export type CotizarInput = {
   tipoId: string;
@@ -257,17 +257,10 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     throw new Error('zocalo debe ser mayor o igual a cero y menor que el alto del mueble');
   }
 
-  const piezasAjustadas = ((piezas ?? []) as Pieza[]).map((pieza) => {
-    if (inp.conFondo !== false) return pieza;
-    if (pieza.rol_tablero === 'fondo') return { ...pieza, formula_cantidad: '0' };
-    if (pieza.nombre !== 'base') return pieza;
-
-    // Sin fondo, la base ocupa la profundidad menos exactamente un espesor
-    // del tablero de caja. Se conserva el eje de largo propio de cada plantilla.
-    if (/\bP\b/.test(pieza.formula_ancho ?? '')) return { ...pieza, formula_ancho: 'P-TC' };
-    if (/\bP\b/.test(pieza.formula_largo ?? '')) return { ...pieza, formula_largo: 'P-TC' };
-    return pieza;
-  });
+  // La regla vive en `muebles.ts`, que no importa `server-only` y por tanto sí
+  // se puede ejercer desde una prueba. Allí se documenta por qué los muebles
+  // superiores quedan fuera.
+  const piezasAjustadas = ajustarPiezasSinFondo((piezas ?? []) as Pieza[], tipo.pref, inp.conFondo);
 
   const calc: CalcInput = {
     dims,

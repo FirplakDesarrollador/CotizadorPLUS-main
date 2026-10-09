@@ -36,6 +36,24 @@ espesor real del tablero seleccionado para caja (por ejemplo, caja de 15 mm →
 base con descuento de 15 mm). No modifica tapas, bases de gaveta ni las
 fórmulas almacenadas en Supabase.
 
+**La bandera describe solo los módulos inferiores. Los muebles superiores siempre
+llevan fondo.** Antes la transformación se aplicaba a todo el catálogo, de modo
+que elegir "Sin fondo" dejaba también a un `W` sin respaldo y lo cotizaba de
+menos. La regla vive ahora en `ajustarPiezasSinFondo()` (`muebles.ts`) y se salta
+los superiores usando `esMuebleSuperior()`, **el mismo clasificador que reparte
+los materiales en el formulario**, para que la interfaz y el precio no puedan
+discrepar sobre qué es un superior.
+
+Está en `muebles.ts` y no en `cotizar.ts` a propósito: aquel importa
+`server-only` y no puede cargarse desde una prueba, y esta regla afecta al
+precio, así que necesita una. La cubre `tests/muebles.test.ts`.
+
+En consecuencia, el formulario de nueva cotización deshabilita **solo** el campo
+*Tablero fondo* de módulos inferiores al elegir "Sin fondo"; el de superiores
+sigue activo porque ese tablero sí se consume. Es presentación únicamente: el
+valor del preset no se borra, de modo que volver a "Con fondo" recupera la
+selección anterior.
+
 El simulador combinado llama `cotizarGrupoConsolidado()` mediante una Server Action con la lista completa de `CotizarInput`. La validación ocurre antes de confirmar un módulo, por lo que una incompatibilidad no altera la última lista ni el último resultado válidos.
 
 **Carga de Datos (`getCotizadorData`):**

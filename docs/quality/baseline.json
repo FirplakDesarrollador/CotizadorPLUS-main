@@ -1,40 +1,19 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-10-02T22:58:00.000Z",
-  "branch": "Ale",
+  "generatedAt": "2026-10-05T13:40:55.300Z",
+  "branch": "Andrés",
   "metrics": {
     "typeErrors": 0,
     "lintErrors": 36,
-    "lintWarnings": 13,
-    "totalTests": 201,
-    "passingTests": 197,
-    "failingTests": 4
+    "lintWarnings": 17,
+    "totalTests": 222,
+    "passingTests": 222,
+    "failingTests": 0
   },
-  "knownFailingTests": [
-    {
-      "suite": "tests/group-engine.test.ts",
-      "name": "bloquea incompatibilidades antes de transformar el despiece",
-      "reason": "Missing expected exception (mismo conjunto)"
-    },
-    {
-      "suite": "tests/group-engine.test.ts",
-      "name": "normaliza a 80 mm exactos los refuerzos y Golas nominales",
-      "reason": "AssertionError: refuerzo_horizontal"
-    },
-    {
-      "suite": "tests/visualizacion-b-fe.test.ts",
-      "name": "B-FE: visualización monta gaveta arriba, puerta abajo y fondo_gaveta adentro sin piezas sueltas",
-      "reason": "fondo_gaveta debe estar alineado con su frente de cajón"
-    },
-    {
-      "suite": "tests/w-sm.test.ts",
-      "name": "superiores aplican la regla de entrepanos en todos sus limites",
-      "reason": "AssertionError: A=17, entrepano cant 0 vs undefined"
-    }
-  ],
+  "knownFailingTests": [],
   "rules": {
     "failOnNewTestFailure": true,
-    "maxFailingTests": 4,
+    "maxFailingTests": 0,
     "maxLintErrors": 36,
     "maxTypeErrors": 0
   }

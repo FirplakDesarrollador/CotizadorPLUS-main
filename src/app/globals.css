@@ -25,16 +25,32 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.cotizador-tab-content,
-.cotizacion-detail-content {
-  width: calc(100% - 500px);
-  margin-inline: auto;
+/* Cotizaciones: el formulario toma un ancho acotado y la tabla se queda con el
+   resto. Con dos columnas iguales la tabla recibia ~548 px y, como declara
+   `min-width: 720px`, aparecia su barra de desplazamiento horizontal. */
+.cotizaciones-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
 }
 
-@media (max-width: 500px) {
-  .cotizador-tab-content,
-  .cotizacion-detail-content {
-    width: calc(100% - 32px);
+.cotizaciones-lista {
+  min-width: 0;
+}
+
+/* Las dos columnas solo entran cuando hay sitio para el formulario (480) mas la
+   tabla (720) mas separaciones (48). Por debajo se apila, y asi la tabla usa el
+   ancho completo en vez de quedarse corta. */
+@media (min-width: 1300px) {
+  .cotizaciones-main-grid {
+    grid-template-columns: minmax(480px, 560px) minmax(0, 1fr);
+  }
+
+  /* La separacion vertical solo tiene sentido con las dos columnas al lado. */
+  .cotizaciones-lista {
+    border-left: 2px solid #e2e8f0;
+    padding-left: 24px;
   }
 }
 

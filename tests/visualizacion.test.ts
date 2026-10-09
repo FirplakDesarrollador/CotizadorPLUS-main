@@ -10,13 +10,23 @@ const data=JSON.parse(fs.readFileSync('tests/fixtures/catalogo-visualizacion.jso
   tipos:{id:string;pref:string;permite_agrupacion:boolean}[];
   piezas:(Pieza&{tipo_mueble_id:string})[];reglas:Regla[];preset:Record<string,string>;tableros:Tablero[];
 };
+// Se detecta `door` como palabra suelta sin usar escapes de regex: el literal
+// de clase evita que un futuro `doorway` cuente como coincidencia.
+const RE_DOOR=new RegExp('(^|[^A-Za-z0-9_])door([^A-Za-z0-9_]|$)');
+const usaDoor=(tipoId:string)=>data.piezas.some(p=>p.tipo_mueble_id===tipoId
+  &&RE_DOOR.test(`${p.formula_largo} ${p.formula_ancho} ${p.formula_cantidad}`));
+
 function member(pref:string,overrides:Record<string,number>={}):PreparedGroupMember {
   const tipo=data.tipos.find(t=>t.pref===pref)!;
   const tall=['PC','PCFD','VPC','OVPC','WPC','AL','CC'].includes(pref);
   return {pref,permiteAgrupacion:tipo.permite_agrupacion,calc:{
     dims:{L:pref==='SDB'?72:/^BBL/.test(pref)?60:36,A:tall?84:30,P:24},
     piezas:data.piezas.filter(p=>p.tipo_mueble_id===tipo.id).map(p=>({...p,visualizacion:inferirMontaje(p)})),
-    reglas:data.reglas.filter(r=>!r.tipo_mueble_id||r.tipo_mueble_id===tipo.id),overrides,
+    // Door es un dato que captura el usuario, no una regla del catalogo: sin el,
+    // las formulas que lo usan (`L-door-RV`) no evaluan. Se detecta en las propias
+    // formulas en vez de listar prefijos, para que un tipo nuevo no vuelva a caer.
+    reglas:data.reglas.filter(r=>!r.tipo_mueble_id||r.tipo_mueble_id===tipo.id),
+    overrides:usaDoor(tipo.id)?{door:24,...overrides}:overrides,
     preset:data.preset,tablerosByCode:Object.fromEntries(data.tableros.map(t=>[t.codigo,t])),
     cantosByCalibre: new Proxy({}, { get: () => ({ calibre: '0.5', precio: 1000 }) }) as Record<string, Canto>,
     herrajesByCode:{},consumiblesBySelector:{},etiquetasUnd:0,usaCarton:false,
@@ -194,9 +204,10 @@ test('respaldo con ejes heredados no se dibuja fuera de una carcasa no cuadrada'
 });
 
 test('DB-4 visualiza los cuatro traseros bajos en sus gavetas',()=>{
+  // Ya no hace falta parchear nada: `0171` quito la plantilla generica y dejo
+  // `trasero_gaveta_pequena` con cantidad `n_cajones==4?n_cajones:0`, de modo que
+  // el catalogo produce los cuatro traseros de 68 mm por si solo.
   const m=member('DB',{n_cajones:4,n_cajones_pequenos:0});
-  const trasero=m.calc.piezas.find(p=>p.nombre==='trasero_gaveta')!;
-  trasero.formula_ancho='n_cajones == 4 ? 68/25.4 : 183/25.4';
   const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
   const traseros=scene.paneles.filter(p=>p.funcion==='trasero_gaveta');
   assert.equal(traseros.length,4);
@@ -340,11 +351,10 @@ test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',(
   const m=member('DB',{n_cajones:2,n_cajones_pequenos:0,gola:1});
   m.pref='DB-2-SM';
   m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('frente_'));
-  m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('trasero_gaveta_'));
-  const traseroGrande=m.calc.piezas.find(p=>p.nombre==='trasero_gaveta')!;
-  traseroGrande.nombre='trasero_gaveta_grande';
-  traseroGrande.formula_cantidad='2';
-  traseroGrande.formula_ancho='183/25.4';
+  // `0171` borro la plantilla generica `trasero_gaveta` de DB, asi que no se puede
+  // renombrar: el catalogo ya entrega `pequena`/`grande` parametrizados y con
+  // n_cajones_pequenos=0 da 0 pequenos y n grandes, que es justo lo que esta
+  // tipologia necesita.
   const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
   refuerzo.formula_cantidad='2';
   const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
@@ -371,11 +381,7 @@ test('DB-2-SM: dos gavetas grandes y el segundo par de Gola queda entre ambas',(
 test('DB-3-SM: tres gavetas iguales y el segundo par de Gola queda entre la segunda y la tercera',()=>{
   const m=member('DB',{n_cajones:3,n_cajones_pequenos:0,gola:1});
   m.pref='DB-3-SM';
-  m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('frente_')&&!p.nombre.startsWith('trasero_gaveta_'));
-  const traseroGrande=m.calc.piezas.find(p=>p.nombre==='trasero_gaveta')!;
-  traseroGrande.nombre='trasero_gaveta_grande';
-  traseroGrande.formula_cantidad='3';
-  traseroGrande.formula_ancho='183/25.4';
+  m.calc.piezas=m.calc.piezas.filter(p=>!p.nombre.startsWith('frente_'));
   const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
   refuerzo.formula_cantidad='2';
   const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
