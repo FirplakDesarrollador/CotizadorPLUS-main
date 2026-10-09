@@ -94,6 +94,39 @@ export function familiaMaterialPorPrefijo(pref: string | null | undefined): Fami
   return esMuebleSuperior(pref) ? 'superior' : 'inferior';
 }
 
+// Solo los campos que la regla necesita, para no atar este módulo —que es de
+// cliente— a la forma completa de `Pieza`.
+type PiezaAjustable = {
+  nombre: string;
+  rol_tablero: string;
+  formula_cantidad: string;
+  formula_largo: string | null;
+  formula_ancho: string | null;
+};
+
+// "Sin fondo" es una configuración de proyecto que describe los módulos
+// INFERIORES: anula la pieza de respaldo y deja la base en la profundidad menos
+// exactamente un espesor de tablero de caja. **Los muebles superiores siempre
+// llevan fondo**, así que la transformación no les aplica — de lo contrario un W
+// se cotizaría sin respaldo y el tablero de fondo de superiores que el formulario
+// sigue pidiendo no se consumiría.
+//
+// Vive aquí y no en `cotizar.ts` porque aquel importa `server-only` y no puede
+// ejercerse desde una prueba; la regla afecta al precio, así que necesita una.
+export function ajustarPiezasSinFondo<T extends PiezaAjustable>(
+  piezas: T[], pref: string | null | undefined, conFondo: boolean | undefined,
+): T[] {
+  if (conFondo !== false || esMuebleSuperior(pref)) return piezas;
+  return piezas.map((pieza) => {
+    if (pieza.rol_tablero === 'fondo') return { ...pieza, formula_cantidad: '0' };
+    if (pieza.nombre !== 'base') return pieza;
+    // Se conserva el eje de largo propio de cada plantilla.
+    if (/\bP\b/.test(pieza.formula_ancho ?? '')) return { ...pieza, formula_ancho: 'P-TC' };
+    if (/\bP\b/.test(pieza.formula_largo ?? '')) return { ...pieza, formula_largo: 'P-TC' };
+    return pieza;
+  });
+}
+
 export const PREFS_CON_PUERTA_PARAMETRICA = ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM'] as const;
 
 export function usaPuertaParametrica(pref: string | null | undefined): boolean {

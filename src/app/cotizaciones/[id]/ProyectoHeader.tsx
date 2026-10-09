@@ -95,8 +95,15 @@ export default function ProyectoHeader({
         <div className="grid sm:grid-cols-3 gap-3">
           <label className="block"><span className="block text-xs text-slate-500 mb-1">Moneda</span>
             <select value={moneda} onChange={(e) => setMoneda(e.target.value as 'COP' | 'USD')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><option>USD</option><option>COP</option></select></label>
-          <label className="block"><span className="block text-xs text-slate-500 mb-1">TRM</span>
-            <input type="number" min="0.01" step="any" value={trm} onChange={(e) => setTrm(Number(e.target.value))} onBlur={saveTrm} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+          {/* Mismo criterio que el formulario de alta: en COP la TRM no se edita.
+              `readOnly` y no `disabled` para conservar el valor — el motor calcula
+              en COP y divide por la TRM para el total en USD de la cabecera. */}
+          <label className="block"><span className={`block text-xs mb-1 ${moneda === 'COP' ? 'text-slate-300' : 'text-slate-500'}`}>TRM</span>
+            <input type="number" min="0.01" step="any" value={trm} onChange={(e) => setTrm(Number(e.target.value))} onBlur={saveTrm} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+              readOnly={moneda === 'COP'}
+              aria-disabled={moneda === 'COP'}
+              title={moneda === 'COP' ? 'Solo se edita con moneda USD' : undefined}
+              className={`w-full rounded-lg border px-3 py-2 text-sm ${moneda === 'COP' ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-slate-300'}`} /></label>
           <label className="block"><span className="block text-xs text-slate-500 mb-1">Margen del proyecto (%)</span>
             <input
               type="number"

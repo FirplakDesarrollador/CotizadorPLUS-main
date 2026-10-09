@@ -1654,3 +1654,47 @@ Se registraron los parámetros de la seccionadora Holz-Her, refilado, sobrantes,
 ## [2026-10-07] update | Pestaña Optimizador (fase 1: datos de entrada)
 
 Nueva ruta /optimizador con proyecto desde cotización, resumen por material, lista de corte, piezas por día y días de producción, y parámetros de planta editables (migración 0180 aplicada). Gate de calidad y build en verde.
+
+## [2026-10-08] update | "Sin fondo" deshabilita los dos campos de Tablero fondo
+
+Al elegir **Sin fondo** en la configuracion de proyecto, los campos *Tablero fondo* seguian habilitados aunque el tablero que se escogiera ahi no se fuera a consumir.
+
+**Se deshabilitan los dos, no uno.** `conFondo=false` pone en cantidad cero **toda** pieza con rol `fondo` (`cotizar.ts`), sin distinguir inferiores de superiores, asi que tanto el campo de "Modulos inferiores (B y V)" como el de "Muebles superiores (W y TW)" quedan sin efecto. Verificado en el motor antes de tocar la UI.
+
+**Alcance acotado**: solo `NuevoCotizacionForm` tiene el radio junto a los campos. `ProjectConfigPanel` y `AddLineForm` tienen *Tablero fondo* pero no el selector de configuracion, asi que no habia nada que deshabilitar ahi.
+
+`Combobox` no soportaba `disabled`; se le anadio. El estado abierto pasa a derivarse (`open && !disabled`) en lugar de guardarse, de modo que si el campo se deshabilita con la lista desplegada esta se cierra sola, sin necesitar un efecto. La etiqueta tambien se atenua para que se lea que el campo no aplica.
+
+**Es solo presentacion**: el valor del preset no se borra, asi que volver a "Con fondo" recupera la seleccion anterior.
+
+`quality:gate` en exit 0 (35 suites, sin regresion frente al baseline) y `quality:learn` sin hallazgos en ninguna severidad.
+
+## [2026-10-08] fix | "Sin fondo" ya no deja sin respaldo a los muebles superiores
+
+Correccion de la entrada anterior, que estaba equivocada en el alcance. El usuario precisa que **los muebles superiores SIEMPRE llevan fondo**: la opcion "Sin fondo" del proyecto describe los modulos inferiores.
+
+**Era un defecto de precio, no solo de interfaz.** `conFondo=false` anulaba **toda** pieza con rol `fondo` sin distinguir familia, de modo que elegir esa opcion dejaba un `W` sin respaldo y lo cotizaba de menos. Nadie lo cubria: no habia un solo test sobre `conFondo` en toda la suite.
+
+**La regla se movio de `cotizar.ts` a `ajustarPiezasSinFondo()` en `muebles.ts`.** No es un capricho de organizacion: `cotizar.ts` importa `server-only` y **no se puede cargar desde una prueba** —el intento falla con "This module cannot be imported from a Client Component module"—, que es exactamente por lo que esta regla llevaba tanto sin cubrir. `muebles.ts` es el modulo de dominio seguro para cliente y ya lo usan otros tests.
+
+El guardia usa `esMuebleSuperior()`, **el mismo clasificador que reparte los materiales en el formulario**. Eso importa: si la UI y el motor divergieran sobre que es un superior, el formulario pediria un tablero que el precio no consume, o al reves. `esMuebleSuperior` lee la primera B o W del prefijo, asi que `WBL` es superior y `BBL` inferior, con `TW*` como excepcion explicita.
+
+**En la interfaz** queda deshabilitado solo el campo *Tablero fondo* de modulos inferiores; el de superiores sigue activo. El texto de ayuda del selector ahora dice a quien aplica.
+
+**Cobertura**: `tests/muebles.test.ts`, 12 casos. Cubre los bordes de `esMuebleSuperior` (primera letra, excepcion TW, nulo/vacio/minusculas) y la regla de fondo (superior conserva, inferior pierde, `conFondo` sin definir se trata como "Con fondo", y la base solo se recalcula en el eje donde aparece la profundidad). Comprobado que 2 de los casos fallan si se quita el guardia.
+
+`quality:gate` en exit 0 (36 suites) y `quality:learn` **sin hallazgos HIGH**. Queda un MED: "cambio en `cotizar.ts` sin `tests/cotizar.test.ts`". **Justificacion tecnica**: ese modulo no es cargable desde un test por su `server-only`, y es justamente la razon de haber extraido la logica a un modulo que si lo es; cubrirlo exigiria un entorno de servidor de Next, no una prueba unitaria.
+
+## [2026-10-08] update | La TRM solo se edita con moneda USD, sin perder el valor
+
+A peticion del usuario, al elegir **COP** el campo *TRM* deja de ser editable. Aplicado en los dos sitios donde conviven ambos controles: el formulario de nueva cotizacion y la cabecera del proyecto (`ProyectoHeader`).
+
+**Se usa `readOnly`, no `disabled`, y la diferencia no es cosmetica.** Un `<input disabled>` **no se envia con el formulario**: `crearCotizacionAction` hace `Number(formData.get('trm') || 4200)`, de modo que deshabilitarlo guardaria el proyecto con TRM **4200** en lugar de la que el usuario tuviera, cambiando todos los totales en USD sin avisar. `readOnly` bloquea la edicion y conserva el dato.
+
+**Y el dato sigue haciendo falta aunque la moneda sea COP.** El motor calcula siempre en COP y divide por la TRM para obtener los USD (`precioUsd = precioCop / inp.trm` en `engine.ts`), y el listado de cotizaciones muestra **ambas** columnas, Total USD y Total COP, para toda cotizacion. Anular el valor habria vaciado o disparado esa columna.
+
+Se anade un aviso bajo el par de campos explicando por que el valor se conserva, mas `aria-disabled` y `title` para que la razon tambien llegue por lectores de pantalla y al pasar el cursor.
+
+**Sin prueba automatizada, y es deliberado**: la regla es una condicion en el JSX (`moneda === 'COP'`), no una funcion con logica propia, y el repositorio no tiene infraestructura de pruebas de componentes —ni `@testing-library` ni entorno DOM—. Montarla para este caso no se justifica; el riesgo real que tenia este cambio era el del envio del formulario, y se evito por diseño, no por logica que se pueda afirmar en un test.
+
+`quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH (persiste el MED de `cotizar.ts`, ya justificado en la entrada anterior). Build y typecheck limpios.
