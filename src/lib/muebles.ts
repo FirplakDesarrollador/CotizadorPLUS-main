@@ -137,12 +137,29 @@ const PREFS_ALTO_LINEA_U = [
   'SV', 'SVFD',
 ] as const;
 
+// Alto estándar del resto de los muebles inferiores.
+export const ALTO_INFERIOR_IN = 30;
+
+// Torres y alacenas. El catálogo las clasifica como `inferior`, pero se arman a
+// la altura de un mueble alto, no a 30", así que se quedan **sin** alto por
+// defecto en lugar de recibir uno equivocado.
+const PREFS_TORRE = ['AL', 'OVPC', 'PC', 'PCFD'] as const;
+
 // Alto que el formulario carga al elegir el tipo, en pulgadas, o `null` si esa
 // tipología no tiene uno. Se carga como valor inicial y sigue siendo editable:
 // es una comodidad, no una restricción.
-export function altoPorDefectoIn(pref: string | null | undefined): number | null {
+//
+// El orden de las tres reglas importa: los inferiores de la línea U (`UB`,
+// `UDB`…) son de categoría `inferior`, así que su 28,75" tiene que resolverse
+// antes de la regla general.
+export function altoPorDefectoIn(
+  pref: string | null | undefined,
+  categoria?: string | null,
+): number | null {
   const value = String(pref ?? '').toUpperCase();
-  return (PREFS_ALTO_LINEA_U as readonly string[]).includes(value) ? ALTO_LINEA_U_IN : null;
+  if ((PREFS_ALTO_LINEA_U as readonly string[]).includes(value)) return ALTO_LINEA_U_IN;
+  if ((PREFS_TORRE as readonly string[]).includes(value)) return null;
+  return categoria === 'inferior' ? ALTO_INFERIOR_IN : null;
 }
 
 // Solo los campos que la regla necesita, para no atar este módulo —que es de

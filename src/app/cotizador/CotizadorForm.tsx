@@ -246,9 +246,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       setHornoLargo('');
       setHornoAlto('');
     }
-    // La linea U y la pareja Sink Vanity se arman a 28,75" de alto. Se carga al
-    // elegir el tipo y queda editable, igual que la profundidad de W.
-    const altoDefecto = altoPorDefectoIn(tipoSeleccionado.pref);
+    // Alto por defecto segun la tipologia: 28,75" la linea U y Sink Vanity, 30"
+    // el resto de los inferiores. Se carga al elegir el tipo y queda editable,
+    // igual que la profundidad de W.
+    const altoDefecto = altoPorDefectoIn(tipoSeleccionado.pref, tipoSeleccionado.categoria);
     if (altoDefecto != null) setAlto(String(convertir(altoDefecto, 'in', unidad)));
     if (tipoSeleccionado.pref === 'W') setProf(String(convertir(12, 'in', unidad)));
     if (tipoSeleccionado.pref === 'WSM') setProf(String(convertir(14, 'in', unidad)));

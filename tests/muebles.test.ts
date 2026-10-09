@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ajustarPiezasSinFondo, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
+import { ajustarPiezasSinFondo, ALTO_INFERIOR_IN, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
 
 // `muebles.ts` es el modulo de dominio compartido por formularios y motor. Las
 // dos piezas que se prueban aqui deciden cosas con efecto en el precio, asi que
@@ -231,38 +231,58 @@ const LINEA_U = ['UB', 'UB-FE', 'UBFD', 'UDB', 'UDV', 'USVFD', 'UV', 'UVFD'];
 const SINK_VANITY = ['SV', 'SVFD'];
 
 test('altoPorDefectoIn: la linea U y Sink Vanity arrancan en 28,75 pulgadas', () => {
-  for (const pref of [...LINEA_U, ...SINK_VANITY]) {
-    assert.equal(altoPorDefectoIn(pref), ALTO_LINEA_U_IN, pref);
-  }
+  // Se pasa la categoria real: los cuatro primeros son `inferior` y los demas
+  // `vanity`. En ambos casos manda la lista, no la categoria.
+  for (const pref of LINEA_U) assert.equal(altoPorDefectoIn(pref, 'inferior'), ALTO_LINEA_U_IN, pref);
+  for (const pref of SINK_VANITY) assert.equal(altoPorDefectoIn(pref, 'vanity'), ALTO_LINEA_U_IN, pref);
   assert.equal(ALTO_LINEA_U_IN, 28.75);
 });
 
-test('altoPorDefectoIn: UW queda fuera aunque empiece por U', () => {
-  // Es el superior de la linea; 28,75" es alto de mueble inferior. Este es el
-  // caso que hace que la lista sea explicita y no una regla sobre el prefijo.
-  assert.equal(altoPorDefectoIn('UW'), null);
+test('altoPorDefectoIn: los demas inferiores arrancan en 30 pulgadas', () => {
+  for (const pref of ['B', 'B-FE', 'BFD', 'BFD-SM', 'SBFD', 'DB', 'DB-2-SM', 'BBL', 'BLS', 'SDB', 'POD', 'DD']) {
+    assert.equal(altoPorDefectoIn(pref, 'inferior'), ALTO_INFERIOR_IN, pref);
+  }
+  assert.equal(ALTO_INFERIOR_IN, 30);
 });
 
-test('altoPorDefectoIn: el resto del catalogo no recibe alto por defecto', () => {
-  for (const pref of ['B', 'B-FE', 'W', 'W-SM', 'DB', 'DB-2-SM', 'F', 'PN', 'TK', 'SBFD', 'SB-SM', 'SDB', 'V', 'PCFD']) {
-    assert.equal(altoPorDefectoIn(pref), null, pref);
+test('altoPorDefectoIn: las torres no reciben 30 pulgadas aunque sean "inferior"', () => {
+  // `AL`, `PC`, `PCFD` y `OVPC` estan en categoria `inferior` pero son alacenas
+  // y torres: se arman a la altura de un mueble alto. Prefieren quedarse sin
+  // valor por defecto a recibir uno equivocado.
+  for (const pref of ['AL', 'PC', 'PCFD', 'OVPC']) {
+    assert.equal(altoPorDefectoIn(pref, 'inferior'), null, pref);
   }
 });
 
-test('altoPorDefectoIn: tolera minusculas, nulo y vacio', () => {
-  assert.equal(altoPorDefectoIn('uv'), ALTO_LINEA_U_IN);
-  assert.equal(altoPorDefectoIn('usvfd'), ALTO_LINEA_U_IN);
-  assert.equal(altoPorDefectoIn(null), null);
-  assert.equal(altoPorDefectoIn(undefined), null);
-  assert.equal(altoPorDefectoIn(''), null);
+test('altoPorDefectoIn: la prioridad de la linea U va antes que la regla general', () => {
+  // `UB` y `UDB` son de categoria `inferior`; si la regla general se evaluara
+  // primero recibirian 30" en vez de 28,75".
+  assert.equal(altoPorDefectoIn('UB', 'inferior'), 28.75);
+  assert.equal(altoPorDefectoIn('UDB', 'inferior'), 28.75);
+  assert.equal(altoPorDefectoIn('UBFD', 'inferior'), 28.75);
 });
 
-test('altoPorDefectoIn: coincide exacto con un prefijo, no por aproximacion', () => {
-  // `UV` recibe el alto, pero `UVX` o `U` no deben colarse.
+test('altoPorDefectoIn: superiores y demas categorias no reciben nada', () => {
+  assert.equal(altoPorDefectoIn('W', 'superior'), null);
+  assert.equal(altoPorDefectoIn('UW', 'superior'), null, 'empieza por U pero es superior');
+  assert.equal(altoPorDefectoIn('F', 'filler'), null);
+  assert.equal(altoPorDefectoIn('PN', 'panel'), null);
+  assert.equal(altoPorDefectoIn('TK', 'zocalo'), null);
+  assert.equal(altoPorDefectoIn('WCC', 'closet'), null);
+  assert.equal(altoPorDefectoIn('KD', 'kit'), null);
+});
+
+test('altoPorDefectoIn: las vanities fuera de la linea U quedan sin valor', () => {
+  // Deuda conocida: `V`, `DV`, `DVE`, `V-FE`, `VFD` y `VPC` son vanity y no se
+  // nombraron al definir la regla, asi que no reciben alto por defecto.
+  for (const pref of ['V', 'DV', 'DVE', 'V-FE', 'VFD', 'VPC']) {
+    assert.equal(altoPorDefectoIn(pref, 'vanity'), null, pref);
+  }
+});
+
+test('altoPorDefectoIn: sin categoria solo resuelve la lista de la linea U', () => {
   assert.equal(altoPorDefectoIn('UV'), ALTO_LINEA_U_IN);
-  assert.equal(altoPorDefectoIn('U'), null);
-  assert.equal(altoPorDefectoIn('UVX'), null);
-  assert.equal(altoPorDefectoIn('UV-FE'), null, 'una variante nueva debe anadirse a la lista a proposito');
+  assert.equal(altoPorDefectoIn('B'), null, 'sin categoria no se puede saber que es inferior');
 });
 
 test('las conversiones que usa el formulario de cotizaciones son las de 28,75 in', () => {

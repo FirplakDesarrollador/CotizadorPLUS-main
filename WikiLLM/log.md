@@ -1776,3 +1776,21 @@ Quedaron fuera `SBFD`, `SB-SM` y `SDB`: empiezan por S y son inferiores, pero no
 **Cobertura**: `tests/muebles.test.ts` sube a 28 casos. Fijan los diez prefijos, la exclusion de `UW`, que el resto del catalogo no reciba nada, la tolerancia a minusculas/nulo, y que la coincidencia sea exacta (`UV` si, `U` y `UVX` no). Uno mas ata las conversiones por unidad que `AddLineForm` escribe a mano —73,025 cm y 730,25 mm— al mismo valor en pulgadas, para que no puedan derivar.
 
 `quality:gate` en exit 0 y `quality:learn` **sin hallazgos en ninguna severidad**. Build y typecheck limpios.
+
+## [2026-10-09] update | Alto por defecto de los muebles inferiores: 30", y 28,75" la linea U
+
+Completa la entrada anterior. `altoPorDefectoIn()` pasa a recibir tambien la **categoria** del tipo y resuelve tres reglas, en este orden:
+
+1. Linea U y Sink Vanity (10 prefijos) -> **28,75"**
+2. Torres y alacenas -> **sin valor**
+3. Cualquier otra de categoria `inferior` -> **30"**
+
+**El orden no es casual.** Los inferiores de la linea U (`UB`, `UB-FE`, `UBFD`, `UDB`) son de categoria `inferior`: si la regla general se evaluara primero, recibirian 30" en vez de 28,75". Hay un test dedicado a esa prioridad.
+
+**Las torres quedan fuera a proposito.** `AL` (alacena), `PC` y `PCFD` (torres) y `OVPC` (alacena para horno) estan clasificadas como `inferior` en el catalogo, pero se arman a la altura de un mueble alto. Ponerles 30" habria sido peor que no ponerles nada, asi que se quedan sin valor por defecto. La unica clasificacion de "torre" que existia estaba en un helper de `tests/visualizacion.test.ts`; ahora vive en `muebles.ts` como `PREFS_TORRE`.
+
+**Deuda anotada**: las vanities fuera de la linea U —`V`, `DV`, `DVE`, `V-FE`, `VFD`, `VPC`— no reciben alto por defecto. Son categoria `vanity` y no se nombraron al definir la regla; no se les asigna una altura sin dato que la respalde. Hay un test que fija ese comportamiento para que sea una decision visible y no un olvido.
+
+`AddLineForm` no declaraba `categoria` en su tipo local aunque `getCotizadorData()` si la trae —ambas pantallas usan ese mismo cargador—, asi que bastó con ampliar el tipo. Su conversion por unidad pasa a derivarse del valor en pulgadas en lugar de escribirse a mano, que con dos alturas distintas ya no era sostenible.
+
+`tests/muebles.test.ts` sube a 30 casos. `quality:gate` en exit 0 y `quality:learn` **sin hallazgos en ninguna severidad**.
