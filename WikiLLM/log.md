@@ -1887,3 +1887,15 @@ El recuadro **FORMA DE PAGO** del resumen decia `50% / 50%`. Ahora dice **"50% d
 **Ajuste de maquetacion necesario**: el recuadro es uno de tres en una rejilla, junto a "30 dias" y "90 dias", compuestos en `text-lg`. Una frase larga en ese cuerpo desbordaba su tercio, asi que la casilla de pago se compone en `text-[11px]` con interlineado ajustado, y las tres pasan a `flex` con el valor centrado para que conserven la misma altura pese al texto de distinto tamano.
 
 `tests/firplak-template.test.ts` sube a 9 casos. `quality:gate` en exit 0, build y typecheck limpios.
+
+## [2026-10-09] update | Las tres casillas del resumen FIRPLAK comparten tipografia y cuerpo
+
+VIGENCIA, FORMA DE PAGO y PLAZO ESTIMADO quedan con el mismo `<b>` y el mismo `text-lg`, en negrita. La casilla de pago habia quedado en `text-[11px]` al redactarse completa, y se veia de otra familia aunque no lo fuera.
+
+**No habia diferencia de fuente**, solo de tamano: ninguna casilla declara familia propia, las tres heredan la del `body` (`Arial, Helvetica, sans-serif`). Verificado en el componente y en `globals.css`.
+
+**Por que `text-lg` y no un cuerpo menor**: calculado el ancho util de cada columna —8,1in de pagina menos los margenes, entre tres, menos el `p-3`: unos **203 px**— la frase "50% de anticipo y 50% antes del despacho" ocupa **dos lineas tanto a `text-base` como a `text-lg`**. Achicarla no ahorraba un renglon, asi que se usa el cuerpo mayor, que ademas es el que ya tenian las otras dos casillas: no se degrada ninguna para igualar.
+
+El `flex` con el valor centrado, que se habia introducido para el texto de distinto tamano, se conserva: ahora sirve para que las tres mantengan la misma altura pese a que la de pago ocupe dos renglones.
+
+`quality:gate` en exit 0, build y typecheck limpios.
