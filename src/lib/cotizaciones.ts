@@ -768,7 +768,13 @@ export async function proveedoresDeTableros(codigos: readonly string[]): Promise
 // testeable; aqui solo esta el acceso a datos.
 // ---------------------------------------------------------------------------
 
-export type MaterialDisponible = { codigo: string; etiqueta: string; precio: number };
+export type MaterialDisponible = {
+  codigo: string;
+  etiqueta: string;
+  precio: number;
+  /** Texto adicional por el que tambien se puede buscar (categoria, proveedor). */
+  busqueda?: string;
+};
 
 /** Catalogos de Materiales-Parametros, para el selector de la cotizacion. */
 export async function getMaterialesDisponibles(): Promise<Record<TipoMaterial, MaterialDisponible[]>> {
@@ -776,15 +782,30 @@ export async function getMaterialesDisponibles(): Promise<Record<TipoMaterial, M
   const [tableros, cantos, herrajes] = await Promise.all([
     sb.from('cot_tableros').select('codigo,precio_m2,proveedor,espesor_mm').eq('activo', true).order('codigo'),
     sb.from('cot_cantos').select('calibre,precio').eq('activo', true).order('calibre'),
-    sb.from('cot_herrajes').select('codigo,precio,descripcion').eq('activo', true).order('codigo'),
+    // `cot_herrajes` nombra esa columna `nombre`, no `descripcion`.
+    sb.from('cot_herrajes').select('codigo,precio,nombre,categoria,unidad').eq('activo', true).order('categoria').order('codigo'),
   ]);
+  // Un error de consulta devolvia antes una lista vacia, y el formulario decia
+  // "0 en catalogo" sin explicar nada. Pedir una columna inexistente se veia
+  // igual que un catalogo vacio de verdad.
+  for (const [nombre, r] of [['tableros', tableros], ['cantos', cantos], ['herrajes', herrajes]] as const) {
+    if (r.error) throw new Error(`No se pudo leer el catalogo de ${nombre}: ${r.error.message}`);
+  }
   return {
     tablero: ((tableros.data ?? []) as { codigo: string; precio_m2: number; proveedor: string | null; espesor_mm: number | null }[])
-      .map((t) => ({ codigo: t.codigo, precio: Number(t.precio_m2), etiqueta: [t.codigo, t.espesor_mm ? `${t.espesor_mm}mm` : '', t.proveedor ?? ''].filter(Boolean).join(' · ') })),
+      .map((t) => ({ codigo: t.codigo, precio: Number(t.precio_m2), etiqueta: [t.codigo, t.espesor_mm ? `${t.espesor_mm}mm` : '', t.proveedor ?? ''].filter(Boolean).join(' · '), busqueda: t.proveedor ?? '' })),
     canto: ((cantos.data ?? []) as { calibre: string; precio: number }[])
       .map((c) => ({ codigo: c.calibre, precio: Number(c.precio), etiqueta: `calibre ${c.calibre}` })),
-    herraje: ((herrajes.data ?? []) as { codigo: string; precio: number; descripcion: string | null }[])
-      .map((h) => ({ codigo: h.codigo, precio: Number(h.precio), etiqueta: [h.codigo, h.descripcion ?? ''].filter(Boolean).join(' · ') })),
+    // Se ofrecen los 19 del catalogo, incluidos los de categoria `consumible`
+    // (tarugos, soportes, grapas): tambien se cobran sueltos. La categoria va en
+    // la etiqueta y en la busqueda para poder distinguirlos de un vistazo.
+    herraje: ((herrajes.data ?? []) as { codigo: string; precio: number; nombre: string | null; categoria: string | null; unidad: string | null }[])
+      .map((h) => ({
+        codigo: h.codigo,
+        precio: Number(h.precio),
+        etiqueta: [h.codigo, h.nombre ?? '', h.categoria ? `(${h.categoria})` : ''].filter(Boolean).join(' · '),
+        busqueda: [h.categoria ?? '', h.nombre ?? ''].filter(Boolean).join(' '),
+      })),
   };
 }
 

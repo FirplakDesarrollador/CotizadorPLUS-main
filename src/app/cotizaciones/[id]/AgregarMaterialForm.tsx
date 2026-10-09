@@ -65,7 +65,7 @@ export default function AgregarMaterialForm({ cocinaId, onDone }: { cocinaId: st
           <span className="mb-1 block">{ETIQUETA_MATERIAL[tipo]} · {items.length} en catálogo</span>
           <Combobox
             value={codigo}
-            options={items.map((m) => ({ value: m.codigo, label: m.etiqueta, searchText: m.codigo }))}
+            options={items.map((m) => ({ value: m.codigo, label: m.etiqueta, searchText: `${m.codigo} ${m.busqueda ?? ''}` }))}
             onChange={setCodigo}
             placeholder={catalogo ? 'Buscar…' : 'Cargando catálogo…'}
             disabled={!catalogo}

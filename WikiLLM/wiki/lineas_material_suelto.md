@@ -65,6 +65,22 @@ El formulario pide los catálogos con una acción al montarse. Enhebrarlos como
 props habría obligado a tocar la página, el cliente del detalle y la tarjeta de
 cocina para un dato que solo usa un formulario que casi nunca está abierto.
 
+## El catálogo de herrajes salía vacío
+
+La primera version pedia `cot_herrajes.descripcion`, columna que **no existe**:
+la tabla la llama `nombre`. Supabase devolvia error, el codigo hacia
+`data ?? []` y el formulario mostraba *"Herraje · 0 en catálogo"*, idéntico a un
+catálogo realmente vacío.
+
+Arreglado el nombre de la columna, y **los errores de consulta dejan de
+tragarse**: si alguno de los tres catálogos falla, `getMaterialesDisponibles()`
+lanza diciendo cuál y por qué, en vez de devolver una lista vacía.
+
+Se ofrecen los **19 herrajes activos**, incluidos los 5 de categoría
+`consumible` (tarugos, soportes metálicos, grapas, cartón, etiqueta): también se
+cobran sueltos. La categoría va en la etiqueta y en el texto de búsqueda, de modo
+que escribir "riel" encuentra los seis rieles sin tener que saberse los códigos.
+
 ## Cobertura y deuda
 
 `tests/materiales-linea.test.ts`, 15 casos: el margen por tipo, el reparto entre

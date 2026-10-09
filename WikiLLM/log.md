@@ -1918,3 +1918,15 @@ La logica vive en `materiales-linea.ts` y no en `cotizaciones.ts` para poder pro
 **`quality:learn` deja un HIGH con justificacion documentada**: `cotizaciones.ts` cambio 112 lineas sin suite propia. Toda su logica se extrajo ya al modulo probado; lo que queda es acceso a datos, y el archivo **no es importable desde un test** —empieza con `import 'server-only'` y el intento falla, comprobado—. Cubrirlo exigiria pruebas de integracion contra Supabase, que el repositorio no tiene.
 
 `tests/materiales-linea.test.ts`, 15 casos. `quality:gate` en exit 0, build y typecheck limpios. **Sin verificar en pantalla**: la cotizacion esta tras login y no hay credenciales. Documentado en [lineas_material_suelto.md](wiki/lineas_material_suelto.md).
+
+## [2026-10-09] fix | El selector de herrajes salia vacio: columna mal nombrada y error tragado
+
+El formulario de "Agregar herrajes" mostraba **"Herraje · 0 en catalogo"** aunque la tabla tiene 19 activos. Los tableros y los cantos si cargaban.
+
+**La consulta pedia `cot_herrajes.descripcion`, columna que no existe**: la tabla la llama `nombre`. Supabase devolvia error, el codigo hacia `data ?? []` y el resultado era indistinguible de un catalogo vacio de verdad.
+
+**El defecto de fondo era tragarse el error**, no el nombre de la columna. `getMaterialesDisponibles()` ahora lanza indicando que catalogo fallo y por que, en vez de devolver una lista vacia que parece un dato legitimo.
+
+Se ofrecen los **19 activos**, incluidos los 5 de categoria `consumible` (tarugo, soporte metalico, grapas, carton, etiqueta): tambien se cobran sueltos, y filtrarlos habria sido una decision que nadie pidio. La categoria se muestra en la etiqueta y entra en el texto de busqueda, asi que escribir "riel" encuentra los seis rieles sin saberse los codigos. El proveedor hace lo mismo en los tableros.
+
+`quality:gate` en exit 0, build y typecheck limpios. Los 6 errores de lint de `cotizaciones.ts` siguen siendo los `no-explicit-any` preexistentes del release v1.0.3.
