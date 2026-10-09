@@ -53,3 +53,10 @@ export function conProveedor(valor: string, proveedor: string | null | undefined
   if (!p) return v;
   return v ? `${v} · ${p}` : p;
 }
+
+// Redaccion de la forma de pago. Vive aqui porque la propuesta la repite en dos
+// sitios —el recuadro del resumen y la lista de terminos— y escribirla dos veces
+// invita a que acaben diciendo cosas distintas.
+export function formaDePago(anticipoPct: number, saldoPct: number): string {
+  return `${anticipoPct}% de anticipo y ${saldoPct}% antes del despacho`;
+}

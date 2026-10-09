@@ -1877,3 +1877,13 @@ Si un proyecto no trae presets, o un tablero no tiene proveedor, la fila se rend
 **Mapeo de calidad**: `quality:learn` señalo que `firplak-template.ts` no estaba en ningun lane del manifiesto. Se añadio —junto con `cema-template.ts`, que tenia el mismo hueco— a `lane:pricing-db`, el que ya cubre `cotizaciones.ts`, con su suite asociada.
 
 `tests/firplak-template.test.ts`, 7 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH; persiste el MED de `cotizaciones.ts`, ya justificado (su `server-only` impide cargarlo desde una prueba unitaria).
+
+## [2026-10-09] update | La forma de pago de la propuesta FIRPLAK se redacta completa
+
+El recuadro **FORMA DE PAGO** del resumen decia `50% / 50%`. Ahora dice **"50% de anticipo y 50% antes del despacho"**, que es la redaccion que la propia propuesta ya usaba mas abajo, en la lista de terminos.
+
+**Se extrajo a `formaDePago()`** (`firplak-template.ts`) porque la frase aparece en dos sitios —el recuadro y los terminos— y escribirla dos veces invita a que acaben diciendo cosas distintas. Sigue los porcentajes de la plantilla, que son editables.
+
+**Ajuste de maquetacion necesario**: el recuadro es uno de tres en una rejilla, junto a "30 dias" y "90 dias", compuestos en `text-lg`. Una frase larga en ese cuerpo desbordaba su tercio, asi que la casilla de pago se compone en `text-[11px]` con interlineado ajustado, y las tres pasan a `flex` con el valor centrado para que conserven la misma altura pese al texto de distinto tamano.
+
+`tests/firplak-template.test.ts` sube a 9 casos. `quality:gate` en exit 0, build y typecheck limpios.

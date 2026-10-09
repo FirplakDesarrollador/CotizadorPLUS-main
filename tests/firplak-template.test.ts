@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { conProveedor, normalizarFirplakTemplate, FIRPLAK_TEMPLATE_DEFAULTS, PROVEEDORES_VACIOS } from '../src/lib/firplak-template';
+import { conProveedor, formaDePago, normalizarFirplakTemplate, FIRPLAK_TEMPLATE_DEFAULTS, PROVEEDORES_VACIOS } from '../src/lib/firplak-template';
 
 // Las tablas de especificaciones de la propuesta FIRPLAK nombran el material de
 // cada bloque; produccion pide ver ademas de quien es el tablero (PRIMADERA,
@@ -54,4 +54,16 @@ test('normalizarFirplakTemplate completa los campos que falten en lo guardado', 
   assert.equal(t.upperBoard, 'Tablero X', 'conserva lo guardado');
   assert.equal(t.projectMaterials, '', 'completa lo que falta');
   assert.equal(t.lowerBoard, FIRPLAK_TEMPLATE_DEFAULTS.lowerBoard);
+});
+
+test('formaDePago se redacta completa, no como "50% / 50%"', () => {
+  assert.equal(formaDePago(50, 50), '50% de anticipo y 50% antes del despacho');
+});
+
+test('formaDePago sigue los porcentajes de la plantilla', () => {
+  // Son editables en la propuesta: el texto tiene que moverse con ellos.
+  assert.equal(formaDePago(30, 70), '30% de anticipo y 70% antes del despacho');
+  assert.equal(formaDePago(100, 0), '100% de anticipo y 0% antes del despacho');
+  assert.equal(formaDePago(FIRPLAK_TEMPLATE_DEFAULTS.depositPercent, FIRPLAK_TEMPLATE_DEFAULTS.balancePercent),
+    '50% de anticipo y 50% antes del despacho', 'los valores por defecto de la plantilla');
 });
