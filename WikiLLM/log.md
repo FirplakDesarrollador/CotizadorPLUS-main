@@ -1712,3 +1712,30 @@ La regla vive en `etiquetaDescripcion()` (`muebles.ts`), junto al resto de helpe
 **Hallazgo adjunto, NO corregido**: la descripcion de un filler sigue diciendo "1 puerta(s) · 2 entrepaño(s)". El tipo `F` tiene **una sola pieza** y su unica regla propia es `n_patas=0`; esos valores los hereda de las reglas **globales** de `n_puertas` y `n_entrepanos`, que aplican a todo tipo sin excepcion. Para un panel de relleno no significan nada. Queda anotado para decidir si se suprimen esos sufijos cuando la tipologia no tiene puertas ni entrepaños reales.
 
 `tests/muebles.test.ts` sube a 16 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.
+
+## [2026-10-09] fix | DB-3 lleva tres pares de barra, no cero
+
+El selector de tipologia DB mostraba "DB-3 · 3 cajones iguales · **sin barras**". El usuario precisa que deben ser tres pares.
+
+**No era un error de texto, sino del dato.** `DB_TIPOLOGIAS` tenia `nb: 0` para DB-3, y ese campo alimenta el override `n_barras` del motor, que a su vez fija la cantidad del herraje `BARRAEST` (9.800 COP cada una). La descripcion decia la verdad: el modulo se cotizaba **sin barras estabilizadoras**. Cambiar solo la etiqueta la habria vuelto mentira.
+
+**El catalogo confirma que 3 es lo correcto.** La regla documentada es que las barras van en los cajones grandes. Cruzando `nb` contra la cantidad de `trasero_gaveta_grande` que el catalogo da a cada configuracion:
+
+| Tipologia | Cajones | Grandes | `nb` antes | Segun la regla |
+| --- | ---: | ---: | ---: | ---: |
+| DB-1S | 3 | 2 | 2 | 2 |
+| DB-2S | 3 | 1 | 1 | 1 |
+| DB-2 | 2 | 2 | 2 | 2 |
+| **DB-3** | 3 | **3** | **0** | **3** |
+| DB-4 | 4 | 0 | 0 | 0 |
+| DB2-1OP | 3 | 3 | 1 | 3 |
+
+DB-4 va bien: sus cuatro cajones son **pequenos** (el catalogo le da cuatro `trasero_gaveta_pequena` y ningun grande), asi que 0 barras es correcto y su "sin barras" se queda.
+
+**Segunda discrepancia, NO corregida**: `DB2-1OP` tiene 1 par donde la cuenta de grandes daria 3. Lleva un cajon oculto y no se sabe si eso cambia el conteo, asi que no se asume una respuesta; el test la excluye explicitamente en vez de taparla.
+
+**Cobertura**: `tests/muebles.test.ts` sube a 20 casos. El principal no fija un numero suelto sino la **regla** —`nb` igual a la cantidad de cajones grandes— de modo que una tipologia nueva que la incumpla se detecta sola. Otro verifica que la descripcion de cada entrada concuerde con su `nb`, que es justo lo que habia fallado aqui.
+
+**Las lineas ya guardadas NO se tocaron.** Hay 3 lineas DB-3 en 2 cotizaciones, con `n_barras` persistido en sus overrides; conservan su valor hasta que se reediten. Una de ellas pertenece a "Prueba Uno", en estado **enviada**: recotizarla por cuenta propia cambiaria el precio de algo ya entregado. Queda a decision del usuario.
+
+`quality:gate` en exit 0, `quality:learn` sin hallazgos HIGH ni MED. Build y typecheck limpios.

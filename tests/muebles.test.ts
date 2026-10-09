@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ajustarPiezasSinFondo, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
+import { ajustarPiezasSinFondo, DB_TIPOLOGIAS, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
 
 // `muebles.ts` es el modulo de dominio compartido por formularios y motor. Las
 // dos piezas que se prueban aqui deciden cosas con efecto en el precio, asi que
@@ -154,4 +154,49 @@ test('etiquetaDescripcion: nulo, vacio y espacios dan cadena vacia', () => {
   assert.equal(etiquetaDescripcion(undefined), '');
   assert.equal(etiquetaDescripcion(''), '');
   assert.equal(etiquetaDescripcion('   '), '');
+});
+
+// ---------------------------------------------------------------------------
+// DB_TIPOLOGIAS: el numero de pares de barra estabilizadora. Es un dato de
+// precio —cada barra es un herraje (`BARRAEST`)— y alimenta el override
+// `n_barras` del motor, asi que conviene atarlo a la regla y no a un numero
+// suelto en una tabla.
+// ---------------------------------------------------------------------------
+
+// Cantidad de traseros grande/pequeno que el catalogo da a cada configuracion
+// (formulas de `trasero_gaveta_grande` y `_pequena` del tipo DB).
+const cajonesGrandes = (nc: number, npeq: number) => (npeq > 0 ? nc - npeq : (nc === 4 ? 0 : nc));
+
+test('DB_TIPOLOGIAS: las barras van en los cajones grandes', () => {
+  // DB2-1OP queda fuera: lleva un cajon oculto y su conteo de barras no sigue
+  // esta regla (tiene 1 donde la cuenta de grandes daria 3). Es una discrepancia
+  // conocida, sin resolver, y no se asume aqui una respuesta.
+  for (const t of DB_TIPOLOGIAS.filter((x) => x.noculto == null)) {
+    assert.equal(t.nb, cajonesGrandes(t.nc, t.npeq),
+      `${t.key}: ${t.nc} cajones, ${t.npeq} pequenos -> ${cajonesGrandes(t.nc, t.npeq)} pares de barra`);
+  }
+});
+
+test('DB-3 lleva tres pares de barra, no cero', () => {
+  // El caso concreto que estaba mal: tres cajones grandes y ninguna barra, de
+  // modo que el selector decia "sin barras" y el modulo se cotizaba sin ellas.
+  const db3 = DB_TIPOLOGIAS.find((t) => t.key === 'DB-3')!;
+  assert.equal(db3.nc, 3);
+  assert.equal(db3.npeq, 0, 'sus tres cajones son grandes');
+  assert.equal(db3.nb, 3);
+  assert.match(db3.desc, /3 pares de barra/);
+});
+
+test('DB-4 si va sin barras: sus cuatro cajones son pequenos', () => {
+  const db4 = DB_TIPOLOGIAS.find((t) => t.key === 'DB-4')!;
+  assert.equal(cajonesGrandes(db4.nc, db4.npeq), 0, 'el catalogo le da cuatro traseros pequenos');
+  assert.equal(db4.nb, 0);
+});
+
+test('la descripcion de cada tipologia concuerda con su numero de barras', () => {
+  for (const t of DB_TIPOLOGIAS) {
+    if (t.nb === 0) { assert.match(t.desc, /sin barras/, t.key); continue; }
+    const esperado = t.nb === 1 ? '1 par de barra' : `${t.nb} pares de barra`;
+    assert.ok(t.desc.includes(esperado), `${t.key}: la descripcion deberia decir "${esperado}" y dice "${t.desc}"`);
+  }
 });

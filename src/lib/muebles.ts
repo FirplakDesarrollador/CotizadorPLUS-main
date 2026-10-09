@@ -176,7 +176,11 @@ export const DB_TIPOLOGIAS: DbTipologia[] = [
   { key: 'DB-1S', nc: 3, nb: 2, npeq: 1, desc: '1 cajón pequeño + 2 grandes · 2 pares de barra' },
   { key: 'DB-2S', nc: 3, nb: 1, npeq: 2, desc: '2 cajones pequeños + 1 grande · 1 par de barra' },
   { key: 'DB-2', nc: 2, nb: 2, npeq: 0, desc: '2 cajones iguales (grandes) · 2 pares de barra' },
-  { key: 'DB-3', nc: 3, nb: 0, npeq: 0, desc: '3 cajones iguales · sin barras' },
+  // DB-3 son tres cajones GRANDES (el catálogo le da tres `trasero_gaveta_grande`
+  // y ningún pequeño), y las barras van en los cajones grandes: le corresponden
+  // tres pares. Estaba en 0, que es lo que hacía que el selector dijera
+  // "sin barras" y que el módulo se cotizara sin las barras estabilizadoras.
+  { key: 'DB-3', nc: 3, nb: 3, npeq: 0, desc: '3 cajones iguales · 3 pares de barra' },
   { key: 'DB-4', nc: 4, nb: 0, npeq: 0, desc: '4 cajones iguales · sin barras' },
   { key: 'DB2-1OP', nc: 3, nb: 1, npeq: 0, noculto: 1, desc: '2 cajones + 1 oculto · 1 par de barra' },
 ];
