@@ -244,6 +244,20 @@ export function permiteTipologiaDb(pref: string | null | undefined): boolean {
   return (PREFS_CON_TIPOLOGIA_DB as readonly string[]).includes(p);
 }
 
+// Cómo se **muestra** una tipología en el selector, según el tipo elegido: un
+// `UDV` ofrece `UDV-1S`, no `DB-1S`.
+//
+// La `key` no cambia. Es el identificador que se persiste en `config.dbTipo` y
+// del que sale el sufijo del código comercial (`DB-1S` → `-1S`, que produce
+// `UDV36-1S`): tocarla rompería las líneas ya guardadas y el código de módulo.
+// Esto es presentación y nada más.
+export function etiquetaTipologiaDb(key: string, pref: string | null | undefined): string {
+  const base = String(pref ?? '').toUpperCase();
+  if (!base || base === 'DB') return key;
+  // `DB-1S` → `UDV-1S`; `DB2-1OP` → `UDV2-1OP`.
+  return key.replace(/^DB/, base);
+}
+
 // Las tipologias DB con Gola de madera son tipos independientes en base de
 // datos porque cada una tiene plantillas y montaje propios. En el formulario
 // se presentan como una sola familia para evitar tres entradas casi iguales.

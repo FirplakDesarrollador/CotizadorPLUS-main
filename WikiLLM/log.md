@@ -1794,3 +1794,15 @@ Completa la entrada anterior. `altoPorDefectoIn()` pasa a recibir tambien la **c
 `AddLineForm` no declaraba `categoria` en su tipo local aunque `getCotizadorData()` si la trae —ambas pantallas usan ese mismo cargador—, asi que bastó con ampliar el tipo. Su conversion por unidad pasa a derivarse del valor en pulgadas en lugar de escribirse a mano, que con dos alturas distintas ya no era sostenible.
 
 `tests/muebles.test.ts` sube a 30 casos. `quality:gate` en exit 0 y `quality:learn` **sin hallazgos en ninguna severidad**.
+
+## [2026-10-09] update | El selector de tipologia se rotula con el tipo elegido, no siempre "DB"
+
+El selector lo comparten tres tipos (`PREFS_CON_TIPOLOGIA_DB`: `DB`, `UDB`, `UDV`), pero se rotulaba siempre "Tipología DB" y ofrecia `DB-1S`, `DB-2S`… incluso con un `UDV` seleccionado. Ahora el rotulo y las opciones siguen al tipo: un UDV ofrece **`UDV-1S`**, **`UDV-2S`**, **`UDV2-1OP`**, y el campo se titula "Tipología UDV".
+
+**La clave NO cambia, y es lo importante del cambio.** `DB-1S` es el identificador que se persiste en `config.dbTipo` y del que sale el sufijo del codigo comercial (`DB-1S` -> `-1S`, que produce `UDV36-1S`). Tocarla habria roto las lineas ya guardadas y el codigo de modulo. `etiquetaTipologiaDb()` transforma **solo** lo que se muestra; el `value` del `<option>` sigue siendo la clave original.
+
+Aplicado en los dos formularios: Simulador y agregar linea.
+
+**Cobertura**: cinco casos en `tests/muebles.test.ts`, que sube a 35. Uno recorre `PREFS_CON_TIPOLOGIA_DB` x `DB_TIPOLOGIAS` y exige que toda combinacion empiece por su prefijo, de modo que si se anade un cuarto tipo al selector su rotulo sale solo y queda cubierto. Otros fijan que un `DB` se quede igual, que sin tipo elegido la clave vuelva intacta y que la sustitucion sea solo del `DB` inicial.
+
+`quality:gate` en exit 0 y `quality:learn` sin hallazgos en ninguna severidad.

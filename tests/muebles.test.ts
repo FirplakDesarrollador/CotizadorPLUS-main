@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ajustarPiezasSinFondo, ALTO_INFERIOR_IN, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
+import { ajustarPiezasSinFondo, ALTO_INFERIOR_IN, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, etiquetaTipologiaDb, PREFS_CON_TIPOLOGIA_DB, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
 
 // `muebles.ts` es el modulo de dominio compartido por formularios y motor. Las
 // dos piezas que se prueban aqui deciden cosas con efecto en el precio, asi que
@@ -290,4 +290,43 @@ test('las conversiones que usa el formulario de cotizaciones son las de 28,75 in
   // correspondan al mismo alto.
   assert.ok(Math.abs(ALTO_LINEA_U_IN * 2.54 - 73.025) < 1e-9, 'cm');
   assert.ok(Math.abs(ALTO_LINEA_U_IN * 25.4 - 730.25) < 1e-9, 'mm');
+});
+
+// ---------------------------------------------------------------------------
+// etiquetaTipologiaDb: el selector de tipologia lo comparten DB, UDB y UDV, y
+// debe rotularse con el tipo elegido. La clave NO cambia: se persiste en
+// `config.dbTipo` y de ella sale el sufijo del codigo comercial.
+// ---------------------------------------------------------------------------
+
+test('etiquetaTipologiaDb: un UDV ofrece UDV-1S, no DB-1S', () => {
+  assert.equal(etiquetaTipologiaDb('DB-1S', 'UDV'), 'UDV-1S');
+  assert.equal(etiquetaTipologiaDb('DB-2S', 'UDV'), 'UDV-2S');
+  assert.equal(etiquetaTipologiaDb('DB-3', 'UDV'), 'UDV-3');
+  assert.equal(etiquetaTipologiaDb('DB2-1OP', 'UDV'), 'UDV2-1OP', 'la clave sin guion tambien se adapta');
+});
+
+test('etiquetaTipologiaDb: cubre los tres tipos que comparten el selector', () => {
+  // Si se anade uno a `PREFS_CON_TIPOLOGIA_DB`, su rotulo sale solo.
+  for (const pref of PREFS_CON_TIPOLOGIA_DB) {
+    for (const t of DB_TIPOLOGIAS) {
+      const etiqueta = etiquetaTipologiaDb(t.key, pref);
+      assert.ok(etiqueta.startsWith(pref), `${pref} / ${t.key} -> ${etiqueta}`);
+    }
+  }
+});
+
+test('etiquetaTipologiaDb: un DB se queda como estaba', () => {
+  for (const t of DB_TIPOLOGIAS) assert.equal(etiquetaTipologiaDb(t.key, 'DB'), t.key, t.key);
+});
+
+test('etiquetaTipologiaDb: sin tipo elegido devuelve la clave intacta', () => {
+  assert.equal(etiquetaTipologiaDb('DB-1S', null), 'DB-1S');
+  assert.equal(etiquetaTipologiaDb('DB-1S', undefined), 'DB-1S');
+  assert.equal(etiquetaTipologiaDb('DB-1S', ''), 'DB-1S');
+});
+
+test('etiquetaTipologiaDb: solo sustituye el DB inicial', () => {
+  // No debe tocar un `DB` que aparezca mas adelante en la clave.
+  assert.equal(etiquetaTipologiaDb('DB-DB', 'UDB'), 'UDB-DB');
+  assert.equal(etiquetaTipologiaDb('udv', 'UDV'), 'udv', 'sin DB inicial no hay nada que sustituir');
 });
