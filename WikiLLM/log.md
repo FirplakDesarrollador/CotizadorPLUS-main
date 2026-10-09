@@ -1853,3 +1853,27 @@ Lo generaba `imprimir/page.tsx` recorriendo las claves de la configuracion y que
 De paso se elimina el `const config` de `imprimir/page.tsx`, que quedaba sin uso.
 
 `quality:gate` en exit 0, build y typecheck limpios. Las 4 advertencias de lint que quedan en `FirplakPrintEditor.tsx` son `no-img-element` preexistentes del release v1.0.3, ajenas a este cambio.
+
+## [2026-10-09] update | La propuesta FIRPLAK nombra el proveedor de cada tablero
+
+Las tablas de especificaciones de muebles superiores e inferiores decian el material pero no de quien era. Ahora cada fila lleva el proveedor del tablero realmente seleccionado en el proyecto: **ECOFORT**, **PRIMADERA**, **DURATEX**, **CHINO**, etc.
+
+```
+Tablero    Tablero STANDARD · ECOFORT
+Espaldar   MDF 5.5 mm, blanco · PRIMADERA
+Caja       Tablero 15 mm, canto 0.45 mm, blanco · ECOFORT
+Puertas    Puerta plana 18 mm... · ECOFORT
+Rellenos   18 mm · ECOFORT
+```
+
+**El texto de la fila sigue viniendo de la plantilla** (editable); lo que se añade es el proveedor, que sale del catalogo. Los 80 tableros activos tienen proveedor registrado, verificado antes de implementarlo.
+
+**El mapeo de fila a rol se acordo con el usuario**, porque no era evidente: "Tablero" y "Caja" toman el tablero de **caja**, "Puertas" y "Rellenos/paneles y zocalos" el de **frente**, y "Espaldar" el de **fondo**. La fila "Tablero" no corresponde a ningun rol —su texto es "Tablero STANDARD"/"Tablero RH", una linea de producto— y se decidio darle el de caja por ser el tablero principal.
+
+**Detalle que se corrigio sobre la marcha**: con la configuracion "Sin fondo", los muebles inferiores no llevan espaldar, de modo que su fila habria dicho "Sin espaldar · PRIMADERA", anunciando el proveedor de una pieza que no existe. Se ata a la bandera `conFondo`: los inferiores pierden el proveedor y **los superiores lo conservan**, porque siempre llevan fondo (ver `ajustarPiezasSinFondo`).
+
+Si un proyecto no trae presets, o un tablero no tiene proveedor, la fila se renderiza como antes: `conProveedor()` devuelve el texto intacto en vez de dejar un separador huerfano.
+
+**Mapeo de calidad**: `quality:learn` señalo que `firplak-template.ts` no estaba en ningun lane del manifiesto. Se añadio —junto con `cema-template.ts`, que tenia el mismo hueco— a `lane:pricing-db`, el que ya cubre `cotizaciones.ts`, con su suite asociada.
+
+`tests/firplak-template.test.ts`, 7 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH; persiste el MED de `cotizaciones.ts`, ya justificado (su `server-only` impide cargarlo desde una prueba unitaria).

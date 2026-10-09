@@ -737,3 +737,19 @@ async function recomputarTotales(cotizacionId: string) {
   // Proyecto
   await sb.from('cot_cotizaciones').update({ total_cop, total_usd }).eq('id', cotizacionId);
 }
+
+// Proveedor de cada codigo de tablero, para la propuesta FIRPLAK: sus tablas de
+// especificaciones nombran el material y produccion pide ver de quien es
+// (PRIMADERA, DURATEX, CHINO...). Devuelve un mapa codigo -> proveedor; un
+// codigo sin proveedor registrado simplemente no aparece.
+export async function proveedoresDeTableros(codigos: readonly string[]): Promise<Record<string, string>> {
+  const unicos = [...new Set(codigos.filter(Boolean))];
+  if (!unicos.length) return {};
+  const sb = await createClient();
+  const { data } = await sb.from('cot_tableros').select('codigo,proveedor').in('codigo', unicos);
+  return Object.fromEntries(
+    ((data ?? []) as { codigo: string; proveedor: string | null }[])
+      .filter((t) => t.proveedor)
+      .map((t) => [t.codigo, String(t.proveedor)]),
+  );
+}

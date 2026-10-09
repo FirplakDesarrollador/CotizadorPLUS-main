@@ -40,14 +40,17 @@
         "src/lib/cotizaciones.ts",
         "src/lib/diseno.ts",
         "src/lib/admin.ts",
-        "src/lib/supabase/**"
+        "src/lib/supabase/**",
+        "src/lib/firplak-template.ts",
+        "src/lib/cema-template.ts"
       ],
       "tests": [
         "tests/margen-global.test.ts",
         "tests/group-result.test.ts",
         "tests/precio-herrajes.test.ts",
         "tests/consumo-materiales.test.ts",
-        "tests/module-groups.test.ts"
+        "tests/module-groups.test.ts",
+        "tests/firplak-template.test.ts"
       ]
     },
     {

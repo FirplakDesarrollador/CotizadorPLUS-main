@@ -32,3 +32,24 @@ export const FIRPLAK_TEMPLATE_DEFAULTS: FirplakTemplate = {
 export function normalizarFirplakTemplate(value: Partial<FirplakTemplate> | null | undefined): FirplakTemplate {
   return { ...FIRPLAK_TEMPLATE_DEFAULTS, ...(value ?? {}) };
 }
+
+// Proveedores de los tableros que la propuesta nombra, por bloque. El mapeo de
+// fila a rol se decidio con el usuario: "Tablero" y "Caja" salen del tablero de
+// caja, "Puertas" y "Rellenos" del de frente, y "Espaldar" del de fondo.
+export type ProveedoresBloque = { caja: string; frente: string; fondo: string };
+export type ProveedoresPropuesta = { superiores: ProveedoresBloque; inferiores: ProveedoresBloque };
+
+export const PROVEEDORES_VACIOS: ProveedoresPropuesta = {
+  superiores: { caja: '', frente: '', fondo: '' },
+  inferiores: { caja: '', frente: '', fondo: '' },
+};
+
+// Añade el proveedor al final del texto de una fila. Si no hay proveedor
+// registrado, el texto se devuelve intacto en lugar de dejar un separador
+// huérfano.
+export function conProveedor(valor: string, proveedor: string | null | undefined): string {
+  const p = String(proveedor ?? '').trim();
+  const v = String(valor ?? '').trim();
+  if (!p) return v;
+  return v ? `${v} · ${p}` : p;
+}
