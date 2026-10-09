@@ -1930,3 +1930,9 @@ El formulario de "Agregar herrajes" mostraba **"Herraje · 0 en catalogo"** aunq
 Se ofrecen los **19 activos**, incluidos los 5 de categoria `consumible` (tarugo, soporte metalico, grapas, carton, etiqueta): tambien se cobran sueltos, y filtrarlos habria sido una decision que nadie pidio. La categoria se muestra en la etiqueta y entra en el texto de busqueda, asi que escribir "riel" encuentra los seis rieles sin saberse los codigos. El proveedor hace lo mismo en los tableros.
 
 `quality:gate` en exit 0, build y typecheck limpios. Los 6 errores de lint de `cotizaciones.ts` siguen siendo los `no-explicit-any` preexistentes del release v1.0.3.
+
+## [2026-10-09] update | El boton pasa a llamarse "Agregar herrajes/otros"
+
+Renombrado a peticion del usuario: el selector ofrece tableros y cantos ademas de herrajes, y el nombre anterior sugeria que solo lo segundo. Se actualiza tambien la mencion en [lineas_material_suelto.md](wiki/lineas_material_suelto.md) para que la documentacion no quede desfasada.
+
+Solo la etiqueta del boton. El titulo del formulario ya decia "Agregar herrajes y materiales" y se deja como estaba.

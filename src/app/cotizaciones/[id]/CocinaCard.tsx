@@ -640,7 +640,7 @@ export default function CocinaCard({
         ) : (
           <div className="flex gap-2">
             <button onClick={() => { setEditId(null); setShowAdd(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
-            <button onClick={() => { setEditId(null); setShowAddMaterial(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar herrajes</button>
+            <button onClick={() => { setEditId(null); setShowAddMaterial(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar herrajes/otros</button>
           </div>
         )}
         {showAddMaterial && <div className="mt-3"><AgregarMaterialForm cocinaId={cocina.id} onDone={() => setShowAddMaterial(false)} /></div>}

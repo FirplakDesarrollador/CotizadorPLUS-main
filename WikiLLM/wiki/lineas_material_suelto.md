@@ -4,7 +4,7 @@
 
 Un tablero, canto o herraje cobrado dentro de una cocina **sin pasar por un
 módulo**: un repuesto, un sobrante, herraje adicional. Se agregan con el botón
-**"+ Agregar herrajes"**, junto a "+ Agregar módulo".
+**"+ Agregar herrajes/otros"**, junto a "+ Agregar módulo".
 
 El catálogo que ofrece es el de **Materiales-Parámetros**: `cot_tableros`,
 `cot_cantos` y `cot_herrajes`, solo los activos.
