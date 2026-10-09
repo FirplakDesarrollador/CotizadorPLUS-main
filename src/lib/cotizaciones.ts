@@ -6,7 +6,7 @@ import {
   distribuirResiduoMoneda, redondearMoneda, precioUnitario,
   type SistemaMedida,
 } from '@/lib/module-groups';
-import { esElementoPlano, etiquetaDescripcion } from '@/lib/muebles';
+import { contarEntrepanos, esElementoPlano, etiquetaDescripcion } from '@/lib/muebles';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
 
@@ -170,10 +170,15 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
   // aplican a todo tipo. Ver `esElementoPlano` en `muebles.ts`. El campo `pref`
   // de la fila conserva el valor original, que alimenta el código comercial.
   const medidas = `${etiquetaDescripcion(input.prefLabel)} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim();
+  // Los entrepaños se cuentan sobre el **despiece**, no sobre `n_entrepanos`:
+  // esa variable es una regla global por altura y no describe el mueble. Ver
+  // `contarEntrepanos`. Se omite el contador cuando es cero, igual que ya se
+  // hacía con puertas y gavetas, en vez de anunciar "0 entrepaño(s)".
+  const entrepanos = contarEntrepanos(res.piezas);
   const desc = esElementoPlano(input.prefLabel) ? medidas : medidas
     + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '')
     + (res.vars.n_cajones ? ` · ${res.vars.n_cajones} gaveta(s)` : '')
-    + (res.vars.n_entrepanos != null ? ` · ${res.vars.n_entrepanos} entrepaño(s)` : '');
+    + (entrepanos ? ` · ${entrepanos} entrepaño(s)` : '');
   return {
     tipo_mueble_id: input.tipoId,
     pref: input.prefLabel ?? null,

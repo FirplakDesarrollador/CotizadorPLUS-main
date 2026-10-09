@@ -125,6 +125,22 @@ export function esElementoPlano(prefLabel: string | null | undefined): boolean {
   return letrasIniciales(prefLabel) in ELEMENTOS_PLANOS;
 }
 
+// Cuántos entrepaños tiene **realmente** el módulo, contados sobre el despiece.
+//
+// La descripción de una línea usaba la variable de regla `n_entrepanos`, que es
+// una regla global por altura (0/1/2/3) y **no** describe el mueble: en 47 de
+// los 81 tipos del catálogo no coincide con las piezas que se cortan. `B` y
+// `BFD` llevan el entrepaño fijo en 1 y la descripción decía 2; `SBFD`, `BOV` y
+// otros 23 tipos no tienen ninguno y decía 2 o 3; `AL` tiene 5 y `WPC` 6.
+//
+// Cuenta también `entrepano_fijo` (UW, BMW-1, BOMH-1 y sus FE): es una pieza
+// más de la hoja de corte, con su material y su canto.
+export function contarEntrepanos(piezas: readonly { pieza: string; cant: number }[]): number {
+  return piezas
+    .filter((p) => /^entrepano/i.test(p.pieza))
+    .reduce((total, p) => total + Math.max(0, Math.round(p.cant)), 0);
+}
+
 // Alto estándar de la línea U y de la pareja Sink Vanity: 28,75 pulgadas.
 export const ALTO_LINEA_U_IN = 28.75;
 

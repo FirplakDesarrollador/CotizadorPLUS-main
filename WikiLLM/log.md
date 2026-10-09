@@ -1806,3 +1806,28 @@ Aplicado en los dos formularios: Simulador y agregar linea.
 **Cobertura**: cinco casos en `tests/muebles.test.ts`, que sube a 35. Uno recorre `PREFS_CON_TIPOLOGIA_DB` x `DB_TIPOLOGIAS` y exige que toda combinacion empiece por su prefijo, de modo que si se anade un cuarto tipo al selector su rotulo sale solo y queda cubierto. Otros fijan que un `DB` se quede igual, que sin tipo elegido la clave vuelva intacta y que la sustitucion sea solo del `DB` inicial.
 
 `quality:gate` en exit 0 y `quality:learn` sin hallazgos en ninguna severidad.
+
+## [2026-10-09] fix | La descripcion de una linea cuenta los entrepanos del despiece, no la variable de regla
+
+El usuario reporta que la cantidad de entrepanos en las descripciones de la pestana Cotizaciones no cuadra. Se evaluaron los **81 tipos activos** con el motor real sobre nueve juegos de medidas, comparando lo que decia la descripcion contra las piezas que se cortan.
+
+**No cuadraba en 47 de los 81.** La descripcion usaba `res.vars.n_entrepanos`, que no describe el mueble: es una **regla global por altura** (`A<=16`->0, `A<=24`->1, `A<=36`->2, resto 3) que aplica a todo tipo. Una tipologia la usa solo si su pieza `entrepano` la declara en `formula_cantidad`, y muchas no lo hacen.
+
+| Tipo | Decia | Tiene | Por que |
+| --- | ---: | ---: | --- |
+| `B`, `BFD` | 2 | **1** | su entrepano es `formula_cantidad: '1'`, fijo |
+| `SBFD`, `BOV`, `BT`, `UVFD` | 2-3 | **0** | no tienen la pieza |
+| `AL` | 2 | **5** | alacena |
+| `WPC` | 2 | **6** | torre |
+| `UW` | 0 | **1** | lleva `entrepano_fijo`, que la variable ignora |
+| `WLD` | 2 | 2 | **correcto**: su pieza si declara `n_entrepanos` |
+
+**36 tipos no tienen pieza de entrepano y 25 de ellos igual anunciaban 2 o 3.** `WLD` es la excepcion que explicaba la confusion: sus filas si cuadraban, lo que hacia parecer que el contador funcionaba.
+
+**Correccion**: `contarEntrepanos()` (`muebles.ts`) suma las piezas `entrepano*` del despiece recien calculado. Verificado tras el cambio: **0 discrepancias en los 81 tipos**. Cuenta tambien `entrepano_fijo` (UW, BMW-1, BOMH-1 y sus FE), que es una pieza mas de la hoja de corte. El contador se omite cuando es cero, en vez de anunciar "0 entrepano(s)".
+
+**Deuda detectada y NO corregida**: el mismo defecto afecta a `n_puertas` (**45 tipos**) y `n_cajones` (**12 tipos**). No se tocaron porque, a diferencia de los entrepanos, "que pieza es una puerta" no es evidente —el motor usa el mismo nombre `frente` para una puerta y para la cara de una gaveta— y definirlo bien es su propio analisis.
+
+**Las lineas guardadas** conservan el texto anterior hasta que se edite la linea o se recalcule la cotizacion. No se hizo migracion: aqui el valor correcto no se puede derivar en SQL, hay que correr el motor por linea.
+
+`tests/muebles.test.ts` sube a 41 casos. Documentado en [descripcion_linea_vs_despiece.md](wiki/descripcion_linea_vs_despiece.md). `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.

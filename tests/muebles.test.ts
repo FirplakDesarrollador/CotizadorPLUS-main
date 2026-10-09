@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ajustarPiezasSinFondo, ALTO_INFERIOR_IN, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, etiquetaTipologiaDb, PREFS_CON_TIPOLOGIA_DB, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
+import { ajustarPiezasSinFondo, ALTO_INFERIOR_IN, contarEntrepanos, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, etiquetaTipologiaDb, PREFS_CON_TIPOLOGIA_DB, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
 
 // `muebles.ts` es el modulo de dominio compartido por formularios y motor. Las
 // dos piezas que se prueban aqui deciden cosas con efecto en el precio, asi que
@@ -329,4 +329,50 @@ test('etiquetaTipologiaDb: solo sustituye el DB inicial', () => {
   // No debe tocar un `DB` que aparezca mas adelante en la clave.
   assert.equal(etiquetaTipologiaDb('DB-DB', 'UDB'), 'UDB-DB');
   assert.equal(etiquetaTipologiaDb('udv', 'UDV'), 'udv', 'sin DB inicial no hay nada que sustituir');
+});
+
+// ---------------------------------------------------------------------------
+// contarEntrepanos: la descripcion de una linea debe decir cuantos entrepanos
+// SE CORTAN, no el valor de la regla global `n_entrepanos`. Esa variable es una
+// escala por altura (0/1/2/3) y en 47 de los 81 tipos del catalogo no coincide
+// con el despiece.
+// ---------------------------------------------------------------------------
+
+const pz = (pieza: string, cant: number) => ({ pieza, cant });
+
+test('contarEntrepanos: suma las piezas de entrepano del despiece', () => {
+  assert.equal(contarEntrepanos([pz('lateral', 2), pz('entrepano', 1), pz('base', 1)]), 1);
+  assert.equal(contarEntrepanos([pz('entrepano', 5)]), 5, 'AL lleva cinco');
+  assert.equal(contarEntrepanos([pz('entrepano', 6)]), 6, 'WPC lleva seis');
+});
+
+test('contarEntrepanos: cuenta tambien entrepano_fijo', () => {
+  // UW, BMW-1 y BOMH-1 (y sus FE) lo llevan: es una pieza mas de la hoja de
+  // corte, con su material y su canto.
+  assert.equal(contarEntrepanos([pz('entrepano_fijo', 1)]), 1);
+  assert.equal(contarEntrepanos([pz('entrepano', 2), pz('entrepano_fijo', 1)]), 3);
+});
+
+test('contarEntrepanos: un modulo sin entrepanos da cero', () => {
+  // `SBFD`, `BOV` y otros 23 tipos no tienen la pieza, y la descripcion llegaba
+  // a anunciar 2 o 3.
+  assert.equal(contarEntrepanos([pz('lateral', 2), pz('base', 1), pz('frente', 2)]), 0);
+  assert.equal(contarEntrepanos([]), 0);
+});
+
+test('contarEntrepanos: ignora piezas con cantidad cero o negativa', () => {
+  // Una plantilla condicional puede evaluar a 0 y el motor igual la lista.
+  assert.equal(contarEntrepanos([pz('entrepano', 0), pz('entrepano_fijo', 1)]), 1);
+  assert.equal(contarEntrepanos([pz('entrepano', -1)]), 0);
+});
+
+test('contarEntrepanos: no confunde otras piezas que contengan la palabra', () => {
+  // `soporte_entrepano` o `refuerzo` no son estantes.
+  assert.equal(contarEntrepanos([pz('soporte_entrepano', 4), pz('refuerzo_trasero', 2)]), 0);
+});
+
+test('contarEntrepanos: redondea cantidades fraccionarias', () => {
+  // Al agrupar modulos el motor puede prorratear; la descripcion es por modulo.
+  assert.equal(contarEntrepanos([pz('entrepano', 1.0)]), 1);
+  assert.equal(contarEntrepanos([pz('entrepano', 2.4)]), 2);
 });
