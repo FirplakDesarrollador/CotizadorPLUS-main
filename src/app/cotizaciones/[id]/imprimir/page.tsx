@@ -57,9 +57,7 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
       for (const line of cocina.lineas) { const sku=line.codigo_modulo??line.pref??'SIN SKU'; const lineQuantity=Number(line.cantidad||0)*quantity; const current=scheduleMap.get(sku); if(current) current.quantity+=lineQuantity; else scheduleMap.set(sku,{sku,description:line.descripcion_es??'',quantity:lineQuantity}); }
       return { name:cocina.nombre, quantity, unitUsd, totalUsd:unitUsd*quantity };
     });
-    const config = (cabecera.config_default ?? {}) as Record<string, unknown>;
-    const projectMaterials = Object.entries(config).filter(([,v])=>typeof v==='string' || typeof v==='number').slice(0,16).map(([k,v])=>`${k}: ${String(v)}`).join('\n');
-    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||'Proyecto sin nombre', builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:cabecera.codigo||id.slice(0,8).toUpperCase(), totalUsd:kitchenRows.reduce((sum,row)=>sum+row.totalUsd,0), template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), projectMaterials }} />;
+    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||'Proyecto sin nombre', builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:cabecera.codigo||id.slice(0,8).toUpperCase(), totalUsd:kitchenRows.reduce((sum,row)=>sum+row.totalUsd,0), template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)) }} />;
   }
   const mostrarSin = query.sinHerrajes !== '0'; const mostrarCon = query.conHerrajes !== '0'; const mostrarUsd = query.usd !== '0'; const mostrarCop = query.cop !== '0'; const trm = Number(cabecera.trm || 0);
   const proyecto = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 };

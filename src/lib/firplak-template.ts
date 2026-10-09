@@ -6,6 +6,11 @@ export type FirplakTemplate = {
   hinges: string; drawerSlides: string; legs: string; shelfSupports: string; handles: string;
   gola: string; liftSystem: string; dishRack: string; toeKick: string; trashBin: string;
   packagingNotes: string; exclusions: string; additionalTerms: string;
+  // Texto libre del bloque "Materiales configurados en el proyecto". Antes se
+  // rellenaba con un volcado de la configuracion interna del proyecto
+  // (`margen`, `unidad`, `perfilId`...), que no es informacion de cliente.
+  // Queda vacio y editable, a la espera del contenido definitivo.
+  projectMaterials: string;
 };
 
 export const FIRPLAK_TEMPLATE_DEFAULTS: FirplakTemplate = {
@@ -21,6 +26,7 @@ export const FIRPLAK_TEMPLATE_DEFAULTS: FirplakTemplate = {
   packagingNotes: 'Muebles empacados individualmente y protegidos para transporte. El empaque especial debe acordarse antes de producción.',
   exclusions: 'No incluye instalación, mesones, lavaplatos, grifería, desagüe, iluminación ni electrodomésticos.',
   additionalTerms: '',
+  projectMaterials: '',
 };
 
 export function normalizarFirplakTemplate(value: Partial<FirplakTemplate> | null | undefined): FirplakTemplate {

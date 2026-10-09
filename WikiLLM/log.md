@@ -1831,3 +1831,25 @@ El usuario reporta que la cantidad de entrepanos en las descripciones de la pest
 **Las lineas guardadas** conservan el texto anterior hasta que se edite la linea o se recalcule la cotizacion. No se hizo migracion: aqui el valor correcto no se puede derivar en SQL, hay que correr el motor por linea.
 
 `tests/muebles.test.ts` sube a 41 casos. Documentado en [descripcion_linea_vs_despiece.md](wiki/descripcion_linea_vs_despiece.md). `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.
+
+## [2026-10-09] fix | La propuesta FIRPLAK deja de volcar la configuracion interna del proyecto
+
+El bloque **"Materiales configurados en el proyecto"** del PDF mostraba un volcado crudo de `config_default`:
+
+```
+margen: 60
+unidad: in
+perfilId: d479ef4b-21e3-457b-95b1-8c4f31156a8b
+cantoCaja: 19x0,45
+cantoFrentes: 22x1
+```
+
+Lo generaba `imprimir/page.tsx` recorriendo las claves de la configuracion y quedandose con las 16 primeras que fueran texto o numero. No es informacion de cliente: son claves internas, un identificador tecnico y el margen comercial, que **no deberia salir en una propuesta**.
+
+**El bloque se conserva y pasa a ser editable.** `projectMaterials` deja de calcularse y se convierte en un campo mas de `FirplakTemplate`, vacio por defecto y con su `<textarea>` en "Editar informacion de la propuesta", a la espera del contenido definitivo. Mientras este vacio, la propuesta muestra el texto de respaldo que ya existia ("Los materiales se detallan en los modulos de la cotizacion").
+
+**Sin migracion**: `normalizarFirplakTemplate()` fusiona los valores por defecto sobre lo guardado, de modo que las dos cotizaciones que ya tienen plantilla leen el campo como cadena vacia. Verificado en la base antes de decidirlo.
+
+De paso se elimina el `const config` de `imprimir/page.tsx`, que quedaba sin uso.
+
+`quality:gate` en exit 0, build y typecheck limpios. Las 4 advertencias de lint que quedan en `FirplakPrintEditor.tsx` son `no-img-element` preexistentes del release v1.0.3, ajenas a este cambio.
