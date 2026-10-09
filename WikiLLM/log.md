@@ -1899,3 +1899,22 @@ VIGENCIA, FORMA DE PAGO y PLAZO ESTIMADO quedan con el mismo `<b>` y el mismo `t
 El `flex` con el valor centrado, que se habia introducido para el texto de distinto tamano, se conserva: ahora sirve para que las tres mantengan la misma altura pese a que la de pago ocupe dos renglones.
 
 `quality:gate` en exit 0, build y typecheck limpios.
+
+## [2026-10-09] ingest | Boton "Agregar herrajes": lineas de material suelto en una cotizacion
+
+Nuevo boton junto a "+ Agregar modulo", con su misma estetica, que permite cobrar un **tablero, canto o herraje sin pasar por un modulo**. El catalogo que ofrece es el de Materiales-Parametros (`cot_tableros`, `cot_cantos`, `cot_herrajes`, solo activos).
+
+**Dos decisiones se acordaron con el usuario** porque afectaban al precio y no se podian inferir:
+
+- **Cantidad en la unidad natural de cada catalogo**: tablero en m2, canto en metros lineales, herraje en unidades. Su tarifa ya esta en esa unidad, asi que no hay conversion que inventar.
+- **Margen segun lo que se agregue**: herraje con `margen_herraje`, tablero y canto con `margen_muebles`, igual que dentro de un modulo. Se aplica con la misma cadena que `engine.ts` —`costo / (1 - margen)`— y el descuento del proyecto despues, solo sobre el USD.
+
+**Lo mas delicado fue el recalculo, no el precio.** Una linea sin `tipo_mueble_id` pasada por el motor lanza "Tipo de mueble no encontrado", y **todas** las rutas de recalculo (editar, agrupar, mover, recalcular la cotizacion entera) pasan por `recalcularGrupo()`: una sola linea de material habria tumbado el recalculo completo de la cotizacion. `grupoSeSaltaElMotor()` lo evita, comprobando con `some` y no con `every` para fallar del lado seguro si alguna quedara mezclada con modulos. Como contrapartida, el precio de una linea de material **no se recalcula**: queda fijado al agregarla.
+
+**Verificado en la base antes de insertar**: `tipo_mueble_id` es nullable, su clave foranea no aplica sobre nulos y el `CHECK` de `unidad_dim` acepta el valor usado. Ninguna de las 153 lineas existentes usaba ese camino.
+
+La logica vive en `materiales-linea.ts` y no en `cotizaciones.ts` para poder probarse; aquel solo tiene el acceso a datos. El formulario pide los catalogos con una accion al montarse en vez de enhebrarlos como props por toda la jerarquia.
+
+**`quality:learn` deja un HIGH con justificacion documentada**: `cotizaciones.ts` cambio 112 lineas sin suite propia. Toda su logica se extrajo ya al modulo probado; lo que queda es acceso a datos, y el archivo **no es importable desde un test** —empieza con `import 'server-only'` y el intento falla, comprobado—. Cubrirlo exigiria pruebas de integracion contra Supabase, que el repositorio no tiene.
+
+`tests/materiales-linea.test.ts`, 15 casos. `quality:gate` en exit 0, build y typecheck limpios. **Sin verificar en pantalla**: la cotizacion esta tras login y no hay credenciales. Documentado en [lineas_material_suelto.md](wiki/lineas_material_suelto.md).

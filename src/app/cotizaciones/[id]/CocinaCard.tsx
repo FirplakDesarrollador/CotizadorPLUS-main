@@ -1,6 +1,7 @@
 'use client';
 import { Fragment, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import AgregarMaterialForm from './AgregarMaterialForm';
 import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineForm';
 import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
 import { colorGrupo, indiceALetras } from '@/lib/module-groups';
@@ -96,6 +97,7 @@ export default function CocinaCard({
 }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
+  const [showAddMaterial, setShowAddMaterial] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState(false);
   const [nombre, setNombre] = useState(cocina.nombre);
@@ -636,8 +638,12 @@ export default function CocinaCard({
             <button onClick={() => setShowAdd(false)} className="text-sm text-slate-400 hover:underline">Cerrar</button>
           </div>
         ) : (
-          <button onClick={() => { setEditId(null); setShowAdd(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
+          <div className="flex gap-2">
+            <button onClick={() => { setEditId(null); setShowAdd(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
+            <button onClick={() => { setEditId(null); setShowAddMaterial(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar herrajes</button>
+          </div>
         )}
+        {showAddMaterial && <div className="mt-3"><AgregarMaterialForm cocinaId={cocina.id} onDone={() => setShowAddMaterial(false)} /></div>}
       </div>
 
       {/* Menú contextual de click derecho (duplicación de Andrés) */}
