@@ -89,6 +89,17 @@
       ]
     },
     {
+      "id": "lane:cutting",
+      "name": "Optimizador de corte",
+      "description": "Configuración de planta y lista de corte del optimizador (src/lib/corte).",
+      "patterns": [
+        "src/lib/corte/**"
+      ],
+      "tests": [
+        "tests/optimizador-corte.test.ts"
+      ]
+    },
+    {
       "id": "lane:frontend",
       "name": "Frontend y Vistas App Router",
       "description": "Componentes de interfaz de usuario, formularios de cotizador y páginas Next.js",
@@ -98,7 +109,8 @@
       ],
       "tests": [
         "tests/margen-global.test.ts",
-        "tests/module-groups.test.ts"
+        "tests/module-groups.test.ts",
+        "tests/optimizador-corte.test.ts"
       ]
     },
     {

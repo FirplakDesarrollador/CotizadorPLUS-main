@@ -1642,3 +1642,15 @@ Ancho resultante de la tabla, calculado en toda la escala:
 La separacion vertical entre columnas (`border-left`) se movio al media query: apilado no tenia sentido.
 
 Verificado contra el CSS que sirve el servidor de desarrollo, no solo en el fuente: `.cotizaciones-main-grid`, el `@media (min-width: 1300px)` y `.max-w-[1600px] { max-width: 1600px }` estan en la hoja compilada. Build y compuerta de calidad limpios.
+
+## [2026-10-06] ingest | Plan del optimizador de corte
+
+Se documentó el plan de desarrollo en docs/plan_optimizador_corte.md y una página resumen en la wiki. Sin cambios de código.
+
+## [2026-10-07] update | Condiciones de planta del optimizador de corte
+
+Se registraron los parámetros de la seccionadora Holz-Her, refilado, sobrantes, formatos, veta y criterio de optimización.
+
+## [2026-10-07] update | Pestaña Optimizador (fase 1: datos de entrada)
+
+Nueva ruta /optimizador con proyecto desde cotización, resumen por material, lista de corte, piezas por día y días de producción, y parámetros de planta editables (migración 0180 aplicada). Gate de calidad y build en verde.

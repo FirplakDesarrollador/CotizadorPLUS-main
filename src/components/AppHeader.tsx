@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { signOutAction } from '@/app/cotizador/session-actions';
 
-export default function AppHeader({ email, rol, active }: { email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'hdr' | 'manual' }) {
+export default function AppHeader({ email, rol, active }: { email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'hdr' | 'optimizador' | 'manual' }) {
   const link = (href: string, label: string, key: string) => (
     <Link href={href} className={`px-3 py-1.5 rounded-lg text-sm ${active === key ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>{label}</Link>
   );
@@ -22,6 +22,7 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
           {rol === 'admin' && link('/admin', 'Materiales-Parámetros', 'admin')}
           {rol === 'admin' && link('/admin/diseno', 'Diseño', 'diseno')}
           {rol === 'admin' && link('/hdr', 'HDR', 'hdr')}
+          {rol === 'admin' && link('/optimizador', 'Optimizador', 'optimizador')}
           {link('/manual', 'Manual', 'manual')}
           </nav>
         </div>
