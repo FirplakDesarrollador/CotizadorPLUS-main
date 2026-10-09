@@ -1757,3 +1757,22 @@ La comparacion es contra **las letras iniciales** de `prefLabel`, no contra el v
 **Backfill**: `0182_descripcion_elementos_planos.sql`, sobre 36 lineas (18 F, 13 PN, 5 TK). Completa la `0181`, que habia puesto FILLER pero dejado los contadores y no cubria PN ni TK. **Reconstruye la descripcion desde las columnas** `largo`/`alto`/`prof`/`unidad_dim` en lugar de parsear el texto: es exactamente como la arma `construirFilaLinea()` y no depende de si lo guardado empieza por el prefijo base o por el codigo completo. Solo descripcion: no toca precio, cantidades ni codigo de modulo. Idempotente, con un `raise` que lo verifica. Ya aplicada: 0 lineas con contadores.
 
 `tests/muebles.test.ts` sube a 22 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.
+
+## [2026-10-09] update | La linea U y Sink Vanity cargan 28,75" de alto por defecto
+
+Al elegir una de estas tipologias, el campo **Alto** se rellena con 28,75 pulgadas. Se aplica en los dos formularios donde se arma un modulo: el Simulador y el de agregar linea a una cotizacion.
+
+**Diez tipologias**, definidas en `PREFS_ALTO_LINEA_U` (`muebles.ts`): `UB`, `UB-FE`, `UBFD`, `UDB`, `UDV`, `USVFD`, `UV`, `UVFD`, `SV` y `SVFD`.
+
+**La lista es explicita y no una regla sobre el prefijo**, por dos razones que se verificaron contra el catalogo:
+
+- `UW` empieza por U pero es de **categoria superior**, y 28,75" es alto de mueble inferior. Una regla "empieza por U" lo habria arrastrado.
+- `SV` y `SVFD` **no** empiezan por U —son Sink Vanity, categoria vanity— pero pertenecen a la misma familia de alto. El usuario los nombro explicitamente.
+
+Quedaron fuera `SBFD`, `SB-SM` y `SDB`: empiezan por S y son inferiores, pero no se nombraron y no hay dato que respalde incluirlos. Al anadir una tipologia de esta familia hay que agregarla a la lista a proposito.
+
+**El alto se carga, no se fija**: el campo sigue editable, igual que la profundidad de 12" que `W` ya cargaba. Es una comodidad, no una restriccion, de modo que se puede seguir cotizando otra altura.
+
+**Cobertura**: `tests/muebles.test.ts` sube a 28 casos. Fijan los diez prefijos, la exclusion de `UW`, que el resto del catalogo no reciba nada, la tolerancia a minusculas/nulo, y que la coincidencia sea exacta (`UV` si, `U` y `UVX` no). Uno mas ata las conversiones por unidad que `AddLineForm` escribe a mano —73,025 cm y 730,25 mm— al mismo valor en pulgadas, para que no puedan derivar.
+
+`quality:gate` en exit 0 y `quality:learn` **sin hallazgos en ninguna severidad**. Build y typecheck limpios.

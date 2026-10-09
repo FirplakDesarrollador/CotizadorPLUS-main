@@ -125,6 +125,26 @@ export function esElementoPlano(prefLabel: string | null | undefined): boolean {
   return letrasIniciales(prefLabel) in ELEMENTOS_PLANOS;
 }
 
+// Alto estándar de la línea U y de la pareja Sink Vanity: 28,75 pulgadas.
+export const ALTO_LINEA_U_IN = 28.75;
+
+// La lista es explícita y no una regla sobre el prefijo. "Empieza por U" dejaría
+// entrar a `UW`, que es un superior, y un tipo nuevo de la línea heredaría el
+// alto sin que nadie lo decidiera. Al añadir una tipología de esta familia hay
+// que agregarla aquí.
+const PREFS_ALTO_LINEA_U = [
+  'UB', 'UB-FE', 'UBFD', 'UDB', 'UDV', 'USVFD', 'UV', 'UVFD',
+  'SV', 'SVFD',
+] as const;
+
+// Alto que el formulario carga al elegir el tipo, en pulgadas, o `null` si esa
+// tipología no tiene uno. Se carga como valor inicial y sigue siendo editable:
+// es una comodidad, no una restricción.
+export function altoPorDefectoIn(pref: string | null | undefined): number | null {
+  const value = String(pref ?? '').toUpperCase();
+  return (PREFS_ALTO_LINEA_U as readonly string[]).includes(value) ? ALTO_LINEA_U_IN : null;
+}
+
 // Solo los campos que la regla necesita, para no atar este módulo —que es de
 // cliente— a la forma completa de `Pieza`.
 type PiezaAjustable = {

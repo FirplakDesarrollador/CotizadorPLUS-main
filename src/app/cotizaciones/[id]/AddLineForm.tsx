@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
@@ -271,6 +271,9 @@ export default function AddLineForm({
     }
     // Los muebles superiores de pared (W) siempre parten de 12 de fondo por defecto.
     const nuevoPref = prefProyecto(nuevoTipo);
+    // Mismo criterio que el Simulador: la linea U y Sink Vanity arrancan en
+    // 28,75" de alto, editable.
+    if (altoPorDefectoIn(nuevoPref) != null) setAlto(unidad === 'in' ? '28.75' : unidad === 'cm' ? '73.025' : '730.25');
     if (nuevoPref === 'W') setProf(unidad === 'in' ? '12' : unidad === 'cm' ? '30.48' : '304.8');
     if (nuevoPref === 'WSM') setProf(unidad === 'in' ? '14' : unidad === 'cm' ? '35.56' : '355.6');
     if (['F', 'DB'].includes(tipos.find((t) => t.id === resolvedId)?.pref ?? '')) setSistemaFrente('manija');

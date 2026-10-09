@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ajustarPiezasSinFondo, DB_TIPOLOGIAS, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
+import { ajustarPiezasSinFondo, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
 
 // `muebles.ts` es el modulo de dominio compartido por formularios y motor. Las
 // dos piezas que se prueban aqui deciden cosas con efecto en el precio, asi que
@@ -221,4 +221,53 @@ test('la descripcion de cada tipologia concuerda con su numero de barras', () =>
     const esperado = t.nb === 1 ? '1 par de barra' : `${t.nb} pares de barra`;
     assert.ok(t.desc.includes(esperado), `${t.key}: la descripcion deberia decir "${esperado}" y dice "${t.desc}"`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// altoPorDefectoIn: la linea U y la pareja Sink Vanity se arman a 28,75".
+// ---------------------------------------------------------------------------
+
+const LINEA_U = ['UB', 'UB-FE', 'UBFD', 'UDB', 'UDV', 'USVFD', 'UV', 'UVFD'];
+const SINK_VANITY = ['SV', 'SVFD'];
+
+test('altoPorDefectoIn: la linea U y Sink Vanity arrancan en 28,75 pulgadas', () => {
+  for (const pref of [...LINEA_U, ...SINK_VANITY]) {
+    assert.equal(altoPorDefectoIn(pref), ALTO_LINEA_U_IN, pref);
+  }
+  assert.equal(ALTO_LINEA_U_IN, 28.75);
+});
+
+test('altoPorDefectoIn: UW queda fuera aunque empiece por U', () => {
+  // Es el superior de la linea; 28,75" es alto de mueble inferior. Este es el
+  // caso que hace que la lista sea explicita y no una regla sobre el prefijo.
+  assert.equal(altoPorDefectoIn('UW'), null);
+});
+
+test('altoPorDefectoIn: el resto del catalogo no recibe alto por defecto', () => {
+  for (const pref of ['B', 'B-FE', 'W', 'W-SM', 'DB', 'DB-2-SM', 'F', 'PN', 'TK', 'SBFD', 'SB-SM', 'SDB', 'V', 'PCFD']) {
+    assert.equal(altoPorDefectoIn(pref), null, pref);
+  }
+});
+
+test('altoPorDefectoIn: tolera minusculas, nulo y vacio', () => {
+  assert.equal(altoPorDefectoIn('uv'), ALTO_LINEA_U_IN);
+  assert.equal(altoPorDefectoIn('usvfd'), ALTO_LINEA_U_IN);
+  assert.equal(altoPorDefectoIn(null), null);
+  assert.equal(altoPorDefectoIn(undefined), null);
+  assert.equal(altoPorDefectoIn(''), null);
+});
+
+test('altoPorDefectoIn: coincide exacto con un prefijo, no por aproximacion', () => {
+  // `UV` recibe el alto, pero `UVX` o `U` no deben colarse.
+  assert.equal(altoPorDefectoIn('UV'), ALTO_LINEA_U_IN);
+  assert.equal(altoPorDefectoIn('U'), null);
+  assert.equal(altoPorDefectoIn('UVX'), null);
+  assert.equal(altoPorDefectoIn('UV-FE'), null, 'una variante nueva debe anadirse a la lista a proposito');
+});
+
+test('las conversiones que usa el formulario de cotizaciones son las de 28,75 in', () => {
+  // AddLineForm escribe los valores por unidad a mano; aqui se fija que
+  // correspondan al mismo alto.
+  assert.ok(Math.abs(ALTO_LINEA_U_IN * 2.54 - 73.025) < 1e-9, 'cm');
+  assert.ok(Math.abs(ALTO_LINEA_U_IN * 25.4 - 730.25) < 1e-9, 'mm');
 });

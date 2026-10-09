@@ -16,7 +16,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
@@ -246,6 +246,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       setHornoLargo('');
       setHornoAlto('');
     }
+    // La linea U y la pareja Sink Vanity se arman a 28,75" de alto. Se carga al
+    // elegir el tipo y queda editable, igual que la profundidad de W.
+    const altoDefecto = altoPorDefectoIn(tipoSeleccionado.pref);
+    if (altoDefecto != null) setAlto(String(convertir(altoDefecto, 'in', unidad)));
     if (tipoSeleccionado.pref === 'W') setProf(String(convertir(12, 'in', unidad)));
     if (tipoSeleccionado.pref === 'WSM') setProf(String(convertir(14, 'in', unidad)));
     if (tipoSeleccionado.pref === 'F' || tipoSeleccionado.pref === 'DB') setSistemaFrente('manija');
