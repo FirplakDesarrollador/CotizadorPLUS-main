@@ -6,6 +6,7 @@ import {
   distribuirResiduoMoneda, redondearMoneda, precioUnitario,
   type SistemaMedida,
 } from '@/lib/module-groups';
+import { etiquetaDescripcion } from '@/lib/muebles';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
 
@@ -163,7 +164,10 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
   // ("lógica unificada"), se guardaba precioCop a secas sin importar conHerrajes
   // — un módulo con herrajes y uno sin herrajes quedaban costando lo mismo.
   const { cop: precioUnitCop, usd: precioUnitUsd } = precioUnitario(input.conHerrajes, res);
-  const desc = `${input.prefLabel ?? ''} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim()
+  // Los fillers se describen "FILLER", no "F": ver `etiquetaDescripcion`. El
+  // campo `pref` de la fila conserva el valor original, que es lo que alimenta
+  // el código comercial.
+  const desc = `${etiquetaDescripcion(input.prefLabel)} ${input.largo}x${input.alto}x${input.prof} ${input.unidad}`.trim()
     + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '')
     + (res.vars.n_cajones ? ` · ${res.vars.n_cajones} gaveta(s)` : '')
     + (res.vars.n_entrepanos != null ? ` · ${res.vars.n_entrepanos} entrepaño(s)` : '');

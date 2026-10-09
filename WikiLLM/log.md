@@ -1698,3 +1698,17 @@ Se anade un aviso bajo el par de campos explicando por que el valor se conserva,
 **Sin prueba automatizada, y es deliberado**: la regla es una condicion en el JSX (`moneda === 'COP'`), no una funcion con logica propia, y el repositorio no tiene infraestructura de pruebas de componentes —ni `@testing-library` ni entorno DOM—. Montarla para este caso no se justifica; el riesgo real que tenia este cambio era el del envio del formulario, y se evito por diseño, no por logica que se pueda afirmar en un test.
 
 `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH (persiste el MED de `cotizar.ts`, ya justificado en la entrada anterior). Build y typecheck limpios.
+
+## [2026-10-09] update | Las lineas de filler se describen FILLER, no F
+
+La descripcion de una linea arranca con su prefijo, de modo que un filler quedaba como `F 6x36x24 in`. Produccion lo lee escrito: **FILLER**. El codigo del modulo (`F636`) no cambia; solo la descripcion.
+
+La regla vive en `etiquetaDescripcion()` (`muebles.ts`), junto al resto de helpers de dominio y, como aquel modulo no importa `server-only`, con prueba propia. `construirFilaLinea()` la usa, y como es el unico sitio donde se arma `descripcion_es`, cubre tanto el alta de una linea como el recalculo masivo.
+
+**Compara contra las letras iniciales, no contra el valor entero.** `prefLabel` llega como codigo completo al agregar la linea (`F636`) y como prefijo base tras el primer recalculo (`F`), y ambos deben dar FILLER; a la vez, un prefijo distinto que empiece por F no debe arrastrarse. Hoy `F` es la unica tipologia de categoria `filler` del catalogo, verificado antes de escribir la regla.
+
+**Backfill**: `0181_descripcion_filler.sql` pone al dia las lineas ya guardadas, que si no conservarian la forma vieja hasta recalcular su cotizacion. 17 lineas en 5 cotizaciones, todas con `pref = 'F'`. Idempotente, con un `raise` que verifica que no quede ninguna. Ya aplicada en Supabase: 17/17, 0 pendientes.
+
+**Hallazgo adjunto, NO corregido**: la descripcion de un filler sigue diciendo "1 puerta(s) · 2 entrepaño(s)". El tipo `F` tiene **una sola pieza** y su unica regla propia es `n_patas=0`; esos valores los hereda de las reglas **globales** de `n_puertas` y `n_entrepanos`, que aplican a todo tipo sin excepcion. Para un panel de relleno no significan nada. Queda anotado para decidir si se suprimen esos sufijos cuando la tipologia no tiene puertas ni entrepaños reales.
+
+`tests/muebles.test.ts` sube a 16 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.

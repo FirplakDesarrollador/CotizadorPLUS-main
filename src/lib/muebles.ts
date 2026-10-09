@@ -94,6 +94,25 @@ export function familiaMaterialPorPrefijo(pref: string | null | undefined): Fami
   return esMuebleSuperior(pref) ? 'superior' : 'inferior';
 }
 
+// Prefijos que en la descripción de una línea se escriben con su nombre de
+// producción en lugar de la letra. `F` es la única tipología de categoría
+// `filler` del catálogo, y producción la lee como FILLER.
+const ETIQUETA_DESCRIPCION: Record<string, string> = { F: 'FILLER' };
+
+// La etiqueta con la que empieza `descripcion_es`. Recibe lo que haya en
+// `prefLabel`, que al agregar la línea es el código completo (`F636`) y tras el
+// primer recálculo es solo el prefijo base (`F`) — ambos deben dar FILLER.
+//
+// Se compara contra las letras iniciales, no contra el valor entero, para que
+// `F636` resuelva pero un prefijo distinto que empiece por F (p. ej. `FPK`) no
+// se vea arrastrado.
+export function etiquetaDescripcion(prefLabel: string | null | undefined): string {
+  const value = String(prefLabel ?? '').trim();
+  if (!value) return '';
+  const letras = value.toUpperCase().match(/^[A-Z]+/)?.[0] ?? '';
+  return ETIQUETA_DESCRIPCION[letras] ?? value;
+}
+
 // Solo los campos que la regla necesita, para no atar este módulo —que es de
 // cliente— a la forma completa de `Pieza`.
 type PiezaAjustable = {

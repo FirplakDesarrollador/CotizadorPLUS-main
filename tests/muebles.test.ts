@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ajustarPiezasSinFondo, esMuebleSuperior, familiaMaterialPorPrefijo } from '../src/lib/muebles';
+import { ajustarPiezasSinFondo, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
 
 // `muebles.ts` es el modulo de dominio compartido por formularios y motor. Las
 // dos piezas que se prueban aqui deciden cosas con efecto en el precio, asi que
@@ -119,4 +119,39 @@ test('una base sin P en ninguna formula se deja intacta', () => {
   const r = ajustarPiezasSinFondo(fija, 'B', false);
   assert.equal(r[0].formula_largo, '17.72441');
   assert.equal(r[0].formula_ancho, '19.15354');
+});
+
+// ---------------------------------------------------------------------------
+// etiquetaDescripcion: con que texto empieza `descripcion_es` de una linea.
+// ---------------------------------------------------------------------------
+
+test('etiquetaDescripcion: los fillers se describen FILLER, no F', () => {
+  // `F` es la unica tipologia de categoria `filler` del catalogo, y produccion
+  // la lee escrita.
+  assert.equal(etiquetaDescripcion('F'), 'FILLER', 'prefijo base, como queda tras recalcular');
+  assert.equal(etiquetaDescripcion('F636'), 'FILLER', 'codigo completo, como queda al agregar la linea');
+  assert.equal(etiquetaDescripcion('F6 3/4 30'), 'FILLER', 'codigo con fraccion imperial');
+  assert.equal(etiquetaDescripcion('f636'), 'FILLER', 'no debe depender de la caja');
+});
+
+test('etiquetaDescripcion: no arrastra otros prefijos que empiecen por F', () => {
+  // Compara contra las letras iniciales completas, de modo que un `FPK` no cae
+  // en la regla de `F`.
+  assert.equal(etiquetaDescripcion('FPK'), 'FPK');
+  assert.equal(etiquetaDescripcion('FPK12'), 'FPK12');
+});
+
+test('etiquetaDescripcion: cualquier otro prefijo se devuelve tal cual', () => {
+  for (const pref of ['B', 'B12', 'W2936-SM', 'DB18-1S', 'TK4 1/436 1/2', 'PCFD12-2OP-PUSH']) {
+    assert.equal(etiquetaDescripcion(pref), pref, pref);
+  }
+});
+
+test('etiquetaDescripcion: nulo, vacio y espacios dan cadena vacia', () => {
+  // `construirFilaLinea` hace `.trim()` sobre el resultado, asi que una etiqueta
+  // vacia no debe dejar un espacio al principio de la descripcion.
+  assert.equal(etiquetaDescripcion(null), '');
+  assert.equal(etiquetaDescripcion(undefined), '');
+  assert.equal(etiquetaDescripcion(''), '');
+  assert.equal(etiquetaDescripcion('   '), '');
 });
