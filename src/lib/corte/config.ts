@@ -20,8 +20,23 @@ export type ConfigOptimizador = {
   sobranteMinAnchoMm: number;
   sobranteEnUltimaLamina: boolean;
   desperdicioMaxPct: number;
-  // 0 = sin definir: la planificación por días queda pendiente.
+  // Ritmo de la seccionadora. Lo consume `plan-diario.ts`; 0 = sin definir y sin plan de días.
   piezasPorDia: number;
+  /** Combinaciones que prueba el acomodo por material antes de quedarse con la mejor. */
+  iteraciones: number;
+  /** Tope de tiempo por material, en ms: el acomodo corre en el navegador. */
+  tiempoMaxMs: number;
+  /** D4: margen sobre el ritmo diario, en %. 0 = el ritmo es exacto. */
+  toleranciaRitmoPct: number;
+  /** D5: dias ademas de los que exige el ritmo, si bajan el desperdicio. */
+  diasExtraPermitidos: number;
+  /** Tope de tiempo de la busqueda de reparto entre dias, en ms. */
+  repartoTiempoMs: number;
+  /**
+   * Heuristicas de acomodo que se prueban (0 = las 20). La busqueda de reparto usa
+   * unas pocas porque acomoda miles de veces; el plan final usa todas.
+   */
+  heuristicasMax: number;
   pilas: PilaEspesor[];
   formatos: FormatoLamina[];
   texturas: TexturaVeta[];
@@ -49,6 +64,12 @@ export const CONFIG_OPTIMIZADOR_DEFAULT: ConfigOptimizador = {
   sobranteEnUltimaLamina: true,
   desperdicioMaxPct: 15,
   piezasPorDia: 0,
+  iteraciones: 2000,
+  tiempoMaxMs: 150,
+  toleranciaRitmoPct: 0,
+  diasExtraPermitidos: 0,
+  repartoTiempoMs: 5000,
+  heuristicasMax: 0,
   pilas: [
     { espesorMm: 15, laminas: 4 },
     { espesorMm: 18, laminas: 3 },
@@ -69,6 +90,9 @@ export const CONFIG_OPTIMIZADOR_DEFAULT: ConfigOptimizador = {
 };
 
 const num = (v: unknown, def: number, min = 0, max = Number.POSITIVE_INFINITY) => {
+  // `Number(null)` y `Number('')` dan 0, no NaN: sin esto una llave vacia en la base
+  // se leeria como cero —disco de 0 mm, busqueda apagada— en vez de tomar el defecto.
+  if (v == null || v === '') return def;
   const n = typeof v === 'string' ? Number(v.replace(',', '.')) : Number(v);
   if (!Number.isFinite(n)) return def;
   return Math.min(max, Math.max(min, n));
@@ -137,6 +161,12 @@ export function normalizarConfig(raw: unknown): ConfigOptimizador {
     sobranteEnUltimaLamina: bool(r.sobranteEnUltimaLamina, d.sobranteEnUltimaLamina),
     desperdicioMaxPct: num(r.desperdicioMaxPct, d.desperdicioMaxPct, 0, 100),
     piezasPorDia: Math.round(num(r.piezasPorDia, d.piezasPorDia, 0, 1_000_000)),
+    iteraciones: Math.round(num(r.iteraciones, d.iteraciones, 0, 100_000)),
+    tiempoMaxMs: Math.round(num(r.tiempoMaxMs, d.tiempoMaxMs, 0, 10_000)),
+    toleranciaRitmoPct: num(r.toleranciaRitmoPct, d.toleranciaRitmoPct, 0, 100),
+    diasExtraPermitidos: Math.round(num(r.diasExtraPermitidos, d.diasExtraPermitidos, 0, 365)),
+    repartoTiempoMs: Math.round(num(r.repartoTiempoMs, d.repartoTiempoMs, 0, 900_000)),
+    heuristicasMax: Math.round(num(r.heuristicasMax, d.heuristicasMax, 0, 100)),
     pilas: pilas.sort((a, b) => a.espesorMm - b.espesorMm),
     formatos,
     texturas,
@@ -153,14 +183,4 @@ export function formatoConfigurado(cfg: ConfigOptimizador, formato: string | nul
 export function laminasPorPila(cfg: ConfigOptimizador, espesorMm: number | null | undefined): number | null {
   if (espesorMm == null) return null;
   return cfg.pilas.find((p) => Math.abs(p.espesorMm - Number(espesorMm)) < 0.01)?.laminas ?? null;
-}
-
-// Reparto de las piezas del proyecto en días de producción: días llenos con
-// `piezasPorDia` y el último con el resto. Vacío si no hay ritmo definido.
-export function repartoDiario(totalPiezas: number, piezasPorDia: number): number[] {
-  const total = Math.max(0, Math.round(totalPiezas));
-  const ritmo = Math.round(piezasPorDia);
-  if (!(ritmo > 0) || total === 0) return [];
-  const dias = Math.ceil(total / ritmo);
-  return Array.from({ length: dias }, (_, i) => (i < dias - 1 ? ritmo : total - ritmo * (dias - 1)));
 }

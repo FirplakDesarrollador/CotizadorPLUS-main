@@ -101,7 +101,13 @@
         "src/lib/corte/**"
       ],
       "tests": [
-        "tests/optimizador-corte.test.ts"
+        "tests/optimizador-corte.test.ts",
+        "tests/plan-diario-corte.test.ts",
+        "tests/guillotina.test.ts",
+        "tests/secuencia-corte.test.ts",
+        "tests/plan-corte.test.ts",
+        "tests/optimizador-reparto.test.ts",
+        "tests/config.test.ts"
       ]
     },
     {

@@ -8,6 +8,9 @@ import {
   type ConfigOptimizador, type CriterioOptimizacion,
 } from '@/lib/corte/config';
 import { construirListaCorte, type TableroInfo } from '@/lib/corte/lista';
+import { planDiarioDeCorte, type PlanDiario } from '@/lib/corte/plan-diario';
+import { planDeCorte, type PlanCorte } from '@/lib/corte/plan-corte';
+import EsquemasCorte from './EsquemasCorte';
 import { guardarConfigOptimizadorAction, proyectoDesdeCotizacionAction, type ProyectoOptimizador } from './actions';
 
 const fmt = (n: number | null | undefined, d = 0) =>
@@ -42,6 +45,221 @@ const th = 'px-2 py-1.5 text-left text-xs font-medium text-slate-500 border-b bo
 const td = 'px-2 py-1.5 text-sm text-slate-800 border-b border-slate-100';
 const tdNum = `${td} text-right tabular-nums`;
 
+// Qué se corta cada día: módulos y unidades, agrupados por tablero para cambiar de
+// material lo menos posible en la seccionadora. El día se reparte en cuanto deja de
+// caber una unidad más, así que ninguna jornada pasa del ritmo.
+type ModuloProyectoFila = { lineaId: string; codigo: string; cocina: string; cantidad: number; piezasPorModulo: number };
+
+/**
+ * Los muebles de la cotización, agrupados por cocina y por referencia.
+ *
+ * Una cotización repite la misma referencia en varias líneas —dos W3642, dos
+ * TK4— y la lista plana obligaba a sumarlas a ojo. Se juntan las que tienen el
+ * mismo código **y el mismo despiece**: si dos líneas con el mismo código dan
+ * distintas piezas por módulo es que su configuración difiere, y mezclarlas
+ * escondería esa diferencia.
+ */
+function ModulosProyecto({ modulos }: { modulos: ModuloProyectoFila[] }) {
+  const [abierto, setAbierto] = useState(false);
+  const [cocinasAbiertas, setCocinasAbiertas] = useState<Set<string>>(new Set());
+
+  const porCocina = useMemo(() => {
+    const cocinas = new Map<string, Map<string, { codigo: string; piezasPorModulo: number; cantidad: number; lineas: number }>>();
+    for (const m of modulos) {
+      const refs = cocinas.get(m.cocina) ?? new Map();
+      const clave = `${m.codigo}|${m.piezasPorModulo}`;
+      const ya = refs.get(clave);
+      if (ya) { ya.cantidad += m.cantidad; ya.lineas += 1; }
+      else refs.set(clave, { codigo: m.codigo, piezasPorModulo: m.piezasPorModulo, cantidad: m.cantidad, lineas: 1 });
+      cocinas.set(m.cocina, refs);
+    }
+    return [...cocinas.entries()]
+      .map(([cocina, refs]) => {
+        const filas = [...refs.values()].sort((a, b) => b.cantidad * b.piezasPorModulo - a.cantidad * a.piezasPorModulo || a.codigo.localeCompare(b.codigo));
+        return {
+          cocina,
+          filas,
+          unidades: filas.reduce((n, f) => n + f.cantidad, 0),
+          piezas: filas.reduce((n, f) => n + f.cantidad * f.piezasPorModulo, 0),
+        };
+      })
+      .sort((a, b) => b.piezas - a.piezas || a.cocina.localeCompare(b.cocina));
+  }, [modulos]);
+
+  const unidades = porCocina.reduce((n, c) => n + c.unidades, 0);
+  const piezas = porCocina.reduce((n, c) => n + c.piezas, 0);
+  const referencias = porCocina.reduce((n, c) => n + c.filas.length, 0);
+  const alternarCocina = (cocina: string) => setCocinasAbiertas((s) => {
+    const n = new Set(s);
+    if (!n.delete(cocina)) n.add(cocina);
+    return n;
+  });
+
+  return (
+    <div className="rounded-xl border border-slate-200">
+      <button type="button" onClick={() => setAbierto((v) => !v)} aria-expanded={abierto}
+        className="flex w-full flex-wrap items-baseline gap-x-3 px-3 py-2 text-left hover:bg-slate-50">
+        <span className="w-4 text-slate-400">{abierto ? '▾' : '▸'}</span>
+        <h3 className="text-sm font-semibold text-slate-800">Módulos del proyecto</h3>
+        <span className="text-xs text-slate-500">
+          {fmt(porCocina.length)} cocina(s) · {fmt(referencias)} referencia(s) · {fmt(modulos.length)} línea(s) ·{' '}
+          {fmt(unidades)} unidades · {fmt(piezas)} piezas
+        </span>
+      </button>
+
+      {abierto && (
+        <div className="divide-y divide-slate-100 border-t border-slate-200">
+          {porCocina.map((c) => {
+            const abiertaCocina = cocinasAbiertas.has(c.cocina);
+            return (
+              <div key={c.cocina}>
+                <button type="button" onClick={() => alternarCocina(c.cocina)} aria-expanded={abiertaCocina}
+                  className="flex w-full flex-wrap items-baseline gap-x-3 px-3 py-1.5 text-left hover:bg-slate-50">
+                  <span className="w-4 text-slate-400">{abiertaCocina ? '▾' : '▸'}</span>
+                  <span className="font-medium text-slate-800">{c.cocina}</span>
+                  <span className="text-xs text-slate-500">
+                    {fmt(c.filas.length)} referencia(s) · {fmt(c.unidades)} unidades · {fmt(c.piezas)} piezas
+                  </span>
+                </button>
+
+                {abiertaCocina && (
+                  <div className="overflow-x-auto px-3 pb-3">
+                    <table className="w-full border-collapse">
+                      <thead><tr>
+                        <th className={th}>Código</th><th className={`${th} text-right`}>Cantidad</th>
+                        <th className={`${th} text-right`}>Piezas por módulo</th><th className={`${th} text-right`}>Piezas totales</th>
+                      </tr></thead>
+                      <tbody>
+                        {c.filas.map((f) => (
+                          <tr key={`${f.codigo}-${f.piezasPorModulo}`}>
+                            <td className={`${td} font-medium`}>
+                              {f.codigo}
+                              {f.lineas > 1 && <span className="ml-1 text-xs font-normal text-slate-400">{f.lineas} líneas</span>}
+                            </td>
+                            <td className={tdNum}>{fmt(f.cantidad)}</td>
+                            <td className={tdNum}>{fmt(f.piezasPorModulo, Number.isInteger(f.piezasPorModulo) ? 0 : 2)}</td>
+                            <td className={tdNum}>{fmt(Math.round(f.piezasPorModulo * f.cantidad))}</td>
+                          </tr>
+                        ))}
+                        <tr className="bg-slate-50 font-semibold">
+                          <td className={td}>{c.cocina}</td>
+                          <td className={tdNum}>{fmt(c.unidades)}</td>
+                          <td className={td} />
+                          <td className={tdNum}>{fmt(Math.round(c.piezas))}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlanDias({ plan, totalLista }: { plan: PlanDiario; totalLista: number }) {
+  // Con diez dias y varios modulos cada uno la tabla plana no se podia leer: cada
+  // dia se pliega y solo se abre el que se quiere mirar.
+  const [abiertos, setAbiertos] = useState<Set<number>>(new Set());
+  const alternar = (dia: number) => setAbiertos((s) => {
+    const n = new Set(s);
+    if (!n.delete(dia)) n.add(dia);
+    return n;
+  });
+
+  const alertas = [...new Set(plan.dias.flatMap((d) => d.alertas))];
+  // El plan suma el despiece por modulo; la lista de corte redondea una sola vez por
+  // medida, asi que en proyectos con modulos agrupados los totales pueden diferir.
+  const difiere = Math.round(plan.totalPiezas) !== totalLista;
+  const todosAbiertos = abiertos.size === plan.dias.length;
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 mb-1">
+        <h3 className="text-sm font-semibold text-slate-800">Plan de corte por día</h3>
+        <p className="text-xs text-slate-500">
+          {fmt(plan.dias.length)} día(s) a {fmt(plan.ritmo)} piezas/día. Los módulos se agrupan por
+          tablero —primero el material con más volumen— y un módulo se puede partir entre dos días.
+        </p>
+      </div>
+
+      {alertas.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 mb-2">
+          {alertas.join(' ')}
+        </div>
+      )}
+
+      <div className="mb-1 flex justify-end">
+        <button type="button"
+          onClick={() => setAbiertos(todosAbiertos ? new Set() : new Set(plan.dias.map((d) => d.dia)))}
+          className="text-xs text-slate-500 hover:text-slate-800 hover:underline">
+          {todosAbiertos ? 'Plegar todos los días' : 'Desplegar todos los días'}
+        </button>
+      </div>
+
+      <div className="divide-y divide-slate-200 rounded-xl border border-slate-200">
+        {plan.dias.map((d) => {
+          const abierto = abiertos.has(d.dia);
+          const materiales = [...new Set(d.items.map((i) => i.material))];
+          return (
+            <div key={d.dia}>
+              <button type="button" onClick={() => alternar(d.dia)}
+                aria-expanded={abierto}
+                className="flex w-full flex-wrap items-baseline gap-x-3 gap-y-0.5 px-3 py-2 text-left hover:bg-slate-50">
+                <span className="w-5 text-slate-400">{abierto ? '▾' : '▸'}</span>
+                <span className="font-semibold text-slate-900">Día {d.dia}</span>
+                <span className="text-sm text-slate-600">
+                  {fmt(d.piezas)} piezas
+                  {d.libre > 0 && <span className="text-slate-400"> · libre {fmt(d.libre)}</span>}
+                </span>
+                <span className="text-sm text-slate-600">
+                  {fmt(d.items.length)} módulo(s) · {fmt(d.items.reduce((n, i) => n + i.unidades, 0))} unidades
+                </span>
+                <span className="text-xs text-slate-400">{materiales.join(' + ')}</span>
+                {d.items.some((i) => i.partido) && <span className="text-xs text-amber-700">tiene módulos partidos</span>}
+              </button>
+
+              {abierto && (
+                <div className="overflow-x-auto px-3 pb-3">
+                  <table className="w-full border-collapse">
+                    <thead><tr>
+                      <th className={th}>Tablero principal</th><th className={th}>Cocina</th><th className={th}>Módulo</th>
+                      <th className={`${th} text-right`}>Unidades</th><th className={`${th} text-right`}>Piezas</th>
+                    </tr></thead>
+                    <tbody>
+                      {d.items.map((it, i) => (
+                        <tr key={`${d.dia}-${it.lineaId}-${i}`}>
+                          <td className={`${td} text-xs`}>{it.material}</td>
+                          <td className={`${td} text-xs text-slate-500`}>{it.cocina}</td>
+                          <td className={`${td} font-medium`}>
+                            {it.codigo}
+                            {it.partido && <span className="ml-1 text-xs font-normal text-amber-700">(parte)</span>}
+                          </td>
+                          <td className={tdNum}>{fmt(it.unidades)}</td>
+                          <td className={tdNum}>{fmt(it.piezas, Number.isInteger(it.piezas) ? 0 : 2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-slate-500 mt-1">
+        {'(parte)'} = el módulo se corta en más de un día.
+        {difiere && ` El plan suma ${fmt(plan.totalPiezas)} piezas del despiece por módulo; la lista de corte cuenta ${fmt(totalLista)} porque las piezas compartidas de los módulos agrupados se redondean una sola vez por medida.`}
+      </p>
+    </div>
+  );
+}
+
+
 export default function OptimizadorView({ configInicial, configGuardada, tableros, cotizaciones }:
   { configInicial: ConfigOptimizador; configGuardada: boolean; tableros: TableroInfo[]; cotizaciones: CotizacionHeader[] }) {
   const [cfg, setCfg] = useState<ConfigOptimizador>(configInicial);
@@ -56,6 +274,8 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
   const [cargando, setCargando] = useState(false);
   const [errorProyecto, setErrorProyecto] = useState<string | null>(null);
   const [texturaPorMaterial, setTexturaPorMaterial] = useState<Record<string, string>>({});
+  const [esquemas, setEsquemas] = useState<{ plan: PlanCorte; clave: string } | null>(null);
+  const [optimizando, setOptimizando] = useState(false);
 
   const sucio = JSON.stringify(cfg) !== JSON.stringify(guardado);
   const set = <K extends keyof ConfigOptimizador>(k: K, v: ConfigOptimizador[K]) => setCfg((c) => ({ ...c, [k]: v }));
@@ -75,6 +295,11 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
     () => (proyecto ? construirListaCorte(proyecto.modulos, tableros, normalizarConfig(cfg)) : null),
     [proyecto, tableros, cfg],
   );
+  // Dias de corte y reparto de modulos: solo depende del ritmo, no de toda la config.
+  const plan = useMemo(
+    () => (proyecto ? planDiarioDeCorte(proyecto.modulos, cfg.piezasPorDia) : null),
+    [proyecto, cfg.piezasPorDia],
+  );
   const formatosCatalogo = useMemo(
     () => [...new Set(tableros.map((t) => normalizarFormato(t.formato)).filter(Boolean))].sort(),
     [tableros],
@@ -84,6 +309,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
     setCotizacionId(id);
     setProyecto(null);
     setErrorProyecto(null);
+    setEsquemas(null);
     if (!id) return;
     setCargando(true);
     try {
@@ -93,6 +319,18 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
     } finally {
       setCargando(false);
     }
+  }
+
+  const claveEsquemas = JSON.stringify([cotizacionId, cfg, texturaPorMaterial]);
+  const esquemasAlDia = esquemas?.clave === claveEsquemas;
+
+  function optimizarCorte() {
+    if (!proyecto) return;
+    setOptimizando(true);
+    // Sincrono: acomodar un proyecto grande toma decimas de segundo.
+    const plan = planDeCorte(proyecto.modulos, tableros, normalizarConfig(cfg), (m) => texturaPorMaterial[m] ?? texturaDefault);
+    setEsquemas({ plan, clave: claveEsquemas });
+    setOptimizando(false);
   }
 
   async function guardar() {
@@ -148,44 +386,16 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
                     onChange={(e) => set('piezasPorDia', Math.max(0, Math.round(num(e.target.value))))} className="inp" />
                 </Campo>
               </div>
-              <Kpi oscuro label="Días de producción"
-                valor={lista.reparto.length ? fmt(lista.reparto.length) : '—'}
-                detalle={lista.reparto.length ? `${fmt(cfg.piezasPorDia)} piezas/día` : 'Define las piezas por día'} />
+              <Kpi oscuro label="Días de corte"
+                valor={plan?.dias.length ? fmt(plan.dias.length) : '—'}
+                detalle={plan?.dias.length
+                  ? `${fmt(plan.ritmo)} piezas/día${plan.dias.length > plan.diasMinimos ? ` · mínimo teórico ${fmt(plan.diasMinimos)}` : ''}`
+                  : 'Define las piezas por día'} />
             </div>
 
-            {lista.reparto.length > 0 && (
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Reparto diario de piezas</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {lista.reparto.map((n, i) => (
-                    <span key={i} className={`rounded-lg px-2 py-1 text-xs ${n < cfg.piezasPorDia ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-slate-100 text-slate-700'}`}>
-                      Día {i + 1}: <b>{fmt(n)}</b>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+            {plan && plan.dias.length > 0 && <PlanDias plan={plan} totalLista={lista.totalPiezas} />}
 
-            <div>
-              <h3 className="text-sm font-semibold text-slate-800 mb-1">Módulos del proyecto</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead><tr>
-                    <th className={th}>Código</th><th className={th}>Cocina</th>
-                    <th className={`${th} text-right`}>Cantidad</th><th className={`${th} text-right`}>Piezas por módulo</th><th className={`${th} text-right`}>Piezas totales</th>
-                  </tr></thead>
-                  <tbody>
-                    {proyecto.modulos.map((m) => (
-                      <tr key={m.lineaId}>
-                        <td className={`${td} font-medium`}>{m.codigo}</td><td className={td}>{m.cocina}</td>
-                        <td className={tdNum}>{fmt(m.cantidad)}</td><td className={tdNum}>{fmt(m.piezasPorModulo, Number.isInteger(m.piezasPorModulo) ? 0 : 2)}</td>
-                        <td className={tdNum}>{fmt(Math.round(m.piezasPorModulo * m.cantidad))}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <ModulosProyecto modulos={proyecto.modulos} />
 
             <div>
               <h3 className="text-sm font-semibold text-slate-800 mb-1">Resumen por material</h3>
@@ -261,10 +471,24 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
               </div>
             </details>
 
-            <div className="flex items-center justify-end gap-3">
-              <span className="text-xs text-slate-400">El cálculo del plan de corte (acomodo, secuencia y número de cortes) llega en la siguiente fase.</span>
-              <button type="button" disabled className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium opacity-40 cursor-not-allowed">Optimizar corte</button>
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <span className="text-xs text-slate-400">
+                {esquemas && !esquemasAlDia
+                  ? 'Cambiaron los parámetros: vuelve a optimizar para ver el acomodo actualizado.'
+                  : 'Acomodo por día con disco, refilado, veta y conteo de cortes.'}
+              </span>
+              <button type="button" onClick={optimizarCorte} disabled={optimizando}
+                className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-700 disabled:opacity-40">
+                {optimizando ? 'Optimizando…' : esquemas ? 'Volver a optimizar' : 'Optimizar corte'}
+              </button>
             </div>
+
+            {esquemas && (
+              <div className={esquemasAlDia ? undefined : 'opacity-60'}>
+                <h3 className="text-sm font-semibold text-slate-800 mb-2">Esquemas de corte por día</h3>
+                <EsquemasCorte plan={esquemas.plan} meta={cfg.desperdicioMaxPct} />
+              </div>
+            )}
           </>
         )}
       </Seccion>
@@ -306,6 +530,8 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
             <Campo label="Sobrante útil mínimo: ancho (mm)"><input type="number" min={0} value={cfg.sobranteMinAnchoMm} onChange={(e) => set('sobranteMinAnchoMm', num(e.target.value))} className="inp" /></Campo>
             <Campo label="Desperdicio máximo por material (%)"><input type="number" min={0} max={100} step="0.5" value={cfg.desperdicioMaxPct} onChange={(e) => set('desperdicioMaxPct', num(e.target.value))} className="inp" /></Campo>
             <Campo label="Piezas por día"><input type="number" min={0} step={1} value={cfg.piezasPorDia || ''} placeholder="definir" onChange={(e) => set('piezasPorDia', Math.max(0, Math.round(num(e.target.value))))} className="inp" /></Campo>
+            <Campo label="Combinaciones a probar"><input type="number" min={0} step={100} value={cfg.iteraciones} onChange={(e) => set('iteraciones', Math.max(0, Math.round(num(e.target.value))))} className="inp" /></Campo>
+            <Campo label="Tope por material (ms)"><input type="number" min={0} step={50} value={cfg.tiempoMaxMs} onChange={(e) => set('tiempoMaxMs', Math.max(0, Math.round(num(e.target.value))))} className="inp" /></Campo>
             <label className="flex items-center gap-2 text-sm text-slate-700 col-span-2">
               <input type="checkbox" checked={cfg.sobranteEnUltimaLamina} onChange={(e) => set('sobranteEnUltimaLamina', e.target.checked)} /> Si queda sobrante, dejarlo en la última lámina de cada material
             </label>
