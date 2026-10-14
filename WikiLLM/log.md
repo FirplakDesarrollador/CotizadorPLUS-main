@@ -1936,3 +1936,221 @@ Se ofrecen los **19 activos**, incluidos los 5 de categoria `consumible` (tarugo
 Renombrado a peticion del usuario: el selector ofrece tableros y cantos ademas de herrajes, y el nombre anterior sugeria que solo lo segundo. Se actualiza tambien la mencion en [lineas_material_suelto.md](wiki/lineas_material_suelto.md) para que la documentacion no quede desfasada.
 
 Solo la etiqueta del boton. El titulo del formulario ya decia "Agregar herrajes y materiales" y se deja como estaba.
+
+## [2026-10-14] update | Plan de corte por dia: que modulos y cuantas unidades por jornada
+
+La pestana Optimizador ya calculaba dias a partir de "piezas por dia", pero solo mostraba el
+conteo de piezas por banda (`Dia 1: 120`) sin decir que cortar. Nuevo `src/lib/corte/plan-diario.ts`
+(`planDiarioDeCorte`): dias de corte y, por cada dia, los modulos con sus unidades y piezas.
+
+Reglas elegidas por el usuario: agrupado por material (primero el tablero con mas volumen, orden de
+la cotizacion dentro de cada material) y las unidades de un modulo se pueden partir entre dos dias.
+El ritmo queda en 0 en `cot_parametros.optimizador` por decision del usuario, asi que la pantalla
+muestra el plan solo cuando el escriba un numero.
+
+Se retira `repartoDiario` de `config.ts` y `reparto` de `ListaCorte`: tener dos calculos de dias
+—la division de piezas y el reparto real de modulos— daba numeros distintos para lo mismo. El KPI
+pasa a llamarse "Dias de corte" y sale del plan, con el minimo teorico como detalle cuando difiere.
+
+Detalle en [optimizador_corte.md](wiki/optimizador_corte.md). Pruebas: `tests/plan-diario-corte.test.ts`
+(14 casos) en `lane:cutting`. quality:gate en exit 0, build limpio, quality:learn sin hallazgos HIGH.
+Sin verificar en pantalla: /optimizador es solo admin y no hay credenciales en la sesion.
+
+## [2026-10-14] ingest | Esquemas de corte por material: acomodo real, D% y numero de tableros
+
+Fase 2 del plan (`docs/plan_optimizador_corte.md`). Nuevo `src/lib/corte/guillotina.ts`: acomoda las
+piezas de cada material en su lamina y devuelve el esquema, el desperdicio, los m2 y el numero de
+tableros. El boton "Optimizar corte" de la pestana, que estaba deshabilitado, ya corre; los esquemas
+se dibujan en SVG en `src/app/optimizador/EsquemasCorte.tsx`, con un color y un numero por medida,
+los sobrantes marcados segun lleguen al minimo de planta, y las laminas de igual acomodo agrupadas
+en patrones ("2 de 2440 x 1830"), que son las que se cortan juntas en la pila.
+
+Acomodo por franjas, como corta la seccionadora. Se prueban 20 combinaciones (5 ordenes x reparto
+global/secuencial x franja nueva baja/alta) y gana la de menos tableros. La politica de alto de
+franja nueva fue la que mas bajo el desperdicio: una caja de cocina tipica paso de 6 tableros a 5, y
+fondos y frentes bajaron al minimo teorico.
+
+Defecto encontrado por una prueba y corregido: `girada` se medIa contra la orientacion con la que la
+heuristica empezaba a probar, no contra el despiece, asi que una pieza puesta de canto salia como "no
+girada" y se cortaria al reves.
+
+Queda pendiente la secuencia y el numero de cortes, el inventario de sobrantes y la validacion con
+planta (fase 3). El acomodo no es optimo: en proyectos variados queda sobre el 15 % de la meta y se
+informa junto al minimo teorico en vez de disimularlo.
+
+Detalle en [optimizador_corte.md](wiki/optimizador_corte.md). Pruebas: `tests/guillotina.test.ts`
+(17 casos) en `lane:cutting`. quality:gate exit 0, build limpio, quality:learn sin hallazgos HIGH.
+Sin verificar en pantalla: /optimizador es solo admin y no hay credenciales en la sesion.
+
+## [2026-10-14] ingest | Corte dia por dia: esquemas, cortes y resumen consolidado
+
+Cierra la fase 2 del plan. Dos modulos nuevos:
+
+- `src/lib/corte/secuencia.ts`: cuenta los cortes de una lamina acomodada, por nivel (refilado,
+  franja, piezas, recorte) y por pasada de la seccionadora, de modo que las laminas de un mismo
+  patron que entran en una pila cuestan un solo juego de cortes. Es un modelo de la secuencia, no
+  una medicion: los niveles de la Holz-Her siguen pendientes con planta.
+- `src/lib/corte/plan-corte.ts`: cruza el reparto diario con el acomodo. Por cada dia devuelve los
+  modulos y unidades, el esquema de cada material, tableros, m2, desperdicio y cortes; mas el
+  consolidado, el desglose por material y el mismo proyecto cortado de una sola vez.
+
+Lo importante del resumen: **cortar por dia gasta mas tablero que cortar todo junto**, porque las
+piezas de dias distintos no comparten lamina. En un proyecto de prueba de 15 modulos a 40 piezas/dia
+son 16 tableros y 31,6 % contra 15 tableros y 26,8 %. La pantalla muestra las dos cifras y la
+diferencia en vez de dar solo una.
+
+La pestana pasa a mostrar los esquemas agrupados por dia, con un bloque de resumen al final: tabla
+por dia, tabla por material sumando los dias, y el desglose de cortes por nivel. Con el ritmo en 0 se
+muestra el proyecto completo y se pide el ritmo.
+
+Detalle en [optimizador_corte.md](wiki/optimizador_corte.md). Pruebas: `tests/secuencia-corte.test.ts`
+(11) y `tests/plan-corte.test.ts` (10) en `lane:cutting`. quality:gate exit 0 con 42 suites, build
+limpio, quality:learn sin hallazgos HIGH. Sin verificar en pantalla: /optimizador es solo admin y no
+hay credenciales en la sesion.
+
+## [2026-10-14] update | Cada esquema dice de que material y de que dia es
+
+El acomodo ya calculaba un esquema por material en cada dia —el dia 3 de la corrida de prueba toca 5
+materiales y 6 tableros, cada uno con su lamina—, pero en pantalla habia que recorrer todos los
+dibujos para saber que tableros entraban en la jornada. Tres cambios de presentacion:
+
+- La cabecera del dia dice cuantos materiales toca.
+- Antes de los esquemas va una **tabla de materiales del dia**: lamina, tableros, cuantos esquemas,
+  m2, netos, desperdicio y cortes, con el total de la jornada.
+- Cada seccion de material y cada lamina se rotulan con el dia y el material, para que una tarjeta
+  suelta se entienda sola al imprimir o al bajar la pagina.
+
+Sin cambios de calculo. quality:gate exit 0, build limpio.
+
+## [2026-10-14] update | Listado de muebles por dia, antes de los esquemas
+
+La lista de modulos iba en una sola linea de la cabecera del dia y con diez modulos se cortaba sin
+poder leerse (visto en captura del usuario). Pasa a ser una tabla propia antes de los esquemas:
+codigo, cocina, tablero principal, unidades y piezas, con el total de la jornada y la marca (parte)
+para los muebles que se cortan tambien en otro dia. La cabecera queda con el conteo.
+
+`CorteDia.modulos` ahora arrastra `piezas`, `material` y `partido`, que ya venian del reparto diario
+y se estaban descartando al componer el plan.
+
+Verificado que los esquemas por material/color ya salian en cada dia: en una corrida de prueba con
+los tres tableros del usuario (PRIRH15ARTICO caja, PRIRH15COLOR CONSTRUCTOR frentes, PRIRH6ARTICO
+fondo) los tres aparecen con su esquema en los tres dias.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-14] update | Busqueda de combinaciones y veredicto de la meta del 15 %
+
+El optimizador deja de ser 20 heuristicas fijas y pasa a buscar: tras las deterministas, arranques
+aleatorios con orientacion, clave de orden con ruido, modo y politica de franja al azar, hasta
+agotar `iteraciones` (2000), `tiempoMaxMs` (150 por material) o 300 arranques sin mejorar. Para en
+seco al tocar el minimo teorico. El azar va sembrado con una semilla derivada del problema, asi que
+la misma entrada sigue dando el mismo plan.
+
+Medido, y es lo importante: con volumen **la meta del 15 % si se cumple** (proyecto de 12 tipos de
+modulo: 13,6 % cortado todo junto). Lo que la rompe es partir la produccion en dias: 17,2 % con 2
+dias y 22,2 % con 5. La pantalla ahora da el veredicto y lo explica.
+
+Tambien se marca `metaInalcanzable` por material: el desperdicio es un escalon, no una curva —las
+laminas se compran enteras— asi que cuando ni el minimo teorico baja de la meta no es el acomodo,
+es el volumen, y la salida es agrupar mas muebles de ese material en la misma corrida.
+
+Honesto sobre el limite: en material mixto de poco volumen, 20 000 iteraciones no mejoran las 5
+laminas contra un minimo teorico de 4; eso pide mas niveles de corte en la maquina, no mas
+iteraciones. Detalle en [optimizador_corte.md](wiki/optimizador_corte.md).
+
+Nuevas llaves de config `iteraciones` y `tiempoMaxMs`, editables en los parametros de planta. No
+hacen falta migraciones: `normalizarConfig` rellena las que falten. Pruebas: 7 casos nuevos en
+`tests/guillotina.test.ts` (24 en total). quality:gate exit 0 con 42 suites, build limpio,
+quality:learn sin hallazgos HIGH.
+
+## [2026-10-14] update | El informe reporta cuantas combinaciones se evaluaron
+
+A peticion del usuario: el resumen del plan de corte muestra ahora las combinaciones de acomodo
+evaluadas, en el KPI del consolidado, como columna en la tabla por dia y en la tabla por material,
+mas las del proyecto cortado de una sola vez. `TotalesCorte` y `FilaMaterial` arrastran
+`iteraciones`, que ya venia por material desde `optimizarMaterial`.
+
+Con una nota de lectura en la propia pantalla: un material que llega al minimo teorico para la
+busqueda de inmediato, asi que 20 combinaciones ahi valen mas que 960 en otro. Un numero bajo
+significa "ya estaba optimo", no "se busco poco".
+
+Prueba nueva en `tests/plan-corte.test.ts`: el consolidado es la suma de lo que probo cada material
+de cada dia, y cuadra con el desglose por material. quality:gate exit 0, build limpio.
+
+## [2026-10-14] ingest | Análisis del reparto de muebles por día del optimizador
+
+Prototipo de búsqueda de muebles completos entre días (40 → 34 tableros en el proyecto de referencia), cota de 14,8 % con corte diario de los tres materiales y prompt de implementación para Antigravity.
+
+## [2026-10-14] update | Prompt de reparto por días ajustado a máximo de iteraciones
+
+Se midió la escala de la búsqueda (pequeño y grande) y se reescribió docs/prompt_antigravity_reparto_dias.md: presupuesto por tiempo, workers en paralelo, caché de dos niveles, vecindarios dirigidos, enumeración exacta y guardado del plan.
+
+## [2026-10-14] ingest | Busqueda del reparto de muebles entre dias
+
+Nuevo `src/lib/corte/reparto.ts`: recocido simulado sobre la matriz dias x lineas, con evaluacion
+incremental, cache por firma de dia, recalentamiento y parada por cota. `planDeCorte` lo usa en vez
+del reparto codicioso de `plan-diario.ts`, que queda como vista previa instantanea.
+
+Medido: proyecto pequeno 44 -> 40 tableros (27,3 % -> 20,1 %); grande 253 -> 247 (23,9 % -> 22,3 %).
+Mas presupuesto siempre mejoro.
+
+Defecto corregido: `grupo_id` no llegaba al optimizador y un grupo fisico se podia partir entre
+dias. Como sus piezas compartidas se redondean por dia, partir un grupo de 2 unidades daba 4
+laterales donde el despiece pide 3. Verificado antes de corregir.
+
+Segundo defecto, encontrado por una prueba nueva: `num()` en `config.ts` convertia `null` y cadena
+vacia en 0 en vez de tomar el defecto, asi que una llave vacia en la base dejaba el disco en 0 mm o
+la busqueda apagada. Afectaba a todas las llaves numericas, no solo a las nuevas.
+
+Llaves nuevas: `toleranciaRitmoPct` (D4), `diasExtraPermitidos` (D5), `repartoTiempoMs`. Sin
+migracion: `normalizarConfig` rellena las que falten. Pruebas movidas a `tests/config.test.ts` (5
+casos) para cerrar el hallazgo HIGH de cobertura, mas `tests/optimizador-reparto.test.ts` (19).
+
+Falta del prompt: interfaz con modos y progreso, workers, rendimiento (~300 mov/s contra 10 000/s),
+vecindarios dirigidos, enumeracion exacta y persistencia del plan. Detalle en
+[optimizador_corte.md](wiki/optimizador_corte.md). quality:gate exit 0, build limpio, quality:learn
+sin HIGH.
+
+## [2026-10-14] update | Los dias del plan se pliegan
+
+Con 10 dias y varios modulos cada uno, la tabla plana del "Plan de corte por dia" no se podia leer
+(captura del usuario: 10 dias, 26 lineas, filas encadenadas con rowSpan). Cada dia pasa a ser una
+fila plegable: cabecera con piezas, libre, cuantos modulos, unidades y materiales, y al abrirla la
+tabla de modulos. Boton "Desplegar / Plegar todos los dias".
+
+Lo mismo en los bloques de dia de los esquemas de corte (`EsquemasCorte.tsx`), que traen tres tablas
+y un dibujo por lamina: la cabecera queda siempre visible con los totales y el cuerpo se pliega.
+Abiertos por defecto, para no esconder lo que ya se veia.
+
+Solo presentacion. quality:gate exit 0, build limpio.
+
+## [2026-10-14] update | La busqueda de reparto corre cuatro veces mas rapido
+
+Perfilado: `evaluarDia` era el 98 % del tiempo (5,07 ms de acomodo contra 0,097 ms de lista). Dos
+cambios: `heuristicasMax: 4` durante la busqueda (el plan final sigue con las 20) y filtro por cota
+antes de acomodar (`cotaDia`: area con sierra contra area util, 50 veces mas barato).
+
+Resultado: proyecto grande 247 -> **242 tableros** (22,3 % -> 20,7 %) en los mismos 20 s; el pequeno
+llega a 40 tableros a los 5 s en vez de a los 20. De ~300 a ~1 300 movimientos/s en el pequeno y
+~750 en el grande. Sigue lejos de los 10 000/s del prompt: falta cache por dia-material y workers.
+
+Corregido de paso: la cota que se informaba se calculaba con el acomodo rapido y salia inflada.
+Ahora sale del proyecto cortado de una sola vez, que ya se acomoda con la configuracion completa.
+
+Prueba nueva: el filtro poda, no cuesta mas evaluaciones y no degrada el resultado. quality:gate
+exit 0, build limpio, quality:learn sin HIGH.
+
+## [2026-10-14] update | Modulos del proyecto: agrupados por cocina y referencia, y plegables
+
+La lista de la seccion 1 era una fila por linea de cotizacion: en el proyecto del usuario, 26 filas
+con referencias repetidas (dos W3642, dos W2642, dos TK4 1/296) que habia que sumar a ojo.
+
+Ahora se agrupa en dos niveles plegables: cocina y, dentro, referencia. Se juntan las lineas con el
+mismo codigo **y el mismo despiece**; si dos lineas con igual codigo dan distintas piezas por modulo
+es que su configuracion difiere y mezclarlas esconderia esa diferencia, asi que quedan separadas.
+Cuando una referencia viene de varias lineas se anota ("2 lineas").
+
+La cabecera resume sin desplegar: cocinas, referencias, lineas, unidades y piezas. Plegada por
+defecto, que es el punto; las cocinas se ordenan por volumen de piezas.
+
+Solo presentacion. quality:gate exit 0, build limpio.

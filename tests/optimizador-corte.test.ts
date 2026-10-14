@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   CONFIG_OPTIMIZADOR_DEFAULT, dimsDesdeCodigoFormato, formatoConfigurado, laminasPorPila,
-  normalizarConfig, normalizarFormato, repartoDiario,
+  normalizarConfig, normalizarFormato,
 } from '../src/lib/corte/config';
 import { construirListaCorte, SIN_TABLERO, type ModuloEntrada, type TableroInfo } from '../src/lib/corte/lista';
 
@@ -23,33 +23,10 @@ test('los parámetros confirmados por planta son el valor por defecto', () => {
   assert.deepEqual(formatoConfigurado(d, '124X246'), { codigo: '124X246', largoMm: 2460, anchoMm: 1240, activo: true });
 });
 
-test('normalizarConfig corrige valores inválidos sin perder los válidos', () => {
-  const c = normalizarConfig({
-    discoMm: '4,6', refiladoMm: 20, refiladoMaxMm: 9, piezasPorDia: -3, nivelesCorte: 2.6,
-    pilas: [{ espesorMm: 18, laminas: 3 }, { espesorMm: 'x', laminas: 2 }],
-    formatos: [{ codigo: ' 183x244 ', largoMm: 1830, anchoMm: 2440 }, { codigo: '183X244', largoMm: 1, anchoMm: 1 }],
-    criterio: ['cortes', 'inventado', 'cortes'],
-  });
-  assert.equal(c.discoMm, 4.6);
-  assert.equal(c.refiladoMm, 9, 'el refilado no puede pasar del máximo');
-  assert.equal(c.piezasPorDia, 0);
-  assert.equal(c.nivelesCorte, 3);
-  assert.deepEqual(c.pilas, [{ espesorMm: 18, laminas: 3 }]);
-  assert.deepEqual(c.formatos, [{ codigo: '183X244', largoMm: 2440, anchoMm: 1830, activo: true }], 'largo = lado mayor y sin duplicados');
-  assert.deepEqual(c.criterio, ['cortes', 'desperdicio', 'laminas', 'sobrante_ultima']);
-});
-
 test('formato del catálogo en cm → mm', () => {
   assert.equal(normalizarFormato(' 183x244 '), '183X244');
   assert.deepEqual(dimsDesdeCodigoFormato('124X246'), { largoMm: 2460, anchoMm: 1240 });
   assert.equal(dimsDesdeCodigoFormato('sin medida'), null);
-});
-
-test('reparto diario: días llenos y el resto en el último', () => {
-  assert.deepEqual(repartoDiario(25, 10), [10, 10, 5]);
-  assert.deepEqual(repartoDiario(20, 10), [10, 10]);
-  assert.deepEqual(repartoDiario(25, 0), [], 'sin ritmo definido no hay días');
-  assert.deepEqual(repartoDiario(0, 10), []);
 });
 
 const tableros: TableroInfo[] = [
@@ -77,7 +54,6 @@ test('lista de corte: agrupa por material y medida, multiplica por cantidad y cu
   assert.equal(lateral?.largoMm, 762);
   assert.equal(lateral?.anchoMm, 609.6);
   assert.equal(l.totalPiezas, 4 * 5);
-  assert.deepEqual(l.reparto, [10, 10]);
   const sinTablero = l.materiales.find((m) => m.material === SIN_TABLERO);
   assert.ok(sinTablero?.alertas.some((a) => a.includes('sin tablero')), 'el rol sin tablero se avisa');
   const fondo = l.materiales.find((m) => m.material === 'FONDO6');

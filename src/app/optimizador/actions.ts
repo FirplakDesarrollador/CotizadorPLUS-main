@@ -25,7 +25,7 @@ export async function guardarConfigOptimizadorAction(raw: unknown): Promise<{ ok
 }
 
 export type ProyectoOptimizador = {
-  modulos: (ModuloEntrada & { lineaId: string; cocina: string; piezasPorModulo: number })[];
+  modulos: (ModuloEntrada & { lineaId: string; cocina: string; piezasPorModulo: number; grupoId: string | null })[];
   errores: { codigo: string; error: string }[];
 };
 
@@ -45,6 +45,7 @@ export async function proyectoDesdeCotizacionAction(cotizacionId: string): Promi
       }));
     out.modulos.push({
       lineaId: m.lineaId,
+      grupoId: m.grupoId,
       codigo: m.codigoModulo,
       cocina: m.cocinaNombre,
       cantidad: m.cantidad,

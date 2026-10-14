@@ -1,9 +1,10 @@
 // Lista de corte de un proyecto: convierte el despiece de cada módulo de una cotización
 // en piezas por material y calcula los indicadores previos a la optimización
-// (piezas totales, días de producción, láminas mínimas y meta de desperdicio).
+// (piezas totales, láminas mínimas y meta de desperdicio). Los días de producción
+// y el reparto por módulo los calcula `plan-diario.ts`.
 // Módulo puro: recibe datos ya calculados por el motor.
 import {
-  formatoConfigurado, laminasPorPila, repartoDiario,
+  formatoConfigurado, laminasPorPila,
   type ConfigOptimizador, type FormatoLamina,
 } from './config';
 
@@ -71,7 +72,6 @@ export type ListaCorte = {
   filas: FilaListaCorte[];
   materiales: ResumenMaterial[];
   totalPiezas: number;
-  reparto: number[];
 };
 
 export const SIN_TABLERO = '(sin tablero asignado)';
@@ -166,7 +166,7 @@ export function construirListaCorte(modulos: ModuloEntrada[], tableros: TableroI
   });
 
   const totalPiezas = lista.reduce((s, f) => s + f.cantidad, 0);
-  return { filas: lista, materiales, totalPiezas, reparto: repartoDiario(totalPiezas, cfg.piezasPorDia) };
+  return { filas: lista, materiales, totalPiezas };
 }
 
 // La pieza cabe en la lámina útil en alguna orientación (la veta se decide después).
