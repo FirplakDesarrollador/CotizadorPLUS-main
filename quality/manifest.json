@@ -43,7 +43,8 @@
         "src/lib/supabase/**",
         "src/lib/firplak-template.ts",
         "src/lib/cema-template.ts",
-        "src/lib/materiales-linea.ts"
+        "src/lib/materiales-linea.ts",
+        "src/lib/grupos-orden.ts"
       ],
       "tests": [
         "tests/margen-global.test.ts",
@@ -52,7 +53,8 @@
         "tests/consumo-materiales.test.ts",
         "tests/module-groups.test.ts",
         "tests/firplak-template.test.ts",
-        "tests/materiales-linea.test.ts"
+        "tests/materiales-linea.test.ts",
+        "tests/grupos-orden.test.ts"
       ]
     },
     {
@@ -107,7 +109,10 @@
         "tests/secuencia-corte.test.ts",
         "tests/plan-corte.test.ts",
         "tests/optimizador-reparto.test.ts",
-        "tests/config.test.ts"
+        "tests/config.test.ts",
+        "tests/optimizador-referencia.test.ts",
+        "tests/secuencia.test.ts",
+        "tests/reparto.test.ts"
       ]
     },
     {
@@ -121,7 +126,14 @@
       "tests": [
         "tests/margen-global.test.ts",
         "tests/module-groups.test.ts",
-        "tests/optimizador-corte.test.ts"
+        "tests/optimizador-corte.test.ts",
+        "tests/tooltips.test.ts",
+        "tests/combobox-filtro.test.ts",
+        "tests/monedas-visibles.test.ts",
+        "tests/iva.test.ts",
+        "tests/herrajes-propuesta.test.ts",
+        "tests/numero-en-letras.test.ts",
+        "tests/grupos-programacion.test.ts"
       ]
     },
     {

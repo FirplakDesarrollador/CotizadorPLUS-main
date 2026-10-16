@@ -234,6 +234,12 @@ function MaterialEsquema({ material, meta, dia }: { material: MaterialDia; meta:
                 : ` · sobre la meta de ${fmt(meta)} %`}
           </span>
           <span><b>{fmt(cortes.total)}</b> cortes</span>
+          {plan.sobrantesReutilizables > 0 && (
+            <span className="text-xs text-emerald-700">
+              sobrante útil: {fmt(plan.sobrantesReutilizables)} pieza(s), {fmt(plan.sobranteReutilizableM2, 2)} m²
+              {plan.mayorSobrante && ` · mayor ${fmt(plan.mayorSobrante.largoMm)} × ${fmt(plan.mayorSobrante.anchoMm)} mm`}
+            </span>
+          )}
           <span className="text-xs text-slate-400">
             mínimo teórico {fmt(plan.desperdicioMinimoPct, 3)} % con {fmt(plan.laminasMinimas)} · {fmt(plan.iteraciones)} combinaciones probadas
           </span>
@@ -344,7 +350,8 @@ function Resumen({ plan, meta }: { plan: PlanCorte; meta: number }) {
 
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
           Cortes: <b>{fmt(c.total)}</b> = {fmt(c.refilado)} de refilado + {fmt(c.nivel1)} de 1.er nivel
-          (franjas) + {fmt(c.nivel2)} de 2.º nivel (piezas) + {fmt(c.nivel3)} de 3.er nivel (recortes).
+          (franjas) + {fmt(c.nivel2)} de 2.º nivel (columnas de piezas) + {fmt(c.nivel3)} de 3.er nivel (piezas
+          apiladas en una columna y recortes).
           Se cuentan por pasada de la seccionadora, así que las láminas de un mismo patrón que entran
           en una pila cuestan un solo juego de cortes. Es un modelo de la secuencia, no una medición:
           los niveles de la máquina siguen pendientes de confirmar con planta.
@@ -353,10 +360,20 @@ function Resumen({ plan, meta }: { plan: PlanCorte; meta: number }) {
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
           Combinaciones: <b>{fmt(plan.consolidado.iteraciones)}</b> acomodos distintos evaluados para
           llegar a este plan, sumando cada material de cada día; el proyecto cortado de una sola vez
-          probó {fmt(plan.proyectoCompleto.iteraciones)} más. Cada combinación cambia el orden de las
-          piezas, su orientación y cómo se abren las franjas, y se conserva la que menos tableros
-          gasta. Un material que llega al mínimo teórico para la búsqueda de inmediato: con 20
-          combinaciones ya está en el mejor acomodo posible y seguir probando no puede mejorarlo.
+          probó {fmt(plan.proyectoCompleto.iteraciones)} más. Cada franja se llena con la combinación de
+          piezas que más la ocupa (mochila), se prueban el primer corte a lo largo y a lo ancho, se apilan
+          piezas encima de las más bajas y las medidas que quedan relegadas a la última lámina ganan
+          prioridad en el siguiente intento. Se conserva el acomodo con menos tableros y, a igualdad, el
+          que deja el sobrante en la última lámina. Un material que llega al mínimo teórico deja de
+          buscar: ningún acomodo puede usar menos láminas.
+        </p>
+
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          Reparto de muebles entre días: <b>{fmt(plan.reparto.iteraciones)}</b> repartos evaluados
+          ({fmt(plan.reparto.evaluaciones)} días acomodados, {fmt(plan.reparto.aciertosCache)} repetidos
+          tomados de memoria). El reparto inicial gastaba {fmt(plan.reparto.tablerosInicial)} tableros; el
+          elegido, {fmt(plan.consolidado.laminas)}. Cortado todo junto, sin días, serían{' '}
+          {fmt(plan.reparto.cotaTableros)}.{plan.reparto.optimo ? ' Se demostró que no existe un reparto mejor.' : ''}
         </p>
 
         <div>

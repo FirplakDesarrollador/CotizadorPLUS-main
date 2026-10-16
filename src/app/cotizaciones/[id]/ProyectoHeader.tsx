@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { actualizarCotizacionAction } from '../actions';
+import { monedasVisibles, type ColumnasMoneda } from '@/lib/monedas-visibles';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -19,6 +20,7 @@ export default function ProyectoHeader({
   onSave,
   children,
   margenGlobal,
+  columnasMoneda,
 }: {
   cab: Cab;
   editing?: boolean;
@@ -28,6 +30,8 @@ export default function ProyectoHeader({
   onMargenBlur?: () => void;
   onSave?: () => Promise<{ ok: boolean; error?: string } | void>;
   children?: React.ReactNode;
+  /** Casillas de columna del detalle. Sin ellas se muestran las dos monedas. */
+  columnasMoneda?: ColumnasMoneda;
   margenGlobal?: { sinHerrajes: number | null; conHerrajes: number | null } | null;
 }) {
   const router = useRouter();
@@ -183,9 +187,15 @@ export default function ProyectoHeader({
           )}
         </p>
       </div>
+      {/* Las casillas de columna eligen que monedas se ven; la moneda del proyecto
+          decide cual va de cifra grande cuando se ven las dos. */}
       <div className="text-right">
-        <div className="text-2xl font-bold text-slate-900">{fmtUSD(cab.total_usd)}</div>
-        <div className="text-sm text-slate-500">{fmtCOP(cab.total_cop)}</div>
+        {monedasVisibles(columnasMoneda ?? { usd: true, cop: true }, cab.moneda === 'COP' ? 'COP' : 'USD')
+          .map((m, i) => (
+            <div key={m} className={i === 0 ? 'text-2xl font-bold text-slate-900' : 'text-sm text-slate-500'}>
+              {m === 'COP' ? fmtCOP(cab.total_cop) : fmtUSD(cab.total_usd)}
+            </div>
+          ))}
       </div>
     </div>
   );

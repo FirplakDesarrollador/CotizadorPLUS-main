@@ -336,3 +336,33 @@ la lista de corte). Dos cambios, y el resultado mejoro de verdad:
 
 La cota que se informa sale del proyecto cortado de una sola vez, acomodado con la configuracion
 completa: antes se calculaba con el acomodo rapido y salia inflada.
+
+## Repositorios de referencia y medición contra packingsolver (2026-10-14)
+Informe completo: `docs/informe_repositorios_optimizador_corte.md`. Con las mismas piezas (todo junto),
+packingsolver (MIT, WASM) usó 30 láminas contra 31 en el proyecto pequeño y 175 contra 179 en el grande;
+en el frente 18 mm del pequeño demostró óptimo 5 láminas donde `guillotina.ts` usa 6 (franjas sin columnas
+apiladas). Su objetivo con sobrante (`bin-packing-with-leftovers`) no devolvió solución en instancias
+grandes; `bin-packing` sí. `reparto.ts` declara `exactoMax` pero no enumera, y no hay Web Workers.
+
+## Mejoras del acomodo y del reparto (2026-10-14)
+Implementado en `src/lib/corte/guillotina.ts`, `secuencia.ts`, `reparto.ts` y la pantalla:
+- **Columnas apiladas** dentro de cada franja (franja → columna → pieza). Se permite apilar
+  piezas más angostas que la columna con un recorte (corte "no exacto" de los solvers de 3
+  etapas). **Pendiente de confirmar con planta** junto con los niveles de la Holz-Her.
+- **Primer corte a lo largo y a lo ancho**: se prueban las dos orientaciones (lámina transpuesta).
+- **Mochila por franja** (`empacarMochila`): cada franja se llena con la combinación de piezas de
+  más área; variante "mejor alto" elige el alto de la franja (≤ 800 piezas por material).
+- **Corrección secuencial de valores**: las medidas que quedan en la última lámina suben de peso.
+- Criterio: menos láminas → última lámina más vacía → menos cortes. Patrones ordenados de más
+  lleno a menos lleno. Nuevos datos: `sobrantesReutilizables`, `sobranteReutilizableM2`, `mayorSobrante`.
+- `validarPatron`: sin solapes, sierra respetada y dentro del refilado. `secuencia.ts` cuenta
+  cortes con columnas y orientación (usa `franja`/`columna` de cada colocación).
+- **Defecto corregido**: la búsqueda del reparto por días no corría (`planDeCorte` recibía
+  `busqueda = {}`). Ahora la pantalla la ejecuta en un **Web Worker** (`plan.worker.ts`) con
+  `repartoTiempoMs` (campo editable en segundos), contador y botón Cancelar. El reparto revisa el
+  reloj en cada movimiento y su modo rápido omite la mochila "mejor alto".
+
+Resultados (todo junto, `scripts/corte-benchmark.ts`): pequeño 31 → **30** láminas, grande 179 →
+**175**, igual que packingsolver; frente 18 mm 6 → **5** (25,2 % → 10,2 %). Plan por días
+(110 piezas/día, 5 s): grande 237 → **227** tableros. Pruebas: `optimizador-referencia`,
+`secuencia`, `reparto` (fixture `tests/fixtures/corte-referencia.json`).

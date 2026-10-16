@@ -16,6 +16,8 @@ export type ProjectDefaults = {
   conFondo?: boolean;
   materialesInferiores?: MaterialDefaults;
   materialesSuperiores?: MaterialDefaults;
+  materialesCloset?: MaterialDefaults;
+  materialesBanos?: MaterialDefaults;
   // Defaults del primer mueble (vienen del formulario de creación)
   tipoId?: string;
   largo?: string;

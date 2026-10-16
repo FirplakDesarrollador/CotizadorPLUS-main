@@ -314,10 +314,10 @@ export function buscarReparto(entrada: EntradaReparto, opciones: OpcionesBusqued
 
   while (true) {
     if (topeIter > 0 && iteraciones >= topeIter) break;
-    if ((iteraciones & 255) === 0) {
-      if (tiempoMax > 0 && Date.now() > limite) break;
-      if (!seguir()) break;
-    }
+    // El reloj se mira en cada movimiento: evaluar un día puede costar decenas de
+    // milisegundos y revisarlo cada 256 se pasaba del presupuesto varias veces.
+    if (tiempoMax > 0 && Date.now() > limite) break;
+    if ((iteraciones & 15) === 0 && !seguir()) break;
     iteraciones++;
 
     // Un movimiento: llevar un bloque de un día a otro y, la mitad de las veces,

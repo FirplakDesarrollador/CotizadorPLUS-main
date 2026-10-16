@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
@@ -23,6 +23,8 @@ export type ProjectDefaults = {
   conFondo?: boolean;
   materialesInferiores?: MaterialDefaults;
   materialesSuperiores?: MaterialDefaults;
+  materialesCloset?: MaterialDefaults;
+  materialesBanos?: MaterialDefaults;
   // Defaults del primer mueble (opcionales, vienen de NuevoCotizacionForm)
   tipoId?: string;
   largo?: string;
@@ -107,10 +109,13 @@ export default function AddLineForm({
   const ov = initial?.overrides ?? null;
   const tipoInicialId = initial?.tipoId ?? projectDefaults?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '';
   const tipoInicialPref = tipos.find((t) => t.id === tipoInicialId)?.pref ?? '';
-  const materialProyecto = (pref: string): MaterialDefaults | undefined =>
-    familiaMaterialPorPrefijo(pref) === 'superior'
-      ? projectDefaults?.materialesSuperiores
-      : projectDefaults?.materialesInferiores;
+  // Cada familia tiene su bloque de materiales. Las cotizaciones creadas antes de
+  // que existieran closet y banos no lo traen: caen en inferiores, como siempre.
+  const materialProyecto = (pref: string): MaterialDefaults | undefined => {
+    const familia = familiaMaterialPorPrefijo(pref);
+    const porFamilia = projectDefaults as unknown as Record<string, MaterialDefaults | undefined> | undefined;
+    return porFamilia?.[CLAVE_CONFIG_FAMILIA[familia]] ?? projectDefaults?.materialesInferiores;
+  };
   const materialInicial = materialProyecto(tipoInicialPref);
 
   // Estados — si viene de NuevoCotizacionForm (projectDefaults), usar esos valores como defaults

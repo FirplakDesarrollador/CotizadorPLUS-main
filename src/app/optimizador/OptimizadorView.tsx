@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
@@ -10,6 +10,7 @@ import {
 import { construirListaCorte, type TableroInfo } from '@/lib/corte/lista';
 import { planDiarioDeCorte, type PlanDiario } from '@/lib/corte/plan-diario';
 import { planDeCorte, type PlanCorte } from '@/lib/corte/plan-corte';
+import type { PedidoPlan, RespuestaPlan } from './plan.worker';
 import EsquemasCorte from './EsquemasCorte';
 import { guardarConfigOptimizadorAction, proyectoDesdeCotizacionAction, type ProyectoOptimizador } from './actions';
 
@@ -276,6 +277,10 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
   const [texturaPorMaterial, setTexturaPorMaterial] = useState<Record<string, string>>({});
   const [esquemas, setEsquemas] = useState<{ plan: PlanCorte; clave: string } | null>(null);
   const [optimizando, setOptimizando] = useState(false);
+  const [segundos, setSegundos] = useState(0);
+  const [errorPlan, setErrorPlan] = useState<string | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+  useEffect(() => () => workerRef.current?.terminate(), []);
 
   const sucio = JSON.stringify(cfg) !== JSON.stringify(guardado);
   const set = <K extends keyof ConfigOptimizador>(k: K, v: ConfigOptimizador[K]) => setCfg((c) => ({ ...c, [k]: v }));
@@ -324,12 +329,42 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
   const claveEsquemas = JSON.stringify([cotizacionId, cfg, texturaPorMaterial]);
   const esquemasAlDia = esquemas?.clave === claveEsquemas;
 
+  // El plan corre en un Web Worker: la búsqueda del reparto por días usa todo el
+  // presupuesto `repartoTiempoMs` y en el hilo de la pantalla la congelaba.
   function optimizarCorte() {
     if (!proyecto) return;
+    const config = normalizarConfig(cfg);
+    const clave = claveEsquemas;
+    setErrorPlan(null);
     setOptimizando(true);
-    // Sincrono: acomodar un proyecto grande toma decimas de segundo.
-    const plan = planDeCorte(proyecto.modulos, tableros, normalizarConfig(cfg), (m) => texturaPorMaterial[m] ?? texturaDefault);
-    setEsquemas({ plan, clave: claveEsquemas });
+    setSegundos(0);
+    const reloj = setInterval(() => setSegundos((n) => n + 1), 1000);
+    const terminar = () => { clearInterval(reloj); setOptimizando(false); workerRef.current?.terminate(); workerRef.current = null; };
+
+    if (typeof Worker === 'undefined') {
+      const plan = planDeCorte(proyecto.modulos, tableros, config, (m) => texturaPorMaterial[m] ?? texturaDefault,
+        { tiempoMaxMs: config.repartoTiempoMs });
+      setEsquemas({ plan, clave });
+      terminar();
+      return;
+    }
+    workerRef.current?.terminate();
+    const worker = new Worker(new URL('./plan.worker.ts', import.meta.url), { type: 'module' });
+    workerRef.current = worker;
+    worker.onmessage = (e: MessageEvent<RespuestaPlan>) => {
+      if (e.data.ok) setEsquemas({ plan: e.data.plan, clave });
+      else setErrorPlan(e.data.error);
+      terminar();
+    };
+    worker.onerror = (e) => { setErrorPlan(e.message || 'Error al calcular el plan'); terminar(); };
+    worker.postMessage({
+      modulos: proyecto.modulos, tableros, cfg: config, texturas: texturaPorMaterial, texturaDefault,
+    } satisfies PedidoPlan);
+  }
+
+  function cancelarOptimizacion() {
+    workerRef.current?.terminate();
+    workerRef.current = null;
     setOptimizando(false);
   }
 
@@ -477,12 +512,21 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
                   ? 'Cambiaron los parámetros: vuelve a optimizar para ver el acomodo actualizado.'
                   : 'Acomodo por día con disco, refilado, veta y conteo de cortes.'}
               </span>
+              {optimizando && (
+                <button type="button" onClick={cancelarOptimizacion}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                  Cancelar
+                </button>
+              )}
               <button type="button" onClick={optimizarCorte} disabled={optimizando}
                 className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-700 disabled:opacity-40">
-                {optimizando ? 'Optimizando…' : esquemas ? 'Volver a optimizar' : 'Optimizar corte'}
+                {optimizando
+                  ? `Optimizando… ${segundos} s de ${Math.round(normalizarConfig(cfg).repartoTiempoMs / 1000)} s`
+                  : esquemas ? 'Volver a optimizar' : 'Optimizar corte'}
               </button>
             </div>
 
+            {errorPlan && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorPlan}</div>}
             {esquemas && (
               <div className={esquemasAlDia ? undefined : 'opacity-60'}>
                 <h3 className="text-sm font-semibold text-slate-800 mb-2">Esquemas de corte por día</h3>
@@ -532,6 +576,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
             <Campo label="Piezas por día"><input type="number" min={0} step={1} value={cfg.piezasPorDia || ''} placeholder="definir" onChange={(e) => set('piezasPorDia', Math.max(0, Math.round(num(e.target.value))))} className="inp" /></Campo>
             <Campo label="Combinaciones a probar"><input type="number" min={0} step={100} value={cfg.iteraciones} onChange={(e) => set('iteraciones', Math.max(0, Math.round(num(e.target.value))))} className="inp" /></Campo>
             <Campo label="Tope por material (ms)"><input type="number" min={0} step={50} value={cfg.tiempoMaxMs} onChange={(e) => set('tiempoMaxMs', Math.max(0, Math.round(num(e.target.value))))} className="inp" /></Campo>
+            <Campo label="Búsqueda del reparto por días (s)"><input type="number" min={0} max={900} step={5} value={Math.round(cfg.repartoTiempoMs / 1000)} onChange={(e) => set('repartoTiempoMs', Math.max(0, Math.round(num(e.target.value) * 1000)))} className="inp" /></Campo>
             <label className="flex items-center gap-2 text-sm text-slate-700 col-span-2">
               <input type="checkbox" checked={cfg.sobranteEnUltimaLamina} onChange={(e) => set('sobranteEnUltimaLamina', e.target.checked)} /> Si queda sobrante, dejarlo en la última lámina de cada material
             </label>
