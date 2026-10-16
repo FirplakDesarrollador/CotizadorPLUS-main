@@ -223,10 +223,16 @@ test('el azar esta sembrado: dos corridas con busqueda dan el mismo plan', () =>
 });
 
 test('sin presupuesto solo corren las heuristicas fijas', () => {
-  const plan = optimizarMaterial(PIEZAS_MIXTAS, LAMINA,
-    normalizarConfig({ ...CONFIG_OPTIMIZADOR_DEFAULT, iteraciones: 0, tiempoMaxMs: 0 }));
-  assert.equal(plan.iteraciones, 20, 'las 20 combinaciones deterministas corren siempre');
+  // 6 de mochila (mejor alto, alta y baja, en las dos orientaciones del primer corte)
+  // + 40 de orden de entrada (5 órdenes × 2 orientaciones × 2 modos × 2 aperturas).
+  // Sin presupuesto no hay fase aleatoria: el plan es determinista.
+  const sinPresupuesto = normalizarConfig({ ...CONFIG_OPTIMIZADOR_DEFAULT, iteraciones: 0, tiempoMaxMs: 0 });
+  const plan = optimizarMaterial(PIEZAS_MIXTAS, LAMINA, sinPresupuesto);
+  const otra = optimizarMaterial(PIEZAS_MIXTAS, LAMINA, sinPresupuesto);
   assert.ok(plan.laminas > 0);
+  assert.ok(plan.iteraciones <= 46, 'nunca más que las combinaciones deterministas');
+  if (plan.laminas > plan.laminasMinimas) assert.equal(plan.iteraciones, 46, 'si no llegó al mínimo, corren todas');
+  assert.deepEqual(otra.patrones, plan.patrones, 'misma entrada, mismo plan');
 });
 
 test('alcanzado el minimo teorico la busqueda para: no hay nada mejor', () => {
@@ -234,7 +240,7 @@ test('alcanzado el minimo teorico la busqueda para: no hay nada mejor', () => {
   const plan = optimizarMaterial([pz('lateral', 600, 450, 32)], LAMINA,
     normalizarConfig({ ...CONFIG_OPTIMIZADOR_DEFAULT, iteraciones: 10_000, tiempoMaxMs: 5000 }));
   assert.equal(plan.laminas, plan.laminasMinimas);
-  assert.equal(plan.iteraciones, 20, 'no gasta iteraciones si ya llego al minimo');
+  assert.equal(plan.iteraciones, 1, 'para en la primera combinación que llega al mínimo');
 });
 
 test('cuando la meta es inalcanzable el plan lo dice en vez de disimularlo', () => {

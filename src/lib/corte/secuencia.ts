@@ -34,23 +34,43 @@ const TOL = 1; // mm: por debajo de esto no hay corte que valga la pena contar.
 /** Cortes de una lámina con este acomodo (una sola pasada, sin contar la pila). */
 export function cortesDeLamina(patron: Patron, formato: FormatoLamina, cfg: ConfigOptimizador): Cortes {
   if (!patron.colocaciones.length) return CERO;
-  const X1 = formato.largoMm - cfg.refiladoMm;
+  // Con el primer corte a lo ancho (`transpuesta`) las franjas corren sobre el eje y:
+  // se leen las coordenadas en el sistema de la franja para contar igual en los dos casos.
+  const t = patron.transpuesta === true;
+  const X1 = (t ? formato.anchoMm : formato.largoMm) - cfg.refiladoMm;
+  const pos = (c: Patron['colocaciones'][number]) => (t
+    ? { a: c.y, b: c.x, largo: c.anchoMm, alto: c.largoMm }
+    : { a: c.x, b: c.y, largo: c.largoMm, alto: c.anchoMm });
 
-  // Las franjas se reconocen por su `y`: el acomodo las apila, nunca las solapa.
-  const franjas = new Map<number, typeof patron.colocaciones>();
-  for (const c of patron.colocaciones) {
-    const y = Math.round(c.y);
-    franjas.set(y, [...(franjas.get(y) ?? []), c]);
-  }
+  // Franja y columna vienen del acomodo. Si faltan (patrones antiguos), la franja se
+  // reconoce por su coordenada de inicio y cada pieza es su propia columna.
+  const franjas = new Map<string, Map<string, ReturnType<typeof pos>[]>>();
+  patron.colocaciones.forEach((c, i) => {
+    const p = pos(c);
+    const kf = c.franja != null ? `f${c.franja}` : `y${Math.round(p.b)}`;
+    const kc = c.columna != null ? `c${c.columna}` : `i${i}`;
+    const cols = franjas.get(kf) ?? new Map<string, ReturnType<typeof pos>[]>();
+    cols.set(kc, [...(cols.get(kc) ?? []), p]);
+    franjas.set(kf, cols);
+  });
 
   let nivel2 = 0;
   let nivel3 = 0;
-  for (const piezas of franjas.values()) {
-    const alto = Math.max(...piezas.map((p) => p.anchoMm));
-    const derecha = Math.max(...piezas.map((p) => p.x + p.largoMm));
-    // n piezas en fila: n-1 cortes entre ellas, y uno más si queda sobrante al borde.
-    nivel2 += piezas.length - 1 + (X1 - derecha > TOL ? 1 : 0);
-    nivel3 += piezas.filter((p) => alto - p.anchoMm > TOL).length;
+  for (const cols of franjas.values()) {
+    const piezas = [...cols.values()].flat();
+    const inicio = Math.min(...piezas.map((p) => p.b));
+    const alto = Math.max(...piezas.map((p) => p.b + p.alto)) - inicio;
+    const derecha = Math.max(...piezas.map((p) => p.a + p.largo));
+    // n columnas en fila: n-1 cortes entre ellas, y uno más si queda sobrante al borde.
+    nivel2 += cols.size - 1 + (X1 - derecha > TOL ? 1 : 0);
+    for (const col of cols.values()) {
+      const ancho = Math.max(...col.map((p) => p.largo));
+      const ocupado = Math.max(...col.map((p) => p.b + p.alto)) - inicio;
+      // Piezas apiladas: un corte entre cada dos, uno si sobra alto encima de la
+      // última y un recorte por pieza más angosta que su columna (solo con 4 niveles).
+      nivel3 += col.length - 1 + (alto - ocupado > TOL ? 1 : 0)
+        + col.filter((p) => ancho - p.largo > TOL).length;
+    }
   }
 
   const refilado = cfg.refiladoMm > 0 ? 2 : 0;

@@ -176,6 +176,7 @@ Editor del **despiece** de cada tipo, sin tocar código:
 Prepara los datos para optimizar el corte de un proyecto (el cálculo del plan de corte llega en la siguiente fase):
 - **Proyecto**: elige una cotización y verás sus módulos, el total de piezas a cortar, el **resumen por material** (piezas, m², láminas mínimas, máximo de láminas para no pasar el desperdicio permitido, alertas) y la lista de corte agrupada por medida.
 - **Piezas por día**: con este dato se calculan los **días de producción** y el reparto diario de piezas (el último día lleva el resto).
+- **Optimizar corte**: calcula el plan en segundo plano (la pantalla no se bloquea), con un contador y el botón **Cancelar**. El campo **Búsqueda del reparto por días (s)** define cuánto tiempo se prueban combinaciones de muebles entre días: más segundos, más combinaciones. Cada material muestra láminas, desperdicio, cortes y el **sobrante útil** (piezas, m² y la mayor medida).
 - **Parámetros de planta** (se guardan para todos los proyectos): seccionadora, espesor del disco, niveles de corte, refilado, láminas por pila según espesor, sobrante útil mínimo, desperdicio máximo, formatos de lámina, texturas que rotan o no la veta y orden del criterio de optimización.
 
 ---

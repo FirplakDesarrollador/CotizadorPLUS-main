@@ -2154,3 +2154,352 @@ La cabecera resume sin desplegar: cocinas, referencias, lineas, unidades y pieza
 defecto, que es el punto; las cocinas se ordenan por volumen de piezas.
 
 Solo presentacion. quality:gate exit 0, build limpio.
+
+## [2026-10-14] ingest | Repositorios de optimización de corte y medición contra packingsolver
+
+Se analizaron 7 repositorios y se midió packingsolver con las mismas piezas: −1 lámina en el proyecto pequeño y −4 en el grande. Informe y plan en docs/informe_repositorios_optimizador_corte.md.
+
+## [2026-10-14] update | Optimizador: columnas, mochila, orientación, worker y reparto activo
+
+Acomodo con columnas apiladas, mochila por franja, dos orientaciones y corrección de valores: iguala a packingsolver (30 y 175 láminas). Se corrigió que la búsqueda del reparto no corría; ahora corre en un Web Worker con presupuesto editable. Gate en verde, sin hallazgos HIGH.
+
+## [2026-10-15] update | Los tips arrancan apagados y el boton muestra su estado
+
+El usuario pidio que el boton Tips quede **inactivo** por defecto al abrir la app. El defecto era
+`true`, asi que ahora `TIPS_ACTIVOS_POR_DEFECTO = false`.
+
+De paso se arreglo lo que impedia darse cuenta del estado: el boton se veia igual encendido que
+apagado —solo cambiaba el emoji— y los tips solo aparecen al pasar el mouse por un campo.
+
+- `TooltipToggle` se ve oscuro cuando esta activo y delineado cuando no, con `aria-pressed`.
+- `useTooltips` pasa a `useSyncExternalStore`, el patron para un estado que vive fuera de React y lo
+  cambia un boton desde cualquier pantalla. De paso quita un error de ESLint que introdujo un primer
+  intento con setState dentro de un efecto.
+- El modulo expone `TIPS_ACTIVOS_POR_DEFECTO`, `tooltipsActivos()`, `suscribirTooltips()` y
+  `resetTooltips()`, lo que permite probarlo sin montar React.
+
+La preferencia **no se guarda**: encenderlos vale para la sesion en curso y cada carga de la app
+parte del defecto.
+
+`tests/tooltips.test.ts` (4 casos) en `lane:frontend`. quality:gate exit 0, build limpio.
+
+## [2026-10-15] fix | El desplegable de cotizaciones abria filtrado a la ya elegida
+
+Al enfocar el buscador, `Combobox` rellenaba el texto con la etiqueta de la opcion seleccionada, asi
+que la lista quedaba filtrada a esa sola y parecia que no hubiera mas cotizaciones. Ahora abre con el
+texto vacio: sale la lista completa, y la eleccion se sigue viendo en el placeholder. Afecta a todos
+los desplegables de la app (tipo de mueble, materiales, cotizaciones).
+
+El filtro se extrajo a `src/lib/combobox-filtro.ts` para poder probarlo: el componente necesita DOM
+y las pruebas corren con `node:test` sin navegador. De paso ahora exige **todas las palabras en
+cualquier orden**, no la frase entera, asi que "boynton coastland" encuentra la cotizacion aunque el
+cliente vaya despues del nombre en la etiqueta.
+
+Verificado contra la base: hay 2 cotizaciones ("26084- BH Boynton GS BLDG B" y "Carolina Sunset -
+Cocinas"), las dos sin codigo, y `listarCotizaciones()` no las limita. El desplegable las muestra.
+
+`tests/combobox-filtro.test.ts` (8 casos) en `lane:frontend`. quality:gate exit 0, build limpio.
+
+## [2026-10-16] fix | Desagrupar un grupo de 3 o mas modulos reventaba con duplicate key
+
+Error reportado: `duplicate key value violates unique constraint
+"cot_grupos_modulos_cocina_id_orden_key"` al desagrupar el grupo `B22.SBFD36.B14`.
+
+Causa: `desagruparGrupo` crea un grupo nuevo por cada linea a partir de la segunda, **dentro de un
+bucle**, y lo insertaba con `orden: 99999` **fijo**. Con dos lineas funcionaba; con tres o mas, el
+segundo insert chocaba contra el primero. La tabla tiene unica `(cocina_id, orden)`.
+
+Mismo defecto latente en los otros cuatro sitios que insertan grupos: usaban `orden: groupCount ?? 0`,
+que solo es libre si los ordenes son 0..n-1 sin huecos. Basta un grupo borrado para que choque.
+
+Los cinco pasan a `max(orden) + 1` (`ordenParaGrupoNuevo`), que no colisiona haya huecos o no.
+`normalizarGrupos` sigue renumerando a 0..n-1 despues, asi que el valor exacto da igual.
+
+La regla se extrajo a `src/lib/grupos-orden.ts` para poder probarla: `cotizaciones.ts` importa
+`server-only` y no se carga desde un test. `tests/grupos-orden.test.ts` (5 casos) en
+`lane:pricing-db`, incluido el que reproduce el bucle de desagrupar.
+
+Base verificada: no quedan residuos (grupos con orden >= 10000, grupos vacios ni cocinas con huecos
+en el orden). El 99999 que se vio en una consulta era transitorio, de la operacion fallida.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] feat | Materiales por familia: Closet/Walk in Closet y Banos/Auxiliares
+
+Dos bloques nuevos de materiales en la creacion de la cotizacion, junto a inferiores y superiores.
+`FamiliaMaterial` pasa de dos valores a cuatro, con `ETIQUETA_FAMILIA` y `CLAVE_CONFIG_FAMILIA` como
+unica fuente: los consumidores dejan de repetir ternarios 'superior' ? ... : ...
+
+- **Closet/Walk in Closet**: tableros y cantos, **sin selector de herrajes** por decision del
+  usuario; los de closet se cargan desde la cotizacion, modulo por modulo. La configuracion guarda
+  `herrajesExcl: []`.
+- **Banos/Auxiliares**: tableros, cantos y herrajes. Son los 13 vanities del catalogo (categoria
+  `vanity`), que hasta ahora se cotizaban con el tablero de inferiores. Decidido con el usuario: las
+  cotizaciones existentes **tomaran el bloque nuevo al recalcular**.
+- El titulo de inferiores pasa de "(B y V)" a "(B)": los vanities ya no van ahi.
+
+Closet apunta de momento a los 4 tipos que el catalogo marca con categoria `closet` (CC, CLV, DFE,
+WCC), **pendiente de la lista de prefijos que dara el usuario**. `WCC` lleva W, asi que sin la tabla
+caeria en superiores: por eso closet y banos se evaluan antes que la regla de la primera B o W.
+
+`herrajesPorFamilia` deja de usar su propio regex `^(B|V)` y llama a `familiaMaterialPorPrefijo`:
+una sola clasificacion para toda la app.
+
+Las cotizaciones sin los bloques nuevos caen en inferiores, como antes. Pruebas: 5 casos en
+`tests/muebles.test.ts` (46 en total). quality:gate exit 0, build limpio.
+
+Falta: los dos bloques en `ProjectConfigPanel` (edicion de una cotizacion ya creada), que hoy solo
+muestra inferiores y superiores aunque el tipo ya acepte los cuatro.
+
+## [2026-10-16] update | Closet y Banos arrancan apagados, con boton para incluirlos
+
+Los dos bloques nuevos se activan por proyecto. Arrancan **apagados**: la mayoria de los proyectos
+son de cocina y no llevan closet ni banos, y tener cuatro bloques de materiales abiertos obliga a
+revisar configuracion que no se va a usar.
+
+Cada bloque lleva en su cabecera un boton **Incluir / Incluido** (oscuro cuando esta activo, igual
+que el resto de controles activos de la app). Apagado: todos los campos del bloque quedan
+deshabilitados y el texto del pie explica que pasa si se deja asi.
+
+Lo importante es que **un bloque apagado no se guarda en la configuracion**. Sin
+`materialesCloset` ni `materialesBanos`, esos modulos caen en inferiores por el mismo fallback que
+ya usaban las cotizaciones anteriores: apagar no inventa un material vacio, deja el de antes.
+
+Solo el formulario de creacion. quality:gate exit 0, build limpio.
+
+## [2026-10-16] style | La propuesta FIRPLAK dice "TIEMPO DE ENTREGA"
+
+La tercera casilla del resumen decia PLAZO ESTIMADO. Cambiada a TIEMPO DE ENTREGA a peticion del
+usuario. El campo del editor que la alimenta pasa de "Plazo (dias)" a "Tiempo de entrega (dias)",
+para que quien lo busque lo encuentre con el nombre que ve en el PDF.
+
+Solo la plantilla FIRPLAK: la de CEMA conserva su propio texto. El dato (`leadTimeDays`) no cambia,
+asi que las cotizaciones ya guardadas siguen igual.
+
+## [2026-10-16] feat | La propuesta FIRPLAK discrimina closet y banos
+
+La pagina de especificaciones tenia dos bloques, "Muebles superiores" y "Muebles inferiores". Ahora
+son cuatro y los dos primeros dicen **cocina**, para que no se confundan con los nuevos:
+
+- Muebles superiores cocina
+- Muebles inferiores cocina
+- Closet / Walk in closet
+- Banos / Auxiliares
+
+Los dos ultimos **solo se imprimen si el proyecto configuro esa familia**. El criterio es la
+presencia de la llave en `ProveedoresPropuesta`: `closet` y `banos` son opcionales a proposito, y
+`page.tsx` solo las arma cuando `config_default` trae `materialesCloset` o `materialesBanos` (los
+bloques que el usuario activa con el boton "Incluir"). Un proyecto de cocina sola imprime la misma
+propuesta de siempre, sin tablas vacias.
+
+Cada bloque trae sus cinco filas con el proveedor del tablero correspondiente, igual que los
+existentes: Tablero y Caja del tablero de caja, Puertas y el ultimo del de frente, Espaldar del de
+fondo. En closet la ultima fila es "Entrepanos, barras y divisiones" en vez de "Rellenos, paneles y
+zocalos".
+
+El titulo de la pagina pasa de "Especificaciones de cocina" a "Especificaciones", que ya no es solo
+de cocina. Diez campos nuevos en la plantilla (`closetBoard`...`bathPanels`) con sus textos por
+defecto y sus campos en el editor; `normalizarFirplakTemplate` los completa en las cotizaciones
+guardadas antes de que existieran.
+
+4 pruebas nuevas en `tests/firplak-template.test.ts` (13 en total). quality:gate exit 0, build limpio.
+
+## [2026-10-16] fix | La cotizacion en COP se mostraba y se imprimia en dolares
+
+Reportado sobre la cotizacion "camila", que **ya tiene `moneda: 'COP'` en la base** (verificado) y
+aun asi mostraba 288,90 USD como cifra grande y 924.449 COP debajo, y exportaba la propuesta en
+dolares. Dos sitios ignoraban la moneda del proyecto:
+
+- `ProyectoHeader`: la cifra grande era siempre `fmtUSD(total_usd)`. Ahora manda `cab.moneda`: en un
+  proyecto en COP la grande es la que el cliente va a pagar y el dolar queda debajo como referencia.
+- Propuesta FIRPLAK: `money()` formateaba siempre en dolares y `FirplakProposalData` solo llevaba
+  valores USD. Ahora lleva tambien los COP y la moneda, y la propuesta imprime la que corresponda.
+
+El valor en pesos **sale de cada linea**, no de multiplicar el dolar por la TRM: con TRM 3.200 eso
+daria 924.480 contra los 924.449 reales, porque cada modulo ya se redondeo. Hay una prueba que fija
+la diferencia.
+
+El Excel y la impresion del listado interno ya respetaban las casillas de columna USD/COP del
+detalle; eso no se toco. Las casillas siguen controlando **que columnas** se ven, y la moneda del
+proyecto controla **en que moneda** se cotiza: son cosas distintas y ahora cada una hace la suya.
+
+`importePropuesta` y `formatearImporte` viven en `firplak-template.ts` para poder probarlos.
+3 pruebas nuevas (16 en total). quality:gate exit 0, build limpio.
+
+## [2026-10-16] update | El total del encabezado sigue las casillas de moneda
+
+Complementa el arreglo anterior. El encabezado ya respetaba la moneda del proyecto, pero seguia
+mostrando las dos cifras aunque en las columnas se hubiera destildado una. Ahora:
+
+| Casillas | Encabezado |
+| --- | --- |
+| Solo COP | solo pesos |
+| Solo USD | solo dolares |
+| Las dos | primero la moneda del proyecto, la otra debajo |
+
+Marcar unicamente pesos y seguir viendo dolares arriba era contradecir lo que se pidio. Con las dos
+marcadas manda la moneda del proyecto, que es en la que se cotiza.
+
+La regla vive en `src/lib/monedas-visibles.ts` para poder probarla, y `ProyectoHeader` la recibe
+como prop opcional: sin ella se comporta como antes, con las dos monedas. 5 casos en
+`tests/monedas-visibles.test.ts`, incluido que nunca repita una moneda ni deje el encabezado en
+blanco. quality:gate exit 0, build limpio.
+
+## [2026-10-16] fix | El resumen de la propuesta dice solo "Muebles"
+
+La columna Descripcion estaba fija en "Muebles de cocina", asi que un area llamada "Closet" salia
+igualmente como cocina. Decision del usuario tras probar dos alternativas: la celda dice solo
+**"Muebles"**, porque el tipo ya lo dice la columna Area, que esta justo al lado.
+
+En el camino se probo derivar el texto de los modulos del area y luego componerlo con el nombre del
+area; ninguna quedo. El modulo `src/lib/descripcion-area.ts` y su prueba se **eliminaron** en vez de
+dejarlos sin uso.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] feat | IVA del 19% en las cotizaciones en pesos
+
+Las cotizaciones en COP liquidan el IVA colombiano en la propuesta PDF y en el Excel:
+
+```
+TOTAL ANTES DE IVA        $ 924.449
+IVA 19%                   $ 175.645
+TOTAL CON IVA INCLUIDO  $ 1.100.094
+```
+
+**Solo en pesos.** Una venta en dolares es exportacion y sale sin IVA, asi que la regla cuelga de la
+moneda del proyecto (`aplicaIva`) y no de un interruptor aparte que alguien pueda dejar mal puesto.
+En USD la propuesta sigue diciendo TOTAL a secas, como antes.
+
+En el Excel el IVA se liquida sobre la columna **c/H COP**, que es la que se le factura al cliente.
+Si esa columna no se exporto —porque se destildo en el detalle— la fila se omite en vez de salir en
+cero, y el TOTAL conserva su nombre de siempre.
+
+`src/lib/iva.ts` con la tarifa, el calculo y la etiqueta; la tarifa es parametro con 19 % por
+defecto, por si alguna linea quedara exenta. 6 casos en `tests/iva.test.ts`, incluidos los de base
+invalida o negativa, que no pueden producir NaN ni IVA a favor.
+
+Pendiente de confirmar: si alguna linea del catalogo esta excluida o exenta, hoy todo va al 19 %.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] fix | La propuesta listaba herrajes que la cotizacion no incluye
+
+La pagina "Herrajes incluidos" traia una lista **fija** de diez renglones —bisagras, correderas,
+patas, soportes, manijas, gola, sistema elevable, platero, zocalo, papelera— con "N/A" en los que no
+aplicaban, mas seis fotos de catalogo. Eso le anuncia al cliente herrajes que su proyecto no lleva y
+esconde los que si.
+
+Ahora la lista sale del **despiece de cada modulo** (`breakdown.herrajes`), sumando por referencia y
+multiplicando por las unidades de la linea y por las veces que se repite el area. La descripcion
+viene de `cot_herrajes.nombre`, no de un texto escrito a mano en la plantilla.
+
+Comprobado contra la cotizacion "camila": lista 4 renglones —bisagra par (4), manija 415 (4), pata
+ajustable (8) y tornillo 8 5/8 (32)— en vez de los diez de antes con seis N/A.
+
+Las **imagenes se eliminaron** de la propuesta, a peticion del usuario. Tambien salieron los diez
+campos de texto de herrajes de `FirplakTemplate` y del editor: ya no alimentan nada y dejarlos
+editables haria creer que cambian la propuesta.
+
+El mismo rol con dos referencias son dos renglones, porque al cliente se le entregan las dos. Un
+codigo sin registro en el catalogo se imprime sin descripcion en vez de con un texto inventado. Si
+los muebles no llevan herrajes, la pagina lo dice en vez de mostrar una tabla vacia.
+
+`src/lib/herrajes-propuesta.ts` con 11 casos en `tests/herrajes-propuesta.test.ts`.
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] update | La propuesta pierde el bloque de materiales del proyecto y las fotos de embalaje
+
+A peticion del usuario:
+
+- Fuera el bloque **"Materiales configurados en el proyecto"** de la pagina de especificaciones. El
+  campo `projectMaterials` sale de `FirplakTemplate` y del editor: nunca llego a tener contenido
+  definitivo y las cuatro tablas de especificaciones ya dicen los materiales.
+- Fuera las **dos fotos de embalaje** de la pagina de condiciones. Queda el texto de Embalaje y los
+  terminos, que es lo que se lee.
+
+Con esto la propuesta ya no usa ninguna imagen salvo el logo. Los archivos siguen en
+`public/firplak-template/` (las 6 de herrajes y las 2 de embalaje) por si se quieren recuperar; no
+se borraron sin pedirlo.
+
+**Defecto encontrado por una prueba**: `normalizarFirplakTemplate` era un spread y arrastraba las
+claves retiradas del JSON guardado, asi que los campos de herrajes y `projectMaterials` se iban a
+seguir acumulando en la base para siempre. Ahora se queda solo con las llaves conocidas y lo
+retirado se va en el proximo guardado, sin migracion.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] feat | Termino de tiempo de entrega en la propuesta
+
+Nuevo punto en Terminos y condiciones, despues del de pago:
+
+> Tiempo de entrega: noventa (90) dias calendario a partir de la confirmacion del anticipo.
+
+El numero **no va escrito a mano**: sale de `leadTimeDays`, que se edita en la plantilla y ya
+alimenta la casilla TIEMPO DE ENTREGA del resumen. Si el plazo cambia a 45, el termino dice
+"cuarenta y cinco (45)".
+
+Para eso se escribio `src/lib/numero-en-letras.ts`: numeros de 0 a 999 en letras, con los casos
+irregulares del espanol (quince, dieciseis, veintidos, treinta y uno, cien contra ciento,
+quinientos, setecientos, novecientos). Fuera de rango devuelve el digito en vez de una frase
+inventada; un plazo de mas de mil dias no existe. 6 casos en `tests/numero-en-letras.test.ts`.
+
+La convencion de letras mas cifra es la de los documentos comerciales en Colombia: evita que un
+digito mal leido cambie el compromiso.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] feat | La programacion de modulos va separada por bloques con su total
+
+La pagina era una lista plana de SKU. Ahora se separa en **Muebles, Paneles, Filler y Herrajes**,
+cada uno con su titulo y con el total de unidades al final del bloque, que es lo que se lee de esa
+pagina y antes habia que sumar a mano.
+
+Clasificacion por el prefijo del modulo: `PN` a Paneles, `F` a Filler, lo demas a Muebles. Se
+comparan las **letras iniciales**, no un `startsWith`, para que `FPK` no caiga en Filler ni `PCFD`
+en Paneles. Una linea sin prefijo es material suelto —lo que se agrega con "Agregar
+herrajes/otros"— y va al bloque de Herrajes.
+
+Los zocalos (`TK`) quedan en Muebles: el usuario pidio cuatro bloques y no se inventa un quinto.
+Un bloque sin filas no se imprime, en vez de salir en cero.
+
+`src/lib/grupos-programacion.ts` con 9 casos en `tests/grupos-programacion.test.ts`.
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] update | Los terminos suben a la primera pagina y la propuesta baja a 4 hojas
+
+A peticion del usuario, en la primera pagina las tres casillas (VIGENCIA, FORMA DE PAGO, TIEMPO DE
+ENTREGA) y la linea de alcance de entrega dejan su sitio a **Terminos y condiciones**, que estaba al
+final del documento.
+
+No se pierde informacion: vigencia, forma de pago y tiempo de entrega ya eran puntos de esa lista
+—decian lo mismo que las casillas— y el alcance de entrega se agrego como punto propio para no
+dejarlo fuera del documento.
+
+El texto de embalaje pasa a ser un punto mas de la lista, como se pidio. Con eso la pagina
+"Embalaje y condiciones" se queda sin contenido y **se elimina**: la propuesta pasa de 5 hojas a 4
+(Cotizacion, Especificaciones, Herrajes incluidos, Programacion de modulos). El campo de notas de
+embalaje sigue editable en la plantilla.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] fix | La propuesta y el Excel siguen la moneda elegida, y el IVA con ella
+
+El IVA ya se liquidaba solo en pesos, pero la moneda del documento salia de `cabecera.moneda` y no
+de lo que se elige en el detalle. Si se destildaba COP y se imprimia, la propuesta seguia saliendo
+en pesos y con IVA.
+
+Ahora los tres —encabezado, propuesta y Excel— usan **la misma regla**, `monedasVisibles`: manda lo
+marcado en las casillas y, con las dos marcadas o sin casillas en la URL, la moneda del proyecto.
+Las casillas ya viajaban en el enlace de Imprimir / PDF y en el de Exportar Excel; la propuesta las
+estaba ignorando.
+
+Consecuencia, que es lo que se pidio:
+
+| Moneda del documento | Pie del resumen |
+| --- | --- |
+| USD | una sola fila: **TOTAL** |
+| COP | TOTAL ANTES DE IVA · IVA 19% · TOTAL CON IVA INCLUIDO |
+
+4 casos nuevos en `tests/iva.test.ts` que fijan la combinacion completa, incluido elegir dolares en
+un proyecto en pesos (sin IVA) y al reves. quality:gate exit 0, build limpio.
