@@ -10,7 +10,7 @@ import ProjectConfigPanel, { type ProjectDefaults } from './ProjectConfigPanel';
 import { eliminarCotizacionAction, actualizarCotizacionAction } from '../actions';
 import VersionesCotizacion from './VersionesCotizacion';
 import type { CotizacionVersion } from '@/lib/cotizaciones';
-import type { FamiliaMaterial } from '@/lib/muebles';
+import { CLAVE_CONFIG_FAMILIA, type FamiliaMaterial } from '@/lib/muebles';
 import { calcularMargenGlobalProyecto } from '@/lib/module-groups';
 
 type LineaConfig = {
@@ -117,6 +117,8 @@ export default function CotizacionDetalleClient({
         conFondo: initialConfig.conFondo ?? true,
         materialesInferiores: initialConfig.materialesInferiores,
         materialesSuperiores: initialConfig.materialesSuperiores,
+        materialesCloset: initialConfig.materialesCloset,
+        materialesBanos: initialConfig.materialesBanos,
         tipoId: initialConfig.tipoId,
         largo: initialConfig.largo,
         alto: initialConfig.alto,
@@ -192,7 +194,7 @@ export default function CotizacionDetalleClient({
   // Al agregar un mueble, sus materiales y cantos quedan como default del proyecto
   // para que el próximo mueble (incluso en otra pestaña o al día siguiente) arranque con los mismos valores.
   function handleMaterialesUsados(materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] }) {
-    const key = materiales.familia === 'superior' ? 'materialesSuperiores' : 'materialesInferiores';
+    const key = CLAVE_CONFIG_FAMILIA[materiales.familia];
     const materialSet = { preset: materiales.preset, cantoFrentes: materiales.cantoFrentes, cantoCaja: materiales.cantoCaja, perfilId: materiales.perfilId, herrajesExcl: materiales.herrajesExcl };
     handleProjectDefaultsChange({
       ...projectDefaults,
@@ -205,7 +207,7 @@ export default function CotizacionDetalleClient({
     <>
       <div className="flex items-start justify-between gap-2" data-tour="proyecto">
         <div className="flex-1">
-          <ProyectoHeader cab={cabecera} margenGlobal={margenGlobal} />
+          <ProyectoHeader cab={cabecera} margenGlobal={margenGlobal} columnasMoneda={{ usd: columnasPrecio.usd, cop: columnasPrecio.cop }} />
         </div>
         <div className="flex gap-2">
           <GuideButton steps={GUIA_PROYECTO} label="Guía" />

@@ -1,12 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { filtrarOpciones } from '@/lib/combobox-filtro';
 
 export type Opt = { value: string; label: string; searchText?: string };
-
-const normalizeSearch = (value: string) => value
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .toLowerCase();
 
 // Desplegable con buscador de texto. Filtra las opciones por lo que se escribe.
 export default function Combobox({ value, options, onChange, placeholder = 'Buscar…', allowEmpty = false, emptyLabel = '—', disabled = false }:
@@ -27,10 +23,7 @@ export default function Combobox({ value, options, onChange, placeholder = 'Busc
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  const q = normalizeSearch((query ?? '').trim());
-  const filtered = q
-    ? options.filter((o) => normalizeSearch(`${o.label} ${o.searchText ?? ''}`).includes(q))
-    : options;
+  const filtered = filtrarOpciones(options, query ?? '');
 
   function pick(v: string) { onChange(v); setOpen(false); setQuery(null); }
 
@@ -46,7 +39,7 @@ export default function Combobox({ value, options, onChange, placeholder = 'Busc
         value={query !== null ? query : (selected?.label ?? '')}
         placeholder={selected ? selected.label : placeholder}
         disabled={disabled}
-        onFocus={(e) => { setOpen(true); setQuery(selected?.label ?? ''); e.currentTarget.select(); }}
+        onFocus={() => { setOpen(true); setQuery(''); }}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); setQuery(null); } }}
       />

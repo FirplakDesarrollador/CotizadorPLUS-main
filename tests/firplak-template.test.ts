@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { conProveedor, formaDePago, normalizarFirplakTemplate, FIRPLAK_TEMPLATE_DEFAULTS, PROVEEDORES_VACIOS } from '../src/lib/firplak-template';
+import { conProveedor, formaDePago, normalizarFirplakTemplate, FIRPLAK_TEMPLATE_DEFAULTS, PROVEEDORES_VACIOS, importePropuesta, formatearImporte } from '../src/lib/firplak-template';
 
 // Las tablas de especificaciones de la propuesta FIRPLAK nombran el material de
 // cada bloque; produccion pide ver ademas de quien es el tablero (PRIMADERA,
@@ -39,21 +39,15 @@ test('PROVEEDORES_VACIOS deja las seis casillas en blanco', () => {
   }
 });
 
-test('la plantilla trae el campo de materiales vacio y editable', () => {
-  // Antes se rellenaba con un volcado de la configuracion interna del proyecto.
-  assert.equal(FIRPLAK_TEMPLATE_DEFAULTS.projectMaterials, '');
-  assert.equal(normalizarFirplakTemplate(null).projectMaterials, '');
-  assert.equal(normalizarFirplakTemplate({ projectMaterials: 'Texto nuevo' }).projectMaterials, 'Texto nuevo');
-});
-
 test('normalizarFirplakTemplate completa los campos que falten en lo guardado', () => {
-  // Las plantillas ya guardadas no tienen `projectMaterials`; deben leerlo como
-  // cadena vacia sin necesidad de migracion.
-  const guardada = { upperBoard: 'Tablero X' } as Parameters<typeof normalizarFirplakTemplate>[0];
+  // Una plantilla guardada hace meses no trae los campos nuevos: se completan con
+  // el defecto, sin necesidad de migracion. Y los campos retirados que siguen en el
+  // JSON guardado simplemente se ignoran.
+  const guardada = { upperBoard: 'Tablero X', projectMaterials: 'texto retirado' } as Parameters<typeof normalizarFirplakTemplate>[0];
   const t = normalizarFirplakTemplate(guardada);
   assert.equal(t.upperBoard, 'Tablero X', 'conserva lo guardado');
-  assert.equal(t.projectMaterials, '', 'completa lo que falta');
-  assert.equal(t.lowerBoard, FIRPLAK_TEMPLATE_DEFAULTS.lowerBoard);
+  assert.equal(t.lowerBoard, FIRPLAK_TEMPLATE_DEFAULTS.lowerBoard, 'completa lo que falta');
+  assert.ok(!('projectMaterials' in t), 'lo retirado no vuelve por la puerta de atras');
 });
 
 test('formaDePago se redacta completa, no como "50% / 50%"', () => {
@@ -66,4 +60,62 @@ test('formaDePago sigue los porcentajes de la plantilla', () => {
   assert.equal(formaDePago(100, 0), '100% de anticipo y 0% antes del despacho');
   assert.equal(formaDePago(FIRPLAK_TEMPLATE_DEFAULTS.depositPercent, FIRPLAK_TEMPLATE_DEFAULTS.balancePercent),
     '50% de anticipo y 50% antes del despacho', 'los valores por defecto de la plantilla');
+});
+
+// ---------------------------------------------------------------------------
+// Closet/walk in closet y banos/auxiliares: sus tablas solo salen en la propuesta
+// cuando el proyecto configuro esas familias.
+// ---------------------------------------------------------------------------
+
+test('la plantilla trae textos por defecto para closet y banos', () => {
+  for (const campo of ['closetBoard', 'closetBack', 'closetCase', 'closetDoors', 'closetPanels',
+    'bathBoard', 'bathBack', 'bathCase', 'bathDoors', 'bathPanels'] as const) {
+    assert.ok(FIRPLAK_TEMPLATE_DEFAULTS[campo].length > 0, `${campo} sin texto por defecto`);
+  }
+});
+
+test('una plantilla guardada sin los campos nuevos los completa', () => {
+  // Las cotizaciones creadas antes de que existieran estas familias no los traen.
+  const normalizada = normalizarFirplakTemplate({ upperBoard: 'Tablero del cliente' });
+  assert.equal(normalizada.upperBoard, 'Tablero del cliente', 'lo guardado manda');
+  assert.equal(normalizada.closetBoard, FIRPLAK_TEMPLATE_DEFAULTS.closetBoard);
+  assert.equal(normalizada.bathPanels, FIRPLAK_TEMPLATE_DEFAULTS.bathPanels);
+});
+
+test('sin closet ni banos configurados, esos bloques no existen', () => {
+  // La ausencia de la llave es lo que la propuesta usa para no imprimir la tabla.
+  assert.equal(PROVEEDORES_VACIOS.closet, undefined);
+  assert.equal(PROVEEDORES_VACIOS.banos, undefined);
+  assert.deepEqual(PROVEEDORES_VACIOS.superiores, { caja: '', frente: '', fondo: '' });
+  assert.deepEqual(PROVEEDORES_VACIOS.inferiores, { caja: '', frente: '', fondo: '' });
+});
+
+test('el proveedor se agrega a las filas de closet y banos igual que a las demas', () => {
+  assert.equal(conProveedor('Tablero 15 mm', 'PRIMADERA'), 'Tablero 15 mm · PRIMADERA');
+  assert.equal(conProveedor('Tablero 15 mm', ''), 'Tablero 15 mm', 'sin proveedor no queda separador huerfano');
+});
+
+// ---------------------------------------------------------------------------
+// Moneda de la propuesta. La cotizacion "camila" estaba en COP y el PDF salia en
+// dolares igual: el cliente tenia que convertir para saber que iba a pagar.
+// ---------------------------------------------------------------------------
+
+test('la propuesta toma el importe de la moneda de la cotizacion', () => {
+  assert.equal(importePropuesta('USD', 288.9, 924449), 288.9);
+  assert.equal(importePropuesta('COP', 288.9, 924449), 924449);
+});
+
+test('el valor en pesos sale de la linea, no de multiplicar el dolar por la TRM', () => {
+  // Con TRM 3200, 288,9 x 3200 = 924.480, pero la linea dice 924.449: la diferencia
+  // es el redondeo de cada modulo. Manda el valor de la linea.
+  const porTrm = 288.9 * 3200;
+  assert.notEqual(porTrm, 924449);
+  assert.equal(importePropuesta('COP', 288.9, 924449), 924449);
+});
+
+test('cada moneda se formatea con su convencion', () => {
+  assert.ok(formatearImporte('USD', 288.9).includes('288.90'), formatearImporte('USD', 288.9));
+  const cop = formatearImporte('COP', 924449);
+  assert.ok(cop.includes('924'), cop);
+  assert.ok(!cop.includes(',00'), 'los pesos no llevan decimales');
 });

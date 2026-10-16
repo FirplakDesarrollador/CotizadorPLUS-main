@@ -8,6 +8,7 @@ import {
 } from '@/lib/module-groups';
 import { contarEntrepanos, esElementoPlano, etiquetaDescripcion } from '@/lib/muebles';
 import { calcularPrecioMaterial, descripcionMaterial, grupoSeSaltaElMotor, type TipoMaterial } from '@/lib/materiales-linea';
+import { siguienteOrdenGrupo as siguienteOrden } from '@/lib/grupos-orden';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
 
@@ -271,6 +272,26 @@ async function obtenerSistema(cotizacionId: string): Promise<SistemaMedida> {
   return (data.sistema_medida ?? 'imperial') as SistemaMedida;
 }
 
+/**
+ * Orden libre para un grupo nuevo de la cocina.
+ *
+ * `cot_grupos_modulos` tiene unica `(cocina_id, orden)`. Antes el orden salia del
+ * **conteo** de grupos, que solo coincide si los valores son 0..n-1 sin huecos, y
+ * `desagruparGrupo` llegaba a insertar varios con un 99999 fijo: desagrupar un
+ * grupo de tres modulos reventaba con "duplicate key value violates unique
+ * constraint". Con max+1 no hay colision, haya huecos o no; `normalizarGrupos`
+ * renumera a 0..n-1 despues.
+ */
+async function ordenParaGrupoNuevo(
+  sb: Awaited<ReturnType<typeof createClient>>,
+  cocinaId: string,
+): Promise<number> {
+  const { data } = await sb.from('cot_grupos_modulos')
+    .select('orden').eq('cocina_id', cocinaId)
+    .order('orden', { ascending: false }).limit(1).maybeSingle();
+  return siguienteOrden((data as { orden: number } | null)?.orden);
+}
+
 async function normalizarGrupos(cocinaId: string) {
   const sb = await createClient();
   const { data: grupos, error } = await sb.from('cot_grupos_modulos').select('id').eq('cocina_id', cocinaId).order('orden').order('created_at');
@@ -392,12 +413,10 @@ export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
   const { count } = await sb.from('cot_cotizacion_lineas')
     .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
 
-  const { count: groupCount } = await sb.from('cot_grupos_modulos')
-    .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
   const { data: grupo, error: groupError } = await sb.from('cot_grupos_modulos').insert({
     cotizacion_id: cotizacionId,
     cocina_id: cocinaId,
-    orden: groupCount ?? 0,
+    orden: await ordenParaGrupoNuevo(sb, cocinaId),
     etiqueta: `NUEVO-${crypto.randomUUID()}`,
   }).select('id').single();
   if (groupError || !grupo) throw new Error(groupError?.message ?? 'No se pudo crear el bloque del módulo');
@@ -457,12 +476,10 @@ export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: str
   if (!current.cocina_id) throw new Error('El módulo no pertenece a una cocina');
 
   if (!current.grupo_id) {
-    const { count: groupCount } = await sb.from('cot_grupos_modulos')
-      .select('id', { count: 'exact', head: true }).eq('cocina_id', current.cocina_id);
     const { data: createdG, error: gErr } = await sb.from('cot_grupos_modulos').insert({
       cotizacion_id: current.cotizacion_id,
       cocina_id: current.cocina_id,
-      orden: groupCount ?? 0,
+      orden: await ordenParaGrupoNuevo(sb, current.cocina_id),
       etiqueta: `NUEVO-${crypto.randomUUID()}`,
     }).select('id').single();
     if (gErr || !createdG) throw new Error(gErr?.message ?? 'No se pudo crear el bloque');
@@ -547,7 +564,7 @@ export async function desagruparGrupo(grupoId: string) {
     const { data: newGrupo, error: groupErr } = await sb.from('cot_grupos_modulos').insert({
       cotizacion_id: grupo.cotizacion_id,
       cocina_id: grupo.cocina_id,
-      orden: 99999,
+      orden: await ordenParaGrupoNuevo(sb, grupo.cocina_id),
       etiqueta: `NUEVO-${crypto.randomUUID()}`,
     }).select('id').single();
     if (groupErr || !newGrupo) throw new Error(groupErr?.message ?? 'Error al crear nuevo grupo');
@@ -675,12 +692,10 @@ export async function duplicarLineaACocina(lineaId: string, nuevaCocinaId: strin
   const { count } = await sb.from('cot_cotizacion_lineas')
     .select('id', { count: 'exact', head: true }).eq('cocina_id', nuevaCocinaId);
 
-  const { count: groupCount } = await sb.from('cot_grupos_modulos')
-    .select('id', { count: 'exact', head: true }).eq('cocina_id', nuevaCocinaId);
   const { data: grupo, error: groupError } = await sb.from('cot_grupos_modulos').insert({
     cotizacion_id: cotizacionId,
     cocina_id: nuevaCocinaId,
-    orden: groupCount ?? 0,
+    orden: await ordenParaGrupoNuevo(sb, nuevaCocinaId),
     etiqueta: `COPIA-${crypto.randomUUID()}`,
   }).select('id').single();
   if (groupError || !grupo) throw new Error(groupError?.message ?? 'No se pudo crear el bloque de destino');
@@ -759,6 +774,21 @@ export async function proveedoresDeTableros(codigos: readonly string[]): Promise
     ((data ?? []) as { codigo: string; proveedor: string | null }[])
       .filter((t) => t.proveedor)
       .map((t) => [t.codigo, String(t.proveedor)]),
+  );
+}
+
+// Nombre de catalogo de cada herraje, para la lista de la propuesta. Mismo
+// criterio que los tableros: un codigo sin registro simplemente no aparece y la
+// fila se imprime sin descripcion en vez de con un texto inventado.
+export async function nombresDeHerrajes(codigos: readonly string[]): Promise<Record<string, string>> {
+  const unicos = [...new Set(codigos.filter(Boolean))];
+  if (!unicos.length) return {};
+  const sb = await createClient();
+  const { data } = await sb.from('cot_herrajes').select('codigo,nombre').in('codigo', unicos);
+  return Object.fromEntries(
+    ((data ?? []) as { codigo: string; nombre: string | null }[])
+      .filter((h) => h.nombre)
+      .map((h) => [h.codigo, String(h.nombre)]),
   );
 }
 
@@ -848,11 +878,9 @@ export async function agregarLineaMaterial(
 
   const { count } = await sb.from('cot_cotizacion_lineas')
     .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
-  const { count: groupCount } = await sb.from('cot_grupos_modulos')
-    .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
   const { data: grupo, error: groupError } = await sb.from('cot_grupos_modulos').insert({
     cotizacion_id: cotizacionId, cocina_id: cocinaId,
-    orden: groupCount ?? 0, etiqueta: `MAT-${crypto.randomUUID()}`,
+    orden: await ordenParaGrupoNuevo(sb, cocinaId), etiqueta: `MAT-${crypto.randomUUID()}`,
   }).select('id').single();
   if (groupError || !grupo) throw new Error(groupError?.message ?? 'No se pudo crear el bloque del material');
 

@@ -3,6 +3,7 @@ import { useActionState, useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { crearCotizacionAction } from './actions';
 import Combobox from '@/components/Combobox';
+import { familiaMaterialPorPrefijo, type FamiliaMaterial } from '@/lib/muebles';
 
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; valores: Record<string, string> };
@@ -58,10 +59,40 @@ export default function NuevoCotizacionForm({
   const [herrajesExclInferiores, setHerrajesExclInferiores] = useState<string[]>([]);
   const [herrajesExclSuperiores, setHerrajesExclSuperiores] = useState<string[]>([]);
 
+  // Closet y banos arrancan con los mismos tableros que inferiores: lo normal es
+  // que cambie uno o dos, no los cuatro bloques desde cero.
+  const [presetCloset, setPresetCloset] = useState<Record<string, string>>({ ...presetDefault });
+  const [presetBanos, setPresetBanos] = useState<Record<string, string>>({ ...presetDefault });
+  const [cantoFrentesCloset, setCantoFrentesCloset] = useState(cantoFrentes);
+  const [cantoCajaCloset, setCantoCajaCloset] = useState(cantoCaja);
+  const [cantoFrentesBanos, setCantoFrentesBanos] = useState(cantoFrentes);
+  const [cantoCajaBanos, setCantoCajaBanos] = useState(cantoCaja);
+  const [perfilClosetId, setPerfilClosetId] = useState(perfilDefaultId);
+  const [perfilBanosId, setPerfilBanosId] = useState(perfilDefaultId);
+  // Closet no lleva herrajes aqui: se cargan desde la cotizacion.
+  const [herrajesExclBanos, setHerrajesExclBanos] = useState<string[]>([]);
+  // Los dos bloques arrancan apagados: la mayoria de los proyectos son de cocina y
+  // no llevan closet ni banos. Apagado no se guarda en la configuracion, asi que
+  // esos modulos siguen cotizandose con el material de inferiores.
+  const [closetActivo, setClosetActivo] = useState(false);
+  const [banosActivo, setBanosActivo] = useState(false);
+
   function aplicarPerfil(id: string) {
     setPerfilId(id);
     const p = perfiles.find((x) => x.id === id);
     if (p) setPreset({ ...p.valores });
+  }
+
+  function aplicarPerfilCloset(id: string) {
+    setPerfilClosetId(id);
+    const p = perfiles.find((x) => x.id === id);
+    if (p) setPresetCloset({ ...p.valores });
+  }
+
+  function aplicarPerfilBanos(id: string) {
+    setPerfilBanosId(id);
+    const p = perfiles.find((x) => x.id === id);
+    if (p) setPresetBanos({ ...p.valores });
   }
 
   function aplicarPerfilSuperior(id: string) {
@@ -94,6 +125,30 @@ export default function NuevoCotizacionForm({
     }
   }
 
+  function handleTableroCloset(rol: string, value: string) {
+    const board = tableros.find((t) => t.codigo === value);
+    setPresetCloset((p) => ({ ...p, [rol]: value, ...(rol === 'caja' ? { refuerzo: value } : {}) }));
+    if (rol === 'caja') {
+      if (board?.espesor_mm === 18) setCantoCajaCloset(getCantoMatch(cantos, '22x1'));
+      else if (board?.espesor_mm === 15) setCantoCajaCloset(getCantoMatch(cantos, '19x0,45'));
+    } else if (rol === 'frente') {
+      if (board?.espesor_mm === 18) setCantoFrentesCloset(getCantoMatch(cantos, '22x1'));
+      else if (board?.espesor_mm === 15) setCantoFrentesCloset(getCantoMatch(cantos, '19x0,45'));
+    }
+  }
+
+  function handleTableroBanos(rol: string, value: string) {
+    const board = tableros.find((t) => t.codigo === value);
+    setPresetBanos((p) => ({ ...p, [rol]: value, ...(rol === 'caja' ? { refuerzo: value } : {}) }));
+    if (rol === 'caja') {
+      if (board?.espesor_mm === 18) setCantoCajaBanos(getCantoMatch(cantos, '22x1'));
+      else if (board?.espesor_mm === 15) setCantoCajaBanos(getCantoMatch(cantos, '19x0,45'));
+    } else if (rol === 'frente') {
+      if (board?.espesor_mm === 18) setCantoFrentesBanos(getCantoMatch(cantos, '22x1'));
+      else if (board?.espesor_mm === 15) setCantoFrentesBanos(getCantoMatch(cantos, '19x0,45'));
+    }
+  }
+
   const tableroOptions = useMemo(
     () => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({
       value: t.codigo,
@@ -104,24 +159,23 @@ export default function NuevoCotizacionForm({
   );
 
   const herrajesPorFamilia = useMemo(() => {
-    const obtener = (familia: 'inferior' | 'superior') => {
+    const obtener = (familia: FamiliaMaterial) => {
       const porRol = new Map<string, HerrajeOpcion>();
       for (const tipo of tipos) {
-        const pertenece = familia === 'inferior'
-          ? /^(B|V)/.test(tipo.pref)
-          : /^(W|TW)/.test(tipo.pref);
-        if (!pertenece) continue;
+        if (familiaMaterialPorPrefijo(tipo.pref) !== familia) continue;
         for (const herraje of herrajesByTipo[tipo.id] ?? []) {
           if (!porRol.has(herraje.rol)) porRol.set(herraje.rol, herraje);
         }
       }
       return [...porRol.values()].sort((a, b) => a.rol.localeCompare(b.rol));
     };
-    return { inferior: obtener('inferior'), superior: obtener('superior') };
+    return { inferior: obtener('inferior'), superior: obtener('superior'), banos: obtener('banos') };
   }, [tipos, herrajesByTipo]);
 
-  function toggleHerraje(rol: string, familia: 'inferior' | 'superior') {
-    const setter = familia === 'inferior' ? setHerrajesExclInferiores : setHerrajesExclSuperiores;
+  function toggleHerraje(rol: string, familia: 'inferior' | 'superior' | 'banos') {
+    const setter = familia === 'inferior' ? setHerrajesExclInferiores
+      : familia === 'banos' ? setHerrajesExclBanos
+      : setHerrajesExclSuperiores;
     setter((actual) => actual.includes(rol) ? actual.filter((item) => item !== rol) : [...actual, rol]);
   }
 
@@ -136,7 +190,26 @@ export default function NuevoCotizacionForm({
       preset: { ...presetSuperior, refuerzo: presetSuperior['caja'] ?? '' },
       cantoFrentes: cantoFrentesSuperior, cantoCaja: cantoCajaSuperior, perfilId: perfilSuperiorId, herrajesExcl: herrajesExclSuperiores,
     },
-  }), [preset, cantoFrentes, cantoCaja, perfilId, conFondo, presetSuperior, cantoFrentesSuperior, cantoCajaSuperior, perfilSuperiorId, herrajesExclInferiores, herrajesExclSuperiores]);
+    // Un bloque apagado no se guarda: sus modulos caen en inferiores, como antes de
+    // que estas familias existieran.
+    ...(closetActivo ? {
+      materialesCloset: {
+        preset: { ...presetCloset, refuerzo: presetCloset['caja'] ?? '' },
+        cantoFrentes: cantoFrentesCloset, cantoCaja: cantoCajaCloset, perfilId: perfilClosetId,
+        // Sin herrajes: los de closet se cargan desde la cotizacion.
+        herrajesExcl: [],
+      },
+    } : {}),
+    ...(banosActivo ? {
+      materialesBanos: {
+        preset: { ...presetBanos, refuerzo: presetBanos['caja'] ?? '' },
+        cantoFrentes: cantoFrentesBanos, cantoCaja: cantoCajaBanos, perfilId: perfilBanosId, herrajesExcl: herrajesExclBanos,
+      },
+    } : {}),
+  }), [preset, cantoFrentes, cantoCaja, perfilId, conFondo, presetSuperior, cantoFrentesSuperior, cantoCajaSuperior, perfilSuperiorId, herrajesExclInferiores, herrajesExclSuperiores,
+    presetCloset, cantoFrentesCloset, cantoCajaCloset, perfilClosetId,
+    presetBanos, cantoFrentesBanos, cantoCajaBanos, perfilBanosId, herrajesExclBanos,
+    closetActivo, banosActivo]);
 
   const configEncoded = useMemo(
     () => btoa(encodeURIComponent(JSON.stringify(configObj))),
@@ -237,7 +310,7 @@ export default function NuevoCotizacionForm({
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400" style={{ gridColumn: '1 / -1' }}>Materiales globales</p>
 
         <section className="space-y-2 rounded-xl border border-slate-200 p-4">
-        <p className="text-xs font-semibold text-slate-700">Módulos inferiores (B y V)</p>
+        <p className="text-xs font-semibold text-slate-700">Módulos inferiores (B)</p>
 
         {perfiles.length > 0 && (
           <F label="Perfil de material">
@@ -325,6 +398,102 @@ export default function NuevoCotizacionForm({
             onToggle={(rol) => toggleHerraje(rol, 'superior')}
           />
         </section>
+
+        <section className="space-y-2 rounded-xl border border-slate-200 p-4">
+          <CabeceraFamilia titulo="Closet/Walk in Closet" activo={closetActivo} onToggle={() => setClosetActivo((v) => !v)} />
+
+          {perfiles.length > 0 && (
+            <F label="Perfil de material" disabled={!closetActivo}>
+              <Combobox value={perfilClosetId} options={perfiles.map((p) => ({ value: p.id, label: p.nombre }))} onChange={aplicarPerfilCloset} placeholder="Elegir perfil…" disabled={!closetActivo} />
+            </F>
+          )}
+
+          <F label="Tablero caja / refuerzos" disabled={!closetActivo}>
+            <Combobox value={presetCloset['caja'] ?? ''} options={tableroOptions} disabled={!closetActivo}
+              onChange={(v) => handleTableroCloset('caja', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+          </F>
+          <F label="Tablero frente" disabled={!closetActivo}>
+            <Combobox value={presetCloset['frente'] ?? ''} options={tableroOptions} disabled={!closetActivo}
+              onChange={(v) => handleTableroCloset('frente', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+          </F>
+          <F label="Tablero fondo" disabled={!closetActivo}>
+            <Combobox value={presetCloset['fondo'] ?? ''} options={tableroOptions} disabled={!closetActivo}
+              onChange={(v) => handleTableroCloset('fondo', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+          </F>
+
+          <div className="grid grid-cols-2 gap-2">
+            <F label="Canto frentes" disabled={!closetActivo}>
+              <select value={cantoFrentesCloset} onChange={(e) => setCantoFrentesCloset(e.target.value)} className="inp" disabled={!closetActivo}>
+                <option value="">Por defecto</option>
+                {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </F>
+            <F label="Canto caja" disabled={!closetActivo}>
+              <select value={cantoCajaCloset} onChange={(e) => setCantoCajaCloset(e.target.value)} className="inp" disabled={!closetActivo}>
+                <option value="">Por defecto</option>
+                {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </F>
+          </div>
+
+          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
+            {closetActivo
+              ? 'Sin herrajes por defecto: los de closet y walk in closet se cargan desde la cotización, módulo por módulo.'
+              : 'Actívalo si el proyecto lleva closet o walk in closet. Apagado, esos módulos se cotizan con el material de inferiores.'}
+          </p>
+        </section>
+
+        <section className="space-y-2 rounded-xl border border-slate-200 p-4">
+          <CabeceraFamilia titulo="Baños/Auxiliares" activo={banosActivo} onToggle={() => setBanosActivo((v) => !v)} />
+
+          {perfiles.length > 0 && (
+            <F label="Perfil de material" disabled={!banosActivo}>
+              <Combobox value={perfilBanosId} options={perfiles.map((p) => ({ value: p.id, label: p.nombre }))} onChange={aplicarPerfilBanos} placeholder="Elegir perfil…" disabled={!banosActivo} />
+            </F>
+          )}
+
+          <F label="Tablero caja / refuerzos" disabled={!banosActivo}>
+            <Combobox value={presetBanos['caja'] ?? ''} options={tableroOptions} disabled={!banosActivo}
+              onChange={(v) => handleTableroBanos('caja', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+          </F>
+          <F label="Tablero frente" disabled={!banosActivo}>
+            <Combobox value={presetBanos['frente'] ?? ''} options={tableroOptions} disabled={!banosActivo}
+              onChange={(v) => handleTableroBanos('frente', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+          </F>
+          <F label="Tablero fondo" disabled={!banosActivo || !conFondo}>
+            <Combobox value={presetBanos['fondo'] ?? ''} options={tableroOptions} disabled={!banosActivo || !conFondo}
+              onChange={(v) => handleTableroBanos('fondo', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+          </F>
+
+          <div className="grid grid-cols-2 gap-2">
+            <F label="Canto frentes" disabled={!banosActivo}>
+              <select value={cantoFrentesBanos} onChange={(e) => setCantoFrentesBanos(e.target.value)} className="inp" disabled={!banosActivo}>
+                <option value="">Por defecto</option>
+                {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </F>
+            <F label="Canto caja" disabled={!banosActivo}>
+              <select value={cantoCajaBanos} onChange={(e) => setCantoCajaBanos(e.target.value)} className="inp" disabled={!banosActivo}>
+                <option value="">Por defecto</option>
+                {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </F>
+          </div>
+
+          {banosActivo ? (
+            <SelectorHerrajes
+              titulo="Herrajes de baños/auxiliares"
+              opciones={herrajesPorFamilia.banos}
+              excluidos={herrajesExclBanos}
+              onToggle={(rol) => toggleHerraje(rol, 'banos')}
+            />
+          ) : (
+            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
+              Actívalo si el proyecto lleva vanities o muebles auxiliares. Apagado, esos módulos se
+              cotizan con el material de inferiores.
+            </p>
+          )}
+        </section>
       </div>
 
       {state && !state.ok && (
@@ -371,6 +540,34 @@ function SelectorHerrajes({ titulo, opciones, excluidos, onToggle }: {
         </div>
       )}
     </fieldset>
+  );
+}
+
+/**
+ * Cabecera de un bloque de materiales que se puede apagar.
+ *
+ * Closet y banos arrancan apagados: la mayoria de los proyectos son de cocina. Un
+ * bloque apagado no se guarda en la configuracion, de modo que sus modulos siguen
+ * cotizandose con el material de inferiores.
+ */
+function CabeceraFamilia({ titulo, activo, onToggle }: { titulo: string; activo: boolean; onToggle: () => void }) {
+  return (
+    <div className="flex items-start justify-between gap-2">
+      <p className={`text-xs font-semibold ${activo ? 'text-slate-700' : 'text-slate-400'}`}>{titulo}</p>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-pressed={activo}
+        className={`shrink-0 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
+          activo
+            ? 'border-slate-900 bg-slate-900 text-white hover:bg-slate-700'
+            : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-100'
+        }`}
+        title={activo ? `Quitar ${titulo} del proyecto` : `Incluir ${titulo} en el proyecto`}
+      >
+        {activo ? 'Incluido' : 'Incluir'}
+      </button>
+    </div>
   );
 }
 

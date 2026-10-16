@@ -75,7 +75,40 @@ export function ordenarPiezasDespiece<T extends { pieza: string; origen?: string
     .map(({ pieza }) => pieza);
 }
 
-export type FamiliaMaterial = 'inferior' | 'superior';
+export type FamiliaMaterial = 'inferior' | 'superior' | 'closet' | 'banos';
+
+export const FAMILIAS_MATERIAL: readonly FamiliaMaterial[] = ['inferior', 'superior', 'closet', 'banos'];
+
+/** Titulo de cada bloque de materiales en los formularios del proyecto. */
+export const ETIQUETA_FAMILIA: Record<FamiliaMaterial, string> = {
+  inferior: 'Modulos inferiores (B)',
+  superior: 'Muebles superiores (W y TW)',
+  closet: 'Closet/Walk in Closet',
+  banos: 'Banos/Auxiliares',
+};
+
+/** Donde vive la configuracion de cada familia dentro de `config_default`. */
+export const CLAVE_CONFIG_FAMILIA: Record<FamiliaMaterial, string> = {
+  inferior: 'materialesInferiores',
+  superior: 'materialesSuperiores',
+  closet: 'materialesCloset',
+  banos: 'materialesBanos',
+};
+
+/**
+ * Closet y walk in closet. **Provisional**: son los cuatro tipos que el catalogo
+ * marca con categoria `closet`, a falta de la lista que confirme produccion.
+ * `WCC` lleva W, asi que sin esta tabla caeria en superiores.
+ */
+const PREFS_CLOSET: readonly string[] = ['CC', 'CLV', 'DFE', 'WCC'];
+
+/**
+ * Banos y auxiliares: los vanities del catalogo (categoria `vanity`). Antes se
+ * cotizaban con el tablero de inferiores; ahora tienen el suyo.
+ */
+const PREFS_BANOS: readonly string[] = [
+  'DV', 'DVE', 'SV', 'SVFD', 'UDV', 'USVFD', 'UV', 'UVFD', 'V', 'V-FE', 'VDF', 'VFD', 'VPC',
+];
 
 // Los prefijos pueden contener ambas letras (por ejemplo WBL). La primera B o
 // W, leída de izquierda a derecha, determina el juego de materiales del proyecto.
@@ -90,8 +123,19 @@ export function esMuebleSuperior(pref: string | null | undefined): boolean {
   return w >= 0 && (b < 0 || w < b);
 }
 
+/**
+ * Que juego de materiales del proyecto le toca a un tipo de mueble.
+ *
+ * Closet y banos se reconocen por el prefijo exacto del catalogo y van primero,
+ * porque algunos llevan las letras que decidirian lo contrario: `WCC` tiene W y
+ * caeria en superiores, y los vanities caian en inferiores. El resto sigue la
+ * regla de siempre: la primera B o W manda.
+ */
 export function familiaMaterialPorPrefijo(pref: string | null | undefined): FamiliaMaterial {
-  return esMuebleSuperior(pref) ? 'superior' : 'inferior';
+  const value = String(pref ?? '').trim().toUpperCase();
+  if (PREFS_CLOSET.includes(value)) return 'closet';
+  if (PREFS_BANOS.includes(value)) return 'banos';
+  return esMuebleSuperior(value) ? 'superior' : 'inferior';
 }
 
 // Elementos planos: tipologías de **una sola pieza**, sin puertas, gavetas ni

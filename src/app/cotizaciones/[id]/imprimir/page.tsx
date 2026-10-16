@@ -1,10 +1,13 @@
 import { notFound } from 'next/navigation';
-import { getCotizacion, proveedoresDeTableros } from '@/lib/cotizaciones';
+import { getCotizacion, nombresDeHerrajes, proveedoresDeTableros } from '@/lib/cotizaciones';
 import PrintButton from './PrintButton';
 import CemaPrintEditor, { type CemaScheduleRow } from './CemaPrintEditor';
 import { normalizarCemaTemplate, type CemaTemplate } from '@/lib/cema-template';
 import FirplakPrintEditor, { type FirplakKitchenRow, type FirplakScheduleRow } from './FirplakPrintEditor';
 import { normalizarFirplakTemplate, type FirplakTemplate, type ProveedoresPropuesta } from '@/lib/firplak-template';
+import { herrajesDeLaCotizacion, type HerrajeDeLinea } from '@/lib/herrajes-propuesta';
+import { grupoDeLinea } from '@/lib/grupos-programacion';
+import { monedasVisibles } from '@/lib/monedas-visibles';
 
 const fmtCOP = (n: number) => Number(n || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -47,6 +50,15 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
       schedule: [...scheduleMap.values()].sort((a, b) => a.sku.localeCompare(b.sku)),
     }} />;
   }
+  // Moneda de la propuesta: la misma regla que el encabezado del detalle. Las
+  // casillas de columna viajan en la URL del boton Imprimir / PDF; si no vienen
+  // —al abrir la pagina directo— manda la moneda del proyecto.
+  const monedaProyecto: 'USD' | 'COP' = cabecera.moneda === 'COP' ? 'COP' : 'USD';
+  const monedaElegida = monedasVisibles(
+    { usd: query.usd !== '0', cop: query.cop !== '0' },
+    monedaProyecto,
+  )[0];
+
   if (cabecera.cotizador_por === 'FIRPLAK') {
     const stored = normalizarFirplakTemplate(cabecera.plantilla_firplak as Partial<FirplakTemplate> | null);
     const template: FirplakTemplate = { ...stored, proposalDate: stored.proposalDate || new Date(cabecera.created_at).toISOString().slice(0, 10) };
@@ -56,6 +68,12 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
     const cfg = (cabecera.config_default ?? {}) as { conFondo?: boolean } & Record<string, { preset?: Record<string, string> } | undefined | boolean>;
     const presetSup = (cfg.materialesSuperiores as { preset?: Record<string, string> } | undefined)?.preset ?? {};
     const presetInf = (cfg.materialesInferiores as { preset?: Record<string, string> } | undefined)?.preset ?? {};
+    // Closet y banos solo existen si el proyecto los activo: si no estan, sus
+    // tablas no se imprimen en vez de salir en blanco.
+    const closetCfg = cfg.materialesCloset as { preset?: Record<string, string> } | undefined;
+    const banosCfg = cfg.materialesBanos as { preset?: Record<string, string> } | undefined;
+    const presetClo = closetCfg?.preset ?? {};
+    const presetBan = banosCfg?.preset ?? {};
     // Con "Sin fondo" los inferiores no llevan espaldar, asi que su fila no debe
     // anunciar proveedor. Los superiores siempre lo llevan (ver
     // `ajustarPiezasSinFondo` en muebles.ts), de modo que conservan el suyo.
@@ -63,20 +81,39 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
     const mapa = await proveedoresDeTableros([
       presetSup.caja, presetSup.frente, presetSup.fondo,
       presetInf.caja, presetInf.frente, presetInf.fondo,
+      presetClo.caja, presetClo.frente, presetClo.fondo,
+      presetBan.caja, presetBan.frente, presetBan.fondo,
     ].filter((c): c is string => typeof c === 'string' && c.length > 0));
     const proveedor = (codigo?: string) => (codigo ? mapa[codigo] ?? '' : '');
     const proveedores: ProveedoresPropuesta = {
       superiores: { caja: proveedor(presetSup.caja), frente: proveedor(presetSup.frente), fondo: proveedor(presetSup.fondo) },
       inferiores: { caja: proveedor(presetInf.caja), frente: proveedor(presetInf.frente), fondo: inferioresConFondo ? proveedor(presetInf.fondo) : '' },
+      ...(closetCfg ? { closet: { caja: proveedor(presetClo.caja), frente: proveedor(presetClo.frente), fondo: proveedor(presetClo.fondo) } } : {}),
+      ...(banosCfg ? { banos: { caja: proveedor(presetBan.caja), frente: proveedor(presetBan.frente), fondo: inferioresConFondo ? proveedor(presetBan.fondo) : '' } } : {}),
     };
+    // Herrajes reales de la cotizacion: salen del despiece de cada linea, no de
+    // una lista fija. Se multiplican por las unidades de la linea y por las veces
+    // que se repite el area.
+    const herrajesLineas = (cocinas as Cocina[]).flatMap((cocina) => cocina.lineas.map((l) => ({
+      cantidad: Number(l.cantidad || 0) * Number(cocina.cantidad ?? 1),
+      herrajes: (Array.isArray(l.breakdown?.herrajes) ? l.breakdown.herrajes : []) as HerrajeDeLinea[],
+    })));
+    const nombresHerrajes = await nombresDeHerrajes(
+      herrajesLineas.flatMap((l) => l.herrajes.map((h) => String(h.codigo ?? ''))).filter(Boolean),
+    );
+    const herrajes = herrajesDeLaCotizacion(herrajesLineas, nombresHerrajes);
+
     const scheduleMap = new Map<string, FirplakScheduleRow>();
     const kitchenRows: FirplakKitchenRow[] = (cocinas as Cocina[]).map((cocina) => {
       const quantity = Number(cocina.cantidad ?? 1);
       const unitUsd = cocina.lineas.reduce((sum, line) => { const p=precios(line,Number(cabecera.trm||0)); return sum+p.conUsd*p.cant; },0);
-      for (const line of cocina.lineas) { const sku=line.codigo_modulo??line.pref??'SIN SKU'; const lineQuantity=Number(line.cantidad||0)*quantity; const current=scheduleMap.get(sku); if(current) current.quantity+=lineQuantity; else scheduleMap.set(sku,{sku,description:line.descripcion_es??'',quantity:lineQuantity}); }
-      return { name:cocina.nombre, quantity, unitUsd, totalUsd:unitUsd*quantity };
+      // El mismo total en pesos, para cuando la cotizacion esta en COP: se toma el
+      // valor en COP de cada linea, no el USD por la TRM, que redondearia dos veces.
+      const unitCop = cocina.lineas.reduce((sum, line) => { const p=precios(line,Number(cabecera.trm||0)); return sum+p.conCop*p.cant; },0);
+      for (const line of cocina.lineas) { const sku=line.codigo_modulo??line.pref??'SIN SKU'; const lineQuantity=Number(line.cantidad||0)*quantity; const current=scheduleMap.get(sku); if(current) current.quantity+=lineQuantity; else scheduleMap.set(sku,{sku,description:line.descripcion_es??'',quantity:lineQuantity,grupo:grupoDeLinea(line.pref??line.codigo_modulo)}); }
+      return { name:cocina.nombre, quantity, unitUsd, totalUsd:unitUsd*quantity, unitCop, totalCop:unitCop*quantity };
     });
-    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||'Proyecto sin nombre', builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:cabecera.codigo||id.slice(0,8).toUpperCase(), totalUsd:kitchenRows.reduce((sum,row)=>sum+row.totalUsd,0), template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), proveedores }} />;
+    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||'Proyecto sin nombre', builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:cabecera.codigo||id.slice(0,8).toUpperCase(), totalUsd:kitchenRows.reduce((sum,row)=>sum+row.totalUsd,0), totalCop:kitchenRows.reduce((sum,row)=>sum+row.totalCop,0), moneda:monedaElegida, template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), proveedores, herrajes }} />;
   }
   const mostrarSin = query.sinHerrajes !== '0'; const mostrarCon = query.conHerrajes !== '0'; const mostrarUsd = query.usd !== '0'; const mostrarCop = query.cop !== '0'; const trm = Number(cabecera.trm || 0);
   const proyecto = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 };

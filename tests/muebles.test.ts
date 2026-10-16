@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ajustarPiezasSinFondo, ALTO_INFERIOR_IN, contarEntrepanos, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, etiquetaTipologiaDb, PREFS_CON_TIPOLOGIA_DB, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo } from '../src/lib/muebles';
+import { ajustarPiezasSinFondo, ALTO_INFERIOR_IN, contarEntrepanos, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, etiquetaTipologiaDb, PREFS_CON_TIPOLOGIA_DB, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo, FAMILIAS_MATERIAL, ETIQUETA_FAMILIA, CLAVE_CONFIG_FAMILIA } from '../src/lib/muebles';
 
 // `muebles.ts` es el modulo de dominio compartido por formularios y motor. Las
 // dos piezas que se prueban aqui deciden cosas con efecto en el precio, asi que
@@ -375,4 +375,53 @@ test('contarEntrepanos: redondea cantidades fraccionarias', () => {
   // Al agrupar modulos el motor puede prorratear; la descripcion es por modulo.
   assert.equal(contarEntrepanos([pz('entrepano', 1.0)]), 1);
   assert.equal(contarEntrepanos([pz('entrepano', 2.4)]), 2);
+});
+
+// ---------------------------------------------------------------------------
+// Familias de material del proyecto. Cada una tiene su bloque de tableros, cantos
+// y herrajes en la configuracion de la cotizacion.
+// ---------------------------------------------------------------------------
+
+test('los vanities se cotizan con el material de banos, no con el de inferiores', () => {
+  for (const pref of ['V', 'VFD', 'UDV', 'SV', 'SVFD', 'DV', 'DVE', 'USVFD', 'UV', 'UVFD', 'V-FE', 'VDF', 'VPC']) {
+    assert.equal(familiaMaterialPorPrefijo(pref), 'banos', pref);
+  }
+});
+
+test('los closet tienen su propio material, aunque el prefijo lleve W', () => {
+  for (const pref of ['CC', 'CLV', 'DFE', 'WCC']) {
+    assert.equal(familiaMaterialPorPrefijo(pref), 'closet', pref);
+  }
+  // WCC lleva W: sin la tabla de closet caeria en superiores.
+  assert.equal(esMuebleSuperior('WCC'), true, 'la regla de la W sigue diciendo superior');
+  assert.equal(familiaMaterialPorPrefijo('WCC'), 'closet', 'pero closet manda');
+});
+
+test('el resto sigue la regla de la primera B o W', () => {
+  for (const pref of ['B', 'BFD', 'DB', 'SBFD', 'AL', 'PC', 'TK', 'F', 'PN']) {
+    assert.equal(familiaMaterialPorPrefijo(pref), 'inferior', pref);
+  }
+  for (const pref of ['W', 'WSM', 'TW', 'TW-SM-PUSH', 'UW', 'WBL', 'WLD']) {
+    assert.equal(familiaMaterialPorPrefijo(pref), 'superior', pref);
+  }
+});
+
+test('el prefijo se compara sin espacios ni minusculas', () => {
+  assert.equal(familiaMaterialPorPrefijo(' udv '), 'banos');
+  assert.equal(familiaMaterialPorPrefijo('clv'), 'closet');
+  assert.equal(familiaMaterialPorPrefijo(null), 'inferior', 'sin prefijo, el fallback de siempre');
+  assert.equal(familiaMaterialPorPrefijo(''), 'inferior');
+});
+
+test('cada familia tiene etiqueta y llave de configuracion propias', () => {
+  assert.deepEqual([...FAMILIAS_MATERIAL], ['inferior', 'superior', 'closet', 'banos']);
+  const claves = FAMILIAS_MATERIAL.map((f) => CLAVE_CONFIG_FAMILIA[f]);
+  assert.equal(new Set(claves).size, claves.length, 'ninguna familia comparte llave con otra');
+  for (const f of FAMILIAS_MATERIAL) {
+    assert.ok(ETIQUETA_FAMILIA[f], `falta la etiqueta de ${f}`);
+    assert.ok(CLAVE_CONFIG_FAMILIA[f].startsWith('materiales'), CLAVE_CONFIG_FAMILIA[f]);
+  }
+  // Las dos que ya existian no pueden cambiar de llave: romperia las cotizaciones guardadas.
+  assert.equal(CLAVE_CONFIG_FAMILIA.inferior, 'materialesInferiores');
+  assert.equal(CLAVE_CONFIG_FAMILIA.superior, 'materialesSuperiores');
 });
