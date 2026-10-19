@@ -2608,3 +2608,4 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-19] update | Desactivación de AL en los catálogos de Simulador y Cotizaciones
 
 ## [2026-10-19] update | Precios editables de tablero aislados por cotización, con recálculo de sus muebles sin modificar el catálogo global
+## [2026-10-19] update | Clasificación por convención de las variantes DB-SM y DB-SM-FE dentro de sus familias en Simulador y Cotizaciones.
