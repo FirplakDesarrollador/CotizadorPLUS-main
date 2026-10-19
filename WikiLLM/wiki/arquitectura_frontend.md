@@ -132,6 +132,20 @@ Ejemplos de componentes destacados:
 - **Layout raíz (`app/layout.tsx`)**: mantiene el renderizado de servidor y usa `suppressHydrationWarning` en `<html>` y `<body>` para tolerar, exclusivamente en esos nodos raíz, atributos transitorios inyectados por extensiones del navegador antes de la hidratación (por ejemplo, `data-qb-installed`). React limita esta supresión al nivel inmediato, por lo que proteger solo `<body>` no cubre mutaciones de `<html>`.
 - **Utilidades de UI (`TooltipToggle.tsx`, `GuideButton.tsx`)**: Para presentar información de contexto o ayuda al usuario sin sobrecargar la pantalla principal.
 - **Constructor combinado (`CotizadorForm.tsx`)**: Presenta arriba los módulos confirmados en orden físico, permite editarlos, eliminarlos, arrastrarlos o moverlos con botones. `+ Agregar módulo` valida el formulario activo, lo confirma y abre el siguiente heredando su configuración. La unidad queda bloqueada después del primer módulo. La tarjeta "Desglose de costo" muestra los totales agregados (Tablero/Canto/Consumibles/Herrajes) sin desglosar por rol de tablero ni por herraje individual — el detalle por rol de tablero (`result.maderaPorRol`) vive en la tarjeta "Materiales" más abajo, y el detalle por herraje (`result.herrajes`) en la tarjeta "Herrajes".
+
+### Precios de tablero propios de una cotización
+
+En **Características del proyecto**, cada selector de tablero de caja/refuerzos,
+frente y fondo muestra el precio editable en COP/m². El mapa
+`config_default.preciosTableros` pertenece exclusivamente a la cotización y usa
+el código del tablero como clave; por eso, si el mismo tablero aparece en más
+de un rol o familia, conserva un único valor coherente dentro del proyecto.
+
+Al guardar un precio, `actualizarCotizacion` lo copia a la configuración de las
+líneas y recalcula sus grupos. `prepararCotizacion` aplica el mapa sobre una
+copia de `tablerosByCode`: nunca escribe en `cot_tableros` ni muta el catálogo
+precompilado compartido. Cotizaciones sin override siguen usando `precio_m2`
+del catálogo. El alcance se limita a tableros; cantos y herrajes no participan.
 - **Búsqueda de tableros por color:** `Combobox` admite `searchText` adicional a la etiqueta visible. Los selectores de tablero del Simulador, creación y edición de cotizaciones, configuración del proyecto y administración indexan explícitamente `cot_tableros.color_nombre`; por ejemplo, escribir `constructor` encuentra los tableros Primadera asociados a ese color. La normalización ignora mayúsculas y tildes.
 - **Tarjeta de Cocina (`CocinaCard.tsx`)**: Renderiza los módulos de cada cocina con arrastre de grupos, columna de Costo USD, desgloses por línea y una fila de totales superiores alineada exactamente con las columnas de valores (Costo USD, Cant, Unit USD, Total USD, Total COP).
 

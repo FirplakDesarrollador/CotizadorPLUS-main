@@ -2572,3 +2572,39 @@ elimina `SF` del código y restaura nombre, descripción y despiece con respaldo
 Simulador y Cotizaciones agrupan las variantes `DB-<variante>-SM-SF` bajo la
 tipología general `DB-SM-SF`, con selector interno y detección automática de
 nuevas variantes. Elegir la familia en Cotizaciones fuerza el estado sin fondo.
+
+## [2026-10-19] update | DB-SM agrupada en Cotizaciones
+
+El selector principal de muebles en Cotizaciones agrupa `DB-2S-SM`,
+`DB-2-SM` y `DB-3-SM` bajo `DB-SM`, igual que el Simulador. Las variantes se
+eligen únicamente desde el selector secundario de la familia.
+
+## [2026-10-19] update | Tipología DB-2-1INT-SM
+
+La migración `0188` crea la variante DB-SM de dos frentes exteriores y una
+gaveta interior según la hoja DB22-2+INT SM. Reproduce las medidas de carcasa,
+tres cajas, frentes y respaldo; usa tres rieles, una Gola y un par de barras.
+Queda activa en Supabase y disponible dentro de la familia `DB-SM` en
+Simulador y Cotizaciones.
+
+## [2026-10-19] update | Canto 22x1 en DB-2-1INT-SM
+
+## [2026-10-19] update | Gaveta interior de DB-2-1INT-SM ubicada completamente debajo de gola_madera con reveal de 3,2 mm
+
+## [2026-10-19] update | Creación de DB-2-1INT-SM-FE con dos cajas grandes, una interior pequeña y retiro visual de 70 mm
+
+## [2026-10-19] update | DB-2-1INT-SM-FE corregida a caja pequeña en gaveta superior exterior e interior, con una sola caja grande inferior
+
+La migración `0189` habilita el calibre de canto en los frentes exterior e
+interior. El motor ahora contabiliza las cuatro aristas de cada pieza y muestra
+el consumo `22x1` cuando corresponde al material y configuración del frente.
+
+## [2026-10-19] update | Alineación del trasero pequeño con la caja superior de DB-2-1INT-SM-FE en la visualización lateral
+
+## [2026-10-19] update | Gaveta interior de DB-2-1INT-SM-FE desplazada hasta tocar internamente el frente exterior superior
+
+## [2026-10-19] update | Desactivación de S, SA, SBAS, SLOC y SMO en los catálogos de Simulador y Cotizaciones
+
+## [2026-10-19] update | Desactivación de AL en los catálogos de Simulador y Cotizaciones
+
+## [2026-10-19] update | Precios editables de tablero aislados por cotización, con recálculo de sus muebles sin modificar el catálogo global

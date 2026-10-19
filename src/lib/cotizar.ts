@@ -11,6 +11,7 @@ import { consolidarGrupo, type CotizarGrupoResult } from '@/lib/group-result';
 import { construirVisualizacion } from './visualizacion';
 import { codigoComercial } from './module-groups';
 import { ajustarPiezasSinFondo, usaHuecoHornoParametrico, usaPuertaParametrica } from './muebles';
+import { aplicarPreciosTableros, type PreciosTablerosCotizacion } from './precios-tableros';
 
 export type CotizarInput = {
   tipoId: string;
@@ -37,6 +38,7 @@ export type CotizarInput = {
   door?: number;
   doorHand?: 'L' | 'R';
   conFondo?: boolean;
+  preciosTableros?: PreciosTablerosCotizacion;
 };
 
 export type CotizarResult = Breakdown & { trm: number; margen: number };
@@ -194,6 +196,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
   // Preset final
   const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
   const preset = { ...presetDefault, ...inp.preset };
+  tablerosByCode = aplicarPreciosTableros(tablerosByCode, inp.preciosTableros);
 
   // Riel override para muebles DB
   if (inp.rielCodigo && inp.rielCodigo !== 'RIELTANDEM') {
