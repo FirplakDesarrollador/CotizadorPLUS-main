@@ -153,6 +153,7 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'DB-2S-SM', largo: 26, alto: 30 }), 'DB26-2S-SM');
   assert.equal(codigoComercial({ ...base, pref: 'DB-2S-SM-FE', largo: 12, alto: 30 }), 'DB12-2S-SM-FE');
   assert.equal(codigoComercial({ ...base, pref: 'DB-2-SM', largo: 26, alto: 30 }), 'DB26-2-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'DB-2-1INT-SM', largo: 22, alto: 30 }), 'DB22-2-1INT-SM');
   assert.equal(codigoComercial({ ...base, pref: 'DB-3-SM', largo: 26, alto: 30 }), 'DB26-3-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UDB', largo: 18, alto: 28.75, dbTipo: 'DB-2S' }), 'UDB18-2S');
   assert.equal(codigoComercial({ ...base, pref: 'UDV', largo: 24, alto: 28.75, dbTipo: 'DB-3' }), 'UDV24-3');
@@ -246,16 +247,16 @@ test('habilita tipologia DB solo en las familias de cajoneras compatibles', () =
   for (const pref of ['B', 'DV', 'DBL', 'PCFD', '', null]) assert.equal(permiteTipologiaDb(pref), false, String(pref));
 });
 
-test('agrupa solo las tres tipologias DB-SM sin ampliar la familia DB existente', () => {
-  assert.deepEqual(DB_SM_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM']);
-  for (const pref of ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM', 'db-3-sm']) assert.equal(esTipologiaDbSm(pref), true, pref);
+test('agrupa las tipologias DB-SM sin ampliar la familia DB existente', () => {
+  assert.deepEqual(DB_SM_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM', 'DB-2-SM', 'DB-2-1INT-SM', 'DB-3-SM']);
+  for (const pref of ['DB-2S-SM', 'DB-2-SM', 'DB-2-1INT-SM', 'DB-3-SM', 'db-3-sm']) assert.equal(esTipologiaDbSm(pref), true, pref);
   for (const pref of ['DB', 'UDB', 'UDV', 'DB-2S', '', null]) assert.equal(esTipologiaDbSm(pref), false, String(pref));
   assert.equal(permiteTipologiaDb('DB-2S-SM'), false);
 });
 
-test('agrupa las tres tipologias DB-SM-FE como familia independiente', () => {
-  assert.deepEqual(DB_SM_FE_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE']);
-  for (const pref of ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE', 'db-3-sm-fe']) assert.equal(esTipologiaDbSmFe(pref), true, pref);
+test('agrupa las cuatro tipologias DB-SM-FE como familia independiente', () => {
+  assert.deepEqual(DB_SM_FE_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE']);
+  for (const pref of ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE', 'db-3-sm-fe']) assert.equal(esTipologiaDbSmFe(pref), true, pref);
   for (const pref of ['DB', 'DB-2S-SM', 'B-FE', '', null]) assert.equal(esTipologiaDbSmFe(pref), false, String(pref));
 });
 

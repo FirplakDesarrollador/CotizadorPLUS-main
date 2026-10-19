@@ -54,7 +54,7 @@ type Linea = {
 
 type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
-type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
+type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null; precio_m2: number };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
 type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
@@ -119,6 +119,7 @@ export default function CotizacionDetalleClient({
         materialesSuperiores: initialConfig.materialesSuperiores,
         materialesCloset: initialConfig.materialesCloset,
         materialesBanos: initialConfig.materialesBanos,
+        preciosTableros: initialConfig.preciosTableros,
         tipoId: initialConfig.tipoId,
         largo: initialConfig.largo,
         alto: initialConfig.alto,

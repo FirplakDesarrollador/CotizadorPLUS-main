@@ -323,13 +323,14 @@ export function etiquetaTipologiaDb(key: string, pref: string | null | undefined
 // datos porque cada una tiene plantillas y montaje propios. En el formulario
 // se presentan como una sola familia para evitar tres entradas casi iguales.
 export type DbSmTipologia = {
-  pref: 'DB-2S-SM' | 'DB-2-SM' | 'DB-3-SM';
+  pref: 'DB-2S-SM' | 'DB-2-SM' | 'DB-2-1INT-SM' | 'DB-3-SM';
   desc: string;
 };
 
 export const DB_SM_TIPOLOGIAS: DbSmTipologia[] = [
   { pref: 'DB-2S-SM', desc: '2 gavetas pequeñas + 1 grande' },
   { pref: 'DB-2-SM', desc: '2 gavetas iguales' },
+  { pref: 'DB-2-1INT-SM', desc: '2 gavetas exteriores + 1 interior' },
   { pref: 'DB-3-SM', desc: '3 gavetas iguales' },
 ];
 
@@ -357,13 +358,14 @@ export function obtenerTipologiasDbSmSf<T extends { pref: string }>(tipos: reado
 // Full Extension de 500 mm. Se presentan como la familia comercial DB-SM-FE,
 // aunque cada variante conserva una plantilla independiente en la base de datos.
 export type DbSmFeTipologia = {
-  pref: 'DB-2S-SM-FE' | 'DB-2-SM-FE' | 'DB-3-SM-FE';
+  pref: 'DB-2S-SM-FE' | 'DB-2-SM-FE' | 'DB-2-1INT-SM-FE' | 'DB-3-SM-FE';
   desc: string;
 };
 
 export const DB_SM_FE_TIPOLOGIAS: DbSmFeTipologia[] = [
   { pref: 'DB-2S-SM-FE', desc: '2 gavetas pequeñas + 1 grande' },
   { pref: 'DB-2-SM-FE', desc: '2 gavetas iguales' },
+  { pref: 'DB-2-1INT-SM-FE', desc: '2 gavetas exteriores + 1 interior' },
   { pref: 'DB-3-SM-FE', desc: '3 gavetas iguales' },
 ];
 

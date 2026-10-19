@@ -247,6 +247,87 @@ test('DB-SM: refuerzo delantero vertical y Gola de madera horizontal',()=>{
   assert.ok(Math.abs(golas[1].z-(refuerzos[1].z-golas[1].h))<1,'la Gola inferior debe quedar debajo de su refuerzo');
 });
 
+test('DB-2-1INT-SM: la gaveta interior queda completa debajo de la Gola',()=>{
+  const m=member('DB',{n_cajones:3,n_cajones_pequenos:2,n_cajones_ocultos:1,gola:1});
+  m.pref='DB-2-1INT-SM';
+  m.calc.piezas=m.calc.piezas.filter(p=>!['frente','frente_gaveta_pequena','frente_gaveta_grande'].includes(p.nombre));
+  const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
+  refuerzo.formula_cantidad='1';
+  const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
+  gola.nombre='gola_madera';
+  gola.formula_cantidad='1';
+  m.calc.piezas.push({
+    nombre:'frente_gaveta_exterior',rol_tablero:'frente',formula_cantidad:'2',
+    formula_largo:'L-RV',formula_ancho:'(A-(n_cajones-n_cajones_ocultos)*RV-gola*2.11024)/(n_cajones-n_cajones_ocultos)',
+    cantos:{},tarugos:0,soportes:0,modo_agrupacion:'local',
+    visualizacion:{version:1,funcion:'frente_gaveta',plano:'XZ',intercambiar:false,confirmado:true},
+  });
+  m.calc.piezas.push({
+    nombre:'frente_gaveta_interior',rol_tablero:'frente',formula_cantidad:'1',
+    formula_largo:'L-2*TC-RV',formula_ancho:'100/25.4',
+    cantos:{},tarugos:0,soportes:0,modo_agrupacion:'local',
+    visualizacion:{version:1,funcion:'frente_interior',plano:'XZ',intercambiar:false,confirmado:true},
+  });
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const golaSuperior=scene.paneles.find(p=>p.nombre==='gola_madera')!;
+  const frenteInterior=scene.paneles.find(p=>p.nombre==='frente_gaveta_interior')!;
+  const piezasInteriores=scene.paneles.filter(p=>p.cajon===frenteInterior.cajon&&p.funcion!=='frente_gaveta');
+  assert.ok(golaSuperior&&frenteInterior);
+  assert.ok(piezasInteriores.length>=3,'la gaveta interior debe conservar frente, base y trasero');
+  assert.ok(piezasInteriores.every(p=>p.z+p.h<=golaSuperior.z-3.2+.1),
+    'todas las piezas de la gaveta interior deben quedar 3,2 mm debajo de la Gola');
+  assert.ok(Math.abs(frenteInterior.z+frenteInterior.h-(golaSuperior.z-3.2))<.1,
+    'el frente interior define la separación de 3,2 mm bajo la Gola');
+});
+
+test('DB-2-1INT-SM-FE: la caja interior toca la cara interna del frente superior',()=>{
+  const m=member('DB',{n_cajones:3,n_cajones_pequenos:1,n_cajones_ocultos:1,gola:1});
+  m.pref='DB-2-1INT-SM-FE';
+  m.calc.piezas=m.calc.piezas.filter(p=>
+    !['frente','frente_gaveta_pequena','frente_gaveta_grande','base_gaveta','trasero_gaveta_pequena','trasero_gaveta_grande'].includes(p.nombre));
+  const refuerzo=m.calc.piezas.find(p=>p.nombre==='refuerzo_delantero')!;
+  refuerzo.formula_cantidad='1';
+  const gola=m.calc.piezas.find(p=>p.nombre==='gola_perfil')!;
+  gola.nombre='gola_madera'; gola.formula_cantidad='1';
+  const piezas:Pieza[]=[
+    {nombre:'lateral_gaveta_grande',rol_tablero:'refuerzo',formula_cantidad:'2',formula_largo:'500/25.4',formula_ancho:'200/25.4',cantos:{},tarugos:0,soportes:0,modo_agrupacion:'local',visualizacion:{version:1,funcion:'lateral_gaveta',plano:'YZ',intercambiar:true,confirmado:true}},
+    {nombre:'trasero_gaveta_grande',rol_tablero:'refuerzo',formula_cantidad:'1',formula_largo:'L-86/25.4',formula_ancho:'180/25.4',cantos:{},tarugos:6,soportes:0,modo_agrupacion:'local',visualizacion:{version:1,funcion:'trasero_gaveta',plano:'XZ',intercambiar:false,confirmado:true}},
+    {nombre:'contraparche_grande',rol_tablero:'refuerzo',formula_cantidad:'1',formula_largo:'L-86/25.4',formula_ancho:'200/25.4',cantos:{},tarugos:6,soportes:0,modo_agrupacion:'local',visualizacion:{version:1,funcion:'frente_interior',plano:'XZ',intercambiar:false,confirmado:true}},
+    {nombre:'lateral_gaveta_pequena',rol_tablero:'refuerzo',formula_cantidad:'4',formula_largo:'500/25.4',formula_ancho:'100/25.4',cantos:{},tarugos:0,soportes:0,modo_agrupacion:'local',visualizacion:{version:1,funcion:'lateral_gaveta',plano:'YZ',intercambiar:true,confirmado:true}},
+    {nombre:'trasero_gaveta_pequena',rol_tablero:'refuerzo',formula_cantidad:'2',formula_largo:'L-86/25.4',formula_ancho:'80/25.4',cantos:{},tarugos:4,soportes:0,modo_agrupacion:'local',visualizacion:{version:1,funcion:'trasero_gaveta',plano:'XZ',intercambiar:false,confirmado:true}},
+    {nombre:'contraparche_pequeno',rol_tablero:'refuerzo',formula_cantidad:'2',formula_largo:'L-86/25.4',formula_ancho:'100/25.4',cantos:{},tarugos:4,soportes:0,modo_agrupacion:'local',visualizacion:{version:1,funcion:'frente_interior',plano:'XZ',intercambiar:false,confirmado:true}},
+    {nombre:'base_gaveta',rol_tablero:'fondo',formula_cantidad:'3',formula_largo:'492/25.4',formula_ancho:'L-72/25.4',cantos:{},tarugos:0,soportes:0,modo_agrupacion:'local',visualizacion:{version:1,funcion:'base_gaveta',plano:'XY',intercambiar:true,confirmado:true}},
+    {nombre:'frente_gaveta_exterior',rol_tablero:'frente',formula_cantidad:'2',formula_largo:'L-RV',formula_ancho:'(A-(n_cajones-n_cajones_ocultos)*RV-gola*2.11024)/(n_cajones-n_cajones_ocultos)',cantos:{},tarugos:0,soportes:0,modo_agrupacion:'local',visualizacion:{version:1,funcion:'frente_gaveta',plano:'XZ',intercambiar:false,confirmado:true}},
+    {nombre:'frente_gaveta_interior',rol_tablero:'frente',formula_cantidad:'1',formula_largo:'L-2*TC-RV',formula_ancho:'100/25.4',cantos:{},tarugos:0,soportes:0,modo_agrupacion:'local',visualizacion:{version:1,funcion:'frente_interior',plano:'XZ',intercambiar:false,confirmado:true}},
+  ];
+  m.calc.piezas.push(...piezas);
+  const scene=construirVisualizacion([m],calcularGrupoFisico([m]));
+  const golaSuperior=scene.paneles.find(p=>p.nombre==='gola_madera')!;
+  const frenteInterior=scene.paneles.find(p=>p.nombre==='frente_gaveta_interior')!;
+  const piezasCajaInterior=scene.paneles.filter(p=>p.cajon===frenteInterior.cajon&&p.funcion!=='frente_gaveta');
+  const basesExteriores=scene.paneles.filter(p=>p.funcion==='base_gaveta'&&p.cajon!==frenteInterior.cajon);
+  assert.equal(scene.paneles.filter(p=>p.nombre==='lateral_gaveta_grande').length,2);
+  assert.equal(scene.paneles.filter(p=>p.nombre==='lateral_gaveta_pequena').length,4);
+  const frentesExterior=scene.paneles.filter(p=>p.funcion==='frente_gaveta').toSorted((a,b)=>b.z-a.z);
+  const frenteExteriorSuperior=frentesExterior[0];
+  const lateralSuperior=scene.paneles.find(p=>p.funcion==='lateral_gaveta'&&p.cajon===frentesExterior[0].cajon)!;
+  const lateralInferior=scene.paneles.find(p=>p.funcion==='lateral_gaveta'&&p.cajon===frentesExterior[1].cajon)!;
+  const lateralInterior=scene.paneles.find(p=>p.funcion==='lateral_gaveta'&&p.cajon===frenteInterior.cajon)!;
+  const traseroSuperior=scene.paneles.find(p=>p.funcion==='trasero_gaveta'&&p.cajon===frentesExterior[0].cajon)!;
+  assert.ok(Math.abs(lateralSuperior.h-100)<.1,'la gaveta exterior superior debe usar caja pequeña');
+  assert.ok(Math.abs(lateralInterior.h-100)<.1,'la gaveta interior debe usar caja pequeña');
+  assert.ok(Math.abs(lateralInferior.h-200)<.1,'la gaveta exterior inferior debe usar caja grande');
+  assert.ok(Math.abs(traseroSuperior.z+traseroSuperior.h-(lateralSuperior.z+lateralSuperior.h))<.1,
+    'el trasero pequeno debe quedar alineado arriba con los laterales de la gaveta superior');
+  assert.ok(Math.abs(traseroSuperior.y+traseroSuperior.d-(lateralSuperior.y+lateralSuperior.d))<.1,
+    'el trasero pequeno debe cerrar la profundidad de la gaveta superior');
+  assert.ok(piezasCajaInterior.every(p=>p.y>=0),'la caja interior no debe atravesar el frente exterior');
+  assert.ok(basesExteriores.every(p=>Math.abs(p.y-10)<.1),'las cajas exteriores conservan su posición de 10 mm');
+  assert.ok(Math.abs(frenteInterior.y-(frenteExteriorSuperior.y+frenteExteriorSuperior.d))<.1,
+    'el frente interior debe tocar la cara interna del frente exterior superior');
+  assert.ok(Math.abs(frenteInterior.z+frenteInterior.h-(golaSuperior.z-3.2))<.1,'la gaveta interior queda 3,2 mm bajo la Gola');
+});
+
 test('DB-2S-SM-FE reutiliza el montaje DB-SM para los dos pares de Gola',()=>{
   const m=member('DB',{n_cajones:3,n_cajones_pequenos:2,gola:1});
   m.pref='DB-2S-SM-FE';

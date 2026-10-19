@@ -30,27 +30,28 @@ body {
    `min-width: 720px`, aparecia su barra de desplazamiento horizontal. */
 .cotizaciones-main-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(440px, 560px) minmax(0, 1fr);
   align-items: start;
   gap: 24px;
 }
 
 .cotizaciones-lista {
   min-width: 0;
+  border-left: 2px solid #e2e8f0;
+  padding-left: 24px;
 }
 
-/* Las dos columnas solo entran cuando hay sitio para el formulario (480) mas la
-   tabla (720) mas separaciones (48). Por debajo se apila, y asi la tabla usa el
-   ancho completo en vez de quedarse corta. */
-@media (min-width: 1300px) {
+/* El escritorio conserva siempre la composición de referencia. Solo se apila
+   cuando el viewport CSS es realmente estrecho; así el zoom del navegador o la
+   escala de Windows no mandan accidentalmente la tabla debajo del formulario. */
+@media (max-width: 1100px) {
   .cotizaciones-main-grid {
-    grid-template-columns: minmax(480px, 560px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  /* La separacion vertical solo tiene sentido con las dos columnas al lado. */
   .cotizaciones-lista {
-    border-left: 2px solid #e2e8f0;
-    padding-left: 24px;
+    border-left: 0;
+    padding-left: 0;
   }
 }
 
