@@ -147,12 +147,19 @@ tenían nombres explícitos y mantienen sus medidas propias de 80/180 mm.
 En el Simulador y en Cotizaciones, `DB-2S-SM`, `DB-2-SM`, `DB-2-1INT-SM` y
 `DB-3-SM` aparecen agrupadas bajo
 `DB-SM — Cajoneras con Gola de madera`. El selector `Tipología DB-SM` cambia
-entre los tres tipos reales, por lo que cada variante conserva sus propias
+entre los cuatro tipos reales, por lo que cada variante conserva sus propias
 plantillas, reglas, herrajes, código comercial y montaje. Este selector es
 independiente del selector histórico `Tipología DB`; no modifica las familias
 `DB`, `UDB` ni `UDV`. Así, la búsqueda principal muestra las familias `DB`,
-`DB-SM`, `DB-SM-SF` y `DB-SM-FE`, mientras las variantes 2, 2S y 3 permanecen
-en sus selectores secundarios.
+`DB-SM`, `DB-SM-SF` y `DB-SM-FE`, mientras las variantes 2, 2S, 3 y 2-1INT
+permanecen en sus selectores secundarios.
+
+La clasificación del frontend se resuelve por convención de prefijo, no por una
+lista cerrada: `DB-<variante>-SM` pertenece a `DB-SM` y
+`DB-<variante>-SM-FE` pertenece a `DB-SM-FE`. El valor se normaliza antes de
+compararlo. Esto integra también `DB-2-1INT-SM` y `DB-2-1INT-SM-FE` dentro de
+sus familias en Simulador y Cotizaciones, y evita que futuras variantes
+compatibles aparezcan como opciones principales independientes.
 
 Las versiones sin respaldo se presentan como la familia virtual
 `DB-SM-SF — Cajoneras con Gola sin fondo` tanto en Simulador como en
