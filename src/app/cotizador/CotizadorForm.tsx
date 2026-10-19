@@ -16,7 +16,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
@@ -35,6 +35,7 @@ const fmtUSD = (n: number) => n.toLocaleString('en-US', { style: 'currency', cur
 const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', fondo: 'fondo' }
 const DB_SM_GROUP_VALUE = '__DB_SM__';
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
+const DB_SM_SF_GROUP_VALUE = '__DB_SM_SF__';
 
 const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ??
@@ -178,7 +179,15 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     const options: { value: string; label: string }[] = [];
     let dbSmAgregado = false;
     let dbSmFeAgregado = false;
+    let dbSmSfAgregado = false;
     for (const tipo of tipos) {
+      if (esTipologiaDbSmSf(tipo.pref)) {
+        if (!dbSmSfAgregado) {
+          options.push({ value: DB_SM_SF_GROUP_VALUE, label: 'DB-SM-SF — Cajoneras con Gola sin fondo' });
+          dbSmSfAgregado = true;
+        }
+        continue;
+      }
       if (esTipologiaDbSmFe(tipo.pref)) {
         if (!dbSmFeAgregado) {
           options.push({ value: DB_SM_FE_GROUP_VALUE, label: 'DB-SM-FE — Cajoneras con Gola y riel Full Extension' });
@@ -210,9 +219,13 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const usaTipologiaDb = permiteTipologiaDb(tipoPref);
   const usaTipologiaDbSm = esTipologiaDbSm(tipoPref);
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(tipoPref);
+  const usaTipologiaDbSmSf = esTipologiaDbSmSf(tipoPref);
+  const tipologiasDbSmSf = obtenerTipologiasDbSmSf(tipos);
   const tipoSelectorValue = usaTipologiaDbSm
     ? DB_SM_GROUP_VALUE
-    : usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
+    : usaTipologiaDbSmFe
+      ? DB_SM_FE_GROUP_VALUE
+      : usaTipologiaDbSmSf ? DB_SM_SF_GROUP_VALUE : tipoId;
   const esPCFD = tipoPref === 'PCFD';
   const usaDoor = usaPuertaParametrica(tipoPref);
   const usaHuecoHorno = usaHuecoHornoParametrico(tipoPref);
@@ -222,6 +235,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       ? tipos.find((tipo) => tipo.pref === DB_SM_TIPOLOGIAS[0].pref)
       : v === DB_SM_FE_GROUP_VALUE
         ? tipos.find((tipo) => tipo.pref === DB_SM_FE_TIPOLOGIAS[0].pref)
+        : v === DB_SM_SF_GROUP_VALUE
+          ? tipologiasDbSmSf[0]
         : tipos.find((tipo) => tipo.id === v);
     if (!tipoSeleccionado) return;
     setTipoId(tipoSeleccionado.id);
@@ -800,6 +815,17 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
                 {DB_SM_FE_TIPOLOGIAS.map((tipologia) => (
                   <option key={tipologia.pref} value={tipologia.pref}>
                     {tipologia.pref} · {tipologia.desc}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {usaTipologiaDbSmSf && (
+            <Field label="Tipología DB-SM-SF">
+              <select value={tipoPref} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {tipologiasDbSmSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>
+                    {tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola sin fondo'}
                   </option>
                 ))}
               </select>

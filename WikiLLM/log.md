@@ -2503,3 +2503,72 @@ Consecuencia, que es lo que se pidio:
 
 4 casos nuevos en `tests/iva.test.ts` que fijan la combinacion completa, incluido elegir dolares en
 un proyecto en pesos (sin IVA) y al reves. quality:gate exit 0, build limpio.
+
+## [2026-10-19] update | Se toleran atributos de extensiones en el nodo HTML durante la hidratación
+
+El layout raíz aplica `suppressHydrationWarning` tanto a `<html>` como a `<body>` para evitar el
+overlay de React cuando una extensión modifica esos nodos antes de la hidratación, sin ocultar
+inconsistencias dentro del árbol de la aplicación.
+
+## [2026-10-19] update | BOV y todas las carcazas lineales admiten agrupación física
+
+La migración `0183_agrupacion_carcazas_lineales.sql` habilita 26 familias
+lineales verificadas y mantiene excluidos esquineros, paneles, zócalos y piezas
+sueltas. Los laterales se comparten; base y tapa se fusionan solo si son
+homologables. `BOV` conserva rails y frente locales. El motor homologa reglas
+continuas existentes con nuevas reglas opcionales y ajusta piezas locales aun
+cuando el ancho se expresa en `formula_ancho` por estar giradas.
+
+## [2026-10-19] update | Migración 0183 aplicada y verificada en Supabase
+
+Se aplicó `0183_agrupacion_carcazas_lineales.sql` al proyecto configurado. La
+verificación posterior confirmó `26/26` familias con agrupación habilitada y,
+para `BOV`, lateral compartido y base continua opcional con `LG-(2*TC)`.
+
+## [2026-10-19] update | Selector Fondo por módulo en cotizaciones
+
+`AddLineForm` incorpora en creación y edición el desplegable **Fondo** con las
+opciones **Con fondo** y **Sin fondo**. La selección se guarda en
+`cot_cotizacion_lineas.config.conFondo` y recalcula despiece, costo y precio;
+los muebles superiores permanecen forzados a **Con fondo**.
+
+## [2026-10-19] ingest | Tipologías abiertas BFD y SBFD
+
+La migración `0184_tipologias_abiertas_bfd_sbfd.sql` crea `OBFD`, `OBFD-SM`,
+`OSBFD` y `OSBFD-SM`. Cada versión conserva metadatos, piezas estructurales,
+reglas y herrajes de su fuente, pero elimina las piezas con rol `frente`; sus
+nombres y descripciones visibles aclaran que son muebles sin puertas.
+
+## [2026-10-19] update | Migración 0184 aplicada y verificada en Supabase
+
+Se aplicó la migración al proyecto configurado. La consulta posterior confirmó
+los cuatro tipos activos, cero piezas de `frente` en cada destino y paridad con
+la fuente en piezas no frontales, reglas y herrajes.
+
+## [2026-10-19] update | Módulos sin puertas excluyen manijas y bisagras
+
+El motor ahora deriva la existencia de puertas desde el despiece efectivo y
+omite `manija` y `bisagra` cuando no existe ningún frente. La migración `0185`
+retira esos roles de `OBFD`, `OBFD-SM`, `OSBFD` y `OSBFD-SM`, conservando los
+herrajes estructurales.
+
+## [2026-10-19] update | Tipologías SF bajo demanda y sufijo comercial
+
+Cotizaciones agrega `-SF` al código de módulos inferiores sin respaldo,
+después de `-SM` y antes de `-15MM`/`-18MM`. La migración `0186` instala una
+función autenticada e idempotente que crea la tipología `*-SF` solo cuando no
+existe, omite únicamente el respaldo `fondo`, ajusta la base a `P-TC` y deja el
+nuevo tipo disponible en Simulador. `fondo_gaveta` se conserva.
+
+## [2026-10-19] update | Con fondo revierte la tipología SF
+
+La migración `0187` instala una resolución bidireccional: **Sin fondo** crea o
+reutiliza `*-SF`, mientras **Con fondo** reemplaza una variante SF por su tipo
+base activo. Edición y alta resuelven el UUID antes de cotizar; el recálculo
+elimina `SF` del código y restaura nombre, descripción y despiece con respaldo.
+
+## [2026-10-19] update | Familia dinámica DB-SM-SF
+
+Simulador y Cotizaciones agrupan las variantes `DB-<variante>-SM-SF` bajo la
+tipología general `DB-SM-SF`, con selector interno y detección automática de
+nuevas variantes. Elegir la familia en Cotizaciones fuerza el estado sin fondo.

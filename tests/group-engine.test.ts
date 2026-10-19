@@ -205,6 +205,34 @@ test('agrupa aunque una tipología tenga una pieza continua adicional', () => {
   assert.equal(pieceTotal(grouped, 'fondo'), 1);
 });
 
+test('homologa una pieza opcional nueva con una pieza continua existente', () => {
+  const established = member({ pref: 'DB-2S-SM-FE', width: 30, omitBack: true });
+  const newlyEnabled = member({ pref: 'BOV', width: 24, omitBack: true });
+  newlyEnabled.calc.piezas = newlyEnabled.calc.piezas.map((piece) => piece.nombre === 'base'
+    ? { ...piece, modo_agrupacion: 'continua_opcional' }
+    : piece);
+
+  const grouped = calcularGrupoFisico([established, newlyEnabled]);
+  assert.ok(grouped.piezasContinuas.includes('base'));
+  assert.equal(pieceTotal(grouped, 'base'), 1);
+  assert.equal(pieceTotal(grouped, 'lateral'), 3);
+});
+
+test('ensancha una pieza local girada al eliminar el lateral de la unión', () => {
+  const left = member({ pref: 'S', width: 24, omitBack: true });
+  const right = member({ pref: 'SA', width: 24, omitBack: true });
+  const rotatedBack: Pieza = {
+    nombre: 'fondo', rol_tablero: 'fondo', formula_cantidad: '1',
+    formula_largo: 'A', formula_ancho: `L-${TC}`, modo_agrupacion: 'local',
+  };
+  left.calc.piezas.push(rotatedBack);
+  right.calc.piezas.push(rotatedBack);
+
+  const grouped = calcularGrupoFisico([left, right]);
+  const widths = grouped.lineas.map((line) => line.piezas.find((piece) => piece.pieza === 'fondo')!.anchoIn);
+  assert.ok(widths.every((width) => Math.abs(width - (24 - TC / 2)) < 0.001));
+});
+
 test('omite fondo y descuenta el espesor de caja en la base al agrupar módulos B-SM', () => {
   const sm = member({ pref: 'DB-2S-SM', width: 30, omiteFondoSoloAgrupado: true });
   sm.calc.piezas = sm.calc.piezas.map((p) => p.nombre === 'base'

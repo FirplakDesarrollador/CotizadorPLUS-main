@@ -157,14 +157,25 @@ Todos los miembros deben cumplir:
 
 Cambiar un atributo incompatible en un integrante se bloquea antes de persistir y la alerta explica la causa. `sin_frentes` puede convivir con módulos con frentes; `solo_frentes` no es una carcasa agrupable.
 
-### 5.1 Exclusiones iniciales
+### 5.1 Alcance de carcazas lineales
 
-- Esquineros/ciegos: `TW`, `WBL`, `DVE`, `BBLFD` si se activa.
-- Torres/hornos: `OVPC`, `PC`, `PCFD`, `VPC`.
-- Especiales: `BOMH`.
-- Paneles/complementos: `D`, `F`, `PN`, `R`, `TK`.
+La migración `0183_agrupacion_carcazas_lineales.sql` amplía la agrupación a
+26 familias lineales de cocina, baño, clóset, hornos y torres. La selección es
+explícita y cada tipo debe tener exactamente una plantilla `lateral` con
+cantidad dos. Los laterales se comparten; `base` y `tapa` son continuas
+opcionales y solo se fusionan si existen y son homologables en todos los
+integrantes. Fondos, rails, entrepaños, gavetas y frentes permanecen locales y
+se ajustan al espacio liberado por la división compartida.
 
-La habilitación se guarda en catálogo para poder añadir reglas posteriores sin condicionales hardcodeados.
+`0183` fue aplicada al proyecto Supabase configurado el 2026-10-19 y verificada
+por consulta directa: `26/26` tipos tienen `permite_agrupacion=true`; `BOV`
+conserva `lateral_compartido` y base `continua_opcional` con `LG-(2*TC)`.
+
+Permanecen excluidos los esquineros o ciegos (`TW`, `WBL`, `DVE`, `BBLFD`,
+`BLS`), paneles, zócalos y piezas sueltas (`D`, `DF`, `E`, `F`, `KD`, `KF`,
+`PN`, `R`, `TK`), y cualquier plantilla sin un par inequívoco de laterales de
+carcaza. No se activa un tipo nuevo por categoría: debe incorporarse a la lista
+validada con sus metadatos de fabricación.
 
 ## 6. Precio individual y subtotal
 

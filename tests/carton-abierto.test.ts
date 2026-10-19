@@ -30,6 +30,28 @@ function input(modoFrentes: CalcInput['modoFrentes']): CalcInput {
   };
 }
 
+function inputConHerrajes(modoFrentes: CalcInput['modoFrentes'], conFrente: boolean): CalcInput {
+  return {
+    ...input(modoFrentes),
+    piezas: conFrente ? [{
+      nombre: 'frente', rol_tablero: 'frente', formula_cantidad: '1',
+      formula_largo: 'L', formula_ancho: 'A', cantos: {},
+    }] : [],
+    preset: conFrente ? { frente: 'FRENTE' } : {},
+    tablerosByCode: conFrente ? { FRENTE: { codigo: 'FRENTE', precio_m2: 0 } } : {},
+    herrajesPlantilla: [
+      { rol: 'pata', herraje_codigo: 'PATA', selector_key: 'pata', formula_cantidad: '4' },
+      { rol: 'bisagra', herraje_codigo: 'BISAGRA', selector_key: 'bisagra', formula_cantidad: '2' },
+      { rol: 'manija', herraje_codigo: 'MANIJA', selector_key: 'manija', formula_cantidad: '1' },
+    ],
+    herrajesByCode: {
+      PATA: { codigo: 'PATA', precio: 10 },
+      BISAGRA: { codigo: 'BISAGRA', precio: 20 },
+      MANIJA: { codigo: 'MANIJA', precio: 30 },
+    },
+  };
+}
+
 test('BFD9 normal (con frentes) sí paga cartón, igual al Excel ($4.820,20)', () => {
   const r = calcularMueble(input('normal'));
   assert.ok(Math.abs(r.consumibles.carton - 4820.2) < 0.1, `carton=${r.consumibles.carton} debería ser ≈4820.20`);
@@ -44,4 +66,20 @@ test('usaCarton=false del tipo sigue anulando el cartón sin importar el modo', 
   const inp = { ...input('normal'), usaCarton: false };
   const r = calcularMueble(inp);
   assert.equal(r.consumibles.carton, 0);
+});
+
+test('un módulo sin puertas excluye manijas y bisagras, pero conserva herrajes estructurales', () => {
+  const r = calcularMueble(inputConHerrajes('normal', false));
+  assert.deepEqual(r.herrajes.map((herraje) => herraje.rol), ['pata']);
+  assert.equal(r.costoHerrajes, 40);
+});
+
+test('modo sin_frentes aplica la misma regla aunque la plantilla original tenga puertas', () => {
+  const r = calcularMueble(inputConHerrajes('sin_frentes', true));
+  assert.deepEqual(r.herrajes.map((herraje) => herraje.rol), ['pata']);
+});
+
+test('un módulo con frente conserva bisagras y manijas', () => {
+  const r = calcularMueble(inputConHerrajes('normal', true));
+  assert.deepEqual(r.herrajes.map((herraje) => herraje.rol), ['pata', 'bisagra', 'manija']);
 });

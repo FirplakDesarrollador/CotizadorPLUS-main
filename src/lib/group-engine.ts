@@ -176,7 +176,12 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
     .filter((p) => p.modo_agrupacion === 'continua_opcional')
     .map((p) => p.clave_fusion || p.nombre)));
   for (const key of optionalKeys) {
-    const refs = members.map(({ calc }) => calc.piezas.find((p) => p.modo_agrupacion === 'continua_opcional' && (p.clave_fusion || p.nombre) === key));
+    // Una pieza opcional también puede homologarse con la misma pieza marcada
+    // como continua en una familia ya soportada. Esto permite incorporar nuevas
+    // carcazas lineales sin degradar las reglas estrictas existentes.
+    const refs = members.map(({ calc }) => calc.piezas.find((p) =>
+      (p.modo_agrupacion === 'continua' || p.modo_agrupacion === 'continua_opcional')
+      && (p.clave_fusion || p.nombre) === key));
     if (refs.every((piece): piece is Pieza => Boolean(piece)) && piezasHomologables(refs, members)) continuousKeys.add(key);
   }
 
@@ -247,15 +252,19 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
       const isContinuous = (piece.modo_agrupacion === 'continua' || piece.modo_agrupacion === 'continua_opcional')
         && continuousKeys.has(key);
       if (!isContinuous) {
+        const isRotatedLocalWidth = !/\bL\b/.test(piece.formula_largo ?? '')
+          && /\bL\b/.test(piece.formula_ancho ?? '');
         const isLocalWidth = (piece.modo_agrupacion === 'local' || piece.modo_agrupacion === 'continua_opcional')
-          && /\bL\b/.test(piece.formula_largo ?? '')
+          && (/\bL\b/.test(piece.formula_largo ?? '') || isRotatedLocalWidth)
           && !/(frente|puerta)/i.test(piece.nombre);
         if (!isLocalWidth) return piece;
         // Cada unión libera un espesor. Se reparte medio espesor a cada
         // compartimento vecino: extremos +TC/2, interiores +TC.
         const contacts = index === 0 || index === n - 1 ? 1 : 2;
         const original = evaluated(piece, calc);
-        return { ...piece, formula_largo: String(original.largo + contacts * tc / 2), resta_largo: 0 };
+        return isRotatedLocalWidth
+          ? { ...piece, formula_ancho: String(original.ancho + contacts * tc / 2), resta_ancho: 0 }
+          : { ...piece, formula_largo: String(original.largo + contacts * tc / 2), resta_largo: 0 };
       }
 
       const representative = first.piezas.find((p) => (p.modo_agrupacion === 'continua' || p.modo_agrupacion === 'continua_opcional') && (p.clave_fusion || p.nombre) === key)!;

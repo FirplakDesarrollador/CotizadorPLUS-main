@@ -37,13 +37,14 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [BLS-RS-SM sin entrepaño](wiki/bls_rs_sm.md) - Variante del esquinero Lazy Susan que conserva el despiece BLS excepto por la eliminación del entrepaño.
 - [BMW-1 y BMW-1-FE](wiki/bmw_1_hoja_real.md) - Mueble inferior para microondas y su variante con caja de gaveta de madera y riel full extension.
 - [BOMH-1 y BOMH-1-FE](wiki/bomh_1_horno_parametrico.md) - Mueble inferior para medio horno con hueco paramétrico y variantes de gaveta Tandem o grande Full Extension.
-- [BOV24 desde hoja real](wiki/bov24_hoja_real.md) - Despiece paramétrico de siete piezas y montaje 3D con dos rails traseros independientes.
+- [BOV24 desde hoja real](wiki/bov24_hoja_real.md) - Despiece paramétrico, montaje 3D y reglas de agrupación física con carcazas lineales.
 - [Consumo de materiales: unidades y merma](wiki/consumo_materiales.md) - Tablero en m² y canto en metros lineales; por qué sus mermas son distintas y cómo se reconstruye el consumo desde el despiece.
 - [Holgura de 1mm sobre la estructura](wiki/holgura_1mm_estructura.md) - Por qué entrepaños y fondos se cortan 1mm más pequeños, qué tipos ya la tenían y el alcance aplicado en `0049`.
 - [Ejes del fondo (backing)](wiki/ejes_fondo_backing.md) - `largo`/`ancho` son ejes geométricos atados a `intercambiar`, no "el mayor primero": el defecto que giraba 90° el backing de `W` con gola y la auditoría de los 44 tipos.
 - [Riesgos e incoherencias del Excel CEMA](wiki/riesgos_excel_cema.md) - Auditoría estructural del libro fuente: margen por fila, 10 filas que mezclan USD y COP, recargo quemado, doble fuente de canto y demás defectos a resolver antes de migrar.
 - [Auditoría de precio SBFD30](wiki/auditoria_precio_sbfd30.md) - Conciliación Excel CEMA vs Cotizador PLUS: dónde viven margen/TRM en el Excel, efecto del `config_default` del proyecto sobre el preset, y método para correr `engine.ts` fuera de la app.
 - [Validación contra hojas de ruta](wiki/validacion_hojas_de_ruta.md) - Estudio de 1.937 hojas de ruta reales: DSL de fórmulas de producción, constante interior por espesor, reglas de reparto de frentes DB, modificadores transversales (`O`/`R`/`SM`/`F9`), tipologías sin mapear y errores detectados en la fuente.
+- [Tipologías abiertas BFD y SBFD](wiki/tipologias_abiertas_bfd_sbfd.md) - Clones OBFD/OSBFD y variantes SM que conservan la configuración de origen y excluyen únicamente las piezas de frente.
 - [Auditoría del catálogo activo](wiki/auditoria_catalogo_activo.md) - Barrido end-to-end de los 60 tipos activos con el motor real: dimensiones negativas que restaban tablero, 20 tipos que cotizan sin herrajes, herrajes duplicados en UW y qué anomalías son falsos positivos.
 - [Cadena de precio: Excel CEMA vs. app](wiki/cadena_precio_excel_vs_app.md) - Correspondencia fórmula por fórmula de la hoja `Precio` contra `engine.ts`/`cotizar.ts`: parámetros de la columna T, margen global ponderado del proyecto y defectos resueltos.
 

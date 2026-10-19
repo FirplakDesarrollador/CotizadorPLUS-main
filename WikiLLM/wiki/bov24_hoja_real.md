@@ -22,3 +22,17 @@ horno cubre el alto exterior descontando el reveal superior de 3,2 mm.
 La migración `0158_bov24_hoja_real.sql` sustituye las dos filas ambiguas
 llamadas `base` de la plantilla anterior por este despiece confirmado. La
 prueba `tests/bov24-hoja-real.test.ts` valida medidas, cantidad física y escena.
+
+## Agrupación física
+
+La migración `0183_agrupacion_carcazas_lineales.sql` habilita `BOV` como
+carcaza lineal agrupable. Sus dos laterales pasan a `lateral_compartido` y la
+base a `continua_opcional` con `LG-(2*TC)`: se fabrica continua cuando todos
+los integrantes tienen una base homologable y permanece local en los demás
+casos. Los dos rails traseros, el rail delantero y el frente siguen siendo
+locales al vano del horno. Dos BOV unidos producen tres laterales, una base
+continua, cuatro rails traseros y dos delanteros.
+
+La migración fue aplicada y verificada en el proyecto Supabase configurado el
+2026-10-19: las 26 familias lineales quedaron habilitadas y los metadatos de
+laterales y base de `BOV` coinciden con este contrato.
