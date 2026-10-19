@@ -9,6 +9,7 @@ import {
 import { contarEntrepanos, esElementoPlano, etiquetaDescripcion } from '@/lib/muebles';
 import { calcularPrecioMaterial, descripcionMaterial, grupoSeSaltaElMotor, type TipoMaterial } from '@/lib/materiales-linea';
 import { siguienteOrdenGrupo as siguienteOrden } from '@/lib/grupos-orden';
+import { resolverTipologiaFondo } from '@/lib/sin-fondo';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
 
@@ -361,6 +362,7 @@ async function recalcularGrupo(
       doorHand: inputs[i].doorHand,
       espesorCajaMm: prepared?.calc.tablerosByCode[prepared.calc.preset.caja]?.espesor_mm,
       espesorFrenteMm: prepared?.calc.tablerosByCode[prepared.calc.preset.frente]?.espesor_mm,
+      conFondo: inputs[i].conFondo,
     });
     const baseResult = calculated.lineas[i] as CotizarResult;
     const result = {
@@ -405,11 +407,12 @@ async function recalcularGrupo(
 
 export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
   const sb = await createClient();
+  const inputResuelto = await resolverTipologiaFondo(sb, input);
   const { data: cocina, error: ce } = await sb.from('cot_cocinas').select('id,cotizacion_id').eq('id', cocinaId).single();
   if (ce || !cocina) throw new Error('Cocina no encontrada');
   const cotizacionId = (cocina as { cotizacion_id: string }).cotizacion_id;
 
-  const res = await cotizar(input);
+  const res = await cotizar(inputResuelto);
   const { count } = await sb.from('cot_cotizacion_lineas')
     .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
 
@@ -427,7 +430,7 @@ export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
     grupo_id: grupo.id,
     posicion_grupo: 1,
     orden: count ?? 0,
-    ...construirFilaLinea(input, res),
+    ...construirFilaLinea(inputResuelto, res),
   });
   if (error) {
     await sb.from('cot_grupos_modulos').delete().eq('id', grupo.id);
@@ -442,6 +445,7 @@ export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
 // Edita una línea existente recalculando con el motor (mismos datos que al agregar).
 export async function editarLinea(lineaId: string, input: AgregarLineaInput) {
   const sb = await createClient();
+  const inputResuelto = await resolverTipologiaFondo(sb, input);
   const { data: linea, error: le } = await sb.from('cot_cotizacion_lineas').select('*').eq('id', lineaId).single();
   if (le || !linea) throw new Error('Línea no encontrada');
   const cotizacionId = (linea as { cotizacion_id: string }).cotizacion_id;
@@ -451,15 +455,15 @@ export async function editarLinea(lineaId: string, input: AgregarLineaInput) {
       .eq('grupo_id', linea.grupo_id).order('posicion_grupo');
     if (groupError) throw new Error(groupError.message);
     if ((groupRows ?? []).length > 1) {
-      if (Number(input.cantidad) !== 1) throw new Error('Un módulo agrupado debe conservar cantidad 1.');
-      const prospective = ((groupRows ?? []) as LineaPersistida[]).map((row) => row.id === lineaId ? input : inputDesdeLinea(row));
+      if (Number(inputResuelto.cantidad) !== 1) throw new Error('Un módulo agrupado debe conservar cantidad 1.');
+      const prospective = ((groupRows ?? []) as LineaPersistida[]).map((row) => row.id === lineaId ? inputResuelto : inputDesdeLinea(row));
       await cotizarGrupo(prospective);
     }
   }
 
-  const res = await cotizar(input);
+  const res = await cotizar(inputResuelto);
   const { error } = await sb.from('cot_cotizacion_lineas')
-    .update(construirFilaLinea(input, res)).eq('id', lineaId);
+    .update(construirFilaLinea(inputResuelto, res)).eq('id', lineaId);
   if (error) throw new Error(error.message);
   if (linea.grupo_id) await recalcularGrupo(linea.grupo_id);
   await recomputarTotales(cotizacionId);

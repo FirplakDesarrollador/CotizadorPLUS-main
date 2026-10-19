@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
@@ -73,6 +73,7 @@ export type LineaInicial = {
 
 const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
+const DB_SM_SF_GROUP_VALUE = '__DB_SM_SF__';
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
 const convertir = (value: number, from: 'in' | 'cm' | 'mm', to: 'in' | 'cm' | 'mm') =>
   Math.round((value * TO_MM[from]) / TO_MM[to] * 1e6) / 1e6;
@@ -180,6 +181,7 @@ export default function AddLineForm({
     return '';
   });
   const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? projectDefaults?.modoFrentes ?? 'normal');
+  const [conFondo, setConFondo] = useState<boolean>(initial?.conFondo ?? projectDefaults?.conFondo ?? true);
   const [sistemaFrente, setSistemaFrente] = useState<SistemaFrente>(initial?.sistemaFrente ?? 'manija');
   const [removible, setRemovible] = useState<boolean>(initial?.removible ?? false);
   const [door, setDoor] = useState(initial?.door != null ? String(initial.door) : '');
@@ -204,6 +206,8 @@ export default function AddLineForm({
   const esDB = permiteTipologiaDb(prefTipo);
   const esDbTradicional = prefTipo === 'DB';
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(prefTipo);
+  const usaTipologiaDbSmSf = esTipologiaDbSmSf(prefTipo);
+  const tipologiasDbSmSf = obtenerTipologiasDbSmSf(tipos);
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
   const usaDoor = usaPuertaParametrica(prefTipo);
   const usaHuecoHorno = usaHuecoHornoParametrico(prefTipo);
@@ -218,7 +222,15 @@ export default function AddLineForm({
   const tipoOptions = (() => {
     const options: { value: string; label: string }[] = [];
     let dbSmFeAgregado = false;
+    let dbSmSfAgregado = false;
     for (const t of tipos) {
+      if (esTipologiaDbSmSf(t.pref)) {
+        if (!dbSmSfAgregado) {
+          options.push({ value: DB_SM_SF_GROUP_VALUE, label: 'DB-SM-SF — Cajoneras con Gola sin fondo' });
+          dbSmSfAgregado = true;
+        }
+        continue;
+      }
       if (esTipologiaDbSmFe(t.pref)) {
         if (!dbSmFeAgregado) {
           options.push({ value: DB_SM_FE_GROUP_VALUE, label: 'DB-SM-FE — Cajoneras con Gola y riel Full Extension' });
@@ -230,7 +242,9 @@ export default function AddLineForm({
     }
     return options;
   })();
-  const tipoSelectorValue = usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
+  const tipoSelectorValue = usaTipologiaDbSmFe
+    ? DB_SM_FE_GROUP_VALUE
+    : usaTipologiaDbSmSf ? DB_SM_SF_GROUP_VALUE : tipoId;
   const tableroOptions = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({
     value: t.codigo,
     label: `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}`,
@@ -240,6 +254,8 @@ export default function AddLineForm({
   function handleTipoChange(id: string) {
     const resolvedId = id === DB_SM_FE_GROUP_VALUE
       ? tipos.find((t) => t.pref === DB_SM_FE_TIPOLOGIAS[0].pref)?.id
+      : id === DB_SM_SF_GROUP_VALUE
+        ? tipologiasDbSmSf[0]?.id
       : id;
     if (!resolvedId) return;
     setTipoId(resolvedId);
@@ -259,6 +275,7 @@ export default function AddLineForm({
     setDoor('');
     setDoorHand('R');
     const nuevoTipo = tipos.find((t) => t.id === resolvedId);
+    if (esTipologiaDbSmSf(nuevoTipo?.pref)) setConFondo(false);
     if (usaHuecoHornoParametrico(nuevoTipo?.pref)) {
       setHornoLargo(String(convertir(219.2, 'mm', unidad)));
       setHornoAlto(String(convertir(153.2, 'mm', unidad)));
@@ -288,6 +305,11 @@ export default function AddLineForm({
   }
 
   function aplicarDbSmFeTipo(pref: string) {
+    const tipo = tipos.find((item) => item.pref === pref);
+    if (tipo) handleTipoChange(tipo.id);
+  }
+
+  function aplicarDbSmSfTipo(pref: string) {
     const tipo = tipos.find((item) => item.pref === pref);
     if (tipo) handleTipoChange(tipo.id);
   }
@@ -351,7 +373,7 @@ export default function AddLineForm({
       overrides.n_cajones_ocultos = dbT?.noculto ?? 0;
     }
     // Variantes transversales: override numérico 0/1 (migración 0028).
-    overrides.gola = esTipologiaDbSm(prefTipo) || esTipologiaDbSmFe(prefTipo) ? 1 : esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0;
+    overrides.gola = esTipologiaDbSm(prefTipo) || esTipologiaDbSmFe(prefTipo) || esTipologiaDbSmSf(prefTipo) ? 1 : esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0;
     if (permiteRemovible(prefTipo)) overrides.removible = removible ? 1 : 0;
 
     const payload = {
@@ -380,6 +402,7 @@ export default function AddLineForm({
             doorHand: usaDoor ? doorHand : null,
             espesorCajaMm: tableros.find((tablero) => tablero.codigo === preset.caja)?.espesor_mm,
             espesorFrenteMm: tableros.find((tablero) => tablero.codigo === preset.frente)?.espesor_mm,
+            conFondo: esMuebleSuperior(prefTipo) ? true : conFondo,
           })
         : undefined,
       modoFrentes,
@@ -395,7 +418,7 @@ export default function AddLineForm({
       dbTipo: esDB && dbTipo ? dbTipo : undefined,
       door: usaDoor ? parseMedida(door) : undefined,
       doorHand: usaDoor ? doorHand : undefined,
-      conFondo: initial?.conFondo ?? projectDefaults?.conFondo ?? true,
+      conFondo: esMuebleSuperior(prefTipo) ? true : conFondo,
     };
 
     const res = esEdicion
@@ -558,6 +581,18 @@ export default function AddLineForm({
           </div>
         )}
 
+        {usaTipologiaDbSmSf && (
+          <div className="grid grid-cols-1 gap-1">
+            <L label="Tipología DB-SM-SF">
+              <select value={prefTipo} onChange={(e) => aplicarDbSmSfTipo(e.target.value)} className="inp">
+                {tipologiasDbSmSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola sin fondo'}</option>
+                ))}
+              </select>
+            </L>
+          </div>
+        )}
+
         {usaRiel && (
           <div className="grid grid-cols-1 gap-1">
             <L label="Tipo de riel">
@@ -637,6 +672,19 @@ export default function AddLineForm({
             </select>
           </L>
         </div>
+
+        <L label="Fondo">
+          <select
+            value={esMuebleSuperior(prefTipo) ? 'con_fondo' : conFondo ? 'con_fondo' : 'sin_fondo'}
+            onChange={(e) => setConFondo(e.target.value === 'con_fondo')}
+            disabled={esMuebleSuperior(prefTipo)}
+            title={esMuebleSuperior(prefTipo) ? 'Los muebles superiores siempre llevan fondo' : undefined}
+            className="inp disabled:bg-slate-100"
+          >
+            <option value="con_fondo">Con fondo</option>
+            <option value="sin_fondo">Sin fondo</option>
+          </select>
+        </L>
 
         {herrajesTipo.length > 0 && (
           <div className="col-span-full rounded-lg border border-slate-200 p-2.5">

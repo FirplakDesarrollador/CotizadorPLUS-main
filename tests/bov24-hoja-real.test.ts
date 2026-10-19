@@ -5,8 +5,8 @@ import { calcularGrupoFisico, type PreparedGroupMember } from '../src/lib/group-
 import { construirVisualizacion } from '../src/lib/visualizacion';
 
 const piezas: Pieza[] = [
-  { nombre:'base', rol_tablero:'caja', formula_cantidad:'1', formula_largo:'L-2*TC', formula_ancho:'P-TC', cantos:{calibre:'19x0,45',largos:2,anchos:0}, visualizacion:{version:1,funcion:'base',plano:'XY',intercambiar:false,z:'0',confirmado:true} },
-  { nombre:'lateral', rol_tablero:'caja', formula_cantidad:'2', formula_largo:'A', formula_ancho:'P', cantos:{calibre:'19x0,45',largos:2,anchos:2}, visualizacion:{version:1,funcion:'lateral',plano:'YZ',intercambiar:false,confirmado:true} },
+  { nombre:'base', rol_tablero:'caja', formula_cantidad:'1', formula_largo:'L-2*TC', formula_ancho:'P-TC', cantos:{calibre:'19x0,45',largos:2,anchos:0}, modo_agrupacion:'continua_opcional', clave_fusion:'base', formula_largo_grupo:'LG-(2*TC)', visualizacion:{version:1,funcion:'base',plano:'XY',intercambiar:false,z:'0',confirmado:true} },
+  { nombre:'lateral', rol_tablero:'caja', formula_cantidad:'2', formula_largo:'A', formula_ancho:'P', cantos:{calibre:'19x0,45',largos:2,anchos:2}, modo_agrupacion:'lateral_compartido', visualizacion:{version:1,funcion:'lateral',plano:'YZ',intercambiar:false,confirmado:true} },
   { nombre:'refuerzo_trasero', rol_tablero:'refuerzo', formula_cantidad:'2', formula_largo:'L-2*TC', formula_ancho:'80/25.4', cantos:{calibre:'19x0,45',largos:2,anchos:0}, visualizacion:{version:1,funcion:'travesano_posterior',plano:'XZ',intercambiar:false,z:'I===0 ? TC : A-H',confirmado:true} },
   { nombre:'refuerzo_delantero', rol_tablero:'caja', formula_cantidad:'1', formula_largo:'L-2*TC', formula_ancho:'80/25.4', cantos:{calibre:'19x0,45',largos:2,anchos:0}, visualizacion:{version:1,funcion:'travesano_frontal',plano:'XZ',intercambiar:false,y:'0',z:'A-H',confirmado:true} },
   { nombre:'frente', rol_tablero:'frente', formula_cantidad:'1', formula_largo:'A-RV', formula_ancho:'L-RV', cantos:{calibre:'22x1',largos:2,anchos:2}, visualizacion:{version:1,funcion:'frente',plano:'XZ',intercambiar:true,y:'-EP',z:'0',confirmado:true} },
@@ -35,7 +35,7 @@ test('BOV24 reproduce las siete piezas y medidas de la hoja real',()=>{
 });
 
 test('BOV24 visualiza siete paneles y separa los dos rails traseros',()=>{
-  const member:PreparedGroupMember={pref:'BOV',permiteAgrupacion:false,calc};
+  const member:PreparedGroupMember={pref:'BOV',permiteAgrupacion:true,calc};
   const scene=construirVisualizacion([member],calcularGrupoFisico([member]));
   assert.equal(scene.paneles.length,7);
   assert.equal(scene.paneles.filter(p=>p.nombre==='lateral').length,2);
@@ -45,4 +45,18 @@ test('BOV24 visualiza siete paneles y separa los dos rails traseros',()=>{
   assert.equal(scene.paneles.filter(p=>p.nombre==='refuerzo_delantero').length,1);
   assert.equal(scene.paneles.filter(p=>p.nombre==='frente').length,1);
   assert.ok(scene.paneles.every(p=>p.confirmado));
+});
+
+test('dos BOV comparten tres laterales y una base continua',()=>{
+  const members:PreparedGroupMember[]=[24,30].map((L)=>({
+    pref:'BOV',permiteAgrupacion:true,calc:{...calc,dims:{...calc.dims,L}},
+  }));
+  const grouped=calcularGrupoFisico(members);
+  const rows=grouped.lineas.flatMap((line)=>line.piezas);
+  const total=(name:string)=>rows.filter((piece)=>piece.pieza===name).reduce((sum,piece)=>sum+piece.cant,0);
+  assert.equal(total('lateral'),3);
+  assert.equal(total('base'),1);
+  assert.equal(total('refuerzo_trasero'),4);
+  assert.equal(total('refuerzo_delantero'),2);
+  assert.deepEqual(grouped.piezasContinuas,['base']);
 });

@@ -246,7 +246,8 @@ export function ajustarPiezasSinFondo<T extends PiezaAjustable>(
 ): T[] {
   if (conFondo !== false || esMuebleSuperior(pref)) return piezas;
   return piezas.map((pieza) => {
-    if (pieza.rol_tablero === 'fondo') return { ...pieza, formula_cantidad: '0' };
+    // `fondo_gaveta` pertenece al cajón; solo se elimina el respaldo `fondo`.
+    if (pieza.nombre.toLowerCase() === 'fondo') return { ...pieza, formula_cantidad: '0' };
     if (pieza.nombre !== 'base') return pieza;
     // Se conserva el eje de largo propio de cada plantilla.
     if (/\bP\b/.test(pieza.formula_ancho ?? '')) return { ...pieza, formula_ancho: 'P-TC' };
@@ -335,6 +336,21 @@ export const DB_SM_TIPOLOGIAS: DbSmTipologia[] = [
 export function esTipologiaDbSm(pref: string | null | undefined): boolean {
   const p = String(pref ?? '').toUpperCase();
   return DB_SM_TIPOLOGIAS.some((tipologia) => tipologia.pref === p);
+}
+
+// Las variantes DB con Gola y sin fondo se crean bajo demanda en la base de
+// datos. Por eso esta familia se reconoce por convención, en lugar de mantener
+// una lista cerrada: cualquier futura `DB-<variante>-SM-SF` aparecerá dentro de
+// la tipología general DB-SM-SF sin requerir otro cambio de frontend.
+export function esTipologiaDbSmSf(pref: string | null | undefined): boolean {
+  const p = String(pref ?? '').trim().toUpperCase();
+  return /^DB-.+-SM-SF$/.test(p);
+}
+
+export function obtenerTipologiasDbSmSf<T extends { pref: string }>(tipos: readonly T[]): T[] {
+  return tipos
+    .filter((tipo) => esTipologiaDbSmSf(tipo.pref))
+    .sort((a, b) => a.pref.localeCompare(b.pref, 'es', { numeric: true }));
 }
 
 // Cajoneras DB con Gola de madera y cajas de gaveta en madera para riel
