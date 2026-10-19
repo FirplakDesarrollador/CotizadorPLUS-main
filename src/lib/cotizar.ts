@@ -305,6 +305,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
       doorHand: inp.doorHand,
       espesorCajaMm: tablerosByCode[preset.caja]?.espesor_mm,
       espesorFrenteMm: tablerosByCode[preset.frente]?.espesor_mm,
+      conFondo: inp.conFondo,
     }),
     prefImperial: tipo.pref_imperial || tipo.pref,
     prefMetrico: tipo.pref_metrico || tipo.pref,

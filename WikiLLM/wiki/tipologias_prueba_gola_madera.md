@@ -114,6 +114,15 @@ plantillas, reglas, herrajes, código comercial y montaje. Este selector es
 independiente del selector histórico `Tipología DB`; no modifica las familias
 `DB`, `UDB` ni `UDV`.
 
+Las versiones sin respaldo se presentan como la familia virtual
+`DB-SM-SF — Cajoneras con Gola sin fondo` tanto en Simulador como en
+Cotizaciones. El selector principal oculta las variantes reales y un selector
+secundario permite elegirlas. La membresía es dinámica: todo tipo activo cuyo
+prefijo cumpla `DB-<variante>-SM-SF` se incorpora automáticamente, incluidos
+los que genere después `cot_asegurar_tipologia_sin_fondo`. Al seleccionar esta
+familia en Cotizaciones también se fija **Fondo = Sin fondo**, para conservar
+la tipología SF al guardar.
+
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la
 Gola de madera, manteniendo esta última en contacto con los frentes.

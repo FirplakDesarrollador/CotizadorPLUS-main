@@ -162,6 +162,7 @@ export type CodigoComercialInput = {
   doorHand?: 'L' | 'R' | null;
   espesorCajaMm?: number | null;
   espesorFrenteMm?: number | null;
+  conFondo?: boolean;
 };
 
 // Código comercial completo de un módulo. Es la única fuente de verdad del orden
@@ -224,7 +225,8 @@ export function codigoComercial(input: CodigoComercialInput): string {
     ? espesorCajaMm
     : null;
   const codigoBase = codigo + bblfdSufijo + dbSufijo + pcfdSufijo
-    + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente));
+    + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente))
+    + (input.conFondo === false && !prefNormalizado.split('-').includes('SF') ? '-SF' : '');
   if (espesorComun == null) return codigoBase;
   // En muebles superiores W/TW con sistema SM el indicador de espesor forma
   // parte del propio segmento: `-SM15`, `-SM18` o sus variantes `-PUSH`.

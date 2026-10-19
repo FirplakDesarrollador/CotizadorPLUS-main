@@ -29,12 +29,31 @@ Este archivo actúa como puente entre la base de datos y el motor de cálculo. S
 3. Construye los objetos de parámetros que espera el `engine.ts` (resolviendo presets y overrides).
 4. Invoca `calcularMueble()` y devuelve el `Breakdown` al frontend.
 
-La configuración de proyecto `conFondo=false` transforma las plantillas antes
-de invocar el motor: toda pieza con rol `fondo` recibe cantidad cero y la
+La configuración `conFondo=false`, heredada inicialmente del proyecto pero
+editable por módulo desde el desplegable **Fondo** de `AddLineForm`, transforma las plantillas antes
+de invocar el motor: la pieza de respaldo cuyo nombre es `fondo` recibe cantidad cero y la
 profundidad de la pieza llamada `base` pasa a ser `P-TC`. `TC` proviene del
 espesor real del tablero seleccionado para caja (por ejemplo, caja de 15 mm →
-base con descuento de 15 mm). No modifica tapas, bases de gaveta ni las
-fórmulas almacenadas en Supabase.
+base con descuento de 15 mm). No modifica tapas, bases ni fondos de gaveta.
+
+Al guardar una línea inferior con `conFondo=false`, `cotizaciones.ts` invoca la
+función transaccional `cot_asegurar_tipologia_sin_fondo()`. Esta reutiliza la
+variante `*-SF` si ya existe o la crea una única vez bajo bloqueo asesor,
+copiando reglas, herrajes y piezas salvo el respaldo, y fijando la profundidad
+de la base en `P-TC`. La variante queda activa en `cot_tipos_mueble` y por ello
+puede seleccionarse posteriormente desde el Simulador. Una tipología ya
+terminada en `-SF` se devuelve tal cual y nunca genera `-SF-SF`.
+
+La resolución es reversible mediante `cot_resolver_tipologia_fondo()`. Al editar
+una línea `*-SF` y elegir **Con fondo**, se busca obligatoriamente la tipología
+base activa retirando solo el sufijo final `-SF` (`BFD-SM-SF` → `BFD-SM`). El
+UUID de la línea se reemplaza antes de cotizar y el recálculo reconstruye el
+código y la descripción sin `SF`. Si la tipología base no existe, el guardado
+falla explícitamente en lugar de conservar una variante incoherente.
+
+`codigoComercial()` añade el sufijo después del sistema de frente y antes del
+espesor: `BFD26-SM-SF` y `BFD26-SM-SF-15MM`. La regla se comparte entre alta,
+edición, recálculo, HDR y Simulador.
 
 **La bandera describe solo los módulos inferiores. Los muebles superiores siempre
 llevan fondo.** Antes la transformación se aplicaba a todo el catálogo, de modo

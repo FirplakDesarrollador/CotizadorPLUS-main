@@ -82,6 +82,16 @@ test('un modulo inferior si pierde el fondo con "Sin fondo"', () => {
   assert.equal(r.find((p) => p.nombre === 'lateral')!.formula_ancho, 'P', 'el resto del despiece no se toca');
 });
 
+test('Sin fondo conserva el fondo de gaveta porque no es el respaldo del mueble', () => {
+  const conGaveta = [...piezas, {
+    nombre: 'fondo_gaveta', rol_tablero: 'fondo', formula_cantidad: '1',
+    formula_largo: 'L-2.8', formula_ancho: '19.3',
+  }];
+  const r = ajustarPiezasSinFondo(conGaveta, 'B-FE', false);
+  assert.equal(r.find((pieza) => pieza.nombre === 'fondo')?.formula_cantidad, '0');
+  assert.equal(r.find((pieza) => pieza.nombre === 'fondo_gaveta')?.formula_cantidad, '1');
+});
+
 test('con "Con fondo" no se toca nada, sea superior o inferior', () => {
   for (const pref of ['B', 'W']) {
     const r = ajustarPiezasSinFondo(piezas, pref, true);

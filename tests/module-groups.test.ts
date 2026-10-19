@@ -15,7 +15,7 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
-import { DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb, usaPuertaParametrica } from '@/lib/muebles';
+import { DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb, usaPuertaParametrica } from '@/lib/muebles';
 
 test('clasifica materiales por la primera B o W del prefijo', () => {
   assert.equal(familiaMaterialPorPrefijo('BBLFD'), 'inferior');
@@ -214,6 +214,21 @@ test('codigoComercial agrega 15MM con las mismas reglas de integración SM', () 
   assert.equal(codigoComercial({ ...base, espesorCajaMm: 15, espesorFrenteMm: 18 }), 'WSM251514');
 });
 
+test('codigoComercial ordena SF después de SM y antes del espesor', () => {
+  const base = { unidad: 'in', sistema: 'imperial' } as const;
+  assert.equal(codigoComercial({
+    ...base, pref: 'BFD-SM', largo: 26, alto: 30, conFondo: false,
+  }), 'BFD26-SM-SF');
+  assert.equal(codigoComercial({
+    ...base, pref: 'BFD-SM', largo: 26, alto: 30, conFondo: false,
+    espesorCajaMm: 15, espesorFrenteMm: 15,
+  }), 'BFD26-SM-SF-15MM');
+  assert.equal(codigoComercial({
+    ...base, pref: 'BFD-SM-SF', largo: 26, alto: 30,
+    espesorCajaMm: 15, espesorFrenteMm: 15,
+  }), 'BFD26-SM-SF-15MM', 'una tipología SF propia no duplica el sufijo');
+});
+
 test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {
   assert.equal(parseMedida('24 7/8'), 24.875);
   assert.equal(parseMedida('24-7/8'), 24.875);
@@ -242,6 +257,26 @@ test('agrupa las tres tipologias DB-SM-FE como familia independiente', () => {
   assert.deepEqual(DB_SM_FE_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE']);
   for (const pref of ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE', 'db-3-sm-fe']) assert.equal(esTipologiaDbSmFe(pref), true, pref);
   for (const pref of ['DB', 'DB-2S-SM', 'B-FE', '', null]) assert.equal(esTipologiaDbSmFe(pref), false, String(pref));
+});
+
+test('agrupa dinamicamente las variantes DB-SM-SF presentes y futuras', () => {
+  for (const pref of ['DB-2-SM-SF', 'DB-2S-SM-SF', 'DB-3-SM-SF', 'db-x-sm-sf']) {
+    assert.equal(esTipologiaDbSmSf(pref), true, pref);
+  }
+  for (const pref of ['DB-SM-SF', 'DB-2-SM', 'DB-2-SM-FE-SF', 'BFD-SM-SF', '', null]) {
+    assert.equal(esTipologiaDbSmSf(pref), false, String(pref));
+  }
+
+  const tipos = [
+    { id: 'b', pref: 'DB-2S-SM-SF' },
+    { id: 'x', pref: 'BFD-SM-SF' },
+    { id: 'a', pref: 'DB-2-SM-SF' },
+    { id: 'c', pref: 'DB-3-SM-SF' },
+  ];
+  assert.deepEqual(
+    obtenerTipologiasDbSmSf(tipos).map((tipo) => tipo.pref),
+    ['DB-2-SM-SF', 'DB-2S-SM-SF', 'DB-3-SM-SF'],
+  );
 });
 
 test('ordena el despiece de produccion y normaliza el shelf mal escrito', () => {

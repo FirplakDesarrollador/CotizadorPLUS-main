@@ -345,6 +345,9 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   // Herrajes
   let costoHerrajes = 0; const herrajesDet: Breakdown['herrajes'] = [];
   const ESTRUCTURAL = new Set(['pata', 'tornillo', 'riel', 'barra']);
+  const HERRAJE_DE_PUERTA = new Set(['manija', 'bisagra']);
+  // Se deriva del despiece efectivo para cubrir tipos O* y modo sin_frentes.
+  const tieneFrentes = piezasDet.some((pieza) => pieza.rol === 'frente' && pieza.cant > 0);
   // Cada trasero alto de gaveta (183mm) requiere un par de barras
   // estabilizadoras. Se deriva del despiece real, no de una tipología manual.
   const paresBarras = piezasDet.reduce((total, pieza) => (
@@ -357,12 +360,15 @@ export function calcularMueble(inp: CalcInput): Breakdown {
   const excluidos = new Set((inp.herrajesExcluidos || []).map((r) => String(r).toLowerCase()));
   let tieneBarraPlantilla = false;
   for (const hp of (inp.herrajesPlantilla || [])) {
-    // "Sin frentes": la carcasa conserva sus herrajes (queda lista para frentes). Kit de frentes: solo herraje de puerta.
-    if (modo === 'solo_frentes' && ESTRUCTURAL.has(hp.rol)) continue;
+    const rolHerraje = String(hp.rol).toLowerCase();
+    // Un módulo sin puertas/frentes no puede cotizar manijas ni bisagras.
+    if (!tieneFrentes && HERRAJE_DE_PUERTA.has(rolHerraje)) continue;
+    // Kit de frentes: solo herraje de puerta.
+    if (modo === 'solo_frentes' && ESTRUCTURAL.has(rolHerraje)) continue;
     // Sistema de frente gola/SM: conserva bisagras y herrajes funcionales, pero no lleva manijas.
-    if (vars.gola === 1 && String(hp.rol).toLowerCase() === 'manija') continue;
-    if (excluidos.has(String(hp.rol).toLowerCase())) continue;
-    const esBarra = String(hp.rol).toLowerCase() === 'barra';
+    if (vars.gola === 1 && rolHerraje === 'manija') continue;
+    if (excluidos.has(rolHerraje)) continue;
+    const esBarra = rolHerraje === 'barra';
     if (esBarra) tieneBarraPlantilla = true;
     const cant = esBarra ? paresBarras : num(hp.formula_cantidad);
     const precio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
