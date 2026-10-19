@@ -1,5 +1,15 @@
 # Auditoría del catálogo activo (60 tipos)
 
+> Actualización 2026-10-19: las tipologías legacy `S`, `SA`, `SBAS`, `SLOC` y
+> `SMO` quedaron inactivas mediante la migración `0192`. Se conservan en base
+> de datos para mantener la integridad de cotizaciones históricas, pero no se
+> ofrecen al buscar o agregar muebles en Simulador y Cotizaciones, cuyos
+> catálogos filtran `activo = true`.
+>
+> La migración `0193` aplica la misma política a `AL`: permanece disponible
+> para resolver referencias históricas, pero deja de ofrecerse en ambos
+> catálogos operativos.
+
 Barrido end-to-end de los 60 tipos `activo = true`: se corre `calcularMueble()` real con el
 `preset_default` y una medida de prueba (30″×30″×24″; los `superior` a 14″ de alto y 12″ de
 fondo) y se marcan los resultados anómalos. Cruza el estado de Supabase contra el motor, no

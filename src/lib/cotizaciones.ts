@@ -8,6 +8,7 @@ import {
 } from '@/lib/module-groups';
 import { contarEntrepanos, esElementoPlano, etiquetaDescripcion } from '@/lib/muebles';
 import { calcularPrecioMaterial, descripcionMaterial, grupoSeSaltaElMotor, type TipoMaterial } from '@/lib/materiales-linea';
+import { normalizarPreciosTableros } from '@/lib/precios-tableros';
 import { siguienteOrdenGrupo as siguienteOrden } from '@/lib/grupos-orden';
 import { resolverTipologiaFondo } from '@/lib/sin-fondo';
 import type { CemaTemplate } from '@/lib/cema-template';
@@ -204,6 +205,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
       door: input.door ?? null,
       doorHand: input.doorHand ?? null,
       conFondo: input.conFondo !== false,
+      preciosTableros: normalizarPreciosTableros(input.preciosTableros),
     },
     cantidad,
     costo_sin_herrajes_cop: res.costoSinHerrajes,
@@ -263,6 +265,7 @@ export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     door: c.door == null ? undefined : Number(c.door),
     doorHand: c.doorHand === 'L' || c.doorHand === 'R' ? c.doorHand : undefined,
     conFondo: c.conFondo !== false,
+    preciosTableros: normalizarPreciosTableros(c.preciosTableros),
   };
 }
 
@@ -614,6 +617,9 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
   if (patch.trm !== undefined && (!Number.isFinite(Number(patch.trm)) || Number(patch.trm) <= 0)) throw new Error('La TRM debe ser mayor que cero.');
 
   let nuevoMargenOverride: number | null | undefined = undefined;
+  let preciosTablerosNuevos: Record<string, number> | undefined;
+  let preciosTablerosCambiaron = false;
+  let configDefaultParaGuardar = patch.configDefault;
   if (patch.configDefault !== undefined && patch.configDefault !== null) {
     if ('margen' in patch.configDefault) {
       const raw = patch.configDefault.margen;
@@ -623,9 +629,23 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
         nuevoMargenOverride = null;
       }
     }
+    if ('preciosTableros' in patch.configDefault) {
+      preciosTablerosNuevos = normalizarPreciosTableros(patch.configDefault.preciosTableros);
+      configDefaultParaGuardar = { ...patch.configDefault, preciosTableros: preciosTablerosNuevos };
+      const { data: actual, error: actualError } = await sb.from('cot_cotizaciones')
+        .select('config_default').eq('id', id).single();
+      if (actualError) throw new Error(actualError.message);
+      const preciosActuales = normalizarPreciosTableros(
+        (actual?.config_default as Record<string, unknown> | null)?.preciosTableros,
+      );
+      const codigos = new Set([...Object.keys(preciosActuales), ...Object.keys(preciosTablerosNuevos)]);
+      preciosTablerosCambiaron = [...codigos].some(
+        (codigo) => preciosActuales[codigo] !== preciosTablerosNuevos?.[codigo],
+      );
+    }
   }
 
-  const debeRecalcularLineas = patch.trm !== undefined || nuevoMargenOverride !== undefined;
+  const debeRecalcularLineas = patch.trm !== undefined || nuevoMargenOverride !== undefined || preciosTablerosCambiaron;
 
   const upd: Record<string, unknown> = {};
   if (patch.nombre !== undefined) upd.nombre = patch.nombre;
@@ -634,7 +654,7 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
   if (patch.moneda !== undefined) upd.moneda = patch.moneda;
   if (patch.trm !== undefined) upd.trm = patch.trm;
   if (patch.estado !== undefined) upd.estado = patch.estado;
-  if (patch.configDefault !== undefined) upd.config_default = patch.configDefault;
+  if (patch.configDefault !== undefined) upd.config_default = configDefaultParaGuardar;
   if (patch.plantillaCema !== undefined) upd.plantilla_cema = patch.plantillaCema;
   if (patch.plantillaFirplak !== undefined) upd.plantilla_firplak = patch.plantillaFirplak;
   const { error } = await sb.from('cot_cotizaciones').update(upd).eq('id', id);
@@ -655,6 +675,9 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
       }
       if (nuevoMargenOverride !== undefined) {
         configUpdates.margenOverride = nuevoMargenOverride;
+      }
+      if (preciosTablerosCambiaron) {
+        configUpdates.preciosTableros = preciosTablerosNuevos ?? {};
       }
       const config = { ...currentConfig, ...configUpdates };
       const { error: configError } = await sb.from('cot_cotizacion_lineas').update({ config }).eq('id', linea.id);

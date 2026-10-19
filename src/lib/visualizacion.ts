@@ -42,9 +42,10 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const esBBLFD = pref === 'BBLFD' || esBBLFDSm;
     const esBlindDoorParametrico = esBBLFD || pref === 'WBL-D-L/R-SM';
     const esDbSmEspecial = [
-      'DB-2S-SM', 'DB-2-SM', 'DB-3-SM',
-      'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE',
+      'DB-2S-SM', 'DB-2-SM', 'DB-2-1INT-SM', 'DB-3-SM',
+      'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE',
     ].includes(pref);
+    const esDb21IntSmFe = pref === 'DB-2-1INT-SM-FE';
     const L=mm(calc.dims.L), A=mm(calc.dims.A), P=mm(calc.dims.P);
     const thickness=(rol: string) => Number(calc.tablerosByCode[calc.preset[rol]]?.espesor_mm ?? 0);
     const TC=thickness('caja') || 15, TF=thickness('frente') || 18, TB=thickness('fondo') || 6;
@@ -137,7 +138,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const doors=items.filter(i=>i.funcion==='frente');
     const fronts=items.filter(i=>i.funcion==='frente_gaveta').flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
     fronts.sort((a,b)=>a.item.h-b.item.h||a.item.source-b.item.source);
-    const intFronts=items.filter(i=>i.funcion==='frente_interior' && (Boolean(vars.n_cajones_ocultos) || /ocult|interior/i.test(i.p.nombre))).flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
+    const intFronts=items.filter(i=>i.funcion==='frente_interior' && /ocult|interior/i.test(i.p.nombre)).flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
     const bodyCount=Math.max(0,...items.filter(i=>i.funcion==='base_gaveta').map(i=>i.count),fronts.length+intFronts.length);
     const drawerSlots: {z:number;h:number;key:string;interior?:boolean}[]=[];
     const gola=vars.gola?53.6:0;
@@ -201,18 +202,31 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     // Dos laterales forman el cuerpo de cada gaveta. El trasero puede ser mas
     // bajo que esos laterales (100/80 mm o 200/180 mm): se alinea por arriba y
     // la diferencia queda libre abajo, como exige el ensamble de produccion.
-    const lateralDrawerHeights = items
+    let lateralDrawerHeights = items
       .filter((candidate) => candidate.funcion === 'lateral_gaveta')
       .flatMap((candidate) => Array.from(
         { length: Math.ceil(candidate.count / 2) },
         () => candidate.h,
       ));
-    const lateralDrawerDepths = items
+    let lateralDrawerDepths = items
       .filter((candidate) => candidate.funcion === 'lateral_gaveta')
       .flatMap((candidate) => Array.from(
         { length: Math.ceil(candidate.count / 2) },
         () => candidate.d,
       ));
+    if (esDb21IntSmFe) {
+      const lateralGrande = items.find((candidate) =>
+        candidate.funcion === 'lateral_gaveta' && candidate.p.nombre.includes('grande'));
+      const lateralPequeno = items.find((candidate) =>
+        candidate.funcion === 'lateral_gaveta' && candidate.p.nombre.includes('pequena'));
+      // La plantilla almacena primero la caja grande, pero el montaje real es:
+      // superior pequena, inferior grande e interior pequena. Las referencias
+      // de alto/profundidad deben seguir los slots y no el orden SQL.
+      if (lateralGrande && lateralPequeno) {
+        lateralDrawerHeights = [lateralPequeno.h, lateralGrande.h, lateralPequeno.h];
+        lateralDrawerDepths = [lateralPequeno.d, lateralGrande.d, lateralPequeno.d];
+      }
+    }
     // En DB-2S-SM-FE las dos cajas pequenas forman un bloque bajo la Gola
     // superior. Se baja el bloque completo solo lo necesario para conservar
     // una luz visible de 3,2 mm; la gaveta grande inferior no se desplaza.
@@ -224,7 +238,28 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const upperSmallDrawerDrop = esDbSmEspecial && vars.gola && smallDrawerCount > 0 && lateralDrawerHeights[0] != null
       ? Math.max(0, firstWoodDrawerTop - (upperGolaBottomZ - 3.2))
       : 0;
+    const interiorDrawerIndex = drawerSlots.findIndex((slot) => slot.interior);
+    const interiorDrawerHeight = Math.max(
+      0,
+      ...intFronts.map((candidate) => candidate.item.h),
+    );
+    // DB-2-1INT-SM aloja una gaveta interior detrás del frente exterior
+    // superior. El montaje normal suma 30 mm sobre el inicio del slot y hacía
+    // que su frente interior invadiera la Gola. Se baja la caja completa hasta
+    // conservar el mismo reveal de 3,2 mm bajo la cara inferior de la Gola.
+    const interiorDrawerDrop = ['DB-2-1INT-SM','DB-2-1INT-SM-FE'].includes(pref) && interiorDrawerIndex >= 0
+      ? Math.max(
+        0,
+        (drawerSlots[interiorDrawerIndex]?.z ?? foot) + 30 + interiorDrawerHeight
+          - (upperGolaBottomZ - 3.2),
+      )
+      : 0;
+    // En la variante FE el contraparche de la gaveta interior toca la cara
+    // interna del frente exterior superior (y=0). El montaje general arranca
+    // las cajas en y=10, por eso esta gaveta compensa esos 10 mm completos.
+    const interiorDrawerOffsetY = esDb21IntSmFe ? -10 : 0;
     const drawerBodyOffsetZ = (drawerIndex: number) => {
+      if (drawerIndex === interiorDrawerIndex) return -interiorDrawerDrop;
       if (drawerIndex >= smallDrawerCount) return 0;
       // La segunda caja pequena se apoya sobre el refuerzo delantero inferior.
       // Sus laterales comienzan 13 mm debajo de la base, por lo que se compensa
@@ -253,7 +288,9 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           else drawerIndex=k;
         }
         else if(funcion==='trasero_gaveta') {
-          if(intFronts.length) {
+          if(esDb21IntSmFe) {
+            drawerIndex=p.nombre.includes('grande')?1:(k===0?0:interiorDrawerIndex);
+          } else if(intFronts.length) {
             if(h>100) drawerIndex=1;
             else drawerIndex=k===0?0:Math.max(0,drawerSlots.findIndex(s=>s.interior));
           } else {
@@ -261,7 +298,14 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
             drawerIndex=ordered.findIndex(v=>v.q===item&&v.j===k);
           }
         }
-        if(funcion==='lateral_gaveta') drawerIndex=Math.floor(i/2);
+        if(funcion==='lateral_gaveta') {
+          drawerIndex=esDb21IntSmFe
+            ? (p.nombre.includes('grande')?1:(k<2?0:interiorDrawerIndex))
+            : Math.floor(i/2);
+        }
+        if(esDb21IntSmFe&&funcion==='frente_interior'&&p.nombre.startsWith('contraparche')) {
+          drawerIndex=p.nombre.includes('grande')?1:(k===0?0:interiorDrawerIndex);
+        }
         const slot=drawerSlots[drawerIndex%Math.max(1,drawerSlots.length)];
         if(isDrawer(funcion)&&slot) cajon=slot.key;
         switch(funcion) {
@@ -341,7 +385,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'base_gaveta': {
             const tieneLateralesDeMadera = lateralDrawerHeights[drawerIndex] != null;
             x=(L-w)/2;
-            y=10;
+            y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0);
             z=(slot?.z??foot)+30+(tieneLateralesDeMadera?13:0)+drawerBodyOffsetZ(drawerIndex);
             break;
           }
@@ -349,12 +393,12 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
             const lateralHeight = lateralDrawerHeights[drawerIndex];
             const lateralDepth = lateralDrawerDepths[drawerIndex];
             x=(L-w)/2;
-            y=10+(lateralDepth??items.find(v=>v.funcion==='base_gaveta')?.d??P-80)-d;
+            y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0)+(lateralDepth??items.find(v=>v.funcion==='base_gaveta')?.d??P-80)-d;
             z=(slot?.z??foot)+30+Math.max(0,(lateralHeight??h)-h)+drawerBodyOffsetZ(drawerIndex);
             break;
           }
-          case 'lateral_gaveta': x=i%2===0?TC+12:L-TC-12-w; y=10; z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
-          case 'frente_interior': x=(L-w)/2; y=10; z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
+          case 'lateral_gaveta': x=i%2===0?TC+12:L-TC-12-w; y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0); z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
+          case 'frente_interior': x=(L-w)/2; y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0); z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
           case 'gola':
             if (esBBLFDSm && p.nombre === 'gola_madera') {
               const frenteW = mm(Number(vars.door ?? 0));

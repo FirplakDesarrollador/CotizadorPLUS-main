@@ -1,8 +1,9 @@
 'use client';
 import Combobox from '@/components/Combobox';
 import { useMemo, useState } from 'react';
+import { precioTableroCotizacion, type PreciosTablerosCotizacion } from '@/lib/precios-tableros';
 
-type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
+type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null; precio_m2: number };
 type Recargo = { id: string; cliente_nombre: string; recargo_pct: number };
 type Perfil = { id: string; nombre: string; valores: Record<string, string> };
 export type MaterialDefaults = { preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] };
@@ -18,6 +19,7 @@ export type ProjectDefaults = {
   materialesSuperiores?: MaterialDefaults;
   materialesCloset?: MaterialDefaults;
   materialesBanos?: MaterialDefaults;
+  preciosTableros?: PreciosTablerosCotizacion;
   // Defaults del primer mueble (vienen del formulario de creación)
   tipoId?: string;
   largo?: string;
@@ -109,6 +111,30 @@ export default function ProjectConfigPanel({ tableros, cantos, perfiles, default
     onChange({ ...defaults, [key]: next, ...(familia === 'inferior' ? { ...next } : {}) });
   }
 
+  function setPrecioTablero(codigo: string, precio: number) {
+    if (!codigo || !Number.isFinite(precio) || precio < 0) return;
+    onChange({
+      ...defaults,
+      preciosTableros: { ...defaults.preciosTableros, [codigo]: precio },
+    });
+  }
+
+  const tableroField = (label: string, rol: string, familia: 'inferior' | 'superior', materiales: MaterialDefaults) => {
+    const codigo = materiales.preset[rol] ?? '';
+    const precio = precioTableroCotizacion(codigo, tableros, defaults.preciosTableros);
+    return (
+      <F label={label}>
+        <Combobox value={codigo} options={tableroOptions} onChange={(v) => setPresetRol(rol, v, familia)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+        <PrecioTableroInput
+          key={`${codigo}:${precio ?? ''}`}
+          codigo={codigo}
+          precio={precio}
+          onCommit={setPrecioTablero}
+        />
+      </F>
+    );
+  };
+
   return (
     <div className="border-t border-slate-200 pt-4 mt-4">
       <div className="mb-4">
@@ -128,15 +154,9 @@ export default function ProjectConfigPanel({ tableros, cantos, perfiles, default
                 </select>
               </F>
             )}
-            <F label="Tablero caja / refuerzos">
-              <Combobox value={materialesInferiores.preset['caja'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('caja', v, 'inferior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
-            </F>
-            <F label="Tablero frente">
-              <Combobox value={materialesInferiores.preset['frente'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('frente', v, 'inferior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
-            </F>
-            <F label="Tablero fondo">
-              <Combobox value={materialesInferiores.preset['fondo'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('fondo', v, 'inferior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
-            </F>
+            {tableroField('Tablero caja / refuerzos', 'caja', 'inferior', materialesInferiores)}
+            {tableroField('Tablero frente', 'frente', 'inferior', materialesInferiores)}
+            {tableroField('Tablero fondo', 'fondo', 'inferior', materialesInferiores)}
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <F label="Canto frentes">
@@ -165,15 +185,9 @@ export default function ProjectConfigPanel({ tableros, cantos, perfiles, default
                 </select>
               </F>
             )}
-            <F label="Tablero caja / refuerzos">
-              <Combobox value={materialesSuperiores.preset['caja'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('caja', v, 'superior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
-            </F>
-            <F label="Tablero frente">
-              <Combobox value={materialesSuperiores.preset['frente'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('frente', v, 'superior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
-            </F>
-            <F label="Tablero fondo">
-              <Combobox value={materialesSuperiores.preset['fondo'] ?? ''} options={tableroOptions} onChange={(v) => setPresetRol('fondo', v, 'superior')} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
-            </F>
+            {tableroField('Tablero caja / refuerzos', 'caja', 'superior', materialesSuperiores)}
+            {tableroField('Tablero frente', 'frente', 'superior', materialesSuperiores)}
+            {tableroField('Tablero fondo', 'fondo', 'superior', materialesSuperiores)}
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <F label="Canto frentes">
@@ -195,6 +209,40 @@ export default function ProjectConfigPanel({ tableros, cantos, perfiles, default
 
       <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.4rem .6rem;font-size:.8rem;background:white}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}`}</style>
     </div>
+  );
+}
+
+function PrecioTableroInput({
+  codigo,
+  precio,
+  onCommit,
+}: {
+  codigo: string;
+  precio: number | null;
+  onCommit: (codigo: string, precio: number) => void;
+}) {
+  const [draft, setDraft] = useState(precio == null ? '' : String(precio));
+
+  return (
+    <span className="mt-1 block">
+      <span className="mb-0.5 block text-[11px] text-slate-500">Valor tablero (COP/m²)</span>
+      <input
+        type="number"
+        min="0"
+        step="1"
+        inputMode="decimal"
+        value={draft}
+        disabled={!codigo}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={() => {
+          const value = Number(draft);
+          if (draft !== '' && Number.isFinite(value) && value >= 0) onCommit(codigo, value);
+          else setDraft(precio == null ? '' : String(precio));
+        }}
+        className="inp"
+        aria-label={`Valor del tablero ${codigo || 'sin seleccionar'} en pesos por metro cuadrado`}
+      />
+    </span>
   );
 }
 
