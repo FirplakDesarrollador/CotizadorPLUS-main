@@ -335,8 +335,11 @@ export const DB_SM_TIPOLOGIAS: DbSmTipologia[] = [
 ];
 
 export function esTipologiaDbSm(pref: string | null | undefined): boolean {
-  const p = String(pref ?? '').toUpperCase();
-  return DB_SM_TIPOLOGIAS.some((tipologia) => tipologia.pref === p);
+  const p = String(pref ?? '').trim().toUpperCase();
+  // La familia se reconoce por convención y no por una lista cerrada. Así una
+  // variante nueva DB-<variante>-SM se integra al grupo principal en vez de
+  // filtrarse como una tipología raíz independiente.
+  return /^DB-.+-SM$/.test(p);
 }
 
 // Las variantes DB con Gola y sin fondo se crean bajo demanda en la base de
@@ -370,8 +373,8 @@ export const DB_SM_FE_TIPOLOGIAS: DbSmFeTipologia[] = [
 ];
 
 export function esTipologiaDbSmFe(pref: string | null | undefined): boolean {
-  const p = String(pref ?? '').toUpperCase();
-  return DB_SM_FE_TIPOLOGIAS.some((tipologia) => tipologia.pref === p);
+  const p = String(pref ?? '').trim().toUpperCase();
+  return /^DB-.+-SM-FE$/.test(p);
 }
 
 // Configuraciones rápidas de torre PCFD. Son presets editables: después de
