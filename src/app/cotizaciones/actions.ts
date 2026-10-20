@@ -42,6 +42,10 @@ export async function crearCotizacionAction(
     if (typeof configRaw === 'string' && configRaw) {
       try { configDefault = JSON.parse(configRaw); } catch { configDefault = null; }
     }
+    const familias = configDefault?.familiasMaterialesActivas;
+    if (!Array.isArray(familias) || familias.length === 0) {
+      throw new Error('Incluye al menos una familia de muebles en la cotización.');
+    }
     const id = await crearCotizacion({ nombre, cliente_nombre, comprador_nombre, cotizador_por, moneda, trm, sistema_medida, configDefault });
     revalidatePath('/cotizaciones');
     return { ok: true, id };

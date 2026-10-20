@@ -13,9 +13,11 @@ export const getUserAndRole = cache(async () => {
   const sb = await createClient();
   const { data: { user } } = await sb.auth.getUser();
   let rol = 'vendedor';
+  let nombre: string | null = null;
   if (user) {
-    const { data: perfil } = await sb.from('cot_perfiles').select('rol').eq('user_id', user.id).single();
+    const { data: perfil } = await sb.from('cot_perfiles').select('rol,nombre').eq('user_id', user.id).single();
     if (perfil?.rol) rol = perfil.rol;
+    nombre = perfil?.nombre?.trim() || null;
   }
-  return { user, rol };
+  return { user, rol, nombre };
 });

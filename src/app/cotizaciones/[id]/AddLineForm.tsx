@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
@@ -21,6 +21,7 @@ export type ProjectDefaults = {
   // recargoId: string;
   margen: string;
   conFondo?: boolean;
+  familiasMaterialesActivas?: FamiliaMaterial[];
   materialesInferiores?: MaterialDefaults;
   materialesSuperiores?: MaterialDefaults;
   materialesCloset?: MaterialDefaults;
@@ -73,7 +74,7 @@ export type LineaInicial = {
   anotaciones?: string | null;
 };
 
-const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
+const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente (también Filler, Panel y Zócalo)', fondo: 'Tablero fondo' };
 const DB_SM_GROUP_VALUE = '__DB_SM__';
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
 const DB_SM_SF_GROUP_VALUE = '__DB_SM_SF__';
@@ -87,7 +88,7 @@ const getCantoMatch = (cantos: string[], target: string) =>
   target;
 
 export default function AddLineForm({
-  cocinaId, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, initial, onDone, onMaterialesUsados
+  cocinaId, tipos, tableros, cantos, presetDefault, rolesByTipo, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, initial, onDone, onMaterialesUsados
 }: {
   cocinaId: string;
   tipos: Tipo[];
@@ -109,14 +110,24 @@ export default function AddLineForm({
 }) {
   const router = useRouter();
   const esEdicion = !!initial;
-  const sbfd = tipos.find((t) => t.pref === 'SBFD');
+  const familiasActivas = projectDefaults?.familiasMaterialesActivas;
+  const tiposDisponibles = initial || !familiasActivas?.length
+    ? tipos
+    : tipos.filter((tipo) => esElementoPlano(tipo.pref) || familiasActivas.includes(familiaMaterialPorPrefijo(tipo.pref)));
+  const sbfd = tiposDisponibles.find((t) => t.pref === 'SBFD');
   const ov = initial?.overrides ?? null;
-  const tipoInicialId = initial?.tipoId ?? projectDefaults?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '';
+  const tipoProyecto = tiposDisponibles.some((tipo) => tipo.id === projectDefaults?.tipoId) ? projectDefaults?.tipoId : undefined;
+  const tipoInicialId = initial?.tipoId ?? tipoProyecto ?? sbfd?.id ?? tiposDisponibles[0]?.id ?? '';
   const tipoInicialPref = tipos.find((t) => t.id === tipoInicialId)?.pref ?? '';
   // Cada familia tiene su bloque de materiales. Las cotizaciones creadas antes de
   // que existieran closet y banos no lo traen: caen en inferiores, como siempre.
-  const materialProyecto = (pref: string): MaterialDefaults | undefined => {
+  const familiaProyecto = (pref: string): FamiliaMaterial => {
     const familia = familiaMaterialPorPrefijo(pref);
+    if (esElementoPlano(pref) && familiasActivas?.length && !familiasActivas.includes(familia)) return familiasActivas[0];
+    return familia;
+  };
+  const materialProyecto = (pref: string): MaterialDefaults | undefined => {
+    const familia = familiaProyecto(pref);
     const porFamilia = projectDefaults as unknown as Record<string, MaterialDefaults | undefined> | undefined;
     return porFamilia?.[CLAVE_CONFIG_FAMILIA[familia]] ?? projectDefaults?.materialesInferiores;
   };
@@ -212,7 +223,7 @@ export default function AddLineForm({
   const usaTipologiaDbSm = esTipologiaDbSm(prefTipo);
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(prefTipo);
   const usaTipologiaDbSmSf = esTipologiaDbSmSf(prefTipo);
-  const tipologiasDbSmSf = obtenerTipologiasDbSmSf(tipos);
+  const tipologiasDbSmSf = obtenerTipologiasDbSmSf(tiposDisponibles);
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
   const usaDoor = usaPuertaParametrica(prefTipo);
   const usaHuecoHorno = usaHuecoHornoParametrico(prefTipo);
@@ -229,7 +240,7 @@ export default function AddLineForm({
     let dbSmAgregado = false;
     let dbSmFeAgregado = false;
     let dbSmSfAgregado = false;
-    for (const t of tipos) {
+    for (const t of tiposDisponibles) {
       if (esTipologiaDbSmSf(t.pref)) {
         if (!dbSmSfAgregado) {
           options.push({ value: DB_SM_SF_GROUP_VALUE, label: 'DB-SM-SF — Cajoneras con Gola sin fondo' });
@@ -329,12 +340,6 @@ export default function AddLineForm({
   function aplicarDbSmSfTipo(pref: string) {
     const tipo = tipos.find((item) => item.pref === pref);
     if (tipo) handleTipoChange(tipo.id);
-  }
-
-  function aplicarPerfil(id: string) {
-    setPerfilId(id);
-    const p = perfiles.find((x) => x.id === id);
-    if (p) setPreset({ ...p.valores });
   }
 
   function aplicarDbTipo(k: string) {
@@ -450,7 +455,7 @@ export default function AddLineForm({
     }
     if (!esEdicion) {
       onMaterialesUsados?.({
-        familia: familiaMaterialPorPrefijo(prefTipo),
+        familia: familiaProyecto(prefTipo),
         preset, cantoFrentes: cantoFrentesSel, cantoCaja: cantoCajaSel, perfilId, herrajesExcl,
       });
     }
@@ -634,12 +639,6 @@ export default function AddLineForm({
               </select>
             </L>
           </div>
-        )}
-
-        {perfiles.length > 0 && (
-          <L label="Perfil de material">
-            <Combobox value={perfilId} options={perfiles.map((p) => ({ value: p.id, label: p.nombre }))} onChange={aplicarPerfil} placeholder="Elegir perfil…" />
-          </L>
         )}
 
         {roles.filter((r) => r !== 'refuerzo').map((rol) => (

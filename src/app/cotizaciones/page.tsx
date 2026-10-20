@@ -18,13 +18,13 @@ const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'curren
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 export default async function CotizacionesPage() {
-  const { user, rol } = await getUserAndRole();
+  const { user, rol, nombre } = await getUserAndRole();
   const cotizaciones = await listarCotizaciones();
   const data = await getCotizadorData();
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <AppHeader email={user?.email} rol={rol} active="cotizaciones" />
+      <AppHeader nombre={nombre} email={user?.email} rol={rol} active="cotizaciones" />
       <div className="mx-auto w-full max-w-[1600px] px-4 pt-4 flex justify-end gap-2">
         <GuideButton steps={GUIA_LISTA} label="Guía de uso" />
         <TooltipToggle />
@@ -43,7 +43,7 @@ export default async function CotizacionesPage() {
 
         <section data-tour="lista" className="cotizaciones-lista">
         <div className="h-fit overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-          <table className="w-full text-sm" style={{ minWidth: 720 }}>
+          <table className="w-full text-sm" style={{ minWidth: 860 }}>
             <thead>
               <tr className="text-left text-slate-400 border-b border-slate-100">
                 <th className="px-4 py-2">Cotización</th>
@@ -51,11 +51,12 @@ export default async function CotizacionesPage() {
                 <th>Estado</th>
                 <th className="text-right">Total USD</th>
                 <th className="text-right px-4">Total COP</th>
+                <th className="px-4">Cotizado por</th>
                 <th className="px-4"></th>
               </tr>
             </thead>
             <tbody>
-              {cotizaciones.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Sin cotizaciones todavía.</td></tr>}
+              {cotizaciones.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Sin cotizaciones todavía.</td></tr>}
               {cotizaciones.map((c) => (
                 <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50">
                   <td className="px-4 py-2">
@@ -69,6 +70,7 @@ export default async function CotizacionesPage() {
                   <td><span className="text-xs rounded-full bg-slate-100 px-2 py-0.5 capitalize">{c.estado}</span></td>
                   <td className="text-right">{fmtUSD(c.total_usd)}</td>
                   <td className="text-right px-4">{fmtCOP(c.total_cop)}</td>
+                  <td className="px-4 text-slate-600">{c.cotizado_por_usuario || 'Sin nombre'}</td>
                   <td className="px-4 py-2"><CotizacionRowActions id={c.id} nombre={c.nombre || 'Sin nombre'} /></td>
                 </tr>
               ))}

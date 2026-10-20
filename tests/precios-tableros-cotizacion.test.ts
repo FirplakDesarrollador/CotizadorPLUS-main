@@ -30,9 +30,12 @@ test('solo admite precios de tablero finitos y no negativos', () => {
   assert.deepEqual(normalizarPreciosTableros({ A: 0, B: '1200', C: -1, D: 'x' }), { A: 0, B: 1200 });
 });
 
-test('las seis selecciones de tablero del panel muestran el valor editable', () => {
+test('los tres roles de tablero muestran valor editable en las cuatro familias', () => {
   const source = fs.readFileSync('src/app/cotizaciones/[id]/ProjectConfigPanel.tsx', 'utf8');
-  assert.equal(source.match(/tableroField\('Tablero /g)?.length, 6);
+  for (const rol of ['caja', 'frente', 'fondo']) {
+    assert.match(source, new RegExp(`\\['${rol}',`));
+  }
+  assert.match(source, /FAMILIAS_MATERIAL\.map/);
   assert.match(source, /Valor tablero \(COP\/m²\)/);
 });
 

@@ -17,6 +17,11 @@ y `W`. No las actualiza ni reutiliza sus plantillas.
 | `DB-2S-SM` | `DB26-2S-SM` | Cajonera independiente 2S con dos gavetas pequeñas, una grande y Gola superior/inferior. |
 | `DB-2-SM` | `DB26-2-SM` | Variante con dos gavetas grandes iguales, Gola superior/intermedia y sin manijas. |
 | `DB-2-1INT-SM` | `DB22-2-1INT-SM` | Dos frentes exteriores iguales, una gaveta interior y una Gola de madera. |
+
+Los nombres visibles del selector para estas tres tipologías superiores son
+`Mueble Superior Sin Manija`, `Mueble Superior Locero Sin Manija` y
+`Mueble Superior Sin Manija con PUSH`. Este ajuste es exclusivamente
+descriptivo; la estructura y el cálculo de las tipologías no cambian.
 | `DB-3-SM` | `DB26-3-SM` | Variante con tres gavetas iguales; segundo par refuerzo/Gola entre la segunda y tercera. |
 
 ## Prioridad de reglas PLUS
