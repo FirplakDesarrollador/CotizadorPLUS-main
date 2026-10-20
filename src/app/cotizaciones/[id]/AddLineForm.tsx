@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
@@ -70,6 +70,7 @@ export type LineaInicial = {
   door?: number;
   doorHand?: 'L' | 'R';
   conFondo?: boolean;
+  anotaciones?: string | null;
 };
 
 const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
@@ -167,6 +168,7 @@ export default function AddLineForm({
   }); */
 
   const [cantidad, setCantidad] = useState(initial?.cantidad ?? 1);
+  const [anotaciones, setAnotaciones] = useState(initial?.anotaciones ?? '');
   const [margenInput, setMargenInput] = useState(initial?.margenOverride != null ? String(initial.margenOverride * 100) : (projectDefaults?.margen ?? ''));
 
   const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : (projectDefaults?.npuertas ?? ''));
@@ -435,6 +437,7 @@ export default function AddLineForm({
       doorHand: usaDoor ? doorHand : undefined,
       conFondo: esMuebleSuperior(prefTipo) ? true : conFondo,
       preciosTableros: projectDefaults?.preciosTableros,
+      anotaciones,
     };
 
     const res = esEdicion
@@ -576,7 +579,7 @@ export default function AddLineForm({
             <L label={`Tipología ${prefTipo || 'DB'}`}>
               <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
                 <option value="">— manual —</option>
-                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{etiquetaTipologiaDb(t.key, prefTipo)}</option>)}
+                {DB_TIPOLOGIAS_COTIZABLES.map((t) => <option key={t.key} value={t.key} title={t.desc}>{etiquetaTipologiaDb(t.key, prefTipo)}</option>)}
               </select>
             </L>
             <L label="Nº barras (pares)">
@@ -732,6 +735,20 @@ export default function AddLineForm({
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mt-3">
+        <L label="Anotaciones">
+          <textarea
+            value={anotaciones}
+            onChange={(e) => setAnotaciones(e.target.value)}
+            maxLength={1000}
+            rows={3}
+            placeholder="Escribe una indicación específica para este mueble…"
+            className="inp min-h-20 resize-y"
+          />
+        </L>
+        <p className="mt-1 text-xs text-slate-500">Solo aplica a este mueble dentro de esta cotización.</p>
       </div>
 
       {error && <p className="text-sm text-red-600 mt-2">{error}</p>}

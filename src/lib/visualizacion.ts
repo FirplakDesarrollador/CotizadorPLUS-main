@@ -7,6 +7,7 @@ export type PanelVisual = {
   funcion: FuncionMontaje; x: number; y: number; z: number; w: number; d: number; h: number;
   largo: number; ancho: number; espesor: number; giro: number; confirmado: boolean;
   nota: string; cajon: string | null;
+  recorte?: { borde: 'frontal_superior'; profundidad: number; alto: number };
 };
 export type EscenaMueble = {
   version: 1; paneles: PanelVisual[]; avisos: string[]; omitidas: string[];
@@ -456,10 +457,22 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           }
           confirmed = true;
         }
+        let recorte: PanelVisual['recorte'];
+        if (config.recorte) {
+          try {
+            const profundidad = Number(evalExpr(config.recorte.profundidad, ctx));
+            const alto = Number(evalExpr(config.recorte.alto, ctx));
+            if (!(profundidad > 0 && profundidad < d && alto > 0 && alto < h)) throw new Error('Recorte fuera del panel');
+            recorte = { borde: config.recorte.borde, profundidad, alto };
+          } catch {
+            warn(`${pref} · ${p.nombre}: mecanizado visual inválido; se representa el panel completo.`);
+            confirmed = false;
+          }
+        }
         addPanel({id:`${mi}:${item.source}:${k}`,nombre:p.nombre,modulo:mi,pref,rol:p.rol_tablero,
           material:calc.preset[p.rol_tablero]??'',funcion,x:defaults.x+(full?0:offset),y:defaults.y,z:defaults.z,w,d,h,
           largo:item.l,ancho:item.a,espesor:item.t,giro,confirmado:confirmed,
-          nota:config.nota??'',cajon});
+          nota:config.nota??'',cajon,recorte});
       }
     }
     if(['BBL','BLS','BLS-RS-SM','WER','WBL','SDB','WPC','PCFD'].includes(pref)) warn(`${pref}: interpretación de piezas rectangulares; recortes, ensambles y distribución especial requieren validación de montaje.`);

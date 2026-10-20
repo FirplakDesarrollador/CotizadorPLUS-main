@@ -295,6 +295,10 @@ export const DB_TIPOLOGIAS: DbTipologia[] = [
   { key: 'DB2-1OP', nc: 3, nb: 1, npeq: 0, noculto: 1, desc: '2 cajones + 1 oculto · 1 par de barra' },
 ];
 
+// Todas las configuraciones DB creadas se ofrecen en Simulador y Cotizaciones.
+// En sistema métrico sus etiquetas se presentan con el prefijo IC equivalente.
+export const DB_TIPOLOGIAS_COTIZABLES = DB_TIPOLOGIAS;
+
 // Cajoneras que comparten el selector comercial de tipologias DB. Mantener
 // esta decision en una sola funcion evita que una ruta aplique el selector sin
 // incluir sus overrides, el riel o el sufijo del codigo.
@@ -314,9 +318,12 @@ export function permiteTipologiaDb(pref: string | null | undefined): boolean {
 // Esto es presentación y nada más.
 export function etiquetaTipologiaDb(key: string, pref: string | null | undefined): string {
   const base = String(pref ?? '').toUpperCase();
-  if (!base || base === 'DB') return key;
-  // `DB-1S` → `UDV-1S`; `DB2-1OP` → `UDV2-1OP`.
-  return key.replace(/^DB/, base);
+  // La clave histórica DB2-1OP se conserva en cálculos y datos persistidos;
+  // únicamente su nombre comercial visible cambia a DB-2-1INT.
+  const etiqueta = key === 'DB2-1OP' ? 'DB-2-1INT' : key;
+  if (!base || base === 'DB') return etiqueta;
+  // `DB-1S` → `UDV-1S`; `DB-2-1INT` → `UDV-2-1INT`.
+  return etiqueta.replace(/^DB/, base);
 }
 
 // Las tipologias DB con Gola de madera son tipos independientes en base de

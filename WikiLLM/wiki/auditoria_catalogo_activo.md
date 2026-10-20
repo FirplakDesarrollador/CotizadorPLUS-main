@@ -9,6 +9,25 @@
 > La migración `0193` aplica la misma política a `AL`: permanece disponible
 > para resolver referencias históricas, pero deja de ofrecerse en ambos
 > catálogos operativos.
+>
+> Actualización 2026-10-20: la migración `0194` desactiva `F`, `OILVP` e
+> `ILVP`. En base de datos los dos últimos son `pref_metrico` de las filas
+> `OSBFD` y `SBFD`, respectivamente; esas son las claves que desactiva la
+> migración. Las tres filas se conservan para cotizaciones históricas, pero ya no
+> son visibles ni seleccionables al agregar muebles en Simulador o
+> Cotizaciones.
+> `getCotizadorData()` también excluye esos tres prefijos de manera explícita,
+> como defensa ante despliegues cuya base todavía no haya aplicado `0194`.
+>
+> Actualización 2026-10-20: `0195` desactiva por prefijo interno y por alias
+> imperial/métrico `S`, `SA`, `SLOC`, `SMO`, `ICP`, `ILVP`, `ALP`, `AL`
+> y `ALH`. Los códigos inexistentes quedan cubiertos para otros entornos. `IP`
+> se excluyó posteriormente de esta política: es el alias métrico de `BFD` y no
+> admite un estado activo independiente. `0196` restaura `BFD` como activa, por
+> lo que se ofrece como `BFD` en imperial y como `IP` en métrico. Las variantes
+> de cajonera `IC-1P`, `IC-2P`, `IC-2` e `IC-4` no son filas de catálogo: son
+> configuraciones de `DB`, y se excluyen de los selectores compartidos mediante
+> `DB_TIPOLOGIAS_COTIZABLES`, conservando la lista completa para históricos.
 
 Barrido end-to-end de los 60 tipos `activo = true`: se corre `calcularMueble()` real con el
 `preset_default` y una medida de prueba (30″×30″×24″; los `superior` a 14″ de alto y 12″ de
@@ -268,6 +287,23 @@ no `largo` / `ancho` — usarlos mal da 60 falsos positivos de "NaN".
 
 Relacionado: [Motor de Cálculo](motor_calculo.md), [Esquema de Base de Datos](esquema_base_datos.md),
 [Validación contra hojas de ruta](validacion_hojas_de_ruta.md).
+
+## Reactivación de F
+
+La migración `0203_reactivar_f.sql` vuelve a marcar `F` como activa. También se
+retira `F` de `TIPOLOGIAS_NO_COTIZABLES`, la defensa compartida de
+`getCotizadorData()`. Por tanto, la tipología se ofrece nuevamente tanto en
+Simulador como en Cotizaciones; las demás exclusiones legacy no cambian.
+
+## Reactivación completa de DB/IC
+
+La migración `0204_reactivar_tipologias_db.sql` garantiza `activo=true` para
+todas las filas con prefijos DB o IC, incluidos sus alias imperial/métrico. La
+causa de la desaparición de `DB-1S`, `DB-2S`, `DB-2` y `DB-4` no estaba en esas
+filas: eran configuraciones internas excluidas por `DB_TIPOLOGIAS_NO_COTIZABLES`.
+Esa exclusión se eliminó y `DB_TIPOLOGIAS_COTIZABLES` vuelve a exponer las seis
+configuraciones declaradas en `DB_TIPOLOGIAS` en Simulador y Cotizaciones.
+
 ## Ajuste de cantos WLD
 
 Los `entrepano` de la tipología exacta `WLD` llevan canto en sus cuatro lados:

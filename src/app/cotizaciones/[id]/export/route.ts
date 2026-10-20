@@ -6,7 +6,7 @@ import { aplicaIva, calcularIva, etiquetaIva, totalConIva } from '@/lib/iva';
 import { monedasVisibles } from '@/lib/monedas-visibles';
 
 type Breakdown = Record<string, unknown> | null;
-type Linea = { pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null } | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_total_cop: number; costo_total_cop?: number; breakdown?: Breakdown };
+type Linea = { pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null } | null; descripcion_es: string | null; anotaciones: string | null; cantidad: number; precio_unit_usd: number; precio_total_cop: number; costo_total_cop?: number; breakdown?: Breakdown };
 type Cocina = { nombre: string; cantidad?: number; lineas: Linea[] };
 
 function precios(linea: Linea, trm: number) {
@@ -59,7 +59,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     for (const l of c.lineas) {
       const p = precios(l, trm); const count = c.lineas.filter((x) => x.grupo_id === l.grupo_id).length;
       const costoCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0);
-      const row: (string | number)[] = [count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? ''), l.codigo_modulo || l.pref || '', count > 1 ? (l.grupo?.codigo_grupo ?? '') : '', l.descripcion_es || ''];
+      const descripcion = [l.descripcion_es, l.anotaciones].filter(Boolean).join(' · ');
+      const row: (string | number)[] = [count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? ''), l.codigo_modulo || l.pref || '', count > 1 ? (l.grupo?.codigo_grupo ?? '') : '', descripcion];
       if (mostrarUsd) row.push(trm > 0 ? costoCop / trm : 0);
       if (mostrarCop) row.push(costoCop);
       row.push(p.cant);
@@ -68,6 +69,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       if (mostrarCon && mostrarUsd) row.push(p.conUsd, p.conUsd * p.cant);
       if (mostrarCon && mostrarCop) row.push(p.conCop, p.conCop * p.cant);
       const excelRow = ws.addRow(row);
+      excelRow.getCell(4).alignment = { vertical: 'top', wrapText: true };
       for (let col = 5; col <= header.length; col++) if (header[col - 1] !== 'Cant') excelRow.getCell(col).numFmt = header[col - 1].endsWith('COP') ? '"$"#,##0' : '"$"#,##0.00';
       sub.sinUsd += p.sinUsd * p.cant; sub.sinCop += p.sinCop * p.cant; sub.conUsd += p.conUsd * p.cant; sub.conCop += p.conCop * p.cant;
     }

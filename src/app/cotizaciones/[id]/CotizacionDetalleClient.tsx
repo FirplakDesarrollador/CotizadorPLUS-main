@@ -12,6 +12,7 @@ import VersionesCotizacion from './VersionesCotizacion';
 import type { CotizacionVersion } from '@/lib/cotizaciones';
 import { CLAVE_CONFIG_FAMILIA, type FamiliaMaterial } from '@/lib/muebles';
 import { calcularMargenGlobalProyecto } from '@/lib/module-groups';
+import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario } from '@/lib/comentarios-cotizacion';
 
 type LineaConfig = {
   preset?: Record<string, string>;
@@ -32,6 +33,7 @@ type Linea = {
   id: string;
   pref: string | null;
   descripcion_es: string | null;
+  anotaciones: string | null;
   cantidad: number;
   precio_unit_usd: number;
   precio_total_usd: number;
@@ -57,7 +59,7 @@ type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metr
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null; precio_m2: number };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
+type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; notas?: string | null; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
 export type ColumnasPrecio = { sinHerrajes: boolean; conHerrajes: boolean; usd: boolean; cop: boolean };
 type UnidadProyecto = 'in' | 'cm' | 'mm';
 
@@ -289,8 +291,14 @@ export default function CotizacionDetalleClient({
 
       <div className="flex flex-wrap gap-2" data-tour="export">
         <a href={`/cotizaciones/${cotizacionId}/export?sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">⬇ Exportar Excel</a>
-        <a href={`/cotizaciones/${cotizacionId}/imprimir?sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">🖨 Imprimir / PDF</a>
-        <VersionesCotizacion cotizacionId={cotizacionId} versiones={versiones} />
+        <a
+          href={`/cotizaciones/${cotizacionId}/imprimir?sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}`}
+          onClick={(event) => {
+            if (estadoRequiereAlertaComentario(cabecera.estado) && !window.confirm(ALERTA_COMENTARIO)) event.preventDefault();
+          }}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+        >🖨 Imprimir / PDF</a>
+        <VersionesCotizacion cotizacionId={cotizacionId} versiones={versiones} estado={cabecera.estado} />
       </div>
 
       <div className="space-y-4" data-tour="cocinas">

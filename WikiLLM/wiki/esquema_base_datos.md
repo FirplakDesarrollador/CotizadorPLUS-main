@@ -26,7 +26,7 @@ La base de datos se estructura en torno a los siguientes modelos:
 ### Transaccionales (Cotizaciones)
 *   **`cot_cotizaciones`:** Cabecera del documento de cotización (cliente, moneda, TRM congelada, estado del negocio).
 *   **`cot_cocinas`:** Jerarquía de cocinas dentro de un proyecto. Almacena el nombre, orden, cantidad (multiplicador de los muebles internos) y totales acumulados en COP/USD.
-*   **`cot_cotizacion_lineas`:** Líneas individuales que componen el presupuesto. Almacena las dimensiones, cantidad solicitada, variables de diseño y guarda el objeto `breakdown` final (JSON) generado por el motor para auditoría histórica.
+*   **`cot_cotizacion_lineas`:** Líneas individuales que componen el presupuesto. Almacena las dimensiones, cantidad solicitada, variables de diseño, la anotación libre exclusiva de esa línea y el objeto `breakdown` final (JSON) generado por el motor para auditoría histórica. `anotaciones` no modifica la tipología ni el cálculo.
 *   **`cot_grupos_modulos`:** Bloques físicos ordenados dentro de una cocina. Almacena la letra canónica, el código concatenado, los subtotales y el breakdown estructural del grupo. Cada línea apunta a un grupo y conserva su posición de izquierda a derecha.
 *   **`cot_cotizacion_versiones`:** Historial inmutable de snapshots JSONB del agregado completo (cabecera, cocinas, grupos y líneas). Las versiones se generan exclusivamente por solicitud manual del usuario; no existen respaldos automáticos.
 
@@ -41,6 +41,8 @@ La migración `0020_agrupacion_modulos.sql` incorpora:
 - Backfill de cada línea histórica como bloque unitario A, B, C… sin modificar sus importes ni breakdown históricos.
 
 La tabla de grupos tiene RLS vinculada al propietario de la cotización o al rol administrador. La migración debe aplicarse antes de desplegar el código que consulta estas columnas.
+
+`cot_cotizaciones.notas` contiene el historial JSON de comentarios internos del estado actual. Se modifica exclusivamente mediante `cot_agregar_comentario`, que anexa entradas inmutables y valida propiedad o rol administrador. Al formar parte de la cabecera, el historial queda aislado por snapshot de versión y no se muestra en documentos impresos.
 
 `codigo_modulo` (el código que se ve en la columna "Módulo" de la tabla de la cocina) lo recalcula siempre `recalcularGrupo()` en `src/lib/cotizaciones.ts`, a partir del prefijo base del tipo de mueble (`prefImperial`/`prefMetrico`, ej. `DB`) y el largo — nunca a partir del `pref` guardado en la línea. Para los muebles `DB` (cajonera), la tipología elegida en el formulario (ej. `DB-1S`, campo "Tipología DB") se guarda por separado como `config.dbTipo` en `cot_cotizacion_lineas` y `recalcularGrupo()` la anexa como sufijo al final del código (`DB15-1S`). Antes de este fix, `dbTipo` no se persistía y el sufijo se perdía cada vez que se creaba o editaba el módulo, aunque el formulario lo mostrara seleccionado.
 

@@ -2609,3 +2609,35 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 
 ## [2026-10-19] update | Precios editables de tablero aislados por cotización, con recálculo de sus muebles sin modificar el catálogo global
 ## [2026-10-19] update | Clasificación por convención de las variantes DB-SM y DB-SM-FE dentro de sus familias en Simulador y Cotizaciones.
+
+## [2026-10-20] update | Desactivación de F, OILVP e ILVP en los catálogos de Simulador y Cotizaciones
+
+## [2026-10-20] update | Exclusión defensiva de F, OILVP e ILVP en el catálogo compartido ante bases pendientes de migración
+
+## [2026-10-20] update | Desactivación de tipologías legacy adicionales y retiro selectivo de variantes IC en Simulador y Cotizaciones
+
+## [2026-10-20] update | Reactivación de BFD y conservación de su alias métrico IP por compartir la misma fila de catálogo
+
+## [2026-10-20] ingest | Creación de SBFD-SMG desde hoja de corte e IGES, con código SMG18 para caja de 18 mm
+
+## [2026-10-20] update | Corrección visual del riel delantero SBFD-SMG a posición horizontal superior según vista lateral del IGES
+
+## [2026-10-20] update | SBFD-SMG adopta la base estándar de SBFD y agrega fondo de 6 mm al despiece y la visualización
+
+## [2026-10-20] update | Visualización del mecanizado frontal superior de 27 × 73 mm en ambos laterales SBFD-SMG
+
+## [2026-10-20] update | Refuerzo delantero SBFD-SMG retirado 27 mm hacia el fondo para alinearlo con el mecanizado de gola
+
+## [2026-10-20] ingest | Creación de BFD-SMG desde hoja BFD24-SMG, con entrepaño, fondo, mecanizado 27 × 73 mm y código SMG18
+
+## [2026-10-20] update | Reactivación de la tipología F en Simulador y Cotizaciones, incluida su retirada de la exclusión defensiva
+
+## [2026-10-20] update | Reactivación de todas las filas y configuraciones DB/IC en Simulador y Cotizaciones
+
+## [2026-10-20] update | Nombre visible DB2-1OP actualizado a DB-2-1INT sin cambiar su clave ni comportamiento
+
+## [2026-10-20] update | Anotaciones por mueble en Cotizaciones, persistentes por versión y visibles en pantalla, impresión y Excel
+
+## [2026-10-20] update | Migración 0205 aplicada en Supabase y anotaciones alineadas junto a descripción y medidas
+
+## [2026-10-20] update | Comentarios internos append-only por versión con alertas para estados Enviada y Aprobada, excluidos de impresión

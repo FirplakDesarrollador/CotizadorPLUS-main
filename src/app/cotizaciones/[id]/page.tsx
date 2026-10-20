@@ -25,6 +25,7 @@ type Linea = {
   id: string;
   pref: string | null;
   descripcion_es: string | null;
+  anotaciones: string | null;
   cantidad: number;
   precio_unit_usd: number;
   precio_total_usd: number;

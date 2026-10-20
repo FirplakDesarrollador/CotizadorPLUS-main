@@ -33,6 +33,7 @@ type Linea = {
   id: string;
   pref: string | null;
   descripcion_es: string | null;
+  anotaciones: string | null;
   cantidad: number;
   costo_total_cop?: number;
 
@@ -158,6 +159,7 @@ export default function CocinaCard({
     cantoFrentes: l.config?.cantoFrentes ?? undefined,
     cantoCaja: l.config?.cantoCaja ?? undefined,
     dbTipo: l.config?.dbTipo ?? undefined,
+    anotaciones: l.anotaciones,
     rielCodigo: l.config?.rielCodigo ?? undefined,
     door: l.config?.door ?? undefined,
     doorHand: l.config?.doorHand ?? undefined,
@@ -507,7 +509,10 @@ export default function CocinaCard({
                         <div>{l.codigo_modulo ?? l.pref}</div>
                         {members > 1 && block.codigoGrupo && <div className="max-w-48 truncate text-[10px] font-normal text-slate-500" title={block.codigoGrupo}>{block.codigoGrupo}</div>}
                       </td>
-                      <td className="px-3 py-2 text-slate-600 leading-5">{l.descripcion_es}</td>
+                      <td className="px-3 py-2 text-slate-600 leading-5">
+                        <span>{l.descripcion_es}</span>
+                        {l.anotaciones && <span className="whitespace-pre-wrap text-slate-700"> · {l.anotaciones}</span>}
+                      </td>
                       {columnasPrecio.usd && <td className="px-2 text-right font-medium text-slate-700 whitespace-nowrap">{fmtUSD(unitCostoUsd)}</td>}
                       {columnasPrecio.cop && <td className="px-2 text-right font-medium text-slate-700 whitespace-nowrap">{fmtCOP(unitCostoCop)}</td>}
                       <td className="px-2 text-right">{l.cantidad}</td>
