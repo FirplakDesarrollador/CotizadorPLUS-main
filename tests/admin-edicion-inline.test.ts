@@ -7,5 +7,5 @@ test('la edicion de catalogos se muestra debajo de la fila seleccionada', () => 
   assert.match(source, /editing && !editing\.id[\s\S]*title="Nuevo registro"/);
   assert.match(source, /editing\?\.id === r\.id[\s\S]*<tr className="border-b border-slate-200">/);
   assert.match(source, /<CatalogEditForm title="Editar registro"/);
-  assert.match(source, /colSpan=\{fields\.length \+ 1\}/);
+  assert.match(source, /colSpan=\{fields\.length\}/);
 });
