@@ -66,7 +66,7 @@ export default async function CotizacionDetallePage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const [{ user, rol }, { cabecera, cocinas }, data, versiones] = await Promise.all([
+  const [{ user, rol, nombre }, { cabecera, cocinas }, data, versiones] = await Promise.all([
     getUserAndRole(),
     getCotizacion(id),
     getCotizadorData(),
@@ -81,7 +81,7 @@ export default async function CotizacionDetallePage({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <AppHeader email={user?.email} rol={rol} active="cotizaciones" />
+      <AppHeader nombre={nombre} email={user?.email} rol={rol} active="cotizaciones" />
       <main className="mx-auto w-full max-w-[1600px] px-4 py-6 space-y-5">
         <CotizacionDetalleClient
           cabecera={cabecera as Parameters<typeof CotizacionDetalleClient>[0]['cabecera']}

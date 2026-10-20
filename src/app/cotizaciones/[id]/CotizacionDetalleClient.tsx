@@ -117,6 +117,7 @@ export default function CotizacionDetalleClient({
         // recargoId: initialConfig.recargoId ?? '',
         margen: initialConfig.margen ?? '',
         conFondo: initialConfig.conFondo ?? true,
+        familiasMaterialesActivas: initialConfig.familiasMaterialesActivas,
         materialesInferiores: initialConfig.materialesInferiores,
         materialesSuperiores: initialConfig.materialesSuperiores,
         materialesCloset: initialConfig.materialesCloset,

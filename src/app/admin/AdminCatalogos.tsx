@@ -1,11 +1,12 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { guardarFilaAction, eliminarFilaAction, guardarParametrosAction, guardarPerfilAction, eliminarPerfilAction } from './actions';
 import type { CatalogoTabla, PresetPerfil } from '@/lib/admin';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import { TIPS_MATERIALES } from '@/lib/tooltips';
+import { calcAreaM2, calcPrecio, calcPrecioM2 } from '@/lib/catalogo-tableros-calculos';
 
 type Field = { key: string; label: string; type: 'text' | 'number' | 'bool'; required?: boolean };
 type Row = Record<string, unknown> & { id?: string };
@@ -92,6 +93,64 @@ function emptyRow(fields: Field[]): Row {
   return r;
 }
 
+function CatalogEditForm({ title, tabla, fields, draft, setDraft, error, saving, save, cancel }: {
+  title: string;
+  tabla: CatalogoTabla;
+  fields: Field[];
+  draft: Row;
+  setDraft: React.Dispatch<React.SetStateAction<Row>>;
+  error: string | null;
+  saving: boolean;
+  save: () => void;
+  cancel: () => void;
+}) {
+  function updateField(field: Field, rawValue: string) {
+    const value = field.type === 'number' ? (rawValue === '' ? '' : Number(rawValue)) : rawValue;
+    setDraft((current) => {
+      const next = { ...current, [field.key]: value };
+      if (tabla !== 'cot_tableros') return next;
+
+      if (field.key === 'formato') {
+        const areaM2 = calcAreaM2(rawValue);
+        if (areaM2 !== null) next.area_m2 = areaM2;
+      } else if (field.key === 'precio') {
+        const precioM2 = calcPrecioM2(value, current.area_m2);
+        if (precioM2 !== null) next.precio_m2 = precioM2;
+      } else if (field.key === 'precio_m2') {
+        const precio = calcPrecio(value, current.area_m2);
+        if (precio !== null) next.precio = precio;
+      }
+
+      return next;
+    });
+  }
+
+  return (
+    <div className="bg-slate-50 p-4">
+      <h3 className="mb-3 text-sm font-medium text-slate-900">{title}</h3>
+      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {fields.map((f) => (
+          <Campo key={f.key} label={`${f.label}${f.required ? ' *' : ''}`} info={TIPS_MATERIALES[f.key]}>
+            {f.type === 'bool' ? (
+              <input type="checkbox" checked={!!draft[f.key]} onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.checked }))} className="h-4 w-4" />
+            ) : (
+              <input type={f.type === 'number' ? 'number' : 'text'} step="any"
+                value={(draft[f.key] ?? '') as string | number}
+                onChange={(e) => updateField(f, e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />
+            )}
+          </Campo>
+        ))}
+      </div>
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      <div className="mt-3 flex gap-2">
+        <button onClick={save} disabled={saving} className="rounded-lg bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50">{saving ? 'Guardando…' : 'Guardar'}</button>
+        <button onClick={cancel} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm hover:bg-slate-100">Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
 function CatalogManager({ tabla, fields, rows }: { tabla: CatalogoTabla; fields: Field[]; rows: Row[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Row | null>(null);
@@ -128,30 +187,11 @@ function CatalogManager({ tabla, fields, rows }: { tabla: CatalogoTabla; fields:
         <button onClick={startAdd} className="rounded-lg bg-slate-900 text-white px-4 py-1.5 text-sm font-medium hover:bg-slate-800">+ Agregar</button>
       </div>
 
-      {editing && (
-        <div className="p-4 bg-slate-50 border-b border-slate-200">
-          <h3 className="text-sm font-medium text-slate-900 mb-3">{editing.id ? 'Editar' : 'Nuevo'} registro</h3>
-          <div className="grid sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {fields.map((f) => (
-              <Campo key={f.key} label={`${f.label}${f.required ? ' *' : ''}`} info={TIPS_MATERIALES[f.key]}>
-                {f.type === 'bool' ? (
-                  <input type="checkbox" checked={!!draft[f.key]} onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.checked }))} className="h-4 w-4" />
-                ) : (
-                  <input type={f.type === 'number' ? 'number' : 'text'} step="any"
-                    value={(draft[f.key] ?? '') as string | number}
-                    onChange={(e) => setDraft((d) => ({ ...d, [f.key]: f.type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value }))}
-                    className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />
-                )}
-              </Campo>
-            ))}
-          </div>
-          {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-          <div className="flex gap-2 mt-3">
-            <button onClick={save} disabled={saving} className="rounded-lg bg-slate-900 text-white px-4 py-1.5 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">{saving ? 'Guardando…' : 'Guardar'}</button>
-            <button onClick={cancel} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm hover:bg-slate-100">Cancelar</button>
-          </div>
+      {editing && !editing.id ? (
+        <div className="border-b border-slate-200">
+          <CatalogEditForm title="Nuevo registro" tabla={tabla} fields={fields} draft={draft} setDraft={setDraft} error={error} saving={saving} save={save} cancel={cancel} />
         </div>
-      )}
+      ) : null}
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -161,7 +201,8 @@ function CatalogManager({ tabla, fields, rows }: { tabla: CatalogoTabla; fields:
           </tr></thead>
           <tbody>
             {filtered.map((r, i) => (
-              <tr key={(r.id as string) ?? i} className="border-b border-slate-50 hover:bg-slate-50">
+              <Fragment key={(r.id as string) ?? i}>
+              <tr className="border-b border-slate-50 hover:bg-slate-50">
                 {fields.map((f) => (
                   <td key={f.key} className="px-3 py-2 whitespace-nowrap">
                     {f.type === 'bool' ? (r[f.key] ? '✓' : '—')
@@ -174,6 +215,14 @@ function CatalogManager({ tabla, fields, rows }: { tabla: CatalogoTabla; fields:
                   <button onClick={() => remove(r)} className="text-slate-400 hover:text-red-600">✕</button>
                 </td>
               </tr>
+              {editing?.id === r.id ? (
+                <tr className="border-b border-slate-200">
+                  <td colSpan={fields.length + 1} className="p-0">
+                    <CatalogEditForm title="Editar registro" tabla={tabla} fields={fields} draft={draft} setDraft={setDraft} error={error} saving={saving} save={save} cancel={cancel} />
+                  </td>
+                </tr>
+              ) : null}
+              </Fragment>
             ))}
             {filtered.length === 0 && <tr><td colSpan={fields.length + 1} className="px-3 py-8 text-center text-slate-400">Sin registros.</td></tr>}
           </tbody>

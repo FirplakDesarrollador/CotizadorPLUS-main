@@ -20,6 +20,7 @@ export type CotizacionHeader = {
   cliente_nombre: string | null; comprador_nombre: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; notas?: string | null;
   sistema_medida: SistemaMedida;
   total_cop: number; total_usd: number; created_at: string;
+  creado_por: string | null; cotizado_por_usuario: string | null;
 };
 
 export type CotizacionVersion = {
@@ -33,10 +34,18 @@ export type CotizacionVersion = {
 
 export async function listarCotizaciones(): Promise<CotizacionHeader[]> {
   const sb = await createClient();
-  const { data } = await sb.from('cot_cotizaciones')
-    .select('id,codigo,nombre,cliente_nombre,comprador_nombre,cotizador_por,moneda,trm,estado,total_cop,total_usd,created_at')
+  const { data, error } = await sb.from('cot_cotizaciones')
+    .select('id,codigo,nombre,cliente_nombre,comprador_nombre,cotizador_por,moneda,trm,estado,total_cop,total_usd,created_at,creado_por')
     .order('created_at', { ascending: false });
-  return (data ?? []) as CotizacionHeader[];
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as Omit<CotizacionHeader, 'cotizado_por_usuario'>[];
+  const autores = [...new Set(rows.map((row) => row.creado_por).filter((id): id is string => Boolean(id)))];
+  const { data: perfiles, error: perfilesError } = autores.length
+    ? await sb.rpc('cot_nombres_usuarios', { p_user_ids: autores })
+    : { data: [], error: null };
+  if (perfilesError) throw new Error(perfilesError.message);
+  const nombres = new Map(((perfiles ?? []) as Array<{ user_id: string; nombre: string | null }>).map((perfil) => [perfil.user_id, perfil.nombre]));
+  return rows.map((row) => ({ ...row, cotizado_por_usuario: row.creado_por ? nombres.get(row.creado_por) ?? null : null }));
 }
 
 export async function listarVersionesCotizacion(cotizacionId: string): Promise<CotizacionVersion[]> {

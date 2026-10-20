@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { signOutAction } from '@/app/cotizador/session-actions';
 
-export default function AppHeader({ email, rol, active }: { email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'hdr' | 'optimizador' | 'manual' }) {
+export default function AppHeader({ nombre, email, rol, active }: { nombre?: string | null; email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'hdr' | 'optimizador' | 'manual' }) {
   const link = (href: string, label: string, key: string) => (
     <Link href={href} className={`px-3 py-1.5 rounded-lg text-sm ${active === key ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>{label}</Link>
   );
@@ -42,7 +42,8 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
             style={{ position: 'absolute', right: 0, top: '100%', width: 256 }}
           >
             <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
-              <p className="truncate text-sm font-medium text-slate-900">{email || 'Usuario'}</p>
+              <p className="truncate text-sm font-semibold text-slate-900">{nombre || 'Usuario'}</p>
+              <p className="mt-0.5 truncate text-xs text-slate-500">{email || 'Sin correo'}</p>
               <p className="mt-0.5 text-xs capitalize text-slate-500">Rol: {rol}</p>
               <form action={signOutAction} className="mt-3 border-t border-slate-100 pt-2">
                 <button className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50">Cerrar sesión</button>

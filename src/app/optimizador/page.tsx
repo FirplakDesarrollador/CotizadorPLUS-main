@@ -7,7 +7,7 @@ import AppHeader from '@/components/AppHeader';
 import OptimizadorView from './OptimizadorView';
 
 export default async function OptimizadorPage() {
-  const { user, rol } = await getUserAndRole();
+  const { user, rol, nombre } = await getUserAndRole();
   if (rol !== 'admin') redirect('/cotizador');
   const sb = await createClient();
   const [{ data: p }, { data: tableros }, cotizaciones] = await Promise.all([
@@ -18,7 +18,7 @@ export default async function OptimizadorPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <AppHeader email={user?.email} rol={rol} active="optimizador" />
+      <AppHeader nombre={nombre} email={user?.email} rol={rol} active="optimizador" />
       <main className="mx-auto max-w-[1500px] px-4 py-6">
         <h1 className="text-2xl font-bold text-slate-900 mb-1">Optimizador de corte</h1>
         <p className="text-sm text-slate-500 mb-4">
