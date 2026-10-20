@@ -2656,3 +2656,5 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-20] update | Cálculos automáticos de área y precio por m² en el catálogo de tableros, con fallback manual y pruebas unitarias.
 
 ## [2026-10-20] update | Mejora de UX en tabla de catálogos: scroll horizontal visible, primera columna sticky con acciones, editor inline adaptado sin scroll y alineación tipográfica
+
+## [2026-10-20] update | Ampliación de la columna Código en la tabla de catálogos para visibilidad completa del identificador sin truncamiento

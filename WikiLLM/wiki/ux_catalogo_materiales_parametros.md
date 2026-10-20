@@ -28,7 +28,7 @@ En la sección de administración (`src/app/admin/AdminCatalogos.tsx`), el compo
 - El botón destructivo crudo "✕" fue reemplazado por un botón accesible con ícono SVG (`aria-label="Eliminar"`, `title="Eliminar"`), preservando la confirmación de borrado nativa con `confirm()`.
 
 ### 4. Jerarquía Tipográfica y Alineación Numérica
-- **Identificador principal**: `font-medium text-slate-900` para código/referencia.
+- **Identificador principal**: `font-medium text-slate-900` para código/referencia, con ancho ampliado (`min-w-[280px]` y `whitespace-nowrap`) para garantizar la visibilidad íntegra del código completo (incluyendo descripciones largas como `ARKCARB18Pet blanco brillante` o `CHICARB15BLANCO AMERICANO`) sin truncamiento ni puntos suspensivos.
 - **Campos numéricos**: Encabezados y celdas con alineación derecha (`text-right font-mono tabular-nums text-slate-700`).
 - **Textos secundarios**: Truncados con `max-w-[180px] truncate` y tooltip nativo `title` para no quebrar la distribución de columnas.
 - **Filas alternas y hover**: Separación sutil tipo cebra (`isEven ? 'bg-slate-50/50' : 'bg-white'`) con resaltado simultáneo en la celda sticky (`group-hover:bg-slate-100`).

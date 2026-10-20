@@ -282,7 +282,7 @@ function CatalogManager({ tabla, fields, rows }: { tabla: CatalogoTabla; fields:
                   key={f.key}
                   className={`px-3 py-2.5 whitespace-nowrap bg-slate-50 border-b border-slate-200 ${
                     idx === 0
-                      ? 'sticky left-0 z-30 border-r border-slate-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] min-w-[140px]'
+                      ? 'sticky left-0 z-30 border-r border-slate-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] min-w-[280px]'
                       : f.type === 'number'
                       ? 'text-right'
                       : ''
@@ -310,10 +310,10 @@ function CatalogManager({ tabla, fields, rows }: { tabla: CatalogoTabla; fields:
                             key={f.key}
                             className={`sticky left-0 z-10 ${
                               isEven ? 'bg-slate-50' : 'bg-white'
-                            } group-hover:bg-slate-100 border-r border-slate-200/80 border-b border-slate-100 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] px-3 py-2.5 align-top transition-colors min-w-[140px]`}
+                            } group-hover:bg-slate-100 border-r border-slate-200/80 border-b border-slate-100 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] px-3 py-2.5 align-top transition-colors min-w-[280px]`}
                           >
                             <div
-                              className="font-medium text-slate-900 text-sm truncate max-w-[150px]"
+                              className="font-medium text-slate-900 text-sm whitespace-nowrap"
                               title={String(r[f.key] ?? '')}
                             >
                               {String(r[f.key] || '—')}
