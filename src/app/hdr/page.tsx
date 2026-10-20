@@ -7,7 +7,7 @@ import AppHeader from '@/components/AppHeader';
 import HdrBuscador from './HdrBuscador';
 
 export default async function HdrPage() {
-  const { user, rol } = await getUserAndRole();
+  const { user, rol, nombre } = await getUserAndRole();
   if (rol !== 'admin') redirect('/cotizador');
   const tipos = await getTiposBasic();
   const sb = await createClient();
@@ -18,7 +18,7 @@ export default async function HdrPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <AppHeader email={user?.email} rol={rol} active="hdr" />
+      <AppHeader nombre={nombre} email={user?.email} rol={rol} active="hdr" />
       <main className="mx-auto max-w-6xl px-4 py-6">
         <h1 className="text-2xl font-bold text-slate-900 mb-1">HDR — Hoja de ruta</h1>
         <p className="text-sm text-slate-500 mb-4">

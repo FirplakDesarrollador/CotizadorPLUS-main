@@ -2641,3 +2641,16 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-20] update | Migración 0205 aplicada en Supabase y anotaciones alineadas junto a descripción y medidas
 
 ## [2026-10-20] update | Comentarios internos append-only por versión con alertas para estados Enviada y Aprobada, excluidos de impresión
+
+## [2026-10-20] update | Nombre visible elegido al ingresar y columna Cotizado por basada en la autoría real de cada cotización
+## [2026-10-20] update | Nombre del usuario mostrado sobre el correo en el menú de sesión
+
+## [2026-10-20] update | Familias de materiales opcionales y tableros separados para frente, filler, panel y zócalo en Cotizaciones
+
+## [2026-10-20] update | Filler, Panel y Zócalo vuelven a compartir el tablero de frente, sin selectores independientes
+
+## [2026-10-20] update | Descripciones visibles W-SM, W-SM-LOC y W-SM-PUSH actualizadas a Sin Manija
+
+## [2026-10-20] update | Edición de materiales desplegada debajo de la fila seleccionada en Materiales-Parámetros
+
+## [2026-10-20] update | Cálculos automáticos de área y precio por m² en el catálogo de tableros, con fallback manual y pruebas unitarias.

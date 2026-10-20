@@ -61,9 +61,14 @@ horizontal para no comprimir fechas, estados ni valores.
 La proporción principal 50/50 y el divisor se declaran como estilos CSS
 explícitos, no mediante variantes responsivas de Tailwind, para garantizar que
 el servidor de desarrollo los aplique aunque su hoja de utilidades esté en caché.
-Dentro del formulario, `Materiales globales` también usa una cuadrícula CSS
-explícita de dos columnas iguales: módulos inferiores B/V a la izquierda y
-módulos superiores W/TW a la derecha.
+Dentro del formulario, `Materiales globales` usa una cuadrícula CSS explícita
+de dos columnas con cuatro tarjetas: inferiores, superiores, clósets y baños.
+Cada tarjeta permanece contraída mientras no esté incluida y despliega sus
+tableros y cantos al activarse. Debe quedar al menos una familia incluida. El
+editor de características reutiliza el mismo modelo y muestra las cuatro
+familias persistidas. Frente, Filler, Panel y Zócalo comparten un único selector
+de tablero claramente rotulado. Los selectores de perfiles predefinidos no forman parte del flujo de
+Cotizaciones.
 El contenedor de esta pantalla usa 1200 px de ancho máximo, reduciendo el
 espacio lateral libre frente al diseño original y dando más área a los campos,
 selectores de materiales y columnas del listado.
@@ -112,6 +117,10 @@ El proyecto utiliza el App Router (`app/`) para definir las secciones principale
 - **`cotizador/`**: Interfaz principal para simular muebles y generar desgloses de precios en tiempo real.
 - **`cotizaciones/`**: Historial y gestión de cotizaciones ya guardadas.
 - **`admin/`**: Panel administrativo para gestionar parámetros globales, reglas y catálogos.
+  En los catálogos de tableros, cantos y herrajes, **Editar** despliega el
+  formulario inmediatamente debajo de la fila seleccionada. El formulario
+  superior queda reservado para **Agregar**, evitando separar visualmente el
+  registro de los datos que se están modificando.
 - **`hdr/`**: Buscador de despiece por código de mueble (ej. `SBFD30`, `W2436`, `DB18-1S`). Solo admin, ver §5.
 - **`login/`**: Inicio de sesión con correo y contraseña mediante Supabase Auth.
 - **`recuperar-contrasena/`**, **`auth/callback/`** y **`actualizar-contrasena/`**: recuperación de contraseña con enlace PKCE de Supabase. El callback intercambia el `code` por una sesión temporal, el formulario actualiza la clave y cierra esa sesión para volver al login. Estas rutas están exceptuadas de la redirección normal del proxy mientras se completa el flujo.
