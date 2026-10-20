@@ -35,6 +35,8 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [B12 desde hoja real](wiki/b_hoja_real.md) - Cruce de las 10 piezas de `B` contra la hoja de producción: tres medidas corregidas cuyo valor correcto ya estaba en las variantes FE.
 - [BLS36 desde hoja real](wiki/bls36_hoja_real.md) - Reconstrucción del esquinero Lazy Susan: once piezas, dos puertas, un entrepaño y respaldos de 15 mm.
 - [BLS-RS-SM sin entrepaño](wiki/bls_rs_sm.md) - Variante del esquinero Lazy Susan que conserva el despiece BLS excepto por la eliminación del entrepaño.
+- [SBFD-SMG](wiki/sbfd_smg.md) - Lavaplatos de dos puertas con gola metálica, despiece certificado y montaje basado en IGES.
+- [BFD-SMG](wiki/bfd_smg.md) - Mueble inferior de dos puertas con gola metálica, entrepaño, fondo de 6 mm y mecanizado frontal 27 × 73 mm.
 - [BMW-1 y BMW-1-FE](wiki/bmw_1_hoja_real.md) - Mueble inferior para microondas y su variante con caja de gaveta de madera y riel full extension.
 - [BOMH-1 y BOMH-1-FE](wiki/bomh_1_horno_parametrico.md) - Mueble inferior para medio horno con hueco paramétrico y variantes de gaveta Tandem o grande Full Extension.
 - [BOV24 desde hoja real](wiki/bov24_hoja_real.md) - Despiece paramétrico, montaje 3D y reglas de agrupación física con carcazas lineales.

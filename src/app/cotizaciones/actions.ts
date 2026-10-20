@@ -7,6 +7,7 @@ import {
   crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
   reordenarGruposCocina,
   guardarVersionCotizacion, restaurarVersionCotizacion,
+  agregarComentarioCotizacion,
   agregarLineaMaterial, getMaterialesDisponibles, type MaterialDisponible,
   type AgregarLineaInput,
 } from '@/lib/cotizaciones';
@@ -130,6 +131,16 @@ export async function actualizarCotizacionAction(id: string, patch: { nombre?: s
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };
+  }
+}
+
+export async function agregarComentarioCotizacionAction(id: string, texto: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await agregarComentarioCotizacion(id, texto);
+    revalidatePath(`/cotizaciones/${id}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo agregar el comentario' };
   }
 }
 

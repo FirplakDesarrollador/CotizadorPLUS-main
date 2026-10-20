@@ -173,6 +173,7 @@ export type CodigoComercialInput = {
 export function codigoComercial(input: CodigoComercialInput): string {
   const { pref, largo, alto, prof, unidad, sistema } = input;
   const prefNormalizado = String(pref).toUpperCase();
+  const esSmg = prefNormalizado === 'SBFD-SMG' || prefNormalizado === 'BFD-SMG';
   const esTw = prefNormalizado === 'TW';
   const esTwSmPush = prefNormalizado === 'TW-SM-PUSH';
   let codigo = codigoModulo(pref, largo, unidad, sistema);
@@ -196,7 +197,7 @@ export function codigoComercial(input: CodigoComercialInput): string {
   if (profSufijo) agregarMedida(profSufijo);
   const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
   const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
-  const llevaSmPropio = prefNormalizado.split('-').includes('SM') || esWsm;
+  const llevaSmPropio = prefNormalizado.split('-').some((segmento) => segmento === 'SM' || segmento === 'SMG') || esWsm;
   // DB tradicional y sus configuraciones (DB-1S, DB-2S, DB-2, DB-3, DB-4,
   // DB2-1OP) no son variantes SM. Las familias con Gola son tipos separados
   // DB-*-SM / DB-*-SM-FE, por lo que un estado heredado nunca debe convertir
@@ -227,6 +228,11 @@ export function codigoComercial(input: CodigoComercialInput): string {
   const codigoBase = codigo + bblfdSufijo + dbSufijo + pcfdSufijo
     + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente))
     + (input.conFondo === false && !prefNormalizado.split('-').includes('SF') ? '-SF' : '');
+  // Las tipologías SMG usan el nombre histórico sin sufijo para la combinación
+  // estándar y compactan el espesor cuando caja y frentes son de 18 mm: `-SMG18`.
+  if (esSmg) return espesorCajaMm === 18 && espesorFrenteMm === 18
+    ? codigoBase.replace('-SMG', '-SMG18')
+    : codigoBase;
   if (espesorComun == null) return codigoBase;
   // En muebles superiores W/TW con sistema SM el indicador de espesor forma
   // parte del propio segmento: `-SM15`, `-SM18` o sus variantes `-PUSH`.

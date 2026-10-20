@@ -215,6 +215,7 @@ create table if not exists public.cot_cotizacion_lineas (
   precio_total_usd      numeric default 0,
   descripcion_es        text,
   descripcion_en        text,
+  anotaciones           text,
   codigo_sap            text,
   breakdown             jsonb,              -- desglose completo de costo para trazabilidad
   created_at            timestamptz not null default now(),

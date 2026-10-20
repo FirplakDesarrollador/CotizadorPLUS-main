@@ -355,6 +355,17 @@ export async function cotizarGrupoConsolidado(inputs: CotizarInput[]): Promise<C
 export type { CotizarGrupoResult } from '@/lib/group-result';
 
 // Datos para poblar la UI del cotizador.
+const TIPOLOGIAS_NO_COTIZABLES = new Set([
+  'OILVP', 'S', 'SA', 'SLOC', 'SMO', 'ICP', 'ILVP',
+  'ALP', 'AL', 'ALH',
+]);
+
+function esTipologiaNoCotizable(tipo: { pref: string; pref_imperial?: string | null; pref_metrico?: string | null }) {
+  return [tipo.pref, tipo.pref_imperial, tipo.pref_metrico].some(
+    (pref) => pref != null && TIPOLOGIAS_NO_COTIZABLES.has(pref),
+  );
+}
+
 export async function getCotizadorData() {
   const sb = await createClient();
   const [{ data: tipos }, /* { data: recargos }, */ { data: tableros }, { data: params }, { data: piezasRoles }, { data: perfiles }, { data: cantos }] = await Promise.all([
@@ -392,7 +403,9 @@ export async function getCotizadorData() {
   const presetDefault = perfilDefault?.valores ?? presetParam;
 
   return {
-    tipos: tipos ?? [],
+    // Defensa adicional a `activo = true`: evita exponer tipologías retiradas
+    // si un entorno todavía no ha aplicado la migración que las desactiva.
+    tipos: (tipos ?? []).filter((tipo: { pref: string; pref_imperial?: string | null; pref_metrico?: string | null }) => !esTipologiaNoCotizable(tipo)),
     // recargos: recargos ?? [],
     tableros: tableros ?? [],
     cantos: ((cantos ?? []) as Array<{ calibre: string }>).map((c: any) => c.calibre as string),
