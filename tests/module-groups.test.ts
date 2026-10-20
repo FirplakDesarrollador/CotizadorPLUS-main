@@ -15,7 +15,7 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
-import { DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb, usaPuertaParametrica } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb, usaPuertaParametrica } from '@/lib/muebles';
 
 test('clasifica materiales por la primera B o W del prefijo', () => {
   assert.equal(familiaMaterialPorPrefijo('BBLFD'), 'inferior');
@@ -124,6 +124,11 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'BMW-1', largo: 36, alto: 30, prof: 24 }), 'BMW36-1');
   assert.equal(codigoComercial({ ...base, pref: 'BMW-1-FE', largo: 36, alto: 30, prof: 24 }), 'BMW36-1-FE');
   assert.equal(codigoComercial({ ...base, pref: 'SBFD-SM', largo: 16, alto: 30 }), 'SBFD16-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'SBFD-SMG', largo: 33, alto: 30, espesorCajaMm: 15, espesorFrenteMm: 18 }), 'SBFD33-SMG');
+  assert.equal(codigoComercial({ ...base, pref: 'SBFD-SMG', largo: 33, alto: 30, espesorCajaMm: 18, espesorFrenteMm: 18 }), 'SBFD33-SMG18');
+  assert.equal(codigoComercial({ ...base, pref: 'BFD-SMG', largo: 24, alto: 30, espesorCajaMm: 15, espesorFrenteMm: 18 }), 'BFD24-SMG');
+  assert.equal(codigoComercial({ ...base, pref: 'BFD-SMG', largo: 24, alto: 30, espesorCajaMm: 18, espesorFrenteMm: 18 }), 'BFD24-SMG18');
+  assert.equal(codigoComercial({ ...base, pref: 'BFD-SMG', largo: 24, alto: 30, espesorCajaMm: 18, espesorFrenteMm: 15 }), 'BFD24-SMG');
   assert.equal(codigoComercial({ ...base, pref: 'SB-SM', largo: 30, alto: 30 }), 'SB30-SM');
   assert.equal(codigoComercial({ ...base, pref: 'OW-MO', largo: 24, alto: 25, prof: 12 }), 'OW2425-MO');
   assert.equal(codigoComercial({ ...base, pref: 'W-SM', largo: 34, alto: 36, prof: 12 }), 'W3436-SM');
@@ -245,6 +250,10 @@ test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {
 test('habilita tipologia DB solo en las familias de cajoneras compatibles', () => {
   for (const pref of ['DB', 'UDB', 'UDV', 'udb']) assert.equal(permiteTipologiaDb(pref), true, pref);
   for (const pref of ['B', 'DV', 'DBL', 'PCFD', '', null]) assert.equal(permiteTipologiaDb(pref), false, String(pref));
+});
+
+test('ofrece todas las configuraciones DB creadas', () => {
+  assert.deepEqual(DB_TIPOLOGIAS_COTIZABLES.map((tipo) => tipo.key), DB_TIPOLOGIAS.map((tipo) => tipo.key));
 });
 
 test('agrupa las tipologias DB-SM sin ampliar la familia DB existente', () => {

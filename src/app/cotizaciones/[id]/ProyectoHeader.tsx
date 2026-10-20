@@ -4,11 +4,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { actualizarCotizacionAction } from '../actions';
 import { monedasVisibles, type ColumnasMoneda } from '@/lib/monedas-visibles';
+import ComentariosProyecto from './ComentariosProyecto';
+import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario, parseComentariosCotizacion } from '@/lib/comentarios-cotizacion';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida?: 'imperial' | 'metrico' };
+type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; notas?: string | null; total_cop: number; total_usd: number; sistema_medida?: 'imperial' | 'metrico' };
 
 export default function ProyectoHeader({
   cab,
@@ -67,6 +69,7 @@ export default function ProyectoHeader({
   }
 
   async function save() {
+    if ((estadoRequiereAlertaComentario(cab.estado) || estadoRequiereAlertaComentario(estado)) && !window.confirm(ALERTA_COMENTARIO)) return;
     setSaving(true); setError(null);
     if (margenLocal !== margen) {
       onMargenChange?.(margenLocal);
@@ -131,14 +134,19 @@ export default function ProyectoHeader({
           </label>
         </div>
         {children}
-        <label className="block max-w-xs"><span className="block text-xs text-slate-500 mb-1">Estado</span>
-          <select value={estado} onChange={(e) => setEstado(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-            <option value="borrador">borrador</option><option value="enviada">enviada</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option>
-          </select></label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <div className="flex gap-2">
-          <button onClick={save} disabled={saving || !nombre.trim()} className="rounded-lg bg-slate-900 text-white px-4 py-1.5 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">{saving ? 'Guardando…' : 'Guardar'}</button>
-          <button onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm hover:bg-slate-100">Cancelar</button>
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          <div className="space-y-3">
+            <label className="block max-w-xs"><span className="block text-xs text-slate-500 mb-1">Estado</span>
+              <select value={estado} onChange={(e) => setEstado(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                <option value="borrador">borrador</option><option value="enviada">enviada</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option>
+              </select></label>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <div className="flex gap-2">
+              <button onClick={save} disabled={saving || !nombre.trim()} className="rounded-lg bg-slate-900 text-white px-4 py-1.5 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">{saving ? 'Guardando…' : 'Guardar'}</button>
+              <button onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm hover:bg-slate-100">Cancelar</button>
+            </div>
+          </div>
+          <ComentariosProyecto cotizacionId={cab.id} comentarios={parseComentariosCotizacion(cab.notas)} />
         </div>
       </div>
     );

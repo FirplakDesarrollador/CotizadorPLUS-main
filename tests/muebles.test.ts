@@ -312,7 +312,7 @@ test('etiquetaTipologiaDb: un UDV ofrece UDV-1S, no DB-1S', () => {
   assert.equal(etiquetaTipologiaDb('DB-1S', 'UDV'), 'UDV-1S');
   assert.equal(etiquetaTipologiaDb('DB-2S', 'UDV'), 'UDV-2S');
   assert.equal(etiquetaTipologiaDb('DB-3', 'UDV'), 'UDV-3');
-  assert.equal(etiquetaTipologiaDb('DB2-1OP', 'UDV'), 'UDV2-1OP', 'la clave sin guion tambien se adapta');
+  assert.equal(etiquetaTipologiaDb('DB2-1OP', 'UDV'), 'UDV-2-1INT', 'la clave histórica usa el nombre comercial nuevo');
 });
 
 test('etiquetaTipologiaDb: cubre los tres tipos que comparten el selector', () => {
@@ -325,8 +325,11 @@ test('etiquetaTipologiaDb: cubre los tres tipos que comparten el selector', () =
   }
 });
 
-test('etiquetaTipologiaDb: un DB se queda como estaba', () => {
-  for (const t of DB_TIPOLOGIAS) assert.equal(etiquetaTipologiaDb(t.key, 'DB'), t.key, t.key);
+test('etiquetaTipologiaDb: DB conserva nombres salvo el alias comercial 2-1INT', () => {
+  for (const t of DB_TIPOLOGIAS) {
+    const esperado = t.key === 'DB2-1OP' ? 'DB-2-1INT' : t.key;
+    assert.equal(etiquetaTipologiaDb(t.key, 'DB'), esperado, t.key);
+  }
 });
 
 test('etiquetaTipologiaDb: sin tipo elegido devuelve la clave intacta', () => {

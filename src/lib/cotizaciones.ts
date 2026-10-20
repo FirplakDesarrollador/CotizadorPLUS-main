@@ -13,10 +13,11 @@ import { siguienteOrdenGrupo as siguienteOrden } from '@/lib/grupos-orden';
 import { resolverTipologiaFondo } from '@/lib/sin-fondo';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
+import type { ComentarioCotizacion } from '@/lib/comentarios-cotizacion';
 
 export type CotizacionHeader = {
   id: string; codigo: string | null; nombre: string | null;
-  cliente_nombre: string | null; comprador_nombre: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string;
+  cliente_nombre: string | null; comprador_nombre: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; notas?: string | null;
   sistema_medida: SistemaMedida;
   total_cop: number; total_usd: number; created_at: string;
 };
@@ -156,6 +157,8 @@ export async function eliminarCocina(cocinaId: string, cotizacionId: string) {
 // ---- Módulos (líneas) dentro de una cocina ----
 export type AgregarLineaInput = CotizarInput & {
   cantidad: number; prefLabel?: string; dbTipo?: string;
+  // Texto libre exclusivo de esta línea; no forma parte de la tipología.
+  anotaciones?: string | null;
   // Variantes transversales; se persisten para que sobrevivan al recargar la cotización.
   sistemaFrente?: string; removible?: boolean;
 };
@@ -216,8 +219,28 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
     precio_total_cop: precioUnitCop * cantidad,
     precio_total_usd: precioUnitUsd * cantidad,
     descripcion_es: desc,
+    anotaciones: normalizarAnotaciones(input.anotaciones),
     breakdown: res,
   };
+}
+
+export async function agregarComentarioCotizacion(cotizacionId: string, texto: string) {
+  const sb = await createClient();
+  const limpio = texto.trim();
+  if (!limpio) throw new Error('El comentario no puede estar vacío.');
+  if (limpio.length > 2000) throw new Error('El comentario no puede superar 2000 caracteres.');
+  const { data, error } = await sb.rpc('cot_agregar_comentario', {
+    p_cotizacion_id: cotizacionId,
+    p_texto: limpio,
+  });
+  if (error) throw new Error(error.message);
+  return data as ComentarioCotizacion;
+}
+
+export function normalizarAnotaciones(value: string | null | undefined) {
+  const clean = value?.trim() ?? '';
+  if (clean.length > 1000) throw new Error('Las anotaciones no pueden superar 1000 caracteres.');
+  return clean || null;
 }
 
 export type LineaPersistida = {
@@ -236,12 +259,14 @@ export type LineaPersistida = {
   config: Record<string, unknown> | null;
   codigo_modulo?: string | null;
   descripcion_es?: string | null;
+  anotaciones?: string | null;
 };
 
 export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
   const c = linea.config ?? {};
   return {
     tipoId: linea.tipo_mueble_id as string,
+    anotaciones: linea.anotaciones ?? null,
     largo: Number(linea.largo), alto: Number(linea.alto), prof: Number(linea.prof),
     unidad: linea.unidad_dim,
     preset: (c.preset ?? {}) as Record<string, string>,

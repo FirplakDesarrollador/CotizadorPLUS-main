@@ -71,6 +71,15 @@ test('la migración 0123 elimina respaldos automáticos en cot_restaurar_version
   assert.equal(migrationSql.includes("config_default = v_cabecera->'config_default'"), true);
 });
 
+test('la migración 0205 guarda anotaciones por línea y las restaura desde versiones', () => {
+  const migrationPath = join(process.cwd(), 'db', 'migrations', '0205_anotaciones_linea_cotizacion.sql');
+  const sql = readFileSync(migrationPath, 'utf8');
+  assert.match(sql, /add column if not exists anotaciones text/i);
+  assert.match(sql, /descripcion_es, descripcion_en, anotaciones, codigo_sap/i);
+  assert.match(sql, /descripcion_en text, anotaciones text, codigo_sap text/i);
+  assert.match(sql, /cot_guardar_version serializa cada fila con to_jsonb\(l\)/i);
+});
+
 test('snapshot contiene todas las entidades necesarias para reproducción exacta', () => {
   const snapshotDemo = {
     schema_version: 1,

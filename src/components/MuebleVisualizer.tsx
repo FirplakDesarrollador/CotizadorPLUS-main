@@ -20,6 +20,18 @@ function corners(p:PanelVisual, opening:number, drawer:string): number[][] {
   return [0,p.h].flatMap(z=>[[0,0],[p.w,0],[p.w,p.d],[0,p.d]].map(([x,y])=>[p.x+x*c-y*s,p.y+y*c+x*s+dy,p.z+z]));
 }
 const project=(c:number[],view:View)=>view==='front'?[c[0],-c[2]]:view==='side'?[c[1],-c[2]]:[c[0],-c[1]];
+function projectedOutline(p:PanelVisual, view:View, opening:number, drawer:string) {
+  if (view==='side' && p.recorte?.borde==='frontal_superior' && p.giro===0) {
+    const dy=p.cajon && p.cajon===drawer?-opening:0;
+    const y0=p.y+dy, y1=y0+p.d, yc=y0+p.recorte.profundidad;
+    const z0=p.z, z1=z0+p.h, zc=z1-p.recorte.alto;
+    return [
+      [p.x,y0,z0], [p.x,y1,z0], [p.x,y1,z1],
+      [p.x,yc,z1], [p.x,yc,zc], [p.x,y0,zc],
+    ].map(c=>project(c,view));
+  }
+  return convexHull(corners(p,opening,drawer).map(c=>project(c,view)));
+}
 function convexHull(points:number[][]) {
   const unique=[...new Map(points.map(([x,y])=>[`${x}:${y}`,[x,y]])).values()].sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
   if(unique.length<=2) return unique;
@@ -36,7 +48,7 @@ function Drawing({scene,view,selected,onSelect,solid,opening,drawer}:{scene:Esce
     const resize=()=>setWidth(host.getBoundingClientRect().width);
     resize(); const observer=new ResizeObserver(resize);observer.observe(host); return()=>observer.disconnect();
   },[]);
-  const shapes=scene.paneles.map(p=>({p,points:corners(p,opening,drawer).map(c=>project(c,view))}));
+  const shapes=scene.paneles.map(p=>({p,points:projectedOutline(p,view,opening,drawer)}));
   const all=shapes.flatMap(s=>s.points);
   // Include the nominal module envelope even in front-only or open configurations.
   for(const m of scene.modulos) for(const x of [m.x,m.x+m.largo]) for(const y of [0,m.profundo]) for(const z of [0,m.alto]) all.push(project([x,y,z],view));
@@ -49,7 +61,7 @@ function Drawing({scene,view,selected,onSelect,solid,opening,drawer}:{scene:Esce
   const chosen=shapes.find(s=>s.p.id===selected);
   const render=(shape:typeof shapes[number],highlight=false)=>{
     const {p,points}=shape;
-    const polygon=convexHull(points).map(([x,y])=>`${ox+x*scale},${oy+y*scale}`).join(' ');
+    const polygon=points.map(([x,y])=>`${ox+x*scale},${oy+y*scale}`).join(' ');
     const faded=selected&&selected!==p.id;
     return <g key={`${p.id}:${highlight}`} onClick={()=>onSelect(p.id)} className="cursor-pointer">
       <title>{p.nombre} · {p.pref} · {mm(p.largo)} × {mm(p.ancho)} × {mm(p.espesor)} mm</title>
