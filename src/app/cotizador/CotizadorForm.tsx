@@ -24,7 +24,7 @@ const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
 const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
   Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
 
-type Tipo = { id: string; pref: string; nombre_es: string | null; categoria: string | null; margen_key: string | null };
+type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria: string | null; margen_key: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null; precio_m2: number | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
@@ -219,7 +219,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   if (!isMounted) return null;
 
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
-  const tipoPref = tipos.find((t) => t.id === tipoId)?.pref ?? '';
+  const tipoActual = tipos.find((t) => t.id === tipoId);
+  const tipoPref = tipoActual?.pref ?? '';
   const usaTipologiaDb = permiteTipologiaDb(tipoPref);
   const usaTipologiaDbSm = esTipologiaDbSm(tipoPref);
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(tipoPref);
@@ -233,7 +234,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const esPCFD = tipoPref === 'PCFD';
   const usaDoor = usaPuertaParametrica(tipoPref);
   const usaHuecoHorno = usaHuecoHornoParametrico(tipoPref);
-  const usaMoHood = usaMedidasMoHood(tipoPref);
+  const usaMoHood = [tipoActual?.pref, tipoActual?.pref_imperial, tipoActual?.pref_metrico].some(usaMedidasMoHood);
   const usaRiel = (usaTipologiaDb && conHerrajes) || esPCFD;
   function handleTipoChange(v: string) {
     const tipoSeleccionado = v === DB_SM_GROUP_VALUE
@@ -727,6 +728,17 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
           </Field>
         </div>
 
+        {usaMoHood && (
+          <div className="grid grid-cols-2 gap-2 items-end">
+            <Field label="MO">
+              <input type="text" required value={mo} onChange={(e) => setMo(e.target.value)} placeholder={String(convertir(200, 'mm', unidad))} title="Distancia entre la base y el entrepaño fijo" className="inp" />
+            </Field>
+            <Field label="HOOD">
+              <input type="text" required value={hood} onChange={(e) => setHood(e.target.value)} placeholder="0" title="Distancia entre el final inferior del lateral y la base" className="inp" />
+            </Field>
+          </div>
+        )}
+
         {usaHuecoHorno && (
           <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 space-y-2">
             <div className="grid grid-cols-2 gap-2 items-end">
@@ -738,16 +750,6 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               </Field>
             </div>
             <p className="text-xs text-amber-900">Ingresa las medidas libres que necesita el horno para quedar empotrado. Si el alto supera el vano disponible, los frentes laterales se ajustan entre la gaveta y el refuerzo superior.</p>
-          </div>
-        )}
-
-        {usaMoHood && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 space-y-2">
-            <div className="grid grid-cols-2 gap-2 items-end">
-              <Field label="MO"><input type="text" required value={mo} onChange={(e) => setMo(e.target.value)} placeholder="200" className="inp" /></Field>
-              <Field label="HOOD"><input type="text" required value={hood} onChange={(e) => setHood(e.target.value)} placeholder="0" className="inp" /></Field>
-            </div>
-            <p className="text-xs text-blue-900">MO mide desde la base hasta el entrepaño fijo. HOOD mide desde el final inferior del lateral hasta la base. La puerta termina en el entrepaño fijo y deja libre el espacio inferior.</p>
           </div>
         )}
 

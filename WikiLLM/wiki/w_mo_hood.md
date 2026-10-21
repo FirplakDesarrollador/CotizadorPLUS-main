@@ -15,6 +15,8 @@ las persisten dentro de `config.overrides`.
 En Cotizaciones, los campos `MO` y `HOOD` aparecen en la fila principal de
 medidas inmediatamente al seleccionar la tipología. La detección considera el
 prefijo base y sus variantes imperial/métrica, normalizadas antes de comparar.
+El Simulador aplica la misma detección y presenta ambos campos inmediatamente
+después de Largo, Alto, Profundidad y Unidad, antes de la sección Tableros.
 
 ## Geometría
 
