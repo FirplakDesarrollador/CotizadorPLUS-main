@@ -1,5 +1,5 @@
 import { evalExpr, type Pieza } from './engine';
-import type { GroupCalculation, PreparedGroupMember } from './group-engine';
+import { isUpperCabinetGroup, normalizeUpperCabinetBaseAndTop, type GroupCalculation, type PreparedGroupMember } from './group-engine';
 import { inferirMontaje, validarMontaje, type FuncionMontaje, type MontajeConfig } from './visualizacion-config';
 
 export type PanelVisual = {
@@ -11,7 +11,7 @@ export type PanelVisual = {
 };
 export type EscenaMueble = {
   version: 1; paneles: PanelVisual[]; avisos: string[]; omitidas: string[];
-  modulos: { pref: string; x: number; largo: number; alto: number; profundo: number }[];
+  modulos: { pref: string; x: number; z: number; largo: number; alto: number; profundo: number }[];
 };
 type Item = { p: Pieza; config: MontajeConfig; funcion: FuncionMontaje; l: number; a: number; t: number; count: number; source: number; w: number; d: number; h: number };
 const mm = (v: number) => v * 25.4;
@@ -20,18 +20,19 @@ const isDrawer = (f: FuncionMontaje) => ['base_gaveta','trasero_gaveta','lateral
 
 /** Uses the exact evaluated, group-adjusted cutting list. Never changes prices. */
 export function construirVisualizacion(members: PreparedGroupMember[], group: GroupCalculation): EscenaMueble {
+  if (members.length > 1) members = normalizeUpperCabinetBaseAndTop(members);
   const scene: EscenaMueble = {version:1,paneles:[],avisos:[],omitidas:[],modulos:[]};
   const warn = (s: string) => { if (!scene.avisos.includes(s)) scene.avisos.push(s); };
   let offset=0;
   const totalL=mm(group.largoTotalIn), multi=members.length>1;
+  const upperGroup=multi&&isUpperCabinetGroup(members);
+  const groupTop=upperGroup?Math.max(...members.map((member)=>mm(member.calc.dims.A))):0;
   const continuous=new Set<string>();
   // `group-engine` fusiona tambien las piezas `continua_opcional`, pero solo las
   // que resultaron compatibles: `group.piezasContinuas` lista las claves que de
   // verdad se unieron. Sin consultarlo, una opcional fusionada llega con la
   // cantidad prorrateada (0,5 por modulo) y se descarta por fraccionaria.
-  const esContinuaEnGrupo=(pz:Pieza)=>pz.modo_agrupacion==='continua'
-    ||(pz.modo_agrupacion==='continua_opcional'
-      &&group.piezasContinuas.includes(pz.clave_fusion||pz.nombre));
+  const esContinuaEnGrupo=(pz:Pieza)=>group.piezasContinuas.includes(pz.clave_fusion||pz.nombre);
   const addPanel = (panel: PanelVisual) => {
     if (scene.paneles.length >= 1500) { warn('Se alcanzó el límite de 1.500 piezas visibles.'); return; }
     scene.paneles.push(panel);
@@ -47,11 +48,14 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE',
     ].includes(pref);
     const esDb21IntSmFe = pref === 'DB-2-1INT-SM-FE';
+    const vars=result.vars;
     const L=mm(calc.dims.L), A=mm(calc.dims.A), P=mm(calc.dims.P);
+    const MO=mm(Number(vars.MO ?? 0)), HOOD=mm(Number(vars.HOOD ?? 0));
+    const verticalOffset=upperGroup?groupTop-A:0;
     const thickness=(rol: string) => Number(calc.tablerosByCode[calc.preset[rol]]?.espesor_mm ?? 0);
     const TC=thickness('caja') || 15, TF=thickness('frente') || 18, TB=thickness('fondo') || 6;
-    scene.modulos.push({pref,x:offset,largo:L,alto:A,profundo:P});
-    const vars=result.vars, items: Item[]=[];
+    scene.modulos.push({pref,x:offset,z:verticalOffset,largo:L,alto:A,profundo:P});
+    const items: Item[]=[];
     const used=new Set<number>();
     calc.piezas.forEach((p, pi) => {
       if (calc.modoFrentes==='sin_frentes' && isFront(p) || calc.modoFrentes==='solo_frentes' && !isFront(p)) return;
@@ -314,7 +318,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
             x=k===0?0:L-w;
             if (config.x) {
               const explicitX = Number(evalExpr(config.x, {
-                L, A, P, TC, TF, TB, LP: w, AP: h, EP: d,
+                L, A, P, TC, TF, TB, MO, HOOD, LP: w, AP: h, EP: d,
                 I: i, N: n, W: w, D: d, H: h, X: x, Y: y, Z: z,
               }));
               if (Number.isFinite(explicitX)) x=explicitX;
@@ -359,7 +363,10 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
             if(!Number.isFinite(z)) z=A-h-i*(innerH-h)/Math.max(1,n);
             break;
           }
-          case 'travesano_posterior': y=P-d; z=foot+i*(innerH-h)/Math.max(1,n-1); break;
+          case 'travesano_posterior':
+            y=P-d;
+            z=upperGroup?A-(i+1)*h:foot+i*(innerH-h)/Math.max(1,n-1);
+            break;
           case 'travesano_lateral': x=TC; z=A-h; break;
           case 'frente': {
             const ds=doorSlots.get(`${item.source}:${k}`)!;
@@ -371,7 +378,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
             else if (esBlindDoorParametrico && p.nombre === 'frente') x=Number(vars.mano_derecha ?? 1) === 1 ? L-w : 0;
             if (config.z) {
               const explicitZ = Number(evalExpr(config.z, {
-                L, A, P, TC, TF, TB, LP: w, AP: h, EP: d,
+                L, A, P, TC, TF, TB, MO, HOOD, LP: w, AP: h, EP: d,
                 I: i, N: n, W: w, D: d, H: h, X: x, Y: y, Z: z,
               }));
               if (Number.isFinite(explicitZ)) z=explicitZ;
@@ -431,7 +438,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         }
         const defaults={x,y,z};
         let giro=0, confirmed=config.confirmado===true;
-        const ctx={L:width,A,P,TC,TF,TB,LP:item.l,AP:item.a,EP:item.t,I:k,N:count,W:w,D:d,H:h,X:x,Y:y,Z:z};
+        const ctx={L:width,A,P,TC,TF,TB,MO,HOOD,LP:item.l,AP:item.a,EP:item.t,I:k,N:count,W:w,D:d,H:h,X:x,Y:y,Z:z};
         try {
           for(const axis of ['x','y','z'] as const) if(config[axis]) defaults[axis]=Number(evalExpr(config[axis],ctx));
           if(!Object.values(defaults).every(Number.isFinite)) throw new Error('Coordenada no finita');
@@ -470,7 +477,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           }
         }
         addPanel({id:`${mi}:${item.source}:${k}`,nombre:p.nombre,modulo:mi,pref,rol:p.rol_tablero,
-          material:calc.preset[p.rol_tablero]??'',funcion,x:defaults.x+(full?0:offset),y:defaults.y,z:defaults.z,w,d,h,
+          material:calc.preset[p.rol_tablero]??'',funcion,x:defaults.x+(full?0:offset),y:defaults.y,z:defaults.z+verticalOffset,w,d,h,
           largo:item.l,ancho:item.a,espesor:item.t,giro,confirmado:confirmed,
           nota:config.nota??'',cajon,recorte});
       }

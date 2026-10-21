@@ -51,7 +51,7 @@ function Drawing({scene,view,selected,onSelect,solid,opening,drawer}:{scene:Esce
   const shapes=scene.paneles.map(p=>({p,points:projectedOutline(p,view,opening,drawer)}));
   const all=shapes.flatMap(s=>s.points);
   // Include the nominal module envelope even in front-only or open configurations.
-  for(const m of scene.modulos) for(const x of [m.x,m.x+m.largo]) for(const y of [0,m.profundo]) for(const z of [0,m.alto]) all.push(project([x,y,z],view));
+  for(const m of scene.modulos) for(const x of [m.x,m.x+m.largo]) for(const y of [0,m.profundo]) for(const z of [m.z,m.z+m.alto]) all.push(project([x,y,z],view));
   const minX=Math.min(0,...all.map(p=>p[0])),maxX=Math.max(1,...all.map(p=>p[0]));
   const minY=Math.min(0,...all.map(p=>p[1])),maxY=Math.max(1,...all.map(p=>p[1]));
   const scale=Math.max(.001,Math.min(Math.max(100,width-48)/(maxX-minX),290/(maxY-minY)));

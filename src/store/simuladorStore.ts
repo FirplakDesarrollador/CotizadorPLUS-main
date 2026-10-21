@@ -30,6 +30,8 @@ export type SimuladorModuloValues = {
   doorHand: 'L' | 'R';
   hornoLargo: string;
   hornoAlto: string;
+  mo: string;
+  hood: string;
 };
 
 export type SimuladorValues = SimuladorModuloValues & {
@@ -87,6 +89,8 @@ export const initialModuloValues: SimuladorModuloValues = {
   doorHand: 'R',
   hornoLargo: '',
   hornoAlto: '',
+  mo: '',
+  hood: '',
 };
 
 const initialStateValues: SimuladorSnapshot = {
@@ -132,6 +136,8 @@ export const getModuloValues = (state: SimuladorModuloValues): SimuladorModuloVa
   doorHand: state.doorHand,
   hornoLargo: state.hornoLargo,
   hornoAlto: state.hornoAlto,
+  mo: state.mo,
+  hood: state.hood,
 });
 
 const getSnapshot = (state: SimuladorState): SimuladorSnapshot => ({
@@ -217,7 +223,7 @@ export const useSimuladorStore = create<SimuladorState>()(
       // v3: el Breakdown ganó `m2`, `metros` y `desperdicio`. Un `result` guardado con
       // la forma anterior no los trae, así que `migrate` lo descarta (pone `result: null`)
       // y el Simulador pide recalcular en vez de renderizar campos ausentes.
-      version: 5,
+      version: 6,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {
@@ -226,11 +232,15 @@ export const useSimuladorStore = create<SimuladorState>()(
           largo: state.largo == null ? initialModuloValues.largo : String(state.largo),
           alto: state.alto == null ? initialModuloValues.alto : String(state.alto),
           prof: state.prof == null ? initialModuloValues.prof : String(state.prof),
+          mo: state.mo == null ? initialModuloValues.mo : String(state.mo),
+          hood: state.hood == null ? initialModuloValues.hood : String(state.hood),
           modulos: (state.modulos ?? []).map((modulo) => ({
             ...modulo,
             largo: String(modulo.largo),
             alto: String(modulo.alto),
             prof: String(modulo.prof),
+            mo: String(modulo.mo ?? ''),
+            hood: String(modulo.hood ?? ''),
           })),
           editingId: null,
           pendingDraft: null,

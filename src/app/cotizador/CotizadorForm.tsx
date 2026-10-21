@@ -16,7 +16,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaMedidasMoHood, usaPuertaParametrica, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
@@ -169,6 +169,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const setHornoLargo = (v: string) => setStore({ hornoLargo: v });
   const hornoAlto = store.hornoAlto ?? '';
   const setHornoAlto = (v: string) => setStore({ hornoAlto: v });
+  const mo = store.mo ?? '';
+  const setMo = (v: string) => setStore({ mo: v });
+  const hood = store.hood ?? '';
+  const setHood = (v: string) => setStore({ hood: v });
 
   const result = store.result;
 
@@ -229,6 +233,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const esPCFD = tipoPref === 'PCFD';
   const usaDoor = usaPuertaParametrica(tipoPref);
   const usaHuecoHorno = usaHuecoHornoParametrico(tipoPref);
+  const usaMoHood = usaMedidasMoHood(tipoPref);
   const usaRiel = (usaTipologiaDb && conHerrajes) || esPCFD;
   function handleTipoChange(v: string) {
     const tipoSeleccionado = v === DB_SM_GROUP_VALUE
@@ -254,6 +259,13 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setPcfdConfig('');
     setDoor('');
     setDoorHand('R');
+    if (usaMedidasMoHood(tipoSeleccionado.pref)) {
+      setMo(String(convertir(200, 'mm', unidad)));
+      setHood('0');
+    } else {
+      setMo('');
+      setHood('');
+    }
     if (usaHuecoHornoParametrico(tipoSeleccionado.pref)) {
       setHornoLargo(String(convertir(219.2, 'mm', unidad)));
       setHornoAlto(String(convertir(153.2, 'mm', unidad)));
@@ -298,6 +310,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (door !== '' && Number.isFinite(parseMedida(door))) setDoor(String(convertir(parseMedida(door), unidad, nu)));
     if (hornoLargo !== '' && Number.isFinite(parseMedida(hornoLargo))) setHornoLargo(String(convertir(parseMedida(hornoLargo), unidad, nu)));
     if (hornoAlto !== '' && Number.isFinite(parseMedida(hornoAlto))) setHornoAlto(String(convertir(parseMedida(hornoAlto), unidad, nu)));
+    if (mo !== '' && Number.isFinite(parseMedida(mo))) setMo(String(convertir(parseMedida(mo), unidad, nu)));
+    if (hood !== '' && Number.isFinite(parseMedida(hood))) setHood(String(convertir(parseMedida(hood), unidad, nu)));
     setUnidad(nu);
   }
 
@@ -319,9 +333,19 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     });
 
   function validarDimensionesActivas() {
-    if (dimensionesValidas({ largo, alto, prof })) return true;
-    setError('Completa Largo, Alto y Prof con valores mayores que cero.');
-    return false;
+    if (!dimensionesValidas({ largo, alto, prof })) {
+      setError('Completa Largo, Alto y Prof con valores mayores que cero.');
+      return false;
+    }
+    if (usaMoHood) {
+      const moValue = parseMedida(mo);
+      const hoodValue = parseMedida(hood);
+      if (!(moValue > 0) || !(hoodValue >= 0) || moValue + hoodValue >= parseMedida(alto)) {
+        setError('MO debe ser mayor que cero, HOOD no puede ser negativo y su suma debe ser menor que el alto del mueble.');
+        return false;
+      }
+    }
+    return true;
   }
 
   function inputFromModule(modulo: SimuladorModulo): CotizarInput {
@@ -335,6 +359,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (usaHuecoHornoParametrico(pref)) {
       overrides.horno_largo = convertir(parseMedida(modulo.hornoLargo), unidad, 'in');
       overrides.horno_alto = convertir(parseMedida(modulo.hornoAlto), unidad, 'in');
+    }
+    if (usaMedidasMoHood(pref)) {
+      overrides.MO = convertir(parseMedida(modulo.mo), unidad, 'in');
+      overrides.HOOD = convertir(parseMedida(modulo.hood), unidad, 'in');
     }
     if (permiteTipologiaDb(pref) && modulo.dbTipo) {
       const dbT = DB_TIPOLOGIAS.find((x) => x.key === modulo.dbTipo);
@@ -710,6 +738,16 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               </Field>
             </div>
             <p className="text-xs text-amber-900">Ingresa las medidas libres que necesita el horno para quedar empotrado. Si el alto supera el vano disponible, los frentes laterales se ajustan entre la gaveta y el refuerzo superior.</p>
+          </div>
+        )}
+
+        {usaMoHood && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 space-y-2">
+            <div className="grid grid-cols-2 gap-2 items-end">
+              <Field label="MO"><input type="text" required value={mo} onChange={(e) => setMo(e.target.value)} placeholder="200" className="inp" /></Field>
+              <Field label="HOOD"><input type="text" required value={hood} onChange={(e) => setHood(e.target.value)} placeholder="0" className="inp" /></Field>
+            </div>
+            <p className="text-xs text-blue-900">MO mide desde la base hasta el entrepaño fijo. HOOD mide desde el final inferior del lateral hasta la base. La puerta termina en el entrepaño fijo y deja libre el espacio inferior.</p>
           </div>
         )}
 

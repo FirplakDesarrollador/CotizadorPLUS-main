@@ -123,6 +123,10 @@ export function esMuebleSuperior(pref: string | null | undefined): boolean {
   return w >= 0 && (b < 0 || w < b);
 }
 
+export function usaMedidasMoHood(pref: string | null | undefined): boolean {
+  return String(pref ?? '').toUpperCase() === 'W-MO-HOOD';
+}
+
 /**
  * Que juego de materiales del proyecto le toca a un tipo de mueble.
  *

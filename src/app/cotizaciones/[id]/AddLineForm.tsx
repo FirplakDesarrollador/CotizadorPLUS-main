@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaMedidasMoHood, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
@@ -211,6 +211,14 @@ export default function AddLineForm({
       ? String(convertir(ov.horno_alto, 'in', unidad))
       : usaHuecoHornoParametrico(tipoInicialPref) ? String(convertir(153.2, 'mm', unidad)) : '',
   );
+  const [mo, setMo] = useState(
+    ov?.MO != null ? String(convertir(ov.MO, 'in', unidad))
+      : usaMedidasMoHood(tipoInicialPref) ? String(convertir(200, 'mm', unidad)) : '',
+  );
+  const [hood, setHood] = useState(
+    ov?.HOOD != null ? String(convertir(ov.HOOD, 'in', unidad))
+      : usaMedidasMoHood(tipoInicialPref) ? '0' : '',
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -227,6 +235,7 @@ export default function AddLineForm({
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
   const usaDoor = usaPuertaParametrica(prefTipo);
   const usaHuecoHorno = usaHuecoHornoParametrico(prefTipo);
+  const usaMoHood = usaMedidasMoHood(prefTipo);
   const usaRiel = esDB || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
 
@@ -303,6 +312,13 @@ export default function AddLineForm({
     setDoor('');
     setDoorHand('R');
     const nuevoTipo = tipos.find((t) => t.id === resolvedId);
+    if (usaMedidasMoHood(nuevoTipo?.pref)) {
+      setMo(String(convertir(200, 'mm', unidad)));
+      setHood('0');
+    } else {
+      setMo('');
+      setHood('');
+    }
     if (esTipologiaDbSmSf(nuevoTipo?.pref)) setConFondo(false);
     if (usaHuecoHornoParametrico(nuevoTipo?.pref)) {
       setHornoLargo(String(convertir(219.2, 'mm', unidad)));
@@ -367,6 +383,7 @@ export default function AddLineForm({
       ['Largo', largo], ['Alto', alto], ['Prof', prof],
       ...(usaDoor ? [['Puerta', door]] : []),
       ...(usaHuecoHorno ? [['Largo libre del horno', hornoLargo], ['Alto libre del horno', hornoAlto]] : []),
+      ...(usaMoHood ? [['MO', mo], ['HOOD', hood]] : []),
     ]
       .filter(([, v]) => Number.isNaN(parseMedida(v as string)));
     if (dimsInvalidas.length > 0) {
@@ -379,6 +396,12 @@ export default function AddLineForm({
       setLoading(false);
       return;
     }
+    if (usaMoHood && (!(parseMedida(mo) > 0) || !(parseMedida(hood) >= 0)
+      || parseMedida(mo) + parseMedida(hood) >= parseMedida(alto))) {
+      setError('MO debe ser mayor que cero, HOOD no puede ser negativo y su suma debe ser menor que el alto del mueble.');
+      setLoading(false);
+      return;
+    }
     const overrides: Record<string, number> = {};
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
@@ -388,6 +411,10 @@ export default function AddLineForm({
     if (usaHuecoHorno) {
       overrides.horno_largo = convertir(parseMedida(hornoLargo), unidad, 'in');
       overrides.horno_alto = convertir(parseMedida(hornoAlto), unidad, 'in');
+    }
+    if (usaMoHood) {
+      overrides.MO = convertir(parseMedida(mo), unidad, 'in');
+      overrides.HOOD = convertir(parseMedida(hood), unidad, 'in');
     }
     if (esDB && dbTipo) {
       const dbT = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
@@ -509,6 +536,16 @@ export default function AddLineForm({
               </L>
             </div>
             <p className="mt-2 text-xs text-amber-900">Estas son las medidas libres que necesita el horno. Si el alto supera el vano disponible, los frentes laterales se ajustan entre la gaveta y el refuerzo superior.</p>
+          </div>
+        )}
+
+        {usaMoHood && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 md:col-span-2 lg:col-span-4">
+            <div className="grid grid-cols-2 gap-2">
+              <L label="MO"><input type="text" required value={mo} onChange={(e) => setMo(e.target.value)} placeholder="200" className="inp" /></L>
+              <L label="HOOD"><input type="text" required value={hood} onChange={(e) => setHood(e.target.value)} placeholder="0" className="inp" /></L>
+            </div>
+            <p className="mt-2 text-xs text-blue-900">MO mide desde la base hasta el entrepaño fijo. HOOD mide desde el final inferior del lateral hasta la base. La puerta termina en el entrepaño fijo y deja libre el espacio inferior.</p>
           </div>
         )}
 

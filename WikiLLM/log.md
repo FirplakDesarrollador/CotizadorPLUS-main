@@ -2658,3 +2658,13 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-20] update | Mejora de UX en tabla de catálogos: scroll horizontal visible, primera columna sticky con acciones, editor inline adaptado sin scroll y alineación tipográfica
 
 ## [2026-10-20] update | Ampliación de la columna Código en la tabla de catálogos para visibilidad completa del identificador sin truncamiento
+
+## [2026-10-21] update | Fondos separados por diferencias de altura y bases incompatibles independientes en grupos de muebles superiores
+
+## [2026-10-21] update | Alineación superior, tapa continua y refuerzos traseros apilados en muebles superiores agrupados
+
+## [2026-10-21] ingest | Nueva tipología W-MO-HOOD basada en UW con medidas MO/HOOD, base extendida y montaje visual paramétrico
+
+## [2026-10-21] update | Migración W-MO-HOOD aplicada, registrada y verificada en Supabase; se agregó un ejecutor reutilizable de migraciones
+
+## [2026-10-21] update | Montaje W-MO-HOOD corregido: base extendida al frente, fondo hasta la base, entrepaños según vano superior, refuerzo inferior sobre base y fijo alineado al frente

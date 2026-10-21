@@ -27,6 +27,13 @@ export type GroupCalculation = {
 
 const mm = (inches: number) => inches * 25.4;
 const near = (a: number, b: number, tolerance = 0.0001) => Math.abs(a - b) <= tolerance;
+export const UPPER_CABINET_PREFS = new Set([
+  'W', 'UW', 'OW', 'WSM', 'W-SM', 'TW', 'TW-SM-PUSH', 'W-SM-PUSH', 'W-SM-LOC', 'W-MO-HOOD',
+]);
+
+export function isUpperCabinetGroup(members: PreparedGroupMember[]) {
+  return members.every((member) => UPPER_CABINET_PREFS.has(member.pref.toUpperCase()));
+}
 
 function longSideCm(formato: string | null | undefined): number | null {
   if (!formato) return null;
@@ -43,6 +50,53 @@ function evaluated(pieza: Pieza, calc: CalcInput) {
     largo: Number(evalExpr(pieza.formula_largo, V)) - Number(pieza.resta_largo || 0),
     ancho: Number(evalExpr(pieza.formula_ancho, V)) - Number(pieza.resta_ancho || 0),
   };
+}
+
+export function normalizeUpperCabinetBaseAndTop(members: PreparedGroupMember[]) {
+  if (!isUpperCabinetGroup(members)) return members;
+  const baseRefs = members.map(({ calc }) => calc.piezas.find((piece) =>
+    piece.nombre === 'base' || piece.nombre === 'base_tapa'));
+  const baseLengths = baseRefs.map((piece, index) => {
+    if (!piece) return null;
+    const dimensions = evaluated(piece, members[index].calc);
+    const rotated = !/\bL\b/.test(piece.formula_largo ?? '') && /\bL\b/.test(piece.formula_ancho ?? '');
+    return rotated ? dimensions.ancho : dimensions.largo;
+  });
+  const hasDifferentBaseLengths = baseLengths.every((length): length is number => length != null)
+    && baseLengths.slice(1).some((length) => !near(length, baseLengths[0]));
+  if (!hasDifferentBaseLengths) return members;
+  return members.map((member) => ({
+    ...member,
+    calc: {
+      ...member.calc,
+      piezas: member.calc.piezas.flatMap((piece): Pieza[] => {
+        if (piece.nombre === 'base_tapa') {
+          return [
+            {
+              ...piece, nombre: 'base', formula_cantidad: '1', modo_agrupacion: 'local',
+              clave_fusion: null, formula_largo_grupo: null,
+              visualizacion: { ...piece.visualizacion, funcion: 'base' },
+            },
+            {
+              ...piece, nombre: 'tapa', formula_cantidad: '1', modo_agrupacion: 'continua',
+              clave_fusion: 'tapa', formula_largo_grupo: 'LG-(2*TC)',
+              visualizacion: { ...piece.visualizacion, funcion: 'tapa' },
+            },
+          ];
+        }
+        if (piece.nombre === 'base') {
+          return [{ ...piece, modo_agrupacion: 'local', clave_fusion: null, formula_largo_grupo: null }];
+        }
+        if (piece.nombre === 'tapa') {
+          return [{
+            ...piece, modo_agrupacion: 'continua', clave_fusion: 'tapa',
+            formula_largo_grupo: piece.formula_largo_grupo || 'LG-(2*TC)',
+          }];
+        }
+        return [piece];
+      }),
+    },
+  }));
 }
 
 function montajeFisico(pieza: Pieza) {
@@ -129,6 +183,7 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
       piezasContinuas: [],
     };
   }
+  members = normalizeUpperCabinetBaseAndTop(members);
   members = members.map((member) => member.omiteFondoSoloAgrupado ? {
     ...member,
     calc: {
@@ -183,6 +238,28 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
       (p.modo_agrupacion === 'continua' || p.modo_agrupacion === 'continua_opcional')
       && (p.clave_fusion || p.nombre) === key));
     if (refs.every((piece): piece is Pieza => Boolean(piece)) && piezasHomologables(refs, members)) continuousKeys.add(key);
+  }
+
+  if (isUpperCabinetGroup(members)) {
+    const hasDifferentHeights = members.slice(1)
+      .some((member) => !near(member.calc.dims.A, first.dims.A));
+    if (hasDifferentHeights) continuousKeys.delete('fondo');
+
+    const baseRefs = members.map(({ calc }) => calc.piezas.find((piece) =>
+      (piece.modo_agrupacion === 'continua' || piece.modo_agrupacion === 'continua_opcional')
+      && (piece.clave_fusion || piece.nombre) === 'base'));
+    if (baseRefs.every((piece): piece is Pieza => Boolean(piece))) {
+      const baseLengths = baseRefs.map((piece, index) => {
+        const dimensions = evaluated(piece, members[index].calc);
+        const rotated = !/\bL\b/.test(piece.formula_largo ?? '') && /\bL\b/.test(piece.formula_ancho ?? '');
+        return rotated ? dimensions.ancho : dimensions.largo;
+      });
+      const hasDifferentBaseLengths = baseLengths.slice(1)
+        .some((length) => !near(length, baseLengths[0]));
+      if (hasDifferentBaseLengths || !piezasHomologables(baseRefs, members)) {
+        continuousKeys.delete('base');
+      }
+    }
   }
 
   for (const key of continuousKeys) {
