@@ -12,6 +12,10 @@ definido por dos medidas editables:
 Los formularios convierten ambas medidas desde la unidad visible a pulgadas y
 las persisten dentro de `config.overrides`.
 
+En Cotizaciones, los campos `MO` y `HOOD` aparecen en la fila principal de
+medidas inmediatamente al seleccionar la tipología. La detección considera el
+prefijo base y sus variantes imperial/métrica, normalizadas antes de comparar.
+
 ## Geometría
 
 - La base se eleva a `Z = HOOD`, conserva el borde posterior alineado con el
