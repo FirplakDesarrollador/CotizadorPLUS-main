@@ -26,7 +26,7 @@ export type MontajeConfig = {
 
 // No JS evaluation in the browser. The server's trusted formula evaluator receives
 // only these coordinate variables; validate names and syntax before persistence.
-export const VARIABLES_MONTAJE = ['L','A','P','TC','TF','TB','LP','AP','EP','I','N','W','D','H','X','Y','Z'];
+export const VARIABLES_MONTAJE = ['L','A','P','TC','TF','TB','MO','HOOD','LP','AP','EP','I','N','W','D','H','X','Y','Z'];
 export function validarMontaje(value: unknown): MontajeConfig | null {
   if (value == null) return null;
   if (typeof value !== 'object' || Array.isArray(value)) throw new Error('Montaje debe ser un objeto.');

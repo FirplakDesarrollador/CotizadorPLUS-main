@@ -57,6 +57,35 @@ test('grupo: tres laterales reales y una base continua, sin cantidades prorratea
   assert.ok(Math.abs(bases[0].w-(48*25.4-30))<.03);
   assert.ok(!s.avisos.some(a=>a.includes('fraccionaria')));
 });
+test('superiores agrupados: alinean arriba, unen tapa y apilan refuerzos traseros',()=>{
+  const short=member('W'),tall=member('UW');
+  short.calc.dims={L:30,A:24,P:12};
+  tall.calc.dims={L:35,A:38,P:12};
+  const group=calcularGrupoFisico([short,tall]);
+  const scene=construirVisualizacion([short,tall],group);
+  const top=38*25.4;
+
+  assert.ok(Math.abs(scene.modulos[0].z-(38-24)*25.4)<.1);
+  assert.ok(Math.abs(scene.modulos[1].z)<.1);
+  const laterals=scene.paneles.filter(p=>p.funcion==='lateral');
+  assert.ok(laterals.length>=3);
+  assert.ok(laterals.every(p=>Math.abs(p.z+p.h-top)<.1),'todos los laterales deben rematar arriba');
+
+  const tops=scene.paneles.filter(p=>p.funcion==='tapa');
+  assert.equal(tops.length,1,'la tapa debe ser una pieza continua');
+  assert.ok(Math.abs(tops[0].z+tops[0].h-top)<.1);
+  assert.ok(Math.abs(tops[0].w-(65*25.4-30))<.1);
+
+  const bases=scene.paneles.filter(p=>p.funcion==='base');
+  assert.equal(bases.length,2,'cada base debe conservar su largo individual');
+  assert.ok(Math.abs(bases[0].z-(38-24)*25.4)<.1,'la base del mueble bajo sube con su carcasa');
+  assert.ok(Math.abs(bases[1].z)<.1,'la diferencia de altura queda debajo del mueble bajo');
+
+  const rear=scene.paneles.filter(p=>p.funcion==='travesano_posterior').sort((a,b)=>b.z-a.z);
+  assert.equal(rear.length,2);
+  assert.ok(Math.abs(rear[0].z+rear[0].h-top)<.1,'el primer refuerzo debe tocar la tapa');
+  assert.ok(Math.abs(rear[1].z+rear[1].h-rear[0].z)<.1,'el segundo refuerzo debe quedar debajo del primero');
+});
 test('frentes excluidos / kit conserva exactamente el alcance del resultado',()=>{
   const a=member('DB',{n_cajones:3,n_cajones_pequenos:1});a.calc.modoFrentes='sin_frentes';
   const s=construirVisualizacion([a],calcularGrupoFisico([a]));assert.ok(!s.paneles.some(p=>p.rol==='frente'));
