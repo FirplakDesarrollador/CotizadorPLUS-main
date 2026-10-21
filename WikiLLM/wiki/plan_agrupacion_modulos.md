@@ -96,6 +96,21 @@ La plantilla declarará el comportamiento; el motor no lo inferirá solo por nom
 
 Los entrepaños permanecen separados porque una pieza continua colisionaría con divisiones de altura completa. Una pieza continua solo se fusiona si es homologable en todos los miembros; nunca atraviesa únicamente parte del grupo.
 
+Para grupos compuestos exclusivamente por muebles superiores `W`, `UW`, `OW`,
+`WSM`, `W-SM`, `TW`, `TW-SM-PUSH`, `W-SM-PUSH` o `W-SM-LOC` se aplican dos
+excepciones parciales que no bloquean la agrupación completa:
+
+- Si las alturas difieren, cada módulo conserva su fondo independiente. Las
+  demás piezas estructurales homologables continúan agrupándose.
+- Si las bases tienen largos individuales diferentes o no conservan la misma
+  sección, todas permanecen independientes. Fondos, refuerzos y demás piezas
+  compatibles conservan su agrupación.
+- Los superiores de distinta altura se alinean por la cara superior; el desnivel
+  queda debajo del módulo más bajo. Cuando una plantilla combina `base_tapa`, el
+  motor la separa: conserva una base local por módulo y fabrica una sola tapa
+  continua. En la representación, los dos refuerzos traseros continuos quedan
+  inmediatamente debajo de la tapa, apilados uno bajo el otro.
+
 ### 4.2 Dimensiones según espesor
 
 Supabase usa hoy constantes heredadas de caja de 15 mm:

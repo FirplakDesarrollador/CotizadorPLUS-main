@@ -30,6 +30,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Torres PCFD con gavetas ocultas](wiki/muebles_pcfd_gavetas_ocultas.md) - Variantes `STANDARD`/`2OP`/`4OP`, fórmulas CEMA y uso paramétrico de cajones y entrepaños.
 - [Variantes de frente Gola SM](wiki/variantes_frente_gola_sm.md) - Investigación de códigos `SM`/`SMG`, refuerzos por familia y modelo recomendado como opción transversal de frentes.
 - [W2936-SM desde hoja real](wiki/w_sm_hoja_real.md) - Integracion verificada de `W` con sistema de frente `SM`: formulas condicionales, ausencia de manijas, HDR y carga en Supabase.
+- [W-MO-HOOD](wiki/w_mo_hood.md) - Tipología superior derivada de UW con medidas MO/HOOD, base profunda de OW-MO, vano inferior abierto y puertas limitadas por el entrepaño fijo.
 - [WBL-D-L/R-SM Blind Door](wiki/wbl_blind_door_sm.md) - Tipología superior independiente con puerta paramétrica en fracciones, apertura L/R, Blind Door fijo y regla común de entrepaños.
 - [Codificación comercial de módulos](wiki/codificacion_comercial_modulos.md) - Fuente única `codigoComercial()`: orden de segmentos, qué tipos llevan el alto (familia W + PN) y sistema de medida por superficie.
 - [Voladizo de la puerta con gola](wiki/visualizacion_gola_voladizo.md) - Por qué el sobrante de una puerta `SM` cuelga bajo la base en la visualización, y por qué en un mueble base tendría que ir arriba.
