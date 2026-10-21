@@ -2668,3 +2668,5 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-21] update | Migración W-MO-HOOD aplicada, registrada y verificada en Supabase; se agregó un ejecutor reutilizable de migraciones
 
 ## [2026-10-21] update | Montaje W-MO-HOOD corregido: base extendida al frente, fondo hasta la base, entrepaños según vano superior, refuerzo inferior sobre base y fijo alineado al frente
+
+## [2026-10-21] update | Campos MO y HOOD visibles en la fila principal de medidas de Cotizaciones para W-MO-HOOD

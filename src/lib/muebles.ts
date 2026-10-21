@@ -124,7 +124,7 @@ export function esMuebleSuperior(pref: string | null | undefined): boolean {
 }
 
 export function usaMedidasMoHood(pref: string | null | undefined): boolean {
-  return String(pref ?? '').toUpperCase() === 'W-MO-HOOD';
+  return String(pref ?? '').trim().toUpperCase() === 'W-MO-HOOD';
 }
 
 /**

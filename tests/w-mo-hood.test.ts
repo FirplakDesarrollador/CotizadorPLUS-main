@@ -76,7 +76,9 @@ test('W-MO-HOOD queda registrado en migración, formularios y código comercial'
   assert.match(simulator,/Field label="HOOD"/);
   assert.match(quoteForm,/L label="MO"/);
   assert.match(quoteForm,/L label="HOOD"/);
+  assert.ok(quoteForm.indexOf('L label="MO"') < quoteForm.indexOf('L label="Cantidad"'), 'MO y HOOD deben aparecer en la fila principal de medidas');
   assert.equal(usaMedidasMoHood('W-MO-HOOD'),true);
+  assert.equal(usaMedidasMoHood(' w-mo-hood '),true);
   assert.equal(esMuebleSuperior('W-MO-HOOD'),true);
   assert.equal(codigoComercial({pref:'W-MO-HOOD',largo:30,alto:36,prof:12,unidad:'in',sistema:'imperial'}),'W3036-MO-HOOD');
 });
