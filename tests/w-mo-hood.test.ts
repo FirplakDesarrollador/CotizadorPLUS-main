@@ -74,6 +74,8 @@ test('W-MO-HOOD queda registrado en migración, formularios y código comercial'
   assert.match(correction,/A-MO-HOOD <= 24/);
   assert.match(simulator,/Field label="MO"/);
   assert.match(simulator,/Field label="HOOD"/);
+  assert.ok(simulator.indexOf('Field label="MO"') < simulator.indexOf('<div data-tour="tableros"'), 'MO y HOOD deben aparecer antes de Tableros en el Simulador');
+  assert.match(simulator,/tipoActual\?\.pref_imperial/);
   assert.match(quoteForm,/L label="MO"/);
   assert.match(quoteForm,/L label="HOOD"/);
   assert.ok(quoteForm.indexOf('L label="MO"') < quoteForm.indexOf('L label="Cantidad"'), 'MO y HOOD deben aparecer en la fila principal de medidas');
