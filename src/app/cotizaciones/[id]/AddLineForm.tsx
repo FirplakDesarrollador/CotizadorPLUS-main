@@ -226,6 +226,7 @@ export default function AddLineForm({
   // Mapeos y opciones
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const prefTipo = tipos.find((t) => t.id === tipoId)?.pref ?? '';
+  const tipo = tipos.find((t) => t.id === tipoId);
   const esDB = permiteTipologiaDb(prefTipo);
   const esDbTradicional = prefTipo === 'DB';
   const usaTipologiaDbSm = esTipologiaDbSm(prefTipo);
@@ -235,11 +236,10 @@ export default function AddLineForm({
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
   const usaDoor = usaPuertaParametrica(prefTipo);
   const usaHuecoHorno = usaHuecoHornoParametrico(prefTipo);
-  const usaMoHood = usaMedidasMoHood(prefTipo);
+  const usaMoHood = [tipo?.pref, tipo?.pref_imperial, tipo?.pref_metrico].some(usaMedidasMoHood);
   const usaRiel = esDB || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
 
-  const tipo = tipos.find((t) => t.id === tipoId);
   const prefProyecto = (t: Tipo | undefined) => sistemaMedida === 'metrico'
     ? (t?.pref_metrico || t?.pref || '')
     : (t?.pref_imperial || t?.pref || '');
@@ -525,6 +525,33 @@ export default function AddLineForm({
           </L>
         </div>
 
+        {usaMoHood && (
+          <div className="grid grid-cols-2 gap-1">
+            <L label="MO">
+              <input
+                type="text"
+                required
+                value={mo}
+                onChange={(e) => setMo(e.target.value)}
+                placeholder={String(convertir(200, 'mm', unidad))}
+                title="Distancia entre la base y el entrepaño fijo"
+                className="inp"
+              />
+            </L>
+            <L label="HOOD">
+              <input
+                type="text"
+                required
+                value={hood}
+                onChange={(e) => setHood(e.target.value)}
+                placeholder="0"
+                title="Distancia entre el final inferior del lateral y la base"
+                className="inp"
+              />
+            </L>
+          </div>
+        )}
+
         {usaHuecoHorno && (
           <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 md:col-span-2 lg:col-span-4">
             <div className="grid grid-cols-2 gap-2">
@@ -536,16 +563,6 @@ export default function AddLineForm({
               </L>
             </div>
             <p className="mt-2 text-xs text-amber-900">Estas son las medidas libres que necesita el horno. Si el alto supera el vano disponible, los frentes laterales se ajustan entre la gaveta y el refuerzo superior.</p>
-          </div>
-        )}
-
-        {usaMoHood && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 md:col-span-2 lg:col-span-4">
-            <div className="grid grid-cols-2 gap-2">
-              <L label="MO"><input type="text" required value={mo} onChange={(e) => setMo(e.target.value)} placeholder="200" className="inp" /></L>
-              <L label="HOOD"><input type="text" required value={hood} onChange={(e) => setHood(e.target.value)} placeholder="0" className="inp" /></L>
-            </div>
-            <p className="mt-2 text-xs text-blue-900">MO mide desde la base hasta el entrepaño fijo. HOOD mide desde el final inferior del lateral hasta la base. La puerta termina en el entrepaño fijo y deja libre el espacio inferior.</p>
           </div>
         )}
 
