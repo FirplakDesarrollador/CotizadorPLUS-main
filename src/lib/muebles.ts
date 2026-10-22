@@ -127,6 +127,19 @@ export function usaMedidasMoHood(pref: string | null | undefined): boolean {
   return String(pref ?? '').trim().toUpperCase() === 'W-MO-HOOD';
 }
 
+const PREFS_TK_TORRE = ['PC', 'PCFD', 'VPC', 'PCFD-MO'] as const;
+export function usaTkTorre(pref: string | null | undefined): boolean {
+  return (PREFS_TK_TORRE as readonly string[]).includes(String(pref ?? '').trim().toUpperCase());
+}
+
+export function usaPuertaSupTorre(pref: string | null | undefined): boolean {
+  return ['PC', 'VPC'].includes(String(pref ?? '').trim().toUpperCase());
+}
+
+export function usaMoTorre(pref: string | null | undefined): boolean {
+  return String(pref ?? '').trim().toUpperCase() === 'PCFD-MO';
+}
+
 /**
  * Que juego de materiales del proyecto le toca a un tipo de mueble.
  *
@@ -248,7 +261,7 @@ type PiezaAjustable = {
 export function ajustarPiezasSinFondo<T extends PiezaAjustable>(
   piezas: T[], pref: string | null | undefined, conFondo: boolean | undefined,
 ): T[] {
-  if (conFondo !== false || esMuebleSuperior(pref)) return piezas;
+  if (conFondo !== false || esMuebleSuperior(pref) || esElementoPlano(pref)) return piezas;
   return piezas.map((pieza) => {
     // `fondo_gaveta` pertenece al cajón; solo se elimina el respaldo `fondo`.
     if (pieza.nombre.toLowerCase() === 'fondo') return { ...pieza, formula_cantidad: '0' };

@@ -179,6 +179,13 @@ test('esElementoPlano: solo F, PN y TK omiten los contadores', () => {
   }
 });
 
+test('F, PN y TK ignoran la transformación estructural sin fondo', () => {
+  const pieza = { nombre: 'fondo', rol_tablero: 'frente', formula_cantidad: '1', formula_largo: 'L', formula_ancho: 'A' };
+  for (const pref of ['F', 'PN', 'TK']) {
+    assert.deepEqual(ajustarPiezasSinFondo([pieza], pref, false), [pieza], pref);
+  }
+});
+
 test('etiquetaDescripcion: nulo, vacio y espacios dan cadena vacia', () => {
   // `construirFilaLinea` hace `.trim()` sobre el resultado, asi que una etiqueta
   // vacia no debe dejar un espacio al principio de la descripcion.

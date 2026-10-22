@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaMedidasMoHood, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
@@ -188,7 +188,10 @@ export default function AddLineForm({
   const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : (projectDefaults?.npuertas ?? ''));
   const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : (projectDefaults?.ncajones ?? ''));
   const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : (projectDefaults?.nentrepanos ?? ''));
-  const [zocalo, setZocalo] = useState(ov?.zocalo != null ? String(ov.zocalo) : '');
+  const [zocalo, setZocalo] = useState(ov?.zocalo != null ? String(convertir(ov.zocalo, 'in', unidad)) : (usaTkTorre(tipoInicialPref) ? '0' : ''));
+  const [puertaSup, setPuertaSup] = useState(ov?.PUERTA_SUP != null
+    ? String(convertir(ov.PUERTA_SUP, 'in', unidad))
+    : usaPuertaSupTorre(tipoInicialPref) ? String(convertir(30, 'in', unidad)) : '');
   const [nbarras, setNbarras] = useState(ov?.n_barras != null ? String(ov.n_barras) : '');
   const [dbTipo, setDbTipo] = useState(initial?.dbTipo ?? '');
   const [rielCodigo, setRielCodigo] = useState(initial?.rielCodigo ?? 'RIELTANDEM');
@@ -216,7 +219,8 @@ export default function AddLineForm({
   );
   const [mo, setMo] = useState(
     ov?.MO != null ? String(convertir(ov.MO, 'in', unidad))
-      : usaMedidasMoHood(tipoInicialPref) ? String(convertir(200, 'mm', unidad)) : '',
+      : usaMedidasMoHood(tipoInicialPref) ? String(convertir(200, 'mm', unidad))
+        : usaMoTorre(tipoInicialPref) ? String(convertir(20, 'in', unidad)) : '',
   );
   const [hood, setHood] = useState(
     ov?.HOOD != null ? String(convertir(ov.HOOD, 'in', unidad))
@@ -229,6 +233,7 @@ export default function AddLineForm({
   // Mapeos y opciones
   const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
   const prefTipo = tipos.find((t) => t.id === tipoId)?.pref ?? '';
+  const fuerzaConFondo = esMuebleSuperior(prefTipo) || esElementoPlano(prefTipo);
   const tipo = tipos.find((t) => t.id === tipoId);
   const esDB = permiteTipologiaDb(prefTipo);
   const esDbTradicional = prefTipo === 'DB';
@@ -244,6 +249,9 @@ export default function AddLineForm({
   const usaDoor = usaPuertaParametrica(prefTipo);
   const usaHuecoHorno = usaHuecoHornoParametrico(prefTipo);
   const usaMoHood = [tipo?.pref, tipo?.pref_imperial, tipo?.pref_metrico].some(usaMedidasMoHood);
+  const usaTk = usaTkTorre(prefTipo);
+  const usaPuertaSup = usaPuertaSupTorre(prefTipo);
+  const usaMoPcfd = usaMoTorre(prefTipo);
   const usaRiel = esDB || usaTipologiaDbSmg || usaTipologiaDbSmgFe || usaTipologiaDbSmgSf || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
 
@@ -348,6 +356,7 @@ export default function AddLineForm({
     setNcajones('');
     setNentrepanos('');
     setZocalo('');
+    setPuertaSup('');
     setNbarras('');
     setDbTipo('');
     setRielCodigo('RIELTANDEM');
@@ -362,6 +371,9 @@ export default function AddLineForm({
       setMo('');
       setHood('');
     }
+    if (usaTkTorre(nuevoTipo?.pref)) setZocalo('0');
+    if (usaPuertaSupTorre(nuevoTipo?.pref)) setPuertaSup(String(convertir(30, 'in', unidad)));
+    if (usaMoTorre(nuevoTipo?.pref)) setMo(String(convertir(20, 'in', unidad)));
     if (esTipologiaDbSmSf(nuevoTipo?.pref)) setConFondo(false);
     if (esTipologiaDbSmG(nuevoTipo?.pref) || esTipologiaDbSmGFe(nuevoTipo?.pref) || esTipologiaDbSmGSf(nuevoTipo?.pref)) {
       setSistemaFrente('gola');
@@ -421,7 +433,7 @@ export default function AddLineForm({
     if (!config) return;
     setNcajones(String(config.nc));
     setNentrepanos(String(config.ne));
-    setZocalo(String(config.zocalo));
+    setZocalo(String(convertir(config.zocalo, 'in', unidad)));
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -432,6 +444,9 @@ export default function AddLineForm({
       ...(usaDoor ? [['Puerta', door]] : []),
       ...(usaHuecoHorno ? [['Largo libre del horno', hornoLargo], ['Alto libre del horno', hornoAlto]] : []),
       ...(usaMoHood ? [['MO', mo], ['HOOD', hood]] : []),
+      ...(usaTk ? [['TK', zocalo]] : []),
+      ...(usaPuertaSup ? [['PUERTA SUP', puertaSup]] : []),
+      ...(usaMoPcfd ? [['MO', mo]] : []),
     ]
       .filter(([, v]) => Number.isNaN(parseMedida(v as string)));
     if (dimsInvalidas.length > 0) {
@@ -450,11 +465,23 @@ export default function AddLineForm({
       setLoading(false);
       return;
     }
+    const altoUtil = parseMedida(alto) - parseMedida(zocalo);
+    if (usaTk && (!(parseMedida(zocalo) >= 0) || !(altoUtil > 0))) {
+      setError('TK es obligatorio, debe ser mayor o igual a cero y menor que el alto.'); setLoading(false); return;
+    }
+    if (usaPuertaSup && (!(parseMedida(puertaSup) > 0) || !(parseMedida(puertaSup) < altoUtil))) {
+      setError('PUERTA SUP es obligatoria y debe ser menor que la altura útil.'); setLoading(false); return;
+    }
+    if (usaMoPcfd && (!(parseMedida(mo) > 0) || !(parseMedida(mo) < altoUtil))) {
+      setError('MO es obligatorio y debe ser menor que la altura útil.'); setLoading(false); return;
+    }
     const overrides: Record<string, number> = {};
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
-    if (zocalo !== '') overrides.zocalo = Number(zocalo);
+    if (zocalo !== '') overrides.zocalo = convertir(parseMedida(zocalo), unidad, 'in');
+    if (usaPuertaSup) overrides.PUERTA_SUP = convertir(parseMedida(puertaSup), unidad, 'in');
+    if (usaMoPcfd) overrides.MO = convertir(parseMedida(mo), unidad, 'in');
     if (nbarras !== '') overrides.n_barras = Number(nbarras);
     if (usaHuecoHorno) {
       overrides.horno_largo = convertir(parseMedida(hornoLargo), unidad, 'in');
@@ -501,7 +528,7 @@ export default function AddLineForm({
             doorHand: usaDoor ? doorHand : null,
             espesorCajaMm: tableros.find((tablero) => tablero.codigo === preset.caja)?.espesor_mm,
             espesorFrenteMm: tableros.find((tablero) => tablero.codigo === preset.frente)?.espesor_mm,
-            conFondo: esMuebleSuperior(prefTipo) ? true : conFondo,
+            conFondo: fuerzaConFondo ? true : conFondo,
           })
         : undefined,
       modoFrentes,
@@ -517,7 +544,7 @@ export default function AddLineForm({
       dbTipo: esDB && dbTipo ? dbTipo : undefined,
       door: usaDoor ? parseMedida(door) : undefined,
       doorHand: usaDoor ? doorHand : undefined,
-      conFondo: esMuebleSuperior(prefTipo) ? true : conFondo,
+      conFondo: fuerzaConFondo ? true : conFondo,
       preciosTableros: projectDefaults?.preciosTableros,
       anotaciones,
     };
@@ -575,6 +602,14 @@ export default function AddLineForm({
           </L>
         </div>
 
+        {usaTk && (
+          <div className={`grid gap-1 ${usaPuertaSup || usaMoPcfd ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <L label="TK"><input type="text" required value={zocalo} onChange={(e) => setZocalo(e.target.value)} placeholder="0" className="inp" /></L>
+            {usaPuertaSup && <L label="PUERTA SUP"><input type="text" required value={puertaSup} onChange={(e) => setPuertaSup(e.target.value)} className="inp" /></L>}
+            {usaMoPcfd && <L label="MO"><input type="text" required value={mo} onChange={(e) => setMo(e.target.value)} className="inp" /></L>}
+          </div>
+        )}
+
         {usaMoHood && (
           <div className="grid grid-cols-2 gap-1">
             <L label="MO">
@@ -617,7 +652,7 @@ export default function AddLineForm({
         )}
 
         {usaDoor && (
-          <div className="grid grid-cols-2 gap-1 md:col-span-2">
+          <div className="grid grid-cols-1 gap-1 md:col-span-2">
             <L label={prefTipo === 'BBLFD' ? 'Door' : 'Puerta'}>
               <input type="text" required value={door} onChange={(e) => setDoor(e.target.value)} placeholder="22 7/8" className="inp" />
             </L>
@@ -676,9 +711,6 @@ export default function AddLineForm({
                 <option value="">— manual —</option>
                 {PCFD_CONFIGURACIONES.map((config) => <option key={config.key} value={config.key}>{config.key} · {config.desc}</option>)}
               </select>
-            </L>
-            <L label="Zócalo TK (in)">
-              <input type="number" min={0} step="any" placeholder="auto" value={zocalo} onChange={(e) => { setZocalo(e.target.value); setPcfdConfig(''); }} className="inp" />
             </L>
           </div>
         )}
@@ -845,10 +877,10 @@ export default function AddLineForm({
 
         <L label="Fondo">
           <select
-            value={esMuebleSuperior(prefTipo) ? 'con_fondo' : conFondo ? 'con_fondo' : 'sin_fondo'}
+            value={fuerzaConFondo ? 'con_fondo' : conFondo ? 'con_fondo' : 'sin_fondo'}
             onChange={(e) => setConFondo(e.target.value === 'con_fondo')}
-            disabled={esMuebleSuperior(prefTipo)}
-            title={esMuebleSuperior(prefTipo) ? 'Los muebles superiores siempre llevan fondo' : undefined}
+            disabled={fuerzaConFondo}
+            title={fuerzaConFondo ? 'Esta tipología no admite variante sin fondo' : undefined}
             className="inp disabled:bg-slate-100"
           >
             <option value="con_fondo">Con fondo</option>

@@ -16,7 +16,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaMedidasMoHood, usaPuertaParametrica, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
@@ -145,6 +145,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   const zocalo = store.zocalo ?? '';
   const setZocalo = (v: string) => setStore({ zocalo: v });
+  const puertaSup = store.puertaSup ?? '';
+  const setPuertaSup = (v: string) => setStore({ puertaSup: v });
   
   const nbarras = store.nbarras;
   const setNbarras = (v: string) => setStore({ nbarras: v });
@@ -269,6 +271,9 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       ? DB_SM_FE_GROUP_VALUE
       : usaTipologiaDbSmSf ? DB_SM_SF_GROUP_VALUE : tipoId;
   const esPCFD = tipoPref === 'PCFD';
+  const usaTk = usaTkTorre(tipoPref);
+  const usaPuertaSup = usaPuertaSupTorre(tipoPref);
+  const usaMoPcfd = usaMoTorre(tipoPref);
   const usaDoor = usaPuertaParametrica(tipoPref);
   const usaHuecoHorno = usaHuecoHornoParametrico(tipoPref);
   const usaMoHood = [tipoActual?.pref, tipoActual?.pref_imperial, tipoActual?.pref_metrico].some(usaMedidasMoHood);
@@ -297,6 +302,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setNcajones('');
     setNentrepanos('');
     setZocalo('');
+    setPuertaSup('');
     setNbarras('');
     setDbTipo('');
     setRielCodigo('RIELTANDEM');
@@ -310,6 +316,9 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       setMo('');
       setHood('');
     }
+    if (usaTkTorre(tipoSeleccionado.pref)) setZocalo('0');
+    if (usaPuertaSupTorre(tipoSeleccionado.pref)) setPuertaSup(String(convertir(30, 'in', unidad)));
+    if (usaMoTorre(tipoSeleccionado.pref)) setMo(String(convertir(20, 'in', unidad)));
     if (usaHuecoHornoParametrico(tipoSeleccionado.pref)) {
       setHornoLargo(String(convertir(219.2, 'mm', unidad)));
       setHornoAlto(String(convertir(153.2, 'mm', unidad)));
@@ -345,7 +354,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (!config) return;
     setNcajones(String(config.nc));
     setNentrepanos(String(config.ne));
-    setZocalo(String(config.zocalo));
+    setZocalo(String(convertir(config.zocalo, 'in', unidad)));
   }
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
   const toggleHerraje = (rol: string) => setStore({ herrajesExcl: herrajesExcl.includes(rol) ? herrajesExcl.filter((x) => x !== rol) : [...herrajesExcl, rol] });
@@ -360,6 +369,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (hornoAlto !== '' && Number.isFinite(parseMedida(hornoAlto))) setHornoAlto(String(convertir(parseMedida(hornoAlto), unidad, nu)));
     if (mo !== '' && Number.isFinite(parseMedida(mo))) setMo(String(convertir(parseMedida(mo), unidad, nu)));
     if (hood !== '' && Number.isFinite(parseMedida(hood))) setHood(String(convertir(parseMedida(hood), unidad, nu)));
+    if (zocalo !== '' && Number.isFinite(parseMedida(zocalo))) setZocalo(String(convertir(parseMedida(zocalo), unidad, nu)));
+    if (puertaSup !== '' && Number.isFinite(parseMedida(puertaSup))) setPuertaSup(String(convertir(parseMedida(puertaSup), unidad, nu)));
     setUnidad(nu);
   }
 
@@ -393,6 +404,19 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         return false;
       }
     }
+    const altoUtil = parseMedida(alto) - parseMedida(zocalo);
+    if (usaTk && (zocalo.trim() === '' || !(parseMedida(zocalo) >= 0) || !(altoUtil > 0))) {
+      setError('TK es obligatorio, debe ser mayor o igual a cero y menor que el alto.');
+      return false;
+    }
+    if (usaPuertaSup && (puertaSup.trim() === '' || !(parseMedida(puertaSup) > 0) || !(parseMedida(puertaSup) < altoUtil))) {
+      setError('PUERTA SUP es obligatoria y debe estar entre 0 y la altura útil del mueble.');
+      return false;
+    }
+    if (usaMoPcfd && (mo.trim() === '' || !(parseMedida(mo) > 0) || !(parseMedida(mo) < altoUtil))) {
+      setError('MO es obligatorio y debe ser menor que la altura útil del mueble.');
+      return false;
+    }
     return true;
   }
 
@@ -401,13 +425,15 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (modulo.npuertas !== '') overrides.n_puertas = Number(modulo.npuertas);
     if (modulo.ncajones !== '') overrides.n_cajones = Number(modulo.ncajones);
     if (modulo.nentrepanos !== '') overrides.n_entrepanos = Number(modulo.nentrepanos);
-    if (modulo.zocalo !== '') overrides.zocalo = Number(modulo.zocalo);
+    if (modulo.zocalo !== '') overrides.zocalo = convertir(parseMedida(modulo.zocalo), unidad, 'in');
+    if (modulo.puertaSup !== '') overrides.PUERTA_SUP = convertir(parseMedida(modulo.puertaSup), unidad, 'in');
     if (modulo.nbarras !== '') overrides.n_barras = Number(modulo.nbarras);
     const pref = tipos.find((tipo) => tipo.id === modulo.tipoId)?.pref ?? '';
     if (usaHuecoHornoParametrico(pref)) {
       overrides.horno_largo = convertir(parseMedida(modulo.hornoLargo), unidad, 'in');
       overrides.horno_alto = convertir(parseMedida(modulo.hornoAlto), unidad, 'in');
     }
+    if (usaMoTorre(pref)) overrides.MO = convertir(parseMedida(modulo.mo), unidad, 'in');
     if (usaMedidasMoHood(pref)) {
       overrides.MO = convertir(parseMedida(modulo.mo), unidad, 'in');
       overrides.HOOD = convertir(parseMedida(modulo.hood), unidad, 'in');
@@ -776,6 +802,14 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
           </Field>
         </div>
 
+        {usaTk && (
+          <div className={`grid gap-2 items-end ${usaPuertaSup || usaMoPcfd ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <Field label="TK"><input type="text" required value={zocalo} onChange={(e) => setZocalo(e.target.value)} placeholder="0" className="inp" /></Field>
+            {usaPuertaSup && <Field label="PUERTA SUP"><input type="text" required value={puertaSup} onChange={(e) => setPuertaSup(e.target.value)} className="inp" /></Field>}
+            {usaMoPcfd && <Field label="MO"><input type="text" required value={mo} onChange={(e) => setMo(e.target.value)} className="inp" /></Field>}
+          </div>
+        )}
+
         {usaMoHood && (
           <div className="grid grid-cols-2 gap-2 items-end">
             <Field label="MO">
@@ -872,7 +906,6 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               </select>
             </Field>
           )}
-          {esPCFD && <Field label="Zócalo TK (in)"><input type="number" min={0} step="any" placeholder="auto" value={zocalo} onChange={(e) => { setZocalo(e.target.value); setPcfdConfig(''); }} className="inp" /></Field>}
           {/* El rótulo sigue al tipo elegido: un UDV ofrece `UDV-1S`, no `DB-1S`.
               El `value` conserva la clave original, que es la que se persiste y
               de la que sale el sufijo del código comercial. */}
