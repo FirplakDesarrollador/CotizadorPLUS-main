@@ -82,5 +82,5 @@ test('W-MO-HOOD queda registrado en migración, formularios y código comercial'
   assert.equal(usaMedidasMoHood('W-MO-HOOD'),true);
   assert.equal(usaMedidasMoHood(' w-mo-hood '),true);
   assert.equal(esMuebleSuperior('W-MO-HOOD'),true);
-  assert.equal(codigoComercial({pref:'W-MO-HOOD',largo:30,alto:36,prof:12,unidad:'in',sistema:'imperial'}),'W3036-MO-HOOD');
+  assert.equal(codigoComercial({pref:'W-MO-HOOD',largo:30,alto:36,prof:12,unidad:'in',sistema:'imperial'}),'W303612-MO-HOOD');
 });
