@@ -21,14 +21,24 @@ function corners(p:PanelVisual, opening:number, drawer:string): number[][] {
 }
 const project=(c:number[],view:View)=>view==='front'?[c[0],-c[2]]:view==='side'?[c[1],-c[2]]:[c[0],-c[1]];
 function projectedOutline(p:PanelVisual, view:View, opening:number, drawer:string) {
-  if (view==='side' && p.recorte?.borde==='frontal_superior' && p.giro===0) {
+  const recortes = p.recortes ?? (p.recorte ? [p.recorte] : []);
+  if (view==='side' && recortes.length && p.giro===0) {
     const dy=p.cajon && p.cajon===drawer?-opening:0;
-    const y0=p.y+dy, y1=y0+p.d, yc=y0+p.recorte.profundidad;
-    const z0=p.z, z1=z0+p.h, zc=z1-p.recorte.alto;
-    return [
-      [p.x,y0,z0], [p.x,y1,z0], [p.x,y1,z1],
-      [p.x,yc,z1], [p.x,yc,zc], [p.x,y0,zc],
-    ].map(c=>project(c,view));
+    const y0=p.y+dy, y1=y0+p.d, z0=p.z, z1=z0+p.h;
+    const cortes = recortes.map((recorte) => {
+      const inicio = recorte.borde==='frontal_superior' ? p.h-recorte.alto : recorte.z ?? 0;
+      return {y:y0+recorte.profundidad,inicio:z0+inicio,fin:z0+inicio+recorte.alto};
+    }).sort((a,b)=>b.fin-a.fin);
+    const outline:number[][]=[[p.x,y0,z0],[p.x,y1,z0],[p.x,y1,z1]];
+    let cursor=z1;
+    for(const corte of cortes) {
+      if(corte.fin>cursor+.01) continue;
+      if(cursor>corte.fin) outline.push([p.x,y0,corte.fin]);
+      outline.push([p.x,corte.y,corte.fin],[p.x,corte.y,corte.inicio],[p.x,y0,corte.inicio]);
+      cursor=corte.inicio;
+    }
+    if(cursor>z0) outline.push([p.x,y0,z0]);
+    return outline.map(c=>project(c,view));
   }
   return convexHull(corners(p,opening,drawer).map(c=>project(c,view)));
 }

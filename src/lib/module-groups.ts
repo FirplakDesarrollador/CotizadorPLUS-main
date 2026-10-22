@@ -173,7 +173,9 @@ export type CodigoComercialInput = {
 export function codigoComercial(input: CodigoComercialInput): string {
   const { pref, largo, alto, prof, unidad, sistema } = input;
   const prefNormalizado = String(pref).toUpperCase();
-  const esSmg = prefNormalizado === 'SBFD-SMG' || prefNormalizado === 'BFD-SMG';
+  // SMG18 es una convención del segmento comercial, no una lista cerrada de
+  // tipologías. Aplica a cualquier familia que declare un segmento SMG.
+  const esSmg = prefNormalizado.split('-').includes('SMG');
   const esTw = prefNormalizado === 'TW';
   const esTwSmPush = prefNormalizado === 'TW-SM-PUSH';
   let codigo = codigoModulo(pref, largo, unidad, sistema);
