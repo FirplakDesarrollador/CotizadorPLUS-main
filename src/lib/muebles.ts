@@ -388,6 +388,51 @@ export function esTipologiaDbSmFe(pref: string | null | undefined): boolean {
   return /^DB-.+-SM-FE$/.test(p);
 }
 
+// Las cajoneras con gola metálica replican las tres familias comerciales de
+// DB-SM. Las regex son deliberadamente disjuntas y se evalúan SF -> FE -> base
+// en los formularios para evitar que una variante entre en la familia raíz.
+export type DbSmGTipologia = {
+  pref: 'DB-2S-SMG' | 'DB-2-SMG' | 'DB-2-1INT-SMG' | 'DB-3-SMG';
+  desc: string;
+};
+
+export const DB_SMG_TIPOLOGIAS: DbSmGTipologia[] = [
+  { pref: 'DB-2S-SMG', desc: '2 gavetas pequeñas + 1 grande' },
+  { pref: 'DB-2-SMG', desc: '2 gavetas iguales' },
+  { pref: 'DB-2-1INT-SMG', desc: '2 gavetas exteriores + 1 interior' },
+  { pref: 'DB-3-SMG', desc: '3 gavetas iguales' },
+];
+
+export type DbSmGFeTipologia = {
+  pref: 'DB-2S-SMG-FE' | 'DB-2-SMG-FE' | 'DB-2-1INT-SMG-FE' | 'DB-3-SMG-FE';
+  desc: string;
+};
+
+export const DB_SMG_FE_TIPOLOGIAS: DbSmGFeTipologia[] = [
+  { pref: 'DB-2S-SMG-FE', desc: '2 gavetas pequeñas + 1 grande · Full Extension' },
+  { pref: 'DB-2-SMG-FE', desc: '2 gavetas iguales · Full Extension' },
+  { pref: 'DB-2-1INT-SMG-FE', desc: '2 gavetas exteriores + 1 interior · Full Extension' },
+  { pref: 'DB-3-SMG-FE', desc: '3 gavetas iguales · Full Extension' },
+];
+
+export function esTipologiaDbSmG(pref: string | null | undefined): boolean {
+  return /^DB-.+-SMG$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export function esTipologiaDbSmGFe(pref: string | null | undefined): boolean {
+  return /^DB-.+-SMG-FE$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export function esTipologiaDbSmGSf(pref: string | null | undefined): boolean {
+  return /^DB-.+-SMG-SF$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export function obtenerTipologiasDbSmGSf<T extends { pref: string }>(tipos: readonly T[]): T[] {
+  return tipos
+    .filter((tipo) => esTipologiaDbSmGSf(tipo.pref))
+    .sort((a, b) => a.pref.localeCompare(b.pref, 'es', { numeric: true }));
+}
+
 // Configuraciones rápidas de torre PCFD. Son presets editables: después de
 // aplicarlos el usuario puede ajustar cajones, entrepaños, puertas y zócalo.
 export type PcfdConfiguracion = {

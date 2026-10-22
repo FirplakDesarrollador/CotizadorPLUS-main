@@ -22,6 +22,17 @@ test('acepta el recorte frontal superior parametrizado para mecanizados', () => 
   });
 });
 
+test('acepta dos recortes frontales con un segundo nivel de gaveta', () => {
+  const config = validarMontaje({
+    recortes: [
+      { borde: 'frontal_superior', profundidad: '27', alto: '73' },
+      { borde: 'frontal_nivel_gaveta', profundidad: '27', alto: '73' },
+    ],
+  });
+  assert.equal(config?.recortes?.length, 2);
+  assert.equal(config?.recortes?.[1].borde, 'frontal_nivel_gaveta');
+});
+
 test('rechaza bordes y campos de recorte no soportados', () => {
   assert.throws(() => validarMontaje({
     recorte: { borde: 'trasero_superior', profundidad: '27', alto: '73' },

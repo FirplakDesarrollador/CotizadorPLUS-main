@@ -40,6 +40,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [BLS-RS-SM sin entrepaño](wiki/bls_rs_sm.md) - Variante del esquinero Lazy Susan que conserva el despiece BLS excepto por la eliminación del entrepaño.
 - [SBFD-SMG](wiki/sbfd_smg.md) - Lavaplatos de dos puertas con gola metálica, despiece certificado y montaje basado en IGES.
 - [BFD-SMG](wiki/bfd_smg.md) - Mueble inferior de dos puertas con gola metálica, entrepaño, fondo de 6 mm y mecanizado frontal 27 × 73 mm.
+- [DB-SMG](wiki/db_smg.md) - Tres familias comerciales de cajoneras con gola metálica (base, FE y SF), doce tipologías y mecanizado lateral 27 × 73 mm.
 - [BMW-1 y BMW-1-FE](wiki/bmw_1_hoja_real.md) - Mueble inferior para microondas y su variante con caja de gaveta de madera y riel full extension.
 - [BOMH-1 y BOMH-1-FE](wiki/bomh_1_horno_parametrico.md) - Mueble inferior para medio horno con hueco paramétrico y variantes de gaveta Tandem o grande Full Extension.
 - [BOV24 desde hoja real](wiki/bov24_hoja_real.md) - Despiece paramétrico, montaje 3D y reglas de agrupación física con carcazas lineales.

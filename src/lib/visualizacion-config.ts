@@ -8,7 +8,7 @@ export const FUNCIONES_MONTAJE = [
 export type FuncionMontaje = typeof FUNCIONES_MONTAJE[number];
 export type PlanoMontaje = 'XY' | 'XZ' | 'YZ';
 export type RecorteMontaje = {
-  borde: 'frontal_superior';
+  borde: 'frontal_superior' | 'frontal_nivel_gaveta';
   profundidad: string;
   alto: string;
 };
@@ -22,6 +22,7 @@ export type MontajeConfig = {
   confirmado?: boolean;
   nota?: string;
   recorte?: RecorteMontaje;
+  recortes?: RecorteMontaje[];
 };
 
 // No JS evaluation in the browser. The server's trusted formula evaluator receives
@@ -31,7 +32,7 @@ export function validarMontaje(value: unknown): MontajeConfig | null {
   if (value == null) return null;
   if (typeof value !== 'object' || Array.isArray(value)) throw new Error('Montaje debe ser un objeto.');
   const v = value as Record<string, unknown>;
-  const allowed = ['version','funcion','plano','intercambiar','x','y','z','giro','confirmado','nota','recorte'];
+  const allowed = ['version','funcion','plano','intercambiar','x','y','z','giro','confirmado','nota','recorte','recortes'];
   if (Object.keys(v).some(k => !allowed.includes(k))) throw new Error('Campo de montaje desconocido.');
   if (v.version != null && v.version !== 1) throw new Error('Versión de montaje no soportada.');
   if (v.funcion != null && !FUNCIONES_MONTAJE.includes(v.funcion as FuncionMontaje)) throw new Error('Función de montaje inválida.');
@@ -49,11 +50,11 @@ export function validarMontaje(value: unknown): MontajeConfig | null {
     if (/(^|[^<>=!])=([^=]|$)|\+\+|--|[A-Z]\s*\(/.test(e)) throw new Error('Solo se permiten expresiones aritméticas de montaje.');
   }
   if (v.nota != null && (typeof v.nota !== 'string' || v.nota.length > 600)) throw new Error('Nota demasiado larga.');
-  if (v.recorte != null) {
-    if (typeof v.recorte !== 'object' || Array.isArray(v.recorte)) throw new Error('Recorte debe ser un objeto.');
-    const recorte = v.recorte as Record<string, unknown>;
+  const validarRecorte = (value: unknown) => {
+    if (typeof value !== 'object' || value == null || Array.isArray(value)) throw new Error('Recorte debe ser un objeto.');
+    const recorte = value as Record<string, unknown>;
     if (Object.keys(recorte).some(k => !['borde','profundidad','alto'].includes(k))) throw new Error('Campo de recorte desconocido.');
-    if (recorte.borde !== 'frontal_superior') throw new Error('Borde de recorte no soportado.');
+    if (!['frontal_superior','frontal_nivel_gaveta'].includes(String(recorte.borde))) throw new Error('Borde de recorte no soportado.');
     for (const key of ['profundidad','alto']) {
       const formula = recorte[key];
       if (typeof formula !== 'string' || formula.length > 240 || !/^[\d\sA-Z+*/().<>=!&|?:-]+$/.test(formula)) throw new Error(`Fórmula ${key} de recorte inválida.`);
@@ -61,6 +62,11 @@ export function validarMontaje(value: unknown): MontajeConfig | null {
       if (names.some(n => !VARIABLES_MONTAJE.includes(n))) throw new Error(`Variable no permitida en recorte ${key}.`);
       if (/(^|[^<>=!])=([^=]|$)|\+\+|--|[A-Z]\s*\(/.test(formula)) throw new Error('Solo se permiten expresiones aritméticas de recorte.');
     }
+  };
+  if (v.recorte != null) validarRecorte(v.recorte);
+  if (v.recortes != null) {
+    if (!Array.isArray(v.recortes) || v.recortes.length < 1 || v.recortes.length > 8) throw new Error('Recortes debe ser una lista de 1 a 8 elementos.');
+    v.recortes.forEach(validarRecorte);
   }
   return { ...v, version: 1 } as MontajeConfig;
 }
