@@ -2683,3 +2683,11 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-21] update | DB-2-1INT-SMG eleva el mecanizado para dejar su borde superior inmediatamente debajo de la base_gaveta
 
 ## [2026-10-22] update | Los nombres comerciales de todos los muebles superiores incluyen la profundidad en Simulador y Cotizaciones
+
+## [2026-10-22] update | Migración retroactiva para agregar profundidad a nombres superiores de cotizaciones existentes y recomponer códigos de grupo
+
+## [2026-10-22] update | Recomposición posterior de codigo_grupo tras detectar que el CTE de 0215 leía la instantánea previa de las líneas
+
+## [2026-10-22] update | F, PN y TK dejan de generar variantes SF; líneas históricas migradas a sus tipologías planas base
+
+## [2026-10-22] ingest | TK paramétrico en PC/PCFD/VPC, puertas divididas en PC/VPC y nueva tipología PCFD-MO
