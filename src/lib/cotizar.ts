@@ -296,7 +296,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     pref: tipo.pref,
     omiteFondoSoloAgrupado: tipo.categoria === 'inferior'
       && tipo.pref.toUpperCase().includes('B')
-      && /(^|-)SM($|-)/i.test(tipo.pref),
+      && /(^|-)(SM|SMG)($|-)/i.test(tipo.pref),
     codigoModulo: codigoComercial({
       pref: tipo.pref,
       largo: inp.largo,

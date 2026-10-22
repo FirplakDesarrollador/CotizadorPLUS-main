@@ -8,6 +8,7 @@ export type PanelVisual = {
   largo: number; ancho: number; espesor: number; giro: number; confirmado: boolean;
   nota: string; cajon: string | null;
   recorte?: { borde: 'frontal_superior'; profundidad: number; alto: number };
+  recortes?: { borde: 'frontal_superior' | 'frontal'; profundidad: number; alto: number; z?: number }[];
 };
 export type EscenaMueble = {
   version: 1; paneles: PanelVisual[]; avisos: string[]; omitidas: string[];
@@ -43,11 +44,13 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const esBBLFDSm = pref === 'BBLFD-D-L/R-SM';
     const esBBLFD = pref === 'BBLFD' || esBBLFDSm;
     const esBlindDoorParametrico = esBBLFD || pref === 'WBL-D-L/R-SM';
-    const esDbSmEspecial = [
+    const esDbSmMaderaEspecial = [
       'DB-2S-SM', 'DB-2-SM', 'DB-2-1INT-SM', 'DB-3-SM',
       'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE',
     ].includes(pref);
-    const esDb21IntSmFe = pref === 'DB-2-1INT-SM-FE';
+    const esDbSmg = /^DB-.+-SMG(-FE|-SF)?$/.test(pref);
+    const esDbSmEspecial = esDbSmMaderaEspecial || esDbSmg;
+    const esDb21IntSmFe = pref === 'DB-2-1INT-SM-FE' || pref === 'DB-2-1INT-SMG-FE';
     const vars=result.vars;
     const L=mm(calc.dims.L), A=mm(calc.dims.A), P=mm(calc.dims.P);
     const MO=mm(Number(vars.MO ?? 0)), HOOD=mm(Number(vars.HOOD ?? 0));
@@ -70,7 +73,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       // estructural: los rails delanteros son verticales a 20 mm del frente y
       // cada Gola es horizontal, contra el frente. Se fija aquí para que una
       // configuración heredada de DB no pueda volver a intercambiar planos.
-      if (esDbSmEspecial && p.nombre === 'refuerzo_delantero') {
+      if (esDbSmMaderaEspecial && p.nombre === 'refuerzo_delantero') {
         config = {
           ...config,
           funcion: 'travesano_frontal', plano: 'XZ', intercambiar: false,
@@ -79,7 +82,15 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           nota: 'Refuerzo vertical: superior y entre los niveles de gavetas.',
         };
       }
-      if (esDbSmEspecial && p.nombre === 'gola_madera') {
+      if (esDbSmg && p.nombre === 'refuerzo_delantero') {
+        config = {
+          ...config,
+          funcion: 'travesano_frontal', plano: 'XY', intercambiar: false,
+          x: 'TC', y: '27', z: 'A-H', confirmado: true,
+          nota: 'Refuerzo delantero horizontal, a 27 mm del frente.',
+        };
+      }
+      if (esDbSmMaderaEspecial && p.nombre === 'gola_madera') {
         config = {
           ...config,
           funcion: 'gola', plano: 'XY', intercambiar: false,
@@ -272,6 +283,21 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       const apoyoSobreRefuerzo = drawerIndex === 1 && lateralDrawerHeights[drawerIndex] != null ? 13 : 0;
       return -upperSmallDrawerDrop + apoyoSobreRefuerzo;
     };
+    // La segunda ranura SMG sustituye al antiguo refuerzo vertical inferior y
+    // conserva su nivel de apoyo particular en cada configuracion de gavetas.
+    const indiceBaseSuperiorSmg = ['DB-2-SMG', 'DB-2-SMG-FE', 'DB-2-SMG-SF'].includes(pref) ? 0 : 1;
+    const tieneLateralEnNivelSmg = lateralDrawerHeights[indiceBaseSuperiorSmg] != null;
+    const desplazamientoNivelSmg = indiceBaseSuperiorSmg < smallDrawerCount ? -upperSmallDrawerDrop : 0;
+    const esDb21IntSmg = /^DB-2-1INT-SMG(-FE|-SF)?$/.test(pref);
+    const baseGavetaSobreJuntaZ = (drawerSlots[0]?.z ?? foot) + 30
+      + (lateralDrawerHeights[0] != null ? 13 : 0) + drawerBodyOffsetZ(0);
+    const segundoNivelSmgZ = esDb21IntSmg && drawerSlots[0]
+      // En 2-1INT la gaveta interior comparte el frente exterior superior. El
+      // borde superior del mecanizado queda bajo la base de la gaveta situada
+      // sobre la junta visible, sin usar el frente interior oculto.
+      ? baseGavetaSobreJuntaZ
+      : (drawerSlots[indiceBaseSuperiorSmg]?.z ?? foot)
+        + 30 + (tieneLateralEnNivelSmg ? 13 : 0) + desplazamientoNivelSmg;
     for(const item of items) {
       const {p,config,w,d,h,count,funcion}=item;
       for(let k=0;k<count;k++) {
@@ -448,7 +474,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         // Los pares DB-SM se relacionan con componentes físicos: el primero se
         // apoya arriba y el segundo queda bajo la última gaveta del bloque
         // superior (dos pequeñas en DB-2S-SM, una grande en DB-2-SM).
-        if (esDbSmEspecial && (p.nombre === 'refuerzo_delantero' || p.nombre === 'gola_madera')) {
+        if (esDbSmMaderaEspecial && (p.nombre === 'refuerzo_delantero' || p.nombre === 'gola_madera')) {
           const indiceBaseSuperior = ['DB-2-SM', 'DB-2-SM-FE'].includes(pref) ? 0 : 1;
           const tieneLateralesDeMadera = lateralDrawerHeights[indiceBaseSuperior] != null;
           const desplazamientoBloqueSuperior = indiceBaseSuperior < smallDrawerCount ? -upperSmallDrawerDrop : 0;
@@ -465,13 +491,31 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           confirmed = true;
         }
         let recorte: PanelVisual['recorte'];
-        if (config.recorte) {
+        let recortes: PanelVisual['recortes'];
+        const recortesConfig = esDbSmg && funcion === 'lateral'
+          ? (config.recortes ?? [
+            { borde: 'frontal_superior' as const, profundidad: '27', alto: '73' },
+            { borde: 'frontal_nivel_gaveta' as const, profundidad: '27', alto: '73' },
+          ])
+          : (config.recortes ?? (config.recorte ? [config.recorte] : []));
+        if (recortesConfig.length) {
           try {
-            const profundidad = Number(evalExpr(config.recorte.profundidad, ctx));
-            const alto = Number(evalExpr(config.recorte.alto, ctx));
-            if (!(profundidad > 0 && profundidad < d && alto > 0 && alto < h)) throw new Error('Recorte fuera del panel');
-            recorte = { borde: config.recorte.borde, profundidad, alto };
+            recortes = recortesConfig.map((item) => {
+              const profundidad = Number(evalExpr(item.profundidad, ctx));
+              const alto = Number(evalExpr(item.alto, ctx));
+              const zRecorte = item.borde === 'frontal_nivel_gaveta'
+                ? Math.max(0, Math.min(h - alto, segundoNivelSmgZ - alto - defaults.z))
+                : undefined;
+              if (!(profundidad > 0 && profundidad < d && alto > 0 && alto < h)) throw new Error('Recorte fuera del panel');
+              if (zRecorte != null && !(zRecorte >= 0 && zRecorte + alto <= h)) throw new Error('Nivel de recorte fuera del panel');
+              return item.borde === 'frontal_superior'
+                ? { borde: 'frontal_superior' as const, profundidad, alto }
+                : { borde: 'frontal' as const, profundidad, alto, z: zRecorte };
+            });
+            const superior = recortes.find((item) => item.borde === 'frontal_superior');
+            if (superior) recorte = { borde: 'frontal_superior', profundidad: superior.profundidad, alto: superior.alto };
           } catch {
+            recortes = undefined;
             warn(`${pref} · ${p.nombre}: mecanizado visual inválido; se representa el panel completo.`);
             confirmed = false;
           }
@@ -479,7 +523,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         addPanel({id:`${mi}:${item.source}:${k}`,nombre:p.nombre,modulo:mi,pref,rol:p.rol_tablero,
           material:calc.preset[p.rol_tablero]??'',funcion,x:defaults.x+(full?0:offset),y:defaults.y,z:defaults.z+verticalOffset,w,d,h,
           largo:item.l,ancho:item.a,espesor:item.t,giro,confirmado:confirmed,
-          nota:config.nota??'',cajon,recorte});
+          nota:config.nota??'',cajon,recorte,recortes});
       }
     }
     if(['BBL','BLS','BLS-RS-SM','WER','WBL','SDB','WPC','PCFD'].includes(pref)) warn(`${pref}: interpretación de piezas rectangulares; recortes, ensambles y distribución especial requieren validación de montaje.`);

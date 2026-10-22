@@ -2672,3 +2672,12 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-21] update | Campos MO y HOOD visibles en la fila principal de medidas de Cotizaciones para W-MO-HOOD
 
 ## [2026-10-21] update | Activación robusta y ubicación visible de MO/HOOD en el Simulador publicado para W-MO-HOOD
+## [2026-10-21] ingest | Familia DB-SMG de doce cajoneras con variantes base, Full Extension y sin fondo, selector único, códigos SMG18 y mecanizado lateral 27 × 73 mm
+
+## [2026-10-21] update | DB-SMG reorganizada en tres familias independientes de selector: base, Full Extension y sin fondo, conservando las doce tipologías e IDs existentes
+
+## [2026-10-21] update | DB-SMG ajusta un único refuerzo delantero horizontal a 27 mm y dos mecanizados laterales 27 × 73 mm según el nivel de gavetas
+
+## [2026-10-21] update | DB-2-1INT-SMG posiciona el segundo mecanizado entre los frentes exteriores e ignora la gaveta interior
+
+## [2026-10-21] update | DB-2-1INT-SMG eleva el mecanizado para dejar su borde superior inmediatamente debajo de la base_gaveta
