@@ -6,7 +6,7 @@
 módulo. Antes de 2026-09-15 la regla estaba replicada en cuatro superficies que
 producían cadenas distintas para el mismo módulo:
 
-| Superficie | Resultado para `W` 29×36 con `SM` |
+| Superficie | Resultado histórico para `W` 29×36 con `SM` |
 | --- | --- |
 | `recalcularGrupo()` (`cotizaciones.ts`) | `W2936-SM` ✔ |
 | `AddLineForm` (`prefLabel`) | `W29-SM` ✘ — omitía el alto |
@@ -21,16 +21,17 @@ lo que el usuario veía antes de guardar. Las cuatro superficies ahora llaman a
 ## Orden de los segmentos
 
 ```text
-pref + largo [+ alto] [+ profundidad-W24] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM] [+ -18MM]
+pref + largo [+ alto] [+ profundidad-superior] [+ -tipologiaDB] [+ -nOP-PUSH] [+ -SM] [+ -18MM]
 ```
 
 1. **`pref` + largo** — vía `codigoModulo()`. En prefijos con guion la medida se
    inserta antes del guion: `B-FE` + 12" → `B12-FE` (ver migración
    `0041_codigo_modulo_medida_antes_del_sufijo.sql`).
 2. **Alto** — solo en los tipos de `PREFS_ALTO_EN_CODIGO` (ver abajo).
-3. **Profundidad W de 24 in** — se concatena solo en la familia `W` cuando la
-   profundidad equivale exactamente a 24 in. Por ejemplo, largo 30, alto 20 y
-   profundidad 24 producen `W302024`; una profundidad distinta conserva `W3020`.
+3. **Profundidad de muebles superiores** — se concatena en todos los muebles
+   reconocidos por `esMuebleSuperior()`, inmediatamente después del alto y antes
+   de cualquier sufijo. Por ejemplo, `W` de 29 × 36 × 12 produce `W293612` y
+   `W-SM` produce `W293612-SM`. `WCC` se excluye porque pertenece a clóset.
 4. **Tipología DB** — `DB18` + `DB-1S` → `DB18-1S`. El motor solo conoce el
    prefijo base `DB`; la tipología vive en el formulario.
 5. **PCFD con gavetas ocultas** — `PCFD12-2OP-PUSH`.
@@ -60,8 +61,8 @@ incluido el alto: 12,875 × 36,75 pulgadas produce `PN12 7/836 3/4`.
 `TK` también incluye largo y alto. Por ejemplo, un zócalo de 4,25 × 36,5
 pulgadas se identifica como `TK4 1/436 1/2`.
 
-Las familias superiores `UW` y `OW` también codifican su alto: por ejemplo,
-`UW1236` corresponde a 12 de largo por 36 de alto.
+Las familias superiores `UW` y `OW` también codifican alto y profundidad: por
+ejemplo, `UW123613` corresponde a 12 de largo, 36 de alto y 13 de profundidad.
 
 La familia `W` de superiores de pared y los paneles `PN` son los únicos cuyo
 alto varía de forma independiente del tipo; en el resto el alto es un dato
@@ -72,11 +73,9 @@ variante `W-XX` heredaría la regla.
 **`WCC` queda fuera a propósito**: pese al prefijo `W`, es un módulo de clóset
 (`categoria='closet'` en `cot_tipos_mueble`), no un superior de pared.
 
-Los demás superiores por categoría (`S`, `SA`, `SBAS`, `SLOC`, `SMO`, `UW`,
-`TW`) no llevan alto por regla general. Las dos excepciones explícitas de esta
-familia son `TW` y `TW-SM-PUSH`: ambas incorporan siempre largo, alto y
-profundidad. Por ejemplo, 30 × 24 × 12 pulgadas produce `TW302412` o
-`TW302412-SM-PUSH`, respectivamente.
+Los superiores que no llevan alto por regla general sí incorporan profundidad.
+`TW` y `TW-SM-PUSH` incorporan largo, alto y profundidad; 30 × 24 × 12 pulgadas
+produce `TW302412` o `TW302412-SM-PUSH`, respectivamente.
 
 ## Sistema de medida
 
