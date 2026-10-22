@@ -28,6 +28,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Muebles esquineros ciegos BBL](wiki/muebles_bbl.md) - Análisis del Excel CEMA y plantillas paramétricas `BBLFD`/`BBL` disponibles en Supabase.
 - [BBLFD-D-L/R-SM](wiki/bblfd_d_lr_sm.md) - Variante Blind Door inferior con montante A−TC, refuerzos delanteros divididos y Gola de madera.
 - [Torres PCFD con gavetas ocultas](wiki/muebles_pcfd_gavetas_ocultas.md) - Variantes `STANDARD`/`2OP`/`4OP`, fórmulas CEMA y uso paramétrico de cajones y entrepaños.
+- [Torres TK, puertas divididas y PCFD-MO](wiki/torres_tk_puertas_pcfd_mo.md) - TK obligatorio, PUERTA SUP en PC/VPC y PCFD-MO con vano central y entrepaños fijos.
 - [Variantes de frente Gola SM](wiki/variantes_frente_gola_sm.md) - Investigación de códigos `SM`/`SMG`, refuerzos por familia y modelo recomendado como opción transversal de frentes.
 - [W2936-SM desde hoja real](wiki/w_sm_hoja_real.md) - Integracion verificada de `W` con sistema de frente `SM`: formulas condicionales, ausencia de manijas, HDR y carga en Supabase.
 - [W-MO-HOOD](wiki/w_mo_hood.md) - Tipología superior derivada de UW con medidas MO/HOOD, base profunda de OW-MO, vano inferior abierto y puertas limitadas por el entrepaño fijo.

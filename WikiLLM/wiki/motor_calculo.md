@@ -63,6 +63,13 @@ los superiores usando `esMuebleSuperior()`, **el mismo clasificador que reparte
 los materiales en el formulario**, para que la interfaz y el precio no puedan
 discrepar sobre qué es un superior.
 
+Los elementos planos `F`, `PN` y `TK` tampoco admiten `SF`: son piezas únicas y
+no poseen respaldo ni base estructural que transformar. La migración
+`0217_elementos_planos_sin_variante_sf.sql` hace que el resolver retorne siempre
+la tipología base, migra líneas accidentales `F-SF`/`PN-SF`/`TK-SF`, desactiva
+esas variantes y recompone sus códigos de grupo. La UI fuerza “Con fondo” y el
+generador comercial omite `-SF` como defensa adicional.
+
 Está en `muebles.ts` y no en `cotizar.ts` a propósito: aquel importa
 `server-only` y no puede cargarse desde una prueba, y esta regla afecta al
 precio, así que necesita una. La cubre `tests/muebles.test.ts`.

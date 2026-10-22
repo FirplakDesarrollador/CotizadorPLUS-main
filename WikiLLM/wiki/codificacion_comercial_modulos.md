@@ -32,6 +32,19 @@ pref + largo [+ alto] [+ profundidad-superior] [+ -tipologiaDB] [+ -nOP-PUSH] [+
    reconocidos por `esMuebleSuperior()`, inmediatamente después del alto y antes
    de cualquier sufijo. Por ejemplo, `W` de 29 × 36 × 12 produce `W293612` y
    `W-SM` produce `W293612-SM`. `WCC` se excluye porque pertenece a clóset.
+
+La migración `0215_profundidad_nombres_superiores_existentes.sql` aplica la
+misma convención a las líneas históricas de cotizaciones. Solo transforma el
+segmento base cuando coincide exactamente con el formato anterior, por lo que
+es idempotente y no duplica la profundidad en códigos nuevos. Después recompone
+`cot_grupos_modulos.codigo_grupo`. Los snapshots de versiones manuales no se
+reescriben porque son inmutables por contrato.
+
+La recomposición se ejecuta en una sentencia posterior mediante
+`0216_recomponer_codigos_grupo_profundidad.sql`. Esta separación es necesaria
+porque un CTE mutador de PostgreSQL conserva la instantánea anterior para otras
+subconsultas de la misma sentencia; `0216` agrega además una aserción que impide
+dejar grupos desincronizados.
 4. **Tipología DB** — `DB18` + `DB-1S` → `DB18-1S`. El motor solo conoce el
    prefijo base `DB`; la tipología vive en el formulario.
 5. **PCFD con gavetas ocultas** — `PCFD12-2OP-PUSH`.
