@@ -32,7 +32,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [W2936-SM desde hoja real](wiki/w_sm_hoja_real.md) - Integracion verificada de `W` con sistema de frente `SM`: formulas condicionales, ausencia de manijas, HDR y carga en Supabase.
 - [W-MO-HOOD](wiki/w_mo_hood.md) - Tipología superior derivada de UW con medidas MO/HOOD, base profunda de OW-MO, vano inferior abierto y puertas limitadas por el entrepaño fijo.
 - [WBL-D-L/R-SM Blind Door](wiki/wbl_blind_door_sm.md) - Tipología superior independiente con puerta paramétrica en fracciones, apertura L/R, Blind Door fijo y regla común de entrepaños.
-- [Codificación comercial de módulos](wiki/codificacion_comercial_modulos.md) - Fuente única `codigoComercial()`: orden de segmentos, qué tipos llevan el alto (familia W + PN) y sistema de medida por superficie.
+- [Codificación comercial de módulos](wiki/codificacion_comercial_modulos.md) - Fuente única `codigoComercial()`: orden de segmentos, alto por tipología y profundidad en todos los muebles superiores.
 - [Voladizo de la puerta con gola](wiki/visualizacion_gola_voladizo.md) - Por qué el sobrante de una puerta `SM` cuelga bajo la base en la visualización, y por qué en un mueble base tendría que ir arriba.
 - [DB18-1S desde hoja real](wiki/db_hoja_real.md) - Cruce de  contra la hoja: la estructura ya era correcta; solo la base de gaveta estaba 0.1mm larga.
 - [B12 desde hoja real](wiki/b_hoja_real.md) - Cruce de las 10 piezas de `B` contra la hoja de producción: tres medidas corregidas cuyo valor correcto ya estaba en las variantes FE.

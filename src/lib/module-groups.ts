@@ -187,19 +187,19 @@ export function codigoComercial(input: CodigoComercialInput): string {
   };
   const altoSufijo = (incluyeAltoEnCodigo(pref) || esTw || esTwSmPush) ? anchoCodigo(alto, unidad, sistema) : '';
   if (altoSufijo) agregarMedida(altoSufijo);
-  // Los superiores W de 24 in identifican esa profundidad en su código. La
-  // comparación se hace en pulgadas para conservar la regla en cm o mm.
-  const esWsm = prefNormalizado === 'WSM';
-  const esWProf24 = prefNormalizado.split('-')[0] === 'W'
-    && prof != null
-    && Math.abs(convertirExacto(prof, unidad, 'in') - 24) < 0.001;
-  const profSufijo = (esWProf24 || ((esWsm || esTw || esTwSmPush) && prof != null))
-    ? anchoCodigo(prof!, unidad, sistema)
+  // Todos los muebles superiores incluyen la profundidad tras el alto. WCC se
+  // excluye porque, aunque su prefijo empieza por W, pertenece a clóset. La
+  // regla vive aquí para que Simulador, Cotizaciones, recálculo y HDR nombren
+  // el mismo módulo de forma idéntica.
+  const incluyeProfundidad = esMuebleSuperior(prefNormalizado) && prefNormalizado !== 'WCC';
+  const profSufijo = incluyeProfundidad && prof != null
+    ? anchoCodigo(prof, unidad, sistema)
     : '';
   if (profSufijo) agregarMedida(profSufijo);
   const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
   const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
-  const llevaSmPropio = prefNormalizado.split('-').some((segmento) => segmento === 'SM' || segmento === 'SMG') || esWsm;
+  const llevaSmPropio = prefNormalizado.split('-').some((segmento) => segmento === 'SM' || segmento === 'SMG')
+    || prefNormalizado === 'WSM';
   // DB tradicional y sus configuraciones (DB-1S, DB-2S, DB-2, DB-3, DB-4,
   // DB2-1OP) no son variantes SM. Las familias con Gola son tipos separados
   // DB-*-SM / DB-*-SM-FE, por lo que un estado heredado nunca debe convertir

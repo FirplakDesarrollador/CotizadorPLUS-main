@@ -2681,3 +2681,5 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-21] update | DB-2-1INT-SMG posiciona el segundo mecanizado entre los frentes exteriores e ignora la gaveta interior
 
 ## [2026-10-21] update | DB-2-1INT-SMG eleva el mecanizado para dejar su borde superior inmediatamente debajo de la base_gaveta
+
+## [2026-10-22] update | Los nombres comerciales de todos los muebles superiores incluyen la profundidad en Simulador y Cotizaciones
