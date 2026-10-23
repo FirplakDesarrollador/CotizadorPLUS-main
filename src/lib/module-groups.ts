@@ -142,6 +142,11 @@ export function sufijoSistemaFrente(sistemaFrente: string | null | undefined): s
 // varía y no es un dato implícito del tipo. WCC queda fuera a propósito — es un
 // módulo de clóset (categoria='closet'), no un superior de pared.
 const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK'] as const;
+const PREFS_TORRE_DIMENSIONES_TK = ['PC', 'PCFD', 'PCFD-MO', 'VPC', 'OVPC'] as const;
+
+function esTorreConDimensionesTk(pref: string): boolean {
+  return (PREFS_TORRE_DIMENSIONES_TK as readonly string[]).includes(pref);
+}
 
 export function incluyeAltoEnCodigo(pref: string | null | undefined): boolean {
   const base = String(pref ?? '').toUpperCase().split('-')[0];
@@ -163,6 +168,8 @@ export type CodigoComercialInput = {
   espesorCajaMm?: number | null;
   espesorFrenteMm?: number | null;
   conFondo?: boolean;
+  /** Altura del zocalo, normalizada a pulgadas en overrides.zocalo. */
+  zocaloIn?: number | null;
 };
 
 // Código comercial completo de un módulo. Es la única fuente de verdad del orden
@@ -185,13 +192,16 @@ export function codigoComercial(input: CodigoComercialInput): string {
     const guion = codigo.indexOf('-');
     codigo = guion === -1 ? codigo + medida : codigo.slice(0, guion) + medida + codigo.slice(guion);
   };
-  const altoSufijo = (incluyeAltoEnCodigo(pref) || esTw || esTwSmPush) ? anchoCodigo(alto, unidad, sistema) : '';
+  const esTorreTk = esTorreConDimensionesTk(prefNormalizado);
+  const altoSufijo = (incluyeAltoEnCodigo(pref) || esTw || esTwSmPush || esTorreTk)
+    ? anchoCodigo(alto, unidad, sistema)
+    : '';
   if (altoSufijo) agregarMedida(altoSufijo);
   // Todos los muebles superiores incluyen la profundidad tras el alto. WCC se
   // excluye porque, aunque su prefijo empieza por W, pertenece a clóset. La
   // regla vive aquí para que Simulador, Cotizaciones, recálculo y HDR nombren
   // el mismo módulo de forma idéntica.
-  const incluyeProfundidad = esMuebleSuperior(prefNormalizado) && prefNormalizado !== 'WCC';
+  const incluyeProfundidad = (esMuebleSuperior(prefNormalizado) && prefNormalizado !== 'WCC') || esTorreTk;
   const profSufijo = incluyeProfundidad && prof != null
     ? anchoCodigo(prof, unidad, sistema)
     : '';
@@ -232,18 +242,22 @@ export function codigoComercial(input: CodigoComercialInput): string {
     + (input.conFondo === false
       && !esIndependienteDeFondo(prefNormalizado)
       && !prefNormalizado.split('-').includes('SF') ? '-SF' : '');
+  const tkMedida = esTorreTk && input.zocaloIn != null
+    ? anchoCodigo(input.zocaloIn, 'in', sistema)
+    : '';
+  const finalizar = (valor: string) => tkMedida ? `${valor} TK${tkMedida}` : valor;
   // Las tipologías SMG usan el nombre histórico sin sufijo para la combinación
   // estándar y compactan el espesor cuando caja y frentes son de 18 mm: `-SMG18`.
-  if (esSmg) return espesorCajaMm === 18 && espesorFrenteMm === 18
+  if (esSmg) return finalizar(espesorCajaMm === 18 && espesorFrenteMm === 18
     ? codigoBase.replace('-SMG', '-SMG18')
-    : codigoBase;
-  if (espesorComun == null) return codigoBase;
+    : codigoBase);
+  if (espesorComun == null) return finalizar(codigoBase);
   // En muebles superiores W/TW con sistema SM el indicador de espesor forma
   // parte del propio segmento: `-SM15`, `-SM18` o sus variantes `-PUSH`.
   if (esMuebleSuperior(prefNormalizado) && codigoBase.includes('-SM')) {
-    return codigoBase.replace('-SM', `-SM${espesorComun}`);
+    return finalizar(codigoBase.replace('-SM', `-SM${espesorComun}`));
   }
-  return `${codigoBase}-${espesorComun === 18 ? '18MM' : '15MM'}`;
+  return finalizar(`${codigoBase}-${espesorComun === 18 ? '18MM' : '15MM'}`);
 }
 
 export function codigoGrupo(codigos: string[]): string {

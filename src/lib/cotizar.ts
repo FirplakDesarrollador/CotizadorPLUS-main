@@ -302,6 +302,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
       largo: inp.largo,
       alto: inp.alto,
       prof: inp.prof,
+      zocaloIn: inp.overrides?.zocalo ?? null,
       unidad: inp.unidad,
       sistema: inp.unidad === 'in' ? 'imperial' : 'metrico',
       door: inp.door,
