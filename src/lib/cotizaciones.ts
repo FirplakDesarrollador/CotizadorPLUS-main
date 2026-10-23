@@ -391,6 +391,7 @@ async function recalcularGrupo(
       largo: inputs[i].largo,
       alto: inputs[i].alto,
       prof: inputs[i].prof,
+      zocaloIn: inputs[i].overrides?.zocalo ?? null,
       unidad: inputs[i].unidad,
       sistema,
       sistemaFrente: inputs[i].sistemaFrente,

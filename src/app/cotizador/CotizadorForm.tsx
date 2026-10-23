@@ -656,7 +656,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   // el código sigue la unidad con la que se está simulando.
   const sistemaCodigo: SistemaMedida = unidad === 'in' ? 'imperial' : 'metrico';
 
-  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'sistemaFrente' | 'dbTipo' | 'ncajones' | 'door' | 'doorHand'>) => {
+  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'zocalo' | 'sistemaFrente' | 'dbTipo' | 'ncajones' | 'door' | 'doorHand'>) => {
     const pref = tipos.find((item) => item.id === valores.tipoId)?.pref ?? '';
     if (!pref) return '';
     return codigoComercial({
@@ -664,6 +664,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       largo: parseMedida(valores.largo),
       alto: parseMedida(valores.alto),
       prof: parseMedida(valores.prof),
+      zocaloIn: valores.zocalo === '' ? null : convertir(parseMedida(valores.zocalo), unidad, 'in'),
       unidad,
       sistema: sistemaCodigo,
       sistemaFrente: valores.sistemaFrente,
@@ -680,7 +681,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   const codigoResultado = store.modulos.length > 0
     ? codigoGrupo(store.modulos.map(codigoDeValores).filter(Boolean))
-    : codigoDeValores({ tipoId, largo, alto, prof, sistemaFrente, dbTipo, ncajones, door, doorHand });
+    : codigoDeValores({ tipoId, largo, alto, prof, zocalo, sistemaFrente, dbTipo, ncajones, door, doorHand });
 
   const editingPosition = store.editingId
     ? store.modulos.findIndex((modulo) => modulo.id === store.editingId) + 1

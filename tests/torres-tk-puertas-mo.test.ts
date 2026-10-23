@@ -7,8 +7,8 @@ const sql = readFileSync('db/migrations/0218_torres_tk_puerta_sup_pcfd_mo.sql', 
 const simulador = readFileSync('src/app/cotizador/CotizadorForm.tsx', 'utf8');
 const cotizaciones = readFileSync('src/app/cotizaciones/[id]/AddLineForm.tsx', 'utf8');
 
-test('PC, PCFD, VPC y PCFD-MO exponen sus medidas especiales', () => {
-  for (const pref of ['PC','PCFD','VPC','PCFD-MO']) assert.equal(usaTkTorre(pref), true, pref);
+test('PC, PCFD, VPC, OVPC y PCFD-MO exponen sus medidas especiales', () => {
+  for (const pref of ['PC','PCFD','VPC','OVPC','PCFD-MO']) assert.equal(usaTkTorre(pref), true, pref);
   assert.equal(usaPuertaSupTorre('PC'), true);
   assert.equal(usaPuertaSupTorre('VPC'), true);
   assert.equal(usaPuertaSupTorre('PCFD'), false);

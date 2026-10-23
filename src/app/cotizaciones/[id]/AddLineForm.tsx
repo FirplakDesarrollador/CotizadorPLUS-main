@@ -519,6 +519,7 @@ export default function AddLineForm({
             largo: parseMedida(largo),
             alto: parseMedida(alto),
             prof: parseMedida(prof),
+            zocaloIn: overrides.zocalo ?? null,
             unidad,
             sistema: sistemaMedida,
             sistemaFrente,

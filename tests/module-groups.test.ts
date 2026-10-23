@@ -168,7 +168,12 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36.75 }), 'PN12 7/836 3/4');
   assert.equal(codigoComercial({ ...base, pref: 'TK', largo: 4.25, alto: 36.5 }), 'TK4 1/436 1/2');
   // PCFD con gavetas ocultas.
-  assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, pcfdCajones: 2 }), 'PCFD12-2OP-PUSH');
+  assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, prof: 24, pcfdCajones: 2 }), 'PCFD129624-2OP-PUSH');
+  assert.equal(codigoComercial({ ...base, pref: 'PC', largo: 30, alto: 96, prof: 24, zocaloIn: 4.5 }), 'PC309624 TK4 1/2');
+  assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 30, alto: 96, prof: 24, pcfdCajones: 2, zocaloIn: 5.25 }), 'PCFD309624-2OP-PUSH TK5 1/4');
+  assert.equal(codigoComercial({ ...base, pref: 'PCFD-MO', largo: 30, alto: 96, prof: 24, zocaloIn: 4 }), 'PCFD309624-MO TK4');
+  assert.equal(codigoComercial({ ...base, pref: 'VPC', largo: 24, alto: 84, prof: 22, zocaloIn: 0 }), 'VPC248422 TK0');
+  assert.equal(codigoComercial({ ...base, pref: 'OVPC', largo: 24, alto: 84, prof: 22, zocaloIn: 4 }), 'OVPC248422 TK4');
   // Sistema métrico.
   assert.equal(codigoComercial({ pref: 'W', largo: 73.66, alto: 91.44, unidad: 'cm', sistema: 'metrico', sistemaFrente: 'gola' }), 'W73.6691.44-SM');
 });

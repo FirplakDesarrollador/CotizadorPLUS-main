@@ -2704,3 +2704,4 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-23] update | PCFD-MO conserva 732 mm como largo de los fijos pese a usar material de frente y distribuye dos entrepaños móviles abajo y uno arriba.
 
 ## [2026-10-23] update | El ancho de base_tapa y entrepano_fijo de PCFD-MO descuenta 18 mm y el espesor real TB del fondo.
+## [2026-10-23] update | Los códigos de PC, PCFD, PCFD-MO, VPC y OVPC incluyen alto, profundidad y el TK asignado como sufijo separado; OVPC ahora solicita TK.
