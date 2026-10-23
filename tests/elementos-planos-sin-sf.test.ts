@@ -13,8 +13,8 @@ test('el resolver devuelve siempre la base para F, PN y TK y retira variantes ac
   assert.match(migration, /set activo = false/);
 });
 
-test('el formulario fuerza fondo para superiores y elementos planos', () => {
-  assert.match(form, /const fuerzaConFondo = esMuebleSuperior\(prefTipo\) \|\| esElementoPlano\(prefTipo\)/);
+test('el formulario fuerza la tipología base para superiores y tipos independientes del fondo', () => {
+  assert.match(form, /const fuerzaConFondo = esMuebleSuperior\(prefTipo\) \|\| esIndependienteDeFondo\(prefTipo\)/);
   assert.match(form, /conFondo: fuerzaConFondo \? true : conFondo/);
   assert.match(form, /disabled=\{fuerzaConFondo\}/);
 });

@@ -32,10 +32,12 @@ export const SISTEMAS_FRENTE: { key: SistemaFrente; label: string; desc: string 
 //
 // Vive aquí y no en cada tabla para que el despiece del Simulador y el del HDR no
 // vuelvan a contradecirse.
-export function orientarPieza<T extends { rol: string; largoIn: number; anchoIn: number }>(
+export function orientarPieza<T extends { pieza?: string; rol: string; largoIn: number; anchoIn: number }>(
   pieza: T,
 ): { largoIn: number; anchoIn: number } {
-  const invertir = pieza.rol === 'frente';
+  // Un entrepaño puede usar tablero de frente (PCFD-MO) sin convertirse por
+  // ello en una puerta vertical. Su nombre conserva los ejes de fabricación.
+  const invertir = pieza.rol === 'frente' && !String(pieza.pieza ?? '').startsWith('entrepano');
   return invertir
     ? { largoIn: pieza.anchoIn, anchoIn: pieza.largoIn }
     : { largoIn: pieza.largoIn, anchoIn: pieza.anchoIn };
@@ -133,7 +135,7 @@ export function usaTkTorre(pref: string | null | undefined): boolean {
 }
 
 export function usaPuertaSupTorre(pref: string | null | undefined): boolean {
-  return ['PC', 'VPC'].includes(String(pref ?? '').trim().toUpperCase());
+  return ['PC', 'VPC', 'PCFD-MO'].includes(String(pref ?? '').trim().toUpperCase());
 }
 
 export function usaMoTorre(pref: string | null | undefined): boolean {
@@ -184,6 +186,14 @@ export function etiquetaDescripcion(prefLabel: string | null | undefined): strin
 // Si la descripción debe omitir los contadores de puertas, gavetas y entrepaños.
 export function esElementoPlano(prefLabel: string | null | undefined): boolean {
   return letrasIniciales(prefLabel) in ELEMENTOS_PLANOS;
+}
+
+// Tipologías cuyo despiece y código comercial no cambian con la configuración
+// de fondo del proyecto. DFE no es un elemento plano, pero tampoco tiene un
+// respaldo estructural que justifique crear una variante DFE-SF.
+export function esIndependienteDeFondo(prefLabel: string | null | undefined): boolean {
+  const pref = String(prefLabel ?? '').trim().toUpperCase().replace(/-SF$/, '');
+  return esElementoPlano(pref) || pref === 'DFE';
 }
 
 // Cuántos entrepaños tiene **realmente** el módulo, contados sobre el despiece.
@@ -261,7 +271,7 @@ type PiezaAjustable = {
 export function ajustarPiezasSinFondo<T extends PiezaAjustable>(
   piezas: T[], pref: string | null | undefined, conFondo: boolean | undefined,
 ): T[] {
-  if (conFondo !== false || esMuebleSuperior(pref) || esElementoPlano(pref)) return piezas;
+  if (conFondo !== false || esMuebleSuperior(pref) || esIndependienteDeFondo(pref)) return piezas;
   return piezas.map((pieza) => {
     // `fondo_gaveta` pertenece al cajón; solo se elimina el respaldo `fondo`.
     if (pieza.nombre.toLowerCase() === 'fondo') return { ...pieza, formula_cantidad: '0' };
