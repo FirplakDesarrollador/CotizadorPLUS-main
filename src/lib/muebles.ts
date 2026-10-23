@@ -129,7 +129,7 @@ export function usaMedidasMoHood(pref: string | null | undefined): boolean {
   return String(pref ?? '').trim().toUpperCase() === 'W-MO-HOOD';
 }
 
-const PREFS_TK_TORRE = ['PC', 'PCFD', 'VPC', 'PCFD-MO'] as const;
+const PREFS_TK_TORRE = ['PC', 'PCFD', 'VPC', 'OVPC', 'PCFD-MO'] as const;
 export function usaTkTorre(pref: string | null | undefined): boolean {
   return (PREFS_TK_TORRE as readonly string[]).includes(String(pref ?? '').trim().toUpperCase());
 }

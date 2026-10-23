@@ -1,7 +1,10 @@
 # Torres PC, PCFD, VPC y PCFD-MO
 
-`PC`, `PCFD`, `VPC` y `PCFD-MO` exigen `TK` en Simulador y Cotizaciones. Admite
+`PC`, `PCFD`, `VPC`, `OVPC` y `PCFD-MO` exigen `TK` en Simulador y Cotizaciones. Admite
 cero y define la altura estructural `A - TK` de laterales, fondo y frentes.
+
+Sus códigos comerciales contienen largo, alto y profundidad y terminan con el
+TK separado por un espacio, por ejemplo `PCFD309624-MO TK4`.
 
 `PC` y `VPC` exigen `PUERTA_SUP`. El número horizontal es una puerta bajo 24
 pulgadas y dos desde 24. El nivel superior mide `PUERTA_SUP - RV`; el inferior

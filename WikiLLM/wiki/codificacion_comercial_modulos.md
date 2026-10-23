@@ -54,6 +54,15 @@ dejar grupos desincronizados.
    independientes `DB-*-SM` y `DB-*-SM-FE` ya llevan su sufijo propio. Ver
    [variantes_frente_gola_sm.md](variantes_frente_gola_sm.md).
 
+Las torres `PC`, `PCFD`, `PCFD-MO`, `VPC` y `OVPC` siempre incorporan largo,
+alto y profundidad. Cuando tienen el zócalo asignado, cierran el código con un
+segmento separado por espacio: ` TK<medida>`. Así, una `PCFD-MO` de
+30 × 96 × 24 pulgadas con zócalo de 4 pulgadas se identifica como
+`PCFD309624-MO TK4`. `codigoComercial()` recibe TK normalizado en pulgadas y lo
+presenta en el sistema del proyecto. La migración
+`0224_codigos_torres_dimensiones_tk.sql` normaliza las líneas históricas que ya
+tenían `overrides.zocalo` y recompone sus códigos de grupo.
+
 ## Qué tipos llevan el alto en el código
 
 `PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK']`
