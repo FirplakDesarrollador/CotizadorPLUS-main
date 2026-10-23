@@ -235,11 +235,12 @@ test('codigoComercial ordena SF después de SM y antes del espesor', () => {
   }), 'BFD26-SM-SF-15MM', 'una tipología SF propia no duplica el sufijo');
 });
 
-test('codigoComercial no agrega SF a los elementos planos F, PN y TK', () => {
+test('codigoComercial no agrega SF a las tipologías independientes del fondo', () => {
   const base = { unidad: 'in', sistema: 'imperial', conFondo: false } as const;
   assert.equal(codigoComercial({ ...base, pref: 'F', largo: 6, alto: 30 }), 'F630');
   assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 24, alto: 36 }), 'PN2436');
   assert.equal(codigoComercial({ ...base, pref: 'TK', largo: 4, alto: 96 }), 'TK496');
+  assert.equal(codigoComercial({ ...base, pref: 'DFE', largo: 80, alto: 50 }), 'DFE80');
 });
 
 test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {

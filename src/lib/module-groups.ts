@@ -1,5 +1,5 @@
 import type { UnidadDim } from '@/lib/engine';
-import { esElementoPlano, esMuebleSuperior } from '@/lib/muebles';
+import { esIndependienteDeFondo, esMuebleSuperior } from '@/lib/muebles';
 
 export type SistemaMedida = 'imperial' | 'metrico';
 
@@ -230,7 +230,7 @@ export function codigoComercial(input: CodigoComercialInput): string {
   const codigoBase = codigo + bblfdSufijo + dbSufijo + pcfdSufijo
     + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente))
     + (input.conFondo === false
-      && !esElementoPlano(prefNormalizado)
+      && !esIndependienteDeFondo(prefNormalizado)
       && !prefNormalizado.split('-').includes('SF') ? '-SF' : '');
   // Las tipologías SMG usan el nombre histórico sin sufijo para la combinación
   // estándar y compactan el espesor cuando caja y frentes son de 18 mm: `-SMG18`.
