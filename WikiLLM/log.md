@@ -2691,3 +2691,16 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-22] update | F, PN y TK dejan de generar variantes SF; líneas históricas migradas a sus tipologías planas base
 
 ## [2026-10-22] ingest | TK paramétrico en PC/PCFD/VPC, puertas divididas en PC/VPC y nueva tipología PCFD-MO
+## [2026-10-22] update | Se hizo invariante al fondo la tipología DFE: no genera sufijo SF y las líneas DFE-SF/F-SF se normalizan a su tipología base.
+
+## [2026-10-23] update | PC corta cuatro entrepaños ajustables más el fijo incluido en base_tapa y visualiza correctamente las puertas superiores e inferiores según TK, PUERTA_SUP y RV.
+
+## [2026-10-23] update | Se verificó en Supabase que PC conservaba cantidad literal 5 y se corrigió el despiece activo a cantidad literal 4 para los entrepaños ajustables.
+
+## [2026-10-23] update | PCFD usa tres base_tapa_division (base, fijo y tapa), descuenta el fijo de los entrepaños móviles y lo representa delante del fondo.
+
+## [2026-10-23] update | PCFD-MO incorpora PUERTA_SUP, define MO como vano libre entre dos fijos de material de frente y posiciona las puertas por referencia a esos fijos.
+
+## [2026-10-23] update | PCFD-MO conserva 732 mm como largo de los fijos pese a usar material de frente y distribuye dos entrepaños móviles abajo y uno arriba.
+
+## [2026-10-23] update | El ancho de base_tapa y entrepano_fijo de PCFD-MO descuenta 18 mm y el espesor real TB del fondo.

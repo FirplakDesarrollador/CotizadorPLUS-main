@@ -44,6 +44,8 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const esBBLFDSm = pref === 'BBLFD-D-L/R-SM';
     const esBBLFD = pref === 'BBLFD' || esBBLFDSm;
     const esBlindDoorParametrico = esBBLFD || pref === 'WBL-D-L/R-SM';
+    const esTorrePuertasDivididas = pref === 'PC' || pref === 'VPC' || pref === 'PCFD-MO';
+    const esPcfdMo = pref === 'PCFD-MO';
     const esDbSmMaderaEspecial = [
       'DB-2S-SM', 'DB-2-SM', 'DB-2-1INT-SM', 'DB-3-SM',
       'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE',
@@ -54,6 +56,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const vars=result.vars;
     const L=mm(calc.dims.L), A=mm(calc.dims.A), P=mm(calc.dims.P);
     const MO=mm(Number(vars.MO ?? 0)), HOOD=mm(Number(vars.HOOD ?? 0));
+    const PUERTA_SUP=mm(Number(vars.PUERTA_SUP ?? 0));
     const verticalOffset=upperGroup?groupTop-A:0;
     const thickness=(rol: string) => Number(calc.tablerosByCode[calc.preset[rol]]?.espesor_mm ?? 0);
     const TC=thickness('caja') || 15, TF=thickness('frente') || 18, TB=thickness('fondo') || 6;
@@ -354,7 +357,38 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'base': z=foot+i*(innerH-h)/Math.max(1,n-1); break;
           case 'tapa': z=A-h; break;
           case 'base_tapa': z=foot+i*(innerH-h)/Math.max(1,n-1); break;
-          case 'estante': y=P-d; z=foot+TC+(i+1)*(innerH-2*TC-h)/(n+1); break;
+          case 'estante':
+            if (esPcfdMo && p.nombre === 'entrepano_fijo') {
+              // MO es la luz libre entre las caras internas de ambos fijos.
+              // El superior referencia el inicio de la puerta superior; el
+              // inferior referencia el final de la puerta inferior.
+              const superiorZ=A-PUERTA_SUP-h;
+              z=k===0 ? superiorZ-MO-h : superiorZ;
+              y=Math.max(0,P-TB-d);
+            } else if (esPcfdMo && p.nombre === 'entrepano') {
+              const fijoSuperiorZ=A-PUERTA_SUP-TF;
+              const fijoInferiorZ=fijoSuperiorZ-MO-TF;
+              if (k===0) {
+                // Un entrepaño móvil en la zona superior, centrado entre el
+                // fijo superior y la tapa.
+                const zonaInicio=fijoSuperiorZ+TF;
+                const zonaFin=A-TC;
+                z=zonaInicio+Math.max(0,zonaFin-zonaInicio-h)/2;
+              } else {
+                // Los dos restantes se distribuyen uniformemente debajo del
+                // fijo inferior para que no parezcan pegados al vano MO.
+                const inferiores=Math.max(1,count-1);
+                const indiceInferior=k-1;
+                const zonaInicio=foot+TC;
+                const disponible=Math.max(0,fijoInferiorZ-zonaInicio-h);
+                z=zonaInicio+(indiceInferior+1)*disponible/(inferiores+1);
+              }
+              y=P-d;
+            } else {
+              y=P-d;
+              z=foot+TC+(i+1)*(innerH-2*TC-h)/(n+1);
+            }
+            break;
           case 'division': x=(i+1)*L/(n+1)-w/2; z=foot+TC; break;
           case 'respaldo': y=baseDepth ?? P-d; z=foot+(innerH-h)/2; break;
           case 'travesano_frontal': {
@@ -397,7 +431,18 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'frente': {
             const ds=doorSlots.get(`${item.source}:${k}`)!;
             x=ds.x; z=ds.z; y=-d;
-            if (esBBLFD && p.nombre === 'frente') {
+            if (esTorrePuertasDivididas && p.nombre === 'puerta_inferior') {
+              // La altura del lateral ya descuenta TK; `foot` es exactamente
+              // el arranque de la carcasa y de las puertas inferiores.
+              z=foot;
+            }
+            else if (esTorrePuertasDivididas && p.nombre === 'puerta_superior') {
+              // La puerta superior remata con la misma luz RV usada por su
+              // fórmula de corte. No depende del orden SQL de las piezas.
+              const reveal=mm(Number(vars.RV ?? (3.2/25.4)));
+              z=A-h-reveal;
+            }
+            else if (esBBLFD && p.nombre === 'frente') {
               const reveal = mm(Number(vars.RV ?? (3.2 / 25.4)));
               x=Number(vars.mano_derecha ?? 1) === 1 ? L-reveal-w : reveal;
             }

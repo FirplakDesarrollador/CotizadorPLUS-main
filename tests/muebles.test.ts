@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ajustarPiezasSinFondo, ALTO_INFERIOR_IN, contarEntrepanos, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, etiquetaTipologiaDb, PREFS_CON_TIPOLOGIA_DB, esElementoPlano, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo, FAMILIAS_MATERIAL, ETIQUETA_FAMILIA, CLAVE_CONFIG_FAMILIA } from '../src/lib/muebles';
+import { ajustarPiezasSinFondo, ALTO_INFERIOR_IN, contarEntrepanos, ALTO_LINEA_U_IN, altoPorDefectoIn, DB_TIPOLOGIAS, etiquetaTipologiaDb, PREFS_CON_TIPOLOGIA_DB, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, etiquetaDescripcion, familiaMaterialPorPrefijo, FAMILIAS_MATERIAL, ETIQUETA_FAMILIA, CLAVE_CONFIG_FAMILIA, orientarPieza } from '../src/lib/muebles';
 
 // `muebles.ts` es el modulo de dominio compartido por formularios y motor. Las
 // dos piezas que se prueban aqui deciden cosas con efecto en el precio, asi que
@@ -184,6 +184,25 @@ test('F, PN y TK ignoran la transformación estructural sin fondo', () => {
   for (const pref of ['F', 'PN', 'TK']) {
     assert.deepEqual(ajustarPiezasSinFondo([pieza], pref, false), [pieza], pref);
   }
+});
+
+test('F y DFE son independientes de la configuración de fondo', () => {
+  assert.equal(esIndependienteDeFondo('F'), true);
+  assert.equal(esIndependienteDeFondo('F-SF'), true);
+  assert.equal(esIndependienteDeFondo('DFE'), true);
+  assert.equal(esIndependienteDeFondo('DFE-SF'), true);
+  assert.equal(esIndependienteDeFondo('BFD'), false);
+});
+
+test('un entrepano con material de frente conserva largo y ancho horizontales', () => {
+  assert.deepEqual(
+    orientarPieza({ pieza: 'entrepano_fijo', rol: 'frente', largoIn: 28.8189, anchoIn: 23.0984 }),
+    { largoIn: 28.8189, anchoIn: 23.0984 },
+  );
+  assert.deepEqual(
+    orientarPieza({ pieza: 'puerta_superior', rol: 'frente', largoIn: 29.874, anchoIn: 14.874 }),
+    { largoIn: 14.874, anchoIn: 29.874 },
+  );
 });
 
 test('etiquetaDescripcion: nulo, vacio y espacios dan cadena vacia', () => {
