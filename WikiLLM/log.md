@@ -2705,3 +2705,7 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 
 ## [2026-10-23] update | El ancho de base_tapa y entrepano_fijo de PCFD-MO descuenta 18 mm y el espesor real TB del fondo.
 ## [2026-10-23] update | Los códigos de PC, PCFD, PCFD-MO, VPC y OVPC incluyen alto, profundidad y el TK asignado como sufijo separado; OVPC ahora solicita TK.
+
+## [2026-10-23] update | El TK de los códigos métricos conserva la medida escrita y elimina residuos decimales producidos por convertir cm a pulgadas y regresar a cm.
+
+## [2026-10-26] update | Las variantes DB-SM-FE-SF se consolidan en una sola tipología visible con selector interno en Simulador, Cotizaciones y HDR.

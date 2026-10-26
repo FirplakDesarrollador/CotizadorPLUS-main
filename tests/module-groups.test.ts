@@ -15,7 +15,7 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
-import { DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb, usaPuertaParametrica } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb, usaPuertaParametrica } from '@/lib/muebles';
 
 test('clasifica materiales por la primera B o W del prefijo', () => {
   assert.equal(familiaMaterialPorPrefijo('BBLFD'), 'inferior');
@@ -174,6 +174,10 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'PCFD-MO', largo: 30, alto: 96, prof: 24, zocaloIn: 4 }), 'PCFD309624-MO TK4');
   assert.equal(codigoComercial({ ...base, pref: 'VPC', largo: 24, alto: 84, prof: 22, zocaloIn: 0 }), 'VPC248422 TK0');
   assert.equal(codigoComercial({ ...base, pref: 'OVPC', largo: 24, alto: 84, prof: 22, zocaloIn: 4 }), 'OVPC248422 TK4');
+  assert.equal(codigoComercial({
+    pref: 'PCFD-MO', largo: 60, alto: 237, prof: 45,
+    unidad: 'cm', sistema: 'metrico', zocaloIn: 3.937008,
+  }), 'PCFD6023745-MO TK10');
   // Sistema métrico.
   assert.equal(codigoComercial({ pref: 'W', largo: 73.66, alto: 91.44, unidad: 'cm', sistema: 'metrico', sistemaFrente: 'gola' }), 'W73.6691.44-SM');
 });
@@ -280,6 +284,18 @@ test('agrupa las cuatro tipologias DB-SM-FE como familia independiente', () => {
   assert.deepEqual(DB_SM_FE_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE']);
   for (const pref of ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE', 'db-3-sm-fe', ' DB-2-1INT-SM-FE ', 'DB-5-SM-FE']) assert.equal(esTipologiaDbSmFe(pref), true, pref);
   for (const pref of ['DB', 'DB-2S-SM', 'B-FE', '', null]) assert.equal(esTipologiaDbSmFe(pref), false, String(pref));
+});
+
+test('agrupa dinamicamente las variantes DB-SM-FE-SF', () => {
+  const prefs = ['DB-2S-SM-FE-SF', 'DB-2-SM-FE-SF', 'DB-2-1INT-SM-FE-SF'];
+  for (const pref of prefs) assert.equal(esTipologiaDbSmFeSf(pref), true, pref);
+  for (const pref of ['DB-2-SM-FE', 'DB-2-SM-SF', 'DB-SM-FE-SF', '', null]) {
+    assert.equal(esTipologiaDbSmFeSf(pref), false, String(pref));
+  }
+  assert.deepEqual(
+    obtenerTipologiasDbSmFeSf(prefs.map((pref) => ({ pref }))).map((tipo) => tipo.pref),
+    ['DB-2-1INT-SM-FE-SF', 'DB-2-SM-FE-SF', 'DB-2S-SM-FE-SF'],
+  );
 });
 
 test('agrupa dinamicamente las variantes DB-SM-SF presentes y futuras', () => {
