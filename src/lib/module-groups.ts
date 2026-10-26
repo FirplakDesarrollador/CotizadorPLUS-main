@@ -113,7 +113,10 @@ export function anchoCodigo(value: number, unidad: UnidadDim, sistema: SistemaMe
     return entero === 0 ? fraccion : `${entero} ${fraccion}`;
   }
   // No redondea: solo elimina ceros de presentación introducidos por Number.
-  return String(converted);
+  // Los campos especiales se normalizan internamente a pulgadas con seis
+  // decimales. Al volver a cm pueden aparecer residuos visibles
+  // (`10` -> `10.00000032`). Se usa la misma precision de los formularios.
+  return String(Number(converted.toFixed(6)));
 }
 
 // La medida va inmediatamente después de la letra base, no al final del código.

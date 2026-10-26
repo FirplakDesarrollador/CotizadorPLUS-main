@@ -411,6 +411,18 @@ export function esTipologiaDbSmFe(pref: string | null | undefined): boolean {
   return /^DB-.+-SM-FE$/.test(p);
 }
 
+// Variantes Full Extension sin fondo. Son tipos independientes en base de
+// datos, pero se muestran como una sola familia comercial con selector interno.
+export function esTipologiaDbSmFeSf(pref: string | null | undefined): boolean {
+  return /^DB-.+-SM-FE-SF$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export function obtenerTipologiasDbSmFeSf<T extends { pref: string }>(tipos: readonly T[]): T[] {
+  return tipos
+    .filter((tipo) => esTipologiaDbSmFeSf(tipo.pref))
+    .sort((a, b) => a.pref.localeCompare(b.pref, 'es', { numeric: true }));
+}
+
 // Las cajoneras con gola metálica replican las tres familias comerciales de
 // DB-SM. Las regex son deliberadamente disjuntas y se evalúan SF -> FE -> base
 // en los formularios para evitar que una variante entre en la familia raíz.

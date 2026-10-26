@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { previewAction } from '../admin/diseno/actions';
 import { modulosDeCotizacionAction, type ModuloHDR } from './actions';
-import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, SISTEMAS_FRENTE, esTipologiaDbSmFe, permiteTipologiaDb, usaPuertaParametrica, type SistemaFrente } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, SISTEMAS_FRENTE, esTipologiaDbSmFe, esTipologiaDbSmFeSf, obtenerTipologiasDbSmFeSf, permiteTipologiaDb, usaPuertaParametrica, type SistemaFrente } from '@/lib/muebles';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { codigoComercial, parseMedida } from '@/lib/module-groups';
@@ -12,6 +12,7 @@ import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from '
 
 type Tipo = { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; nombre_es: string | null; categoria: string | null };
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
+const DB_SM_FE_SF_GROUP_VALUE = '__DB_SM_FE_SF__';
 
 export default function HdrBuscador({ tipos, presetDefault, tableros, cotizaciones }:
   { tipos: Tipo[]; presetDefault: Record<string, string>; tableros: Tablero[]; cotizaciones: CotizacionHeader[] }) {
@@ -39,7 +40,15 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const tipoOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
     let dbSmFeAgregado = false;
+    let dbSmFeSfAgregado = false;
     for (const t of tipos) {
+      if (esTipologiaDbSmFeSf(t.pref)) {
+        if (!dbSmFeSfAgregado) {
+          options.push({ value: DB_SM_FE_SF_GROUP_VALUE, label: 'DB-SM-FE-SF — Cajoneras con Gola, riel Full Extension y sin fondo' });
+          dbSmFeSfAgregado = true;
+        }
+        continue;
+      }
       if (esTipologiaDbSmFe(t.pref)) {
         if (!dbSmFeAgregado) {
           options.push({ value: DB_SM_FE_GROUP_VALUE, label: 'DB-SM-FE — Cajoneras con Gola y riel Full Extension' });
@@ -55,8 +64,12 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const esDB = permiteTipologiaDb(tipoSel?.pref);
   const esDbTradicional = tipoSel?.pref === 'DB';
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(tipoSel?.pref);
+  const usaTipologiaDbSmFeSf = esTipologiaDbSmFeSf(tipoSel?.pref);
+  const tipologiasDbSmFeSf = obtenerTipologiasDbSmFeSf(tipos);
   const usaDoor = usaPuertaParametrica(tipoSel?.pref);
-  const tipoSelectorValue = usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
+  const tipoSelectorValue = usaTipologiaDbSmFeSf
+    ? DB_SM_FE_SF_GROUP_VALUE
+    : usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
 
   const cotizacionOptions = useMemo(
     () => cotizaciones.map((c) => ({
@@ -67,7 +80,9 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   );
 
   function handleTipoChange(v: string) {
-    const resolvedId = v === DB_SM_FE_GROUP_VALUE
+    const resolvedId = v === DB_SM_FE_SF_GROUP_VALUE
+      ? tipologiasDbSmFeSf[0]?.id
+      : v === DB_SM_FE_GROUP_VALUE
       ? tipos.find((t) => t.pref === DB_SM_FE_TIPOLOGIAS[0].pref)?.id
       : v;
     if (!resolvedId) return;
@@ -77,6 +92,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     if (pref === 'W') setProf(unidad === 'in' ? 12 : unidad === 'cm' ? 30.48 : 304.8);
     if (pref === 'WSM') setProf(unidad === 'in' ? 14 : unidad === 'cm' ? 35.56 : 355.6);
     if (pref === 'F' || pref === 'DB') setSistemaFrente('manija');
+    if (esTipologiaDbSmFeSf(pref)) setSistemaFrente('gola');
   }
 
   function aplicarDbSmFeTipo(pref: string) {
@@ -250,6 +266,16 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
               <select value={tipoSel?.pref ?? ''} onChange={(e) => aplicarDbSmFeTipo(e.target.value)} className="inp">
                 {DB_SM_FE_TIPOLOGIAS.map((tipologia) => (
                   <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.desc}</option>
+                ))}
+              </select>
+            </Campo>
+          )}
+
+          {usaTipologiaDbSmFeSf && (
+            <Campo label="Tipología DB-SM-FE-SF">
+              <select value={tipoSel?.pref ?? ''} onChange={(e) => aplicarDbSmFeTipo(e.target.value)} className="inp">
+                {tipologiasDbSmFeSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola, Full Extension y sin fondo'}</option>
                 ))}
               </select>
             </Campo>

@@ -226,6 +226,19 @@ define únicamente el ensamble visual de las piezas propias de esta tipología:
 ## Familia DB-SM-FE
 
 La migración `0108_db_sm_fe.sql` incorpora la familia comercial `DB-SM-FE`.
+
+### Familia DB-SM-FE-SF
+
+Las variantes Full Extension sin fondo se mantienen como tipos independientes
+en `cot_tipos_mueble`, pero Simulador, Cotizaciones y HDR las presentan bajo
+una sola opción raíz: `DB-SM-FE-SF — Cajoneras con Gola, riel Full Extension y
+sin fondo`. El selector interno se alimenta dinámicamente de los tipos activos
+que cumplen `DB-<variante>-SM-FE-SF`; actualmente ofrece `DB-2S-SM-FE-SF`,
+`DB-2-SM-FE-SF` y `DB-2-1INT-SM-FE-SF`.
+
+Seleccionar una variante conserva su `tipo_mueble_id` real, fuerza Gola,
+mantiene `conFondo=false` y selecciona `RIELFE500`. No se reemplazan ni migran
+las líneas existentes: la consolidación es exclusivamente de presentación.
 La familia existe solo como encabezado en los selectores de Simulador,
 Cotizaciones y HDR; las filas calculables de `cot_tipos_mueble` son
 `DB-2S-SM-FE`, `DB-2-SM-FE` y `DB-3-SM-FE`. La convención comercial inserta
