@@ -16,7 +16,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
 
 // Conversión exacta entre unidades vía milímetros.
@@ -35,6 +35,7 @@ const fmtUSD = (n: number) => n.toLocaleString('en-US', { style: 'currency', cur
 const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', fondo: 'fondo' }
 const DB_SM_GROUP_VALUE = '__DB_SM__';
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
+const DB_SM_FE_SF_GROUP_VALUE = '__DB_SM_FE_SF__';
 const DB_SM_SF_GROUP_VALUE = '__DB_SM_SF__';
 const DB_SMG_GROUP_VALUE = '__DB_SMG__';
 const DB_SMG_FE_GROUP_VALUE = '__DB_SMG_FE__';
@@ -188,11 +189,19 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     const options: { value: string; label: string }[] = [];
     let dbSmAgregado = false;
     let dbSmFeAgregado = false;
+    let dbSmFeSfAgregado = false;
     let dbSmSfAgregado = false;
     let dbSmgAgregado = false;
     let dbSmgFeAgregado = false;
     let dbSmgSfAgregado = false;
     for (const tipo of tipos) {
+      if (esTipologiaDbSmFeSf(tipo.pref)) {
+        if (!dbSmFeSfAgregado) {
+          options.push({ value: DB_SM_FE_SF_GROUP_VALUE, label: 'DB-SM-FE-SF — Cajoneras con Gola, riel Full Extension y sin fondo' });
+          dbSmFeSfAgregado = true;
+        }
+        continue;
+      }
       if (esTipologiaDbSmGSf(tipo.pref)) {
         if (!dbSmgSfAgregado) {
           options.push({ value: DB_SMG_SF_GROUP_VALUE, label: 'DB-SMG-SF — Cajoneras con Gola metálica sin fondo' });
@@ -253,11 +262,13 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const usaTipologiaDb = permiteTipologiaDb(tipoPref);
   const usaTipologiaDbSm = esTipologiaDbSm(tipoPref);
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(tipoPref);
+  const usaTipologiaDbSmFeSf = esTipologiaDbSmFeSf(tipoPref);
   const usaTipologiaDbSmSf = esTipologiaDbSmSf(tipoPref);
   const usaTipologiaDbSmg = esTipologiaDbSmG(tipoPref);
   const usaTipologiaDbSmgFe = esTipologiaDbSmGFe(tipoPref);
   const usaTipologiaDbSmgSf = esTipologiaDbSmGSf(tipoPref);
   const tipologiasDbSmSf = obtenerTipologiasDbSmSf(tipos);
+  const tipologiasDbSmFeSf = obtenerTipologiasDbSmFeSf(tipos);
   const tipologiasDbSmgSf = obtenerTipologiasDbSmGSf(tipos);
   const tipoSelectorValue = usaTipologiaDbSmgSf
     ? DB_SMG_SF_GROUP_VALUE
@@ -265,6 +276,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       ? DB_SMG_FE_GROUP_VALUE
       : usaTipologiaDbSmg
         ? DB_SMG_GROUP_VALUE
+    : usaTipologiaDbSmFeSf
+    ? DB_SM_FE_SF_GROUP_VALUE
     : usaTipologiaDbSm
     ? DB_SM_GROUP_VALUE
     : usaTipologiaDbSmFe
@@ -277,9 +290,11 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const usaDoor = usaPuertaParametrica(tipoPref);
   const usaHuecoHorno = usaHuecoHornoParametrico(tipoPref);
   const usaMoHood = [tipoActual?.pref, tipoActual?.pref_imperial, tipoActual?.pref_metrico].some(usaMedidasMoHood);
-  const usaRiel = (usaTipologiaDb && conHerrajes) || usaTipologiaDbSmg || usaTipologiaDbSmgFe || usaTipologiaDbSmgSf || esPCFD;
+  const usaRiel = (usaTipologiaDb && conHerrajes) || usaTipologiaDbSmFeSf || usaTipologiaDbSmg || usaTipologiaDbSmgFe || usaTipologiaDbSmgSf || esPCFD;
   function handleTipoChange(v: string) {
-    const tipoSeleccionado = v === DB_SMG_SF_GROUP_VALUE
+    const tipoSeleccionado = v === DB_SM_FE_SF_GROUP_VALUE
+      ? tipologiasDbSmFeSf[0]
+      : v === DB_SMG_SF_GROUP_VALUE
       ? tipologiasDbSmgSf[0]
       : v === DB_SMG_FE_GROUP_VALUE
         ? tipos.find((tipo) => tipo.pref === DB_SMG_FE_TIPOLOGIAS[0].pref)
@@ -334,9 +349,9 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (tipoSeleccionado.pref === 'W') setProf(String(convertir(12, 'in', unidad)));
     if (tipoSeleccionado.pref === 'WSM') setProf(String(convertir(14, 'in', unidad)));
     if (tipoSeleccionado.pref === 'F' || tipoSeleccionado.pref === 'DB') setSistemaFrente('manija');
-    if (esTipologiaDbSmG(tipoSeleccionado.pref) || esTipologiaDbSmGFe(tipoSeleccionado.pref) || esTipologiaDbSmGSf(tipoSeleccionado.pref)) {
+    if (esTipologiaDbSmFeSf(tipoSeleccionado.pref) || esTipologiaDbSmG(tipoSeleccionado.pref) || esTipologiaDbSmGFe(tipoSeleccionado.pref) || esTipologiaDbSmGSf(tipoSeleccionado.pref)) {
       setSistemaFrente('gola');
-      setRielCodigo(esTipologiaDbSmGFe(tipoSeleccionado.pref) ? 'RIELFE500' : 'RIELTANDEM');
+      setRielCodigo(esTipologiaDbSmFeSf(tipoSeleccionado.pref) || esTipologiaDbSmGFe(tipoSeleccionado.pref) ? 'RIELFE500' : 'RIELTANDEM');
     }
   }
   function aplicarDbSmTipo(pref: string) {
@@ -447,7 +462,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     // fórmulas de pieza y las reglas puedan reaccionar (ver migración 0028).
     // Las variantes DB-SM tienen Gola integrada: un selector heredado en
     // "manija" no puede desactivar sus dos golas ni alterar sus frentes.
-    const esDbSm = esTipologiaDbSm(pref) || esTipologiaDbSmFe(pref)
+    const esDbSm = esTipologiaDbSm(pref) || esTipologiaDbSmFe(pref) || esTipologiaDbSmFeSf(pref) || esTipologiaDbSmSf(pref)
       || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref);
     overrides.gola = esDbSm ? 1 : pref === 'DB' ? 0 : modulo.sistemaFrente === 'gola' ? 1 : 0;
     if (permiteRemovible(pref)) overrides.removible = modulo.removible ? 1 : 0;
@@ -465,7 +480,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       herrajesExcluidos: modulo.conHerrajes && modulo.herrajesExcl.length ? modulo.herrajesExcl : undefined,
       cantoFrentes: modulo.cantoFrentes || undefined,
       cantoCaja: modulo.cantoCaja || undefined,
-      rielCodigo: (permiteTipologiaDb(pref) || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref) || pref === 'PCFD') && modulo.rielCodigo ? modulo.rielCodigo : undefined,
+      rielCodigo: (permiteTipologiaDb(pref) || esTipologiaDbSmFeSf(pref) || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref) || pref === 'PCFD') && modulo.rielCodigo ? modulo.rielCodigo : undefined,
       door: usaPuertaParametrica(pref) && modulo.door !== '' ? parseMedida(modulo.door) : undefined,
       doorHand: usaPuertaParametrica(pref) ? modulo.doorHand : undefined,
     };
@@ -937,6 +952,17 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
                 {DB_SM_FE_TIPOLOGIAS.map((tipologia) => (
                   <option key={tipologia.pref} value={tipologia.pref}>
                     {tipologia.pref} · {tipologia.desc}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {usaTipologiaDbSmFeSf && (
+            <Field label="Tipología DB-SM-FE-SF">
+              <select value={tipoPref} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {tipologiasDbSmFeSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>
+                    {tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola, Full Extension y sin fondo'}
                   </option>
                 ))}
               </select>
