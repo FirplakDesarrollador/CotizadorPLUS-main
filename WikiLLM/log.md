@@ -2713,3 +2713,7 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 ## [2026-10-27] update | Los gaveteros DFE incluyen alto y profundidad en su código comercial (Simulador, Cotizaciones y BD histórica via migración 0226).
 
 ## [2026-10-27] update | PCFD-SF se retira y normaliza a PCFD; PCFD incluye largo, alto, profundidad y el TK asignado al final, y PC/PCFD/PCFD-MO/OVPC dejan de inyectar un TK predeterminado.
+
+## [2026-10-28] update | Nombre del PDF de cotización con proyecto y fecha de generación
+
+Se unifica el título de impresión de las plantillas general, CEMA y FIRPLAK como `Cotización Nombre del proyecto AAAA-MM-DD`, con limpieza de caracteres de archivo y actualizaci?n de fecha al imprimir.
