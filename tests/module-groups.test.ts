@@ -171,6 +171,7 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, prof: 24, pcfdCajones: 2 }), 'PCFD129624-2OP-PUSH');
   assert.equal(codigoComercial({ ...base, pref: 'PC', largo: 30, alto: 96, prof: 24, zocaloIn: 4.5 }), 'PC309624 TK4 1/2');
   assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 30, alto: 96, prof: 24, pcfdCajones: 2, zocaloIn: 5.25 }), 'PCFD309624-2OP-PUSH TK5 1/4');
+  assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 30, alto: 96, prof: 24, conFondo: false, zocaloIn: 4.5 }), 'PCFD309624 TK4 1/2');
   assert.equal(codigoComercial({ ...base, pref: 'PCFD-MO', largo: 30, alto: 96, prof: 24, zocaloIn: 4 }), 'PCFD309624-MO TK4');
   assert.equal(codigoComercial({ ...base, pref: 'VPC', largo: 24, alto: 84, prof: 22, zocaloIn: 0 }), 'VPC248422 TK0');
   assert.equal(codigoComercial({ ...base, pref: 'OVPC', largo: 24, alto: 84, prof: 22, zocaloIn: 4 }), 'OVPC248422 TK4');
@@ -249,7 +250,25 @@ test('codigoComercial no agrega SF a las tipologías independientes del fondo', 
   assert.equal(codigoComercial({ ...base, pref: 'F', largo: 6, alto: 30 }), 'F630');
   assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 24, alto: 36 }), 'PN2436');
   assert.equal(codigoComercial({ ...base, pref: 'TK', largo: 4, alto: 96 }), 'TK496');
-  assert.equal(codigoComercial({ ...base, pref: 'DFE', largo: 80, alto: 50 }), 'DFE80');
+  assert.equal(codigoComercial({ ...base, pref: 'DFE', largo: 80, alto: 50, prof: 40 }), 'DFE805040');
+});
+
+test('DFE incluye alto y profundidad en su código comercial', () => {
+  assert.equal(
+    codigoComercial({ pref: 'DFE', largo: 56, alto: 17, prof: 45, unidad: 'cm', sistema: 'metrico' }),
+    'DFE561745',
+    'DFE métrico en cm con largo 56, alto 17 y profundidad 45'
+  );
+  assert.equal(
+    codigoComercial({ pref: 'DFE', largo: 520, alto: 200, prof: 520, unidad: 'mm', sistema: 'metrico' }),
+    'DFE522052',
+    'DFE métrico en mm con largo 520, alto 200 y profundidad 520'
+  );
+  assert.equal(
+    codigoComercial({ pref: 'DFE', largo: 24, alto: 8, prof: 18, unidad: 'in', sistema: 'imperial' }),
+    'DFE24818',
+    'DFE imperial con largo 24, alto 8 y profundidad 18'
+  );
 });
 
 test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {

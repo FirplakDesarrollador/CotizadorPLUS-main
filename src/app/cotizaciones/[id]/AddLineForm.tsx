@@ -5,7 +5,7 @@ import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
@@ -189,7 +189,11 @@ export default function AddLineForm({
   const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : (projectDefaults?.npuertas ?? ''));
   const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : (projectDefaults?.ncajones ?? ''));
   const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : (projectDefaults?.nentrepanos ?? ''));
-  const [zocalo, setZocalo] = useState(ov?.zocalo != null ? String(convertir(ov.zocalo, 'in', unidad)) : (usaTkTorre(tipoInicialPref) ? '0' : ''));
+  const [zocalo, setZocalo] = useState(() => {
+    if (ov?.zocalo != null) return String(convertir(ov.zocalo, 'in', unidad));
+    const valor = tkPredeterminadoTorre(tipoInicialPref);
+    return valor == null ? '' : String(convertir(valor, 'in', unidad));
+  });
   const [puertaSup, setPuertaSup] = useState(ov?.PUERTA_SUP != null
     ? String(convertir(ov.PUERTA_SUP, 'in', unidad))
     : usaPuertaSupTorre(tipoInicialPref) ? String(convertir(30, 'in', unidad)) : '');
@@ -386,7 +390,8 @@ export default function AddLineForm({
       setMo('');
       setHood('');
     }
-    if (usaTkTorre(nuevoTipo?.pref)) setZocalo('0');
+    const tkPredeterminado = tkPredeterminadoTorre(nuevoTipo?.pref);
+    if (tkPredeterminado != null) setZocalo(String(convertir(tkPredeterminado, 'in', unidad)));
     if (usaPuertaSupTorre(nuevoTipo?.pref)) setPuertaSup(String(convertir(30, 'in', unidad)));
     if (usaMoTorre(nuevoTipo?.pref)) setMo(String(convertir(20, 'in', unidad)));
     if (esTipologiaDbSmSf(nuevoTipo?.pref) || esTipologiaDbSmFeSf(nuevoTipo?.pref)) setConFondo(false);

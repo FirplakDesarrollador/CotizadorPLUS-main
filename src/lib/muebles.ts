@@ -134,6 +134,12 @@ export function usaTkTorre(pref: string | null | undefined): boolean {
   return (PREFS_TK_TORRE as readonly string[]).includes(String(pref ?? '').trim().toUpperCase());
 }
 
+// Solo VPC conserva TK0 como valor inicial. En PC, PCFD, PCFD-MO y OVPC el TK
+// debe ser una medida elegida por el usuario, no un cero inyectado por el formulario.
+export function tkPredeterminadoTorre(pref: string | null | undefined): number | null {
+  return String(pref ?? '').trim().toUpperCase() === 'VPC' ? 0 : null;
+}
+
 export function usaPuertaSupTorre(pref: string | null | undefined): boolean {
   return ['PC', 'VPC', 'PCFD-MO'].includes(String(pref ?? '').trim().toUpperCase());
 }
@@ -190,10 +196,11 @@ export function esElementoPlano(prefLabel: string | null | undefined): boolean {
 
 // Tipologías cuyo despiece y código comercial no cambian con la configuración
 // de fondo del proyecto. DFE no es un elemento plano, pero tampoco tiene un
-// respaldo estructural que justifique crear una variante DFE-SF.
+// respaldo estructural que justifique crear una variante DFE-SF. PCFD se maneja
+// siempre como la tipologia base; no existe una alternativa comercial PCFD-SF.
 export function esIndependienteDeFondo(prefLabel: string | null | undefined): boolean {
   const pref = String(prefLabel ?? '').trim().toUpperCase().replace(/-SF$/, '');
-  return esElementoPlano(pref) || pref === 'DFE';
+  return esElementoPlano(pref) || pref === 'DFE' || pref === 'PCFD';
 }
 
 // Cuántos entrepaños tiene **realmente** el módulo, contados sobre el despiece.
