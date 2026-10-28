@@ -75,3 +75,5 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Comparativo PB SHORE PRUEBA frente a HDR](wiki/comparativo_pb_shore_prueba.md) - Auditoría de 20 módulos: piezas, tablero y canto netos frente a las HDR PDF y consumos con suplementos.
 
 - [Comparación Query App 2-10](wiki/comparacion_query_app_2_10.md) - Muestra por tipología y variantes: cantidades de piezas, cantos, entrepaños superiores y cobertura frente al catálogo activo.
+
+- [Nombre del PDF de cotización](wiki/nombre_pdf_cotizacion.md) - Nombre sugerido con proyecto y fecha local de generación en todas las plantillas.
