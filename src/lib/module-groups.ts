@@ -140,11 +140,11 @@ export function sufijoSistemaFrente(sistemaFrente: string | null | undefined): s
   return sistemaFrente === 'gola' ? '-SM' : '';
 }
 
-// Los superiores de la familia W, los paneles PN, los fillers F y los zocalos TK incluyen el alto en el código
+// Los superiores de la familia W, los paneles PN, los fillers F, los zocalos TK y gaveteros DFE incluyen el alto en el código
 // (W2936 = 29 de largo, 36 de alto): a diferencia de los demás tipos su alto sí
 // varía y no es un dato implícito del tipo. WCC queda fuera a propósito — es un
 // módulo de clóset (categoria='closet'), no un superior de pared.
-const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK'] as const;
+const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK', 'DFE'] as const;
 const PREFS_TORRE_DIMENSIONES_TK = ['PC', 'PCFD', 'PCFD-MO', 'VPC', 'OVPC'] as const;
 
 function esTorreConDimensionesTk(pref: string): boolean {
@@ -200,11 +200,14 @@ export function codigoComercial(input: CodigoComercialInput): string {
     ? anchoCodigo(alto, unidad, sistema)
     : '';
   if (altoSufijo) agregarMedida(altoSufijo);
-  // Todos los muebles superiores incluyen la profundidad tras el alto. WCC se
+  // Todos los muebles superiores y DFE incluyen la profundidad tras el alto. WCC se
   // excluye porque, aunque su prefijo empieza por W, pertenece a clóset. La
   // regla vive aquí para que Simulador, Cotizaciones, recálculo y HDR nombren
   // el mismo módulo de forma idéntica.
-  const incluyeProfundidad = (esMuebleSuperior(prefNormalizado) && prefNormalizado !== 'WCC') || esTorreTk;
+  const esDfe = prefNormalizado.split('-')[0] === 'DFE';
+  const incluyeProfundidad = (esMuebleSuperior(prefNormalizado) && prefNormalizado !== 'WCC')
+    || esTorreTk
+    || esDfe;
   const profSufijo = incluyeProfundidad && prof != null
     ? anchoCodigo(prof, unidad, sistema)
     : '';
