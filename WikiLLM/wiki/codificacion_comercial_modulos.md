@@ -67,9 +67,17 @@ las líneas históricas que ya tenían `overrides.zocalo`; la migración
 `0225_normalizar_tk_metrico_codigos_torres.sql` corrige los sufijos métricos
 existentes y recompone sus códigos de grupo.
 
+`PCFD` no admite una variante comercial `PCFD-SF`: el selector fuerza la
+tipología base y la migración `0227_pcfd_sin_sf_y_tk_sin_predeterminado.sql`
+normaliza las líneas históricas. Esa migración también elimina el TK
+predeterminado de `PC`, `PCFD`, `PCFD-MO` y `OVPC`; el sufijo `TK<medida>` solo
+aparece cuando el usuario asigna una medida. `VPC` conserva `TK0` inicial.
+
 ## Qué tipos llevan el alto en el código
 
-`PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK']`
+`PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK', 'DFE']`
+
+`DFE` (gavetero de clóset) incluye tanto el alto como la profundidad inmediatamente tras el largo: por ejemplo, `DFE561745` corresponde a 56 de largo, 17 de alto y 45 de profundidad en cm, y `DFE24818` en pulgadas. Esto asegura consistencia entre el Simulador, el selector de agregar módulo, la tabla de cotización y el histórico en base de datos. La migración `0226_dfe_alto_y_profundidad_codigo.sql` normalizó las líneas existentes en `cot_cotizacion_lineas` y sincronizó sus respectivos grupos en `cot_grupos_modulos`.
 
 `F` incluye largo y alto en el código comercial: un filler de 6 × 30 pulgadas
 se identifica como `F630`. Al seleccionar esta tipología, Simulador,
