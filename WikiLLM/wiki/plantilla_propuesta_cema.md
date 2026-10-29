@@ -11,16 +11,16 @@ técnicas y los términos para evitar páginas con contenido residual.
 ## Selección automática
 
 `/cotizaciones/[id]/imprimir` consulta `cot_cotizaciones.cotizador_por`. Para
-`CEMA` renderiza `CemaPrintEditor`; para `FIRPLAK` conserva el informe tabular
-existente. El botón “Imprimir / PDF” no necesita parámetros de plantilla.
+`CEMA` renderiza `CemaPrintEditor`; para `FIRPLAK` usa su editor de propuesta comercial. El botón “Imprimir / PDF” no necesita parámetros de plantilla.
 
 ## Datos automáticos
 
 - Proyecto, constructora (`Prepared for`) y comprador/contacto provienen de la cabecera.
 - Fecha inicial proviene de `created_at`; código de cotización o UUID corto alimenta la referencia.
 - Cantidad de cocinas suma `cot_cocinas.cantidad`.
-- Schedule consolida `codigo_modulo`, descripción y cantidad, incluyendo el multiplicador de cocina.
-- Total contractual usa `total_usd`; gabinetes es total menos el valor editable de mesones.
+- Schedule consolida `codigo_modulo`, descripción y cantidad de módulos, incluyendo el multiplicador de cocina; excluye los artículos de Agregar herrajes/otros.
+- Total contractual usa `total_usd`; gabinetes es total menos el valor editable de mesones y los adicionales. Los adicionales tienen su propia fila comercial y detalle de cantidades, unidades y valores en Herrajes / otros.
+- Las especificaciones de tableros y cantos proceden de Características del proyecto y del catálogo; los textos antiguos de acabados de la plantilla no sustituyen los materiales elegidos. Ver el [protocolo de cotizaciones](protocolo_pdf_cotizaciones.md).
 
 ## Datos editables y persistencia
 

@@ -132,6 +132,7 @@ export async function actualizarCotizacionAction(id: string, patch: { nombre?: s
   try {
     await actualizarCotizacion(id, patch);
     revalidatePath(`/cotizaciones/${id}`);
+    revalidatePath(`/cotizaciones/${id}/imprimir`);
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };

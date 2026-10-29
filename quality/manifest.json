@@ -45,7 +45,11 @@
         "src/lib/cema-template.ts",
         "src/lib/materiales-linea.ts",
         "src/lib/precios-tableros.ts",
-        "src/lib/grupos-orden.ts"
+        "src/lib/grupos-orden.ts",
+        "src/lib/materiales-proyecto.ts",
+        "src/lib/propuesta-cotizacion.ts",
+        "scripts/auditar-propuestas.ts",
+        "src/lib/guardado-secuencial.ts"
       ],
       "tests": [
         "tests/margen-global.test.ts",
@@ -56,7 +60,11 @@
         "tests/firplak-template.test.ts",
         "tests/materiales-linea.test.ts",
         "tests/precios-tableros-cotizacion.test.ts",
-        "tests/grupos-orden.test.ts"
+        "tests/grupos-orden.test.ts",
+        "tests/propuesta-cotizacion.test.ts",
+        "tests/materiales-proyecto.test.ts",
+        "tests/cotizaciones.test.ts",
+        "tests/guardado-secuencial.test.ts"
       ]
     },
     {
@@ -135,7 +143,11 @@
         "tests/iva.test.ts",
         "tests/herrajes-propuesta.test.ts",
         "tests/numero-en-letras.test.ts",
-        "tests/grupos-programacion.test.ts"
+        "tests/grupos-programacion.test.ts",
+        "tests/propuesta-cotizacion.test.ts",
+        "tests/materiales-proyecto.test.ts",
+        "tests/cotizaciones.test.ts",
+        "tests/guardado-secuencial.test.ts"
       ]
     },
     {

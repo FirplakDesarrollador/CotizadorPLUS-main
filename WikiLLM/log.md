@@ -2716,4 +2716,12 @@ el consumo `22x1` cuando corresponde al material y configuración del frente.
 
 ## [2026-10-28] update | Nombre del PDF de cotización con proyecto y fecha de generación
 
-Se unifica el título de impresión de las plantillas general, CEMA y FIRPLAK como `Cotización Nombre del proyecto AAAA-MM-DD`, con limpieza de caracteres de archivo y actualizaci?n de fecha al imprimir.
+Se unifica el título de impresión de las plantillas general, CEMA y FIRPLAK como `Cotización Nombre del proyecto AAAA-MM-DD`, con limpieza de caracteres de archivo y actualización de fecha al imprimir.
+
+## [2026-10-29] update | Herrajes/otros, materiales por área closet y doble verificación de PDF
+
+Los adicionales se excluyen de muebles y programación de las tres plantillas y se detallan con cantidades, unidades y valores. Las especificaciones proceden de Características del proyecto y catálogo. Un área con closet tiene prioridad sobre el prefijo del módulo. Se sincronizaron 201 módulos de las 7 cotizaciones existentes, con respaldo previo, recálculo de 199 grupos y auditoría posterior sin diferencias de materiales ni totales. Supabase registra la migración 0228 y la clasificación de las 51 líneas históricas. Se guardan reglas en AGENTS.md y el protocolo en wiki/protocolo_pdf_cotizaciones.md: dos PDF independientes por proyecto (KUNDARA y Milán), comparación de texto, revisión renderizada, límites y validación de 83 archivos de pruebas.
+
+## [2026-10-29] update | Propagación visible de materiales globales y preparación de integración
+
+Se serializa el guardado de Características para impedir que peticiones anteriores sobrescriban cambios posteriores; se muestran progreso y errores. El editor abierto refleja el preset y los cantos guardados tras la actualización y la etiqueta de materiales globales solo confirma coincidencias reales. Se invalida también la vista imprimible. Se añaden pruebas de guardado concurrente e inmutable y el protocolo exige dos cambios reales desde la interfaz sobre PN, F, W y DFE de una sección closet. Validación exhaustiva: 84 archivos de pruebas.
