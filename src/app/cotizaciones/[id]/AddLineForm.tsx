@@ -4,8 +4,9 @@ import { useRouter } from 'next/navigation';
 import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
+import { familiaMaterialDelArea } from '@/lib/materiales-proyecto';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, familiaMaterialPorPrefijo, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
@@ -92,9 +93,10 @@ const getCantoMatch = (cantos: string[], target: string) =>
   target;
 
 export default function AddLineForm({
-  cocinaId, tipos, tableros, cantos, presetDefault, rolesByTipo, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, initial, onDone, onMaterialesUsados
+  cocinaId, nombreArea = '', tipos, tableros, cantos, presetDefault, rolesByTipo, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, initial, onDone, onMaterialesUsados
 }: {
   cocinaId: string;
+  nombreArea?: string;
   tipos: Tipo[];
   tableros: Tablero[];
   cantos: string[];
@@ -117,7 +119,7 @@ export default function AddLineForm({
   const familiasActivas = projectDefaults?.familiasMaterialesActivas;
   const tiposDisponibles = initial || !familiasActivas?.length
     ? tipos
-    : tipos.filter((tipo) => esElementoPlano(tipo.pref) || familiasActivas.includes(familiaMaterialPorPrefijo(tipo.pref)));
+    : tipos.filter((tipo) => esElementoPlano(tipo.pref) || familiasActivas.includes(familiaMaterialDelArea(tipo.pref, nombreArea)));
   const sbfd = tiposDisponibles.find((t) => t.pref === 'SBFD');
   const ov = initial?.overrides ?? null;
   const tipoProyecto = tiposDisponibles.some((tipo) => tipo.id === projectDefaults?.tipoId) ? projectDefaults?.tipoId : undefined;
@@ -126,7 +128,8 @@ export default function AddLineForm({
   // Cada familia tiene su bloque de materiales. Las cotizaciones creadas antes de
   // que existieran closet y banos no lo traen: caen en inferiores, como siempre.
   const familiaProyecto = (pref: string): FamiliaMaterial => {
-    const familia = familiaMaterialPorPrefijo(pref);
+    const familia = familiaMaterialDelArea(pref, nombreArea);
+    if (familia === 'closet') return familia;
     if (esElementoPlano(pref) && familiasActivas?.length && !familiasActivas.includes(familia)) return familiasActivas[0];
     return familia;
   };
@@ -598,7 +601,9 @@ export default function AddLineForm({
         <h2 className="font-semibold text-slate-900">{esEdicion ? 'Editar mueble' : 'Agregar mueble'}</h2>
         {projectDefaults && (
           <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
-            ✓ Materiales globales aplicados
+            {Object.entries(materialProyecto(tipos.find(t => t.id === tipoId)?.pref ?? '')?.preset ?? {}).every(([rol, codigo]) => preset[rol] === codigo)
+              ? '✓ Materiales globales aplicados'
+              : 'Materiales globales pendientes de aplicar'}
           </span>
         )}
       </div>

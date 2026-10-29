@@ -81,23 +81,10 @@ Se ofrecen los **19 herrajes activos**, incluidos los 5 de categoría
 cobran sueltos. La categoría va en la etiqueta y en el texto de búsqueda, de modo
 que escribir "riel" encuentra los seis rieles sin tener que saberse los códigos.
 
-## Cobertura y deuda
+## PDF y verificacion vigente
 
-`tests/materiales-linea.test.ts`, 15 casos: el margen por tipo, el reparto entre
-las columnas s/H y c/H, el descuento sobre el USD, una TRM de cero que no
-produzca `Infinity`, cantidades negativas, un margen del 100 % que no divida por
-cero, el formato de la descripción y las cuatro ramas del guardia.
+Todos los tipos de este boton se clasifican comercialmente en Herrajes / otros del PDF, con cantidades, unidad y valores; se excluyen del resumen de muebles y de la programacion. Esta regla no modifica el margen de catalogo del tipo de material. La cantidad real esta en `config.material.cantidad`; la cantidad de linea y las repeticiones del area se aplican una sola vez.
 
-**`quality:learn` deja un hallazgo HIGH sin resolver, con justificación.**
-Señala que `cotizaciones.ts` cambió 112 líneas sin `tests/cotizaciones.test.ts`.
-Toda la lógica se extrajo ya a `materiales-linea.ts`, que sí está cubierto; lo
-que queda en `cotizaciones.ts` es acceso a datos —consultar los catálogos,
-insertar la fila— que no se puede probar sin base. Y el módulo **no es
-importable desde un test**: empieza con `import 'server-only'` y el intento falla
-con *"This module cannot be imported from a Client Component module"*
-(comprobado). Cubrirlo exigiría pruebas de integración contra Supabase, que el
-repositorio no tiene.
+La migracion `0228_clasificacion_pdf_herrajes_otros.sql` registra `config.clasificacionPdf = herrajes_otros` para el historico. El PDF tambien reconoce directamente `config.material`, por compatibilidad con versiones antiguas.
 
-**Sin verificar en pantalla**: la cotización está tras login y no hay
-credenciales disponibles, así que el flujo se valida por tipos, pruebas
-unitarias, `quality:gate` y build, no abriendo el formulario.
+`tests/materiales-linea.test.ts` mantiene la cobertura del calculo de precios. `tests/propuesta-cotizacion.test.ts` agrega clasificacion, cantidades, redondeo y HTML imprimible; `tests/cotizaciones.test.ts` conserva sus casos originales y agrega persistencia y recalculo idempotente. El acceso administrativo fuera de requests permite auditar las cotizaciones reales sin exponer credenciales. Ya existe un flujo de verificacion en navegador autenticado y dos generaciones de PDF: consultar el [protocolo de cotizaciones](protocolo_pdf_cotizaciones.md).

@@ -14,6 +14,7 @@ import { resolverTipologiaFondo } from '@/lib/sin-fondo';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
 import type { ComentarioCotizacion } from '@/lib/comentarios-cotizacion';
+import { aplicarMaterialesProyecto, materialesDelDespieceCoinciden, resolverCodigoTablero, type ConfigMaterialesProyecto, type TableroProyecto } from '@/lib/materiales-proyecto';
 
 export type CotizacionHeader = {
   id: string; codigo: string | null; nombre: string | null;
@@ -83,6 +84,7 @@ export async function restaurarVersionCotizacion(cotizacionId: string, versionId
     p_version_id: versionId,
   });
   if (error) throw new Error(error.message);
+  await sincronizarMaterialesCotizacion(cotizacionId);
 }
 
 // Proyecto con sus cocinas y, dentro de cada cocina, sus módulos (líneas).
@@ -152,6 +154,7 @@ export async function actualizarCocina(cocinaId: string, input: { nombre?: strin
   const { data: cocina, error } = await sb.from('cot_cocinas').update(patch).eq('id', cocinaId).select('cotizacion_id').single();
   if (error) throw new Error(error.message);
   if (cocina?.cotizacion_id) {
+    if (patch.nombre !== undefined) await sincronizarMaterialesCotizacion(cocina.cotizacion_id);
     await recomputarTotales(cocina.cotizacion_id);
   }
 }
@@ -373,9 +376,19 @@ async function recalcularGrupo(
   // recalculo de toda la cotizacion.
   if (grupoSeSaltaElMotor(lineas)) return;
 
-  const inputs = lineas.map(inputDesdeLinea);
+  const [catalogo, proyecto, area] = await Promise.all([
+    catalogoPrefetch ?? cargarCatalogoPrecompilado(),
+    sb.from('cot_cotizaciones').select('config_default').eq('id', grupo.cotizacion_id).single(),
+    sb.from('cot_cocinas').select('nombre').eq('id', grupo.cocina_id).single(),
+  ]);
+  for (const result of [proyecto, area]) if (result.error) throw new Error(result.error.message);
+  const codigosTableros = Object.keys(catalogo.tablerosByCode).map(codigo => ({ codigo }));
+  const inputs = lineas.map(linea => {
+    const input = aplicarMaterialesProyecto(inputDesdeLinea(linea), proyecto.data?.config_default ?? {}, catalogo.tiposById[linea.tipo_mueble_id!]?.pref, area.data?.nombre ?? '');
+    return { ...input, preset: Object.fromEntries(Object.entries(input.preset).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, codigosTableros)])) };
+  });
   const sistema = sistemaPrefetch ?? await obtenerSistema(grupo.cotizacion_id);
-  const calculated = await cotizarGrupo(inputs, catalogoPrefetch);
+  const calculated = await cotizarGrupo(inputs, catalogo);
 
   const calculatedRows: { code: string; row: ReturnType<typeof construirFilaLinea> }[] = [];
   for (let i = 0; i < lineas.length; i += 1) {
@@ -445,10 +458,11 @@ async function recalcularGrupo(
 
 export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
   const sb = await createClient();
-  const inputResuelto = await resolverTipologiaFondo(sb, input);
+  let inputResuelto = await resolverTipologiaFondo(sb, input);
   const { data: cocina, error: ce } = await sb.from('cot_cocinas').select('id,cotizacion_id').eq('id', cocinaId).single();
   if (ce || !cocina) throw new Error('Cocina no encontrada');
   const cotizacionId = (cocina as { cotizacion_id: string }).cotizacion_id;
+  inputResuelto = await resolverMaterialesDeInput(sb, inputResuelto, cocinaId, cotizacionId);
 
   const res = await cotizar(inputResuelto);
   const { count } = await sb.from('cot_cotizacion_lineas')
@@ -483,10 +497,11 @@ export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
 // Edita una línea existente recalculando con el motor (mismos datos que al agregar).
 export async function editarLinea(lineaId: string, input: AgregarLineaInput) {
   const sb = await createClient();
-  const inputResuelto = await resolverTipologiaFondo(sb, input);
+  let inputResuelto = await resolverTipologiaFondo(sb, input);
   const { data: linea, error: le } = await sb.from('cot_cotizacion_lineas').select('*').eq('id', lineaId).single();
   if (le || !linea) throw new Error('Línea no encontrada');
   const cotizacionId = (linea as { cotizacion_id: string }).cotizacion_id;
+  inputResuelto = await resolverMaterialesDeInput(sb, inputResuelto, linea.cocina_id, cotizacionId);
 
   if (linea.grupo_id) {
     const { data: groupRows, error: groupError } = await sb.from('cot_cotizacion_lineas').select('*')
@@ -728,6 +743,7 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
     await Promise.all(Array.from(grupos).map((grupoId) => recalcularGrupo(grupoId, catalogo, sistema)));
     await recomputarTotales(id);
   }
+  if (patch.configDefault !== undefined) await sincronizarMaterialesCotizacion(id);
 }
 
 export async function eliminarLinea(cotizacionId: string, lineaId: string) {
@@ -837,6 +853,77 @@ export async function proveedoresDeTableros(codigos: readonly string[]): Promise
       .filter((t) => t.proveedor)
       .map((t) => [t.codigo, String(t.proveedor)]),
   );
+}
+
+export async function tablerosDeProyecto(): Promise<TableroProyecto[]> {
+  const sb = await createClient();
+  const { data, error } = await sb.from('cot_tableros').select('codigo,proveedor,sustrato,espesor_mm,color_nombre');
+  if (error) throw new Error(error.message);
+  return (data ?? []) as TableroProyecto[];
+}
+
+async function resolverMaterialesDeInput(sb: Awaited<ReturnType<typeof createClient>>, input: AgregarLineaInput, cocinaId: string, cotizacionId: string): Promise<AgregarLineaInput> {
+  const [area, proyecto, tipo, tableros] = await Promise.all([
+    sb.from('cot_cocinas').select('nombre').eq('id', cocinaId).single(),
+    sb.from('cot_cotizaciones').select('config_default').eq('id', cotizacionId).single(),
+    sb.from('cot_tipos_mueble').select('pref').eq('id', input.tipoId).single(),
+    tablerosDeProyecto(),
+  ]);
+  for (const result of [area, proyecto, tipo]) if (result.error) throw new Error(result.error.message);
+  const resuelto = aplicarMaterialesProyecto(input, proyecto.data?.config_default ?? {}, tipo.data?.pref, area.data?.nombre ?? '');
+  return { ...resuelto, preset: Object.fromEntries(Object.entries(resuelto.preset).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, tableros)])) };
+}
+
+/** Aplica las características vigentes y recalcula únicamente los grupos afectados. */
+export async function sincronizarMaterialesCotizacion(cotizacionId: string) {
+  const sb = await createClient();
+  const [proyecto, areas, lineas, tipos, tableros] = await Promise.all([
+    sb.from('cot_cotizaciones').select('config_default').eq('id', cotizacionId).single(),
+    sb.from('cot_cocinas').select('id,nombre').eq('cotizacion_id', cotizacionId),
+    sb.from('cot_cotizacion_lineas').select('*').eq('cotizacion_id', cotizacionId),
+    sb.from('cot_tipos_mueble').select('id,pref'),
+    tablerosDeProyecto(),
+  ]);
+  for (const result of [proyecto, areas, lineas, tipos]) if (result.error) throw new Error(result.error.message);
+  const cfg = structuredClone(proyecto.data?.config_default ?? {}) as ConfigMaterialesProyecto;
+  const normalizarPreset = (preset: Record<string, string> | undefined) => preset && Object.fromEntries(Object.entries(preset).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, tableros)]));
+  cfg.preset = normalizarPreset(cfg.preset);
+  for (const key of ['materialesInferiores', 'materialesSuperiores', 'materialesCloset', 'materialesBanos'] as const) {
+    if (cfg[key]?.preset) cfg[key]!.preset = normalizarPreset(cfg[key]!.preset);
+  }
+  if (JSON.stringify(cfg) !== JSON.stringify(proyecto.data?.config_default ?? {})) {
+    const { error } = await sb.from('cot_cotizaciones').update({ config_default: cfg }).eq('id', cotizacionId);
+    if (error) throw new Error(error.message);
+  }
+  const nombres = new Map<string, string>(((areas.data ?? []) as Array<{ id: string; nombre: string }>).map(a => [a.id, a.nombre]));
+  const prefijos = new Map<string, string>(((tipos.data ?? []) as Array<{ id: string; pref: string }>).map(t => [t.id, t.pref]));
+  const grupos = new Set<string>();
+  let corregidas = 0;
+  for (const linea of lineas.data ?? []) {
+    if (!linea.tipo_mueble_id) {
+      if (linea.config?.material && linea.config.clasificacionPdf !== 'herrajes_otros') {
+        const { error } = await sb.from('cot_cotizacion_lineas').update({ config: { ...linea.config, clasificacionPdf: 'herrajes_otros' } }).eq('id', linea.id);
+        if (error) throw new Error(error.message);
+      }
+      continue;
+    }
+    const actual = inputDesdeLinea(linea as LineaPersistida);
+    const siguiente = aplicarMaterialesProyecto(actual, cfg, prefijos.get(linea.tipo_mueble_id), nombres.get(linea.cocina_id) ?? '');
+    siguiente.preset = normalizarPreset(siguiente.preset) ?? {};
+    if (JSON.stringify(actual.preset) === JSON.stringify(siguiente.preset) && actual.cantoCaja === siguiente.cantoCaja && actual.cantoFrentes === siguiente.cantoFrentes && materialesDelDespieceCoinciden(linea.breakdown, siguiente.preset)) continue;
+    const config = { ...linea.config, preset: siguiente.preset, cantoCaja: siguiente.cantoCaja, cantoFrentes: siguiente.cantoFrentes };
+    const { error } = await sb.from('cot_cotizacion_lineas').update({ config }).eq('id', linea.id);
+    if (error) throw new Error(error.message);
+    if (linea.grupo_id) grupos.add(linea.grupo_id);
+    corregidas += 1;
+  }
+  if (grupos.size) {
+    const catalogo = await cargarCatalogoPrecompilado();
+    const sistema = await obtenerSistema(cotizacionId);
+    for (const grupoId of grupos) await recalcularGrupo(grupoId, catalogo, sistema);
+    await recomputarTotales(cotizacionId);
+  }
+  return { corregidas, grupos: grupos.size };
 }
 
 // Nombre de catalogo de cada herraje, para la lista de la propuesta. Mismo
@@ -953,7 +1040,7 @@ export async function agregarLineaMaterial(
     codigo_modulo: entrada.codigo,
     largo: 0, alto: 0, prof: 0, unidad_dim: 'in',
     cantidad: 1,  // el "cuantos" vive en la cantidad del material, no en la linea
-    config: { material: { ...entrada, precioUnitarioCop: item.precio } },
+    config: { clasificacionPdf: 'herrajes_otros', material: { ...entrada, precioUnitarioCop: item.precio } },
     costo_sin_herrajes_cop: precios.costoSinHerrajes,
     costo_herrajes_cop: precios.costoHerrajes,
     costo_total_cop: precios.costoConHerrajes,
