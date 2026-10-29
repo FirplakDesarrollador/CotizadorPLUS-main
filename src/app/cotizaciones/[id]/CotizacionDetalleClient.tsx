@@ -13,6 +13,7 @@ import type { CotizacionVersion } from '@/lib/cotizaciones';
 import { CLAVE_CONFIG_FAMILIA, type FamiliaMaterial } from '@/lib/muebles';
 import { calcularMargenGlobalProyecto } from '@/lib/module-groups';
 import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario } from '@/lib/comentarios-cotizacion';
+import { crearGuardadoSecuencial } from '@/lib/guardado-secuencial';
 
 type LineaConfig = {
   preset?: Record<string, string>;
@@ -167,6 +168,21 @@ export default function CotizacionDetalleClient({
   const [columnasPrecio, setColumnasPrecio] = useState<ColumnasPrecio>({ sinHerrajes: true, conHerrajes: true, usd: true, cop: true });
 
   const router = useRouter();
+  const [guardadoMateriales, setGuardadoMateriales] = useState({ pendientes: 0, error: null as string | null });
+  const guardarEnOrden = useMemo(() => crearGuardadoSecuencial<ProjectDefaults>(async next => {
+    const resultado = await actualizarCotizacionAction(cotizacionId, { configDefault: next });
+    if (!resultado.ok) throw new Error(resultado.error || 'No se pudieron aplicar los materiales.');
+    router.refresh();
+  }, (pendientes, error) => setGuardadoMateriales({ pendientes, error })), [cotizacionId, router]);
+
+  async function guardarCaracteristicas(next: ProjectDefaults) {
+    try {
+      await guardarEnOrden(next);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  }
 
   const margenGlobal = useMemo(
     () => calcularMargenGlobalProyecto(cocinas, cabecera.total_cop),
@@ -175,7 +191,7 @@ export default function CotizacionDetalleClient({
 
   function handleProjectDefaultsChange(next: ProjectDefaults) {
     setProjectDefaults(next);
-    actualizarCotizacionAction(cotizacionId, { configDefault: next }).catch(() => {});
+    void guardarCaracteristicas(next);
   }
 
   function handleUnidadProyectoChange(unidad: UnidadProyecto) {
@@ -191,8 +207,7 @@ export default function CotizacionDetalleClient({
   }
 
   async function handleMargenBlur() {
-    await actualizarCotizacionAction(cotizacionId, { configDefault: projectDefaults });
-    router.refresh();
+    await guardarCaracteristicas(projectDefaults);
   }
 
   // Al agregar un mueble, sus materiales y cantos quedan como default del proyecto
@@ -237,13 +252,12 @@ export default function CotizacionDetalleClient({
             margen={projectDefaults.margen}
             onMargenChange={(margen) => setProjectDefaults((prev) => ({ ...prev, margen }))}
             onMargenBlur={handleMargenBlur}
-            onSave={async () => {
-              await actualizarCotizacionAction(cotizacionId, { configDefault: projectDefaults });
-              router.refresh();
-              return { ok: true };
-            }}
+            onSave={() => guardarCaracteristicas(projectDefaults)}
             margenGlobal={margenGlobal}
           >
+            <p role="status" className={guardadoMateriales.error ? 'mt-3 text-sm text-red-700' : 'mt-3 text-sm text-slate-600'}>
+              {guardadoMateriales.error || (guardadoMateriales.pendientes ? 'Aplicando materiales a todos los muebles, paneles y fillers…' : 'Materiales guardados y aplicados a los módulos del proyecto.')}
+            </p>
             <ProjectConfigPanel
               tableros={tableros}
               cantos={cantos}

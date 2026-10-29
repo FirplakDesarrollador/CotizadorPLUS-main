@@ -1,5 +1,8 @@
 'use client';
 import PrintDocumentTitle from './PrintDocumentTitle';
+import { HerrajesOtrosPdf, MaterialesProyectoPdf } from './DetallesProyecto';
+import type { AdicionalPropuesta } from '@/lib/propuesta-cotizacion';
+import type { EspecificacionProyecto } from '@/lib/materiales-proyecto';
 
 import { Fragment, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -9,7 +12,7 @@ import type { CemaTemplate } from '@/lib/cema-template';
 export type CemaScheduleRow = { sku: string; description: string; quantity: number };
 export type CemaProposalData = {
   id: string; projectName: string; preparedFor: string; contact: string; kitchens: number;
-  totalUsd: number; template: CemaTemplate; schedule: CemaScheduleRow[];
+  adicionales: AdicionalPropuesta[]; materiales: EspecificacionProyecto[]; totalUsd: number; template: CemaTemplate; schedule: CemaScheduleRow[];
 };
 
 const money = (value: number) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -40,7 +43,7 @@ const terms = [
 function Proposal({ data }: { data: CemaProposalData }) {
   const t = data.template;
   const countertops = Math.max(0, Number(t.countertopAmountUsd));
-  const cabinetry = Math.max(0, data.totalUsd - countertops);
+  const cabinetry = Math.max(0, data.totalUsd - countertops - data.adicionales.reduce((sum, fila) => sum + fila.totalUsd, 0));
   const category = (pattern: RegExp) => data.schedule.filter((row) => pattern.test(row.sku)).reduce((sum, row) => sum + row.quantity, 0);
   return <div className="cema-document bg-slate-100 py-6 print:bg-white print:py-0">
     <section className="cema-page mx-auto mb-6 min-h-[10.2in] max-w-[8.1in] bg-white p-[0.48in] shadow-sm print:mb-0 print:shadow-none">
@@ -64,7 +67,7 @@ function Proposal({ data }: { data: CemaProposalData }) {
 
     <Page number={2} title="CABINETRY STANDARD" subtitle="Project-specific cabinet specification">
       <ul className="list-disc space-y-2 pl-5 text-sm leading-5"><li>Cabinetry manufactured using project-approved CARB 2-compliant boards and finishes.</li><li>Cabinet interiors and exposed faces follow the materials configured in the quotation.</li><li>Doors, fillers, panels and toe kicks use the selected project material and edge banding.</li><li>Adjustable shelves, leveling legs and soft-close hardware are included where configured.</li><li>Final selections remain subject to approved shop drawings and submittals.</li></ul>
-      <h3 className="mt-7 font-bold">STANDARD HARDWARE</h3><table className="mt-2 w-full text-xs"><tbody>{[['Drawer system','Metal tandem box / configured rail'],['Hinges','Soft-close concealed'],['Legs','Adjustable plastic legs'],['Shelf supports','Nickel-plated steel']].map(([a,b])=><tr key={a} className="border-b"><td className="bg-[#eef1ed] p-3 font-bold">{a}</td><td className="p-3">{b}</td></tr>)}</tbody></table>
+      <HerrajesOtrosPdf filas={data.adicionales} moneda="USD" />
       <div className="mt-8 grid grid-cols-2 gap-6 text-xs"><div><h3 className="font-bold text-[#65796d]">INCLUDED</h3><p className="mt-2 leading-5">Configured cabinetry, panels, fillers, toe kicks, adjustable shelves, leveling legs and selected hardware.</p></div><div><h3 className="font-bold text-[#65796d]">BY OTHERS / EXCLUDED</h3><p className="mt-2 leading-5">Appliances, sinks, faucets, plumbing, electrical work, lighting and items not present in the quotation.</p></div></div>
     </Page>
 
@@ -74,7 +77,7 @@ function Proposal({ data }: { data: CemaProposalData }) {
     </Page>
 
     <Page number={4} title="TECHNICAL SPECIFICATIONS" subtitle="Cabinet construction and finish selections">
-      <table className="w-full text-xs"><thead className="bg-[#101615] text-white"><tr><th className="p-2 text-left">SELECTION</th><th>KITCHEN</th><th>BATHROOM</th></tr></thead><tbody>{[['Door color',t.doorColorKitchen,t.doorColorBathroom],['Door texture',t.doorTextureKitchen,t.doorTextureBathroom],['Door style','Flat panel','Flat panel'],['Hardware','Per configured modules','Per configured modules']].map((r,i)=><tr key={r[0]} className={i%2===0?'bg-[#eef1ed]':''}>{r.map((v,j)=><td key={j} className="p-3">{v}</td>)}</tr>)}</tbody></table>
+      <MaterialesProyectoPdf bloques={data.materiales} />
       <h3 className="mt-8 font-bold">COUNTERTOP SPECIFICATIONS</h3><table className="mt-2 w-full text-xs"><tbody>{[['Material',t.countertopMaterial],['Color',t.countertopColor],['Thickness',t.countertopThickness],['Kitchen depth',t.kitchenDepth],['Bathroom depth',t.bathroomDepth],['Kitchen backsplash',t.kitchenBacksplash],['Bathroom backsplash',t.bathroomBacksplash],['Edge / Waterfalls',t.waterfalls]].map(([a,b],i)=><tr key={a} className={i%2===0?'bg-[#eef1ed]':''}><td className="p-2 font-bold">{a}</td><td className="p-2">{b}</td></tr>)}</tbody></table>
     </Page>
 

@@ -536,8 +536,8 @@ export default function CocinaCard({
                           </div>
                           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                             <AddLineForm
-                              key={l.id}
-                              cocinaId={cocina.id}
+                              key={`${l.id}:${JSON.stringify(l.config?.preset)}:${l.config?.cantoCaja}:${l.config?.cantoFrentes}`}
+                              cocinaId={cocina.id} nombreArea={cocina.nombre}
                               tipos={tipos}
                               tableros={tableros}
                               cantos={cantos}
@@ -626,7 +626,7 @@ export default function CocinaCard({
           <div className="space-y-2">
             <AddLineForm
               key={`nuevo-${projectDefaults?.unidad ?? sistemaMedida}`}
-              cocinaId={cocina.id}
+              cocinaId={cocina.id} nombreArea={cocina.nombre}
               tipos={tipos}
               tableros={tableros}
               cantos={cantos}

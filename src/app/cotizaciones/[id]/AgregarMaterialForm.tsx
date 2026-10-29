@@ -49,6 +49,8 @@ export default function AgregarMaterialForm({ cocinaId, onDone }: { cocinaId: st
         <button onClick={onDone} className="text-sm text-slate-400 hover:underline">Cerrar</button>
       </div>
 
+      <p className="mb-3 text-xs text-slate-600">Todo lo agregado aquí se clasifica en Herrajes / otros del PDF, con sus cantidades y valores. Se excluye del conteo de muebles.</p>
+
       <div className="grid gap-3 md:grid-cols-[160px_1fr_140px_auto] md:items-end">
         <label className="block text-xs text-slate-500">
           <span className="mb-1 block">Tipo</span>

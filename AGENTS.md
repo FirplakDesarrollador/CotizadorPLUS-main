@@ -62,6 +62,13 @@ Este flujo de trabajo define los pasos exactos a seguir para garantizar que la b
 
 # Sistema de Calidad Modular, Trinquete de Deuda y Safe Change
 
+## Invariantes de cotizaciones y PDF
+
+- Todo artículo de **+ Agregar herrajes/otros** se cuenta con cantidades y valores en **Herrajes / otros** del PDF; se excluye de muebles y programación de módulos. El total lo incluye una sola vez.
+- Toda sección cuyo nombre contenga **closet** usa los materiales de **Closet/Walk-in closet** de Características del proyecto para todos sus módulos, independientemente del prefijo.
+- Las especificaciones impresas deben describir los materiales y cantos realmente elegidos en Características del proyecto, con su catálogo, sin textos genéricos de la plantilla que contradigan esas selecciones.
+- Para cambios en cotizaciones, materiales o impresión, cumplir el [protocolo de verificación](WikiLLM/wiki/protocolo_pdf_cotizaciones.md): auditoría de datos, regresiones y dos generaciones independientes del PDF con revisión de texto y páginas renderizadas.
+
 El repositorio cuenta con un sistema de calidad basado en impacto, trinquete de deuda histórica (*Ratchet*) y auditoría consultiva continua.
 
 ### 1. Comandos Operativos Obligatorios
