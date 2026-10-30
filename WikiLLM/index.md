@@ -78,3 +78,4 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Comparación Query App 2-10](wiki/comparacion_query_app_2_10.md) - Muestra por tipología y variantes: cantidades de piezas, cantos, entrepaños superiores y cobertura frente al catálogo activo.
 
 - [Nombre del PDF de cotización](wiki/nombre_pdf_cotizacion.md) - Nombre sugerido con proyecto y fecha local de generación en todas las plantillas.
+- [Dashboard de cotizaciones y ubicación](wiki/dashboard_cotizaciones.md) - País/ciudad, filtros compartibles, agregados SQL con RLS, gráficas SVG, tabla paginada y exportación CSV.

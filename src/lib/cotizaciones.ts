@@ -14,9 +14,11 @@ import { resolverTipologiaFondo } from '@/lib/sin-fondo';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
 import type { ComentarioCotizacion } from '@/lib/comentarios-cotizacion';
+import { normalizarUbicacion } from '@/lib/ubicacion-cotizacion';
 import { aplicarMaterialesProyecto, materialesDelDespieceCoinciden, resolverCodigoTablero, type ConfigMaterialesProyecto, type TableroProyecto } from '@/lib/materiales-proyecto';
 
 export type CotizacionHeader = {
+  pais: string; ciudad: string | null;
   id: string; codigo: string | null; nombre: string | null;
   cliente_nombre: string | null; comprador_nombre: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; notas?: string | null;
   sistema_medida: SistemaMedida;
@@ -36,7 +38,7 @@ export type CotizacionVersion = {
 export async function listarCotizaciones(): Promise<CotizacionHeader[]> {
   const sb = await createClient();
   const { data, error } = await sb.from('cot_cotizaciones')
-    .select('id,codigo,nombre,cliente_nombre,comprador_nombre,cotizador_por,moneda,trm,estado,total_cop,total_usd,created_at,creado_por')
+    .select('id,codigo,nombre,cliente_nombre,comprador_nombre,pais,ciudad,cotizador_por,moneda,trm,estado,total_cop,total_usd,created_at,creado_por')
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as Omit<CotizacionHeader, 'cotizado_por_usuario'>[];
@@ -113,12 +115,13 @@ export async function getCotizacion(id: string) {
   return { cabecera: cab, cocinas: cocinasConLineas, lineasSinCocina: lineasByCocina['sin'] ?? [] };
 }
 
-export async function crearCotizacion(input: { nombre: string; cliente_nombre?: string; comprador_nombre?: string; cotizador_por?: 'FIRPLAK' | 'CEMA'; moneda?: 'COP' | 'USD'; trm?: number; sistema_medida?: SistemaMedida; configDefault?: Record<string, unknown> | null }) {
+export async function crearCotizacion(input: { nombre: string; pais?: string; ciudad?: string | null; cliente_nombre?: string; comprador_nombre?: string; cotizador_por?: 'FIRPLAK' | 'CEMA'; moneda?: 'COP' | 'USD'; trm?: number; sistema_medida?: SistemaMedida; configDefault?: Record<string, unknown> | null }) {
   const sb = await createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) throw new Error('No autenticado');
   const { data, error } = await sb.from('cot_cotizaciones').insert({
     nombre: input.nombre,
+    ...normalizarUbicacion(input.pais ?? 'Colombia', input.ciudad),
     cliente_nombre: input.cliente_nombre || null,
     comprador_nombre: input.comprador_nombre || null,
     cotizador_por: input.cotizador_por ?? 'FIRPLAK',
@@ -140,6 +143,12 @@ export async function crearCocina(cotizacionId: string, nombre: string) {
   const { count } = await sb.from('cot_cocinas').select('id', { count: 'exact', head: true }).eq('cotizacion_id', cotizacionId);
   const { error } = await sb.from('cot_cocinas').insert({ cotizacion_id: cotizacionId, nombre: nombre || `Cocina ${(count ?? 0) + 1}`, orden: count ?? 0 });
   if (error) throw new Error(error.message);
+}
+
+export async function actualizarUbicacionCotizacion(id: string, pais: string, ciudad?: string | null) {
+  const sb = await createClient();
+  const { error } = await sb.from('cot_cotizaciones').update(normalizarUbicacion(pais, ciudad)).eq('id', id).select('id').single();
+  if (error) throw new Error('No se pudo actualizar la ubicación. Comprueba tus permisos sobre la cotización.');
 }
 
 export async function actualizarCocina(cocinaId: string, input: { nombre?: string; cantidad?: number } | string) {

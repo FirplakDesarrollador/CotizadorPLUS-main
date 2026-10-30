@@ -3,6 +3,7 @@ import { useActionState, useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { crearCotizacionAction } from './actions';
 import Combobox from '@/components/Combobox';
+import UbicacionCotizacion from '@/components/UbicacionCotizacion';
 import { familiaMaterialPorPrefijo, type FamiliaMaterial } from '@/lib/muebles';
 
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
@@ -33,6 +34,8 @@ export default function NuevoCotizacionForm({
   tableros, cantos, presetDefault, trmDefault, tipos, herrajesByTipo,
 }: Props) {
   const router = useRouter();
+  const [pais, setPais] = useState('Colombia');
+  const [ciudad, setCiudad] = useState('');
 
   const [moneda, setMoneda] = useState<'USD' | 'COP'>('USD');
   const [conFondo, setConFondo] = useState(true);
@@ -210,6 +213,7 @@ export default function NuevoCotizacionForm({
 
       {/* ── Datos del proyecto ── */}
       <section className="grid gap-3 md:grid-cols-2 md:items-start">
+      <UbicacionCotizacion pais={pais} ciudad={ciudad} onPaisChange={setPais} onCiudadChange={setCiudad}/>
       <F label="Nombre del proyecto *">
         <input name="nombre" required placeholder="Ej. Cocina Torre A — Apto 502" className="inp" />
       </F>

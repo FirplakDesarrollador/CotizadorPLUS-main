@@ -1,0 +1,3 @@
+export default function CargandoDashboard() {
+  return <main aria-busy="true" aria-label="Cargando dashboard de cotizaciones" className="mx-auto max-w-[1600px] space-y-5 px-6 py-8"><p className="text-sm text-slate-500">Cargando dashboard de cotizaciones…</p><div className="h-32 animate-pulse rounded-2xl bg-slate-200 motion-reduce:animate-none"/><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">{Array.from({ length: 6 }, (_, i) => <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200 motion-reduce:animate-none"/>)}</div><div className="h-80 animate-pulse rounded-2xl bg-slate-200 motion-reduce:animate-none"/></main>;
+}
