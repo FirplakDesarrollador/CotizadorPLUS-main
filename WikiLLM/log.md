@@ -2736,3 +2736,64 @@ Habilitadas BFD-SMG/SBFD-SMG y variantes -SF mediante 0230, aplicada en Supabase
 Se conservan las reglas físicas y los mecanizados. Corregida la paginación del
 catálogo precompilado para recuperar las 1.013 piezas. Auditoría de 18 variantes
 y 18 cruces, pruebas de regresión y documentación en plan_agrupacion_modulos.md.
+## [2026-10-30] update | Sufijos de espesor y SMG15 en cotizaciones
+
+Reutilizada la regla de espesores comunes de caja/frente para añadir SMG15.
+Auditadas 9 cotizaciones; actualizados 40 códigos y 25 grupos de MALECÓN 72,
+con respaldo y transacción, conservando precios y materiales. Documentación
+en codificacion_comercial_modulos.md y páginas de las familias SMG.
+
+## [2026-10-30] ingest | Análisis TW/W-SM-HOOD y preparación del campo HOOD
+
+Analizado TW-SM-HOOD.iges y sus once sólidos. Preparados campo, persistencia,
+validación y cantidad de puertas; pendientes las aclaraciones de frente falso
+variable/fijo y fondo de tabla/IGES antes de registrar las tipologías.
+
+## [2026-10-30] update | TW/W-SM-HOOD con HOOD y FREE confirmados
+
+Aplicada 0231 en Supabase. Carcasa=Alto−HOOD, frente falso=HOOD−FREE; FREE
+representa la parte visible del extractor. Fondo según tabla. TW una puerta y
+W dos. Campo y validación en simulador/cotizaciones, persistencia e historial.
+Documentación definitiva en tw_w_sm_hood.md; pruebas de motor, montaje y unidades.
+
+## [2026-10-30] update | Corrige trim de medidas ausentes en Simulador
+
+Normalización de todas las medidas del estado guardado y módulos combinados,
+incluida hidratación de la misma versión y Fast Refresh; almacenamiento versión 9.
+parseMedida acepta null/undefined como incompleto (NaN), sin inventar cero ni
+eliminar módulos. Nuevas regresiones de recuperación e historial y parser.
+Documentado en arquitectura_frontend.md y actualizada la versión en tw_w_sm_hood.md.
+
+## [2026-10-30] update | Extensión del frente falso HOOD bajo las puertas
+
+Aplicada 0232 para TW/W-SM-HOOD. Se suman 145,95 mm al alto HOOD−FREE y se
+conserva el borde inferior: separación exacta de 30 mm con las puertas.
+Actualizados visualización, madera, canto y precio; el tramo superior existe
+incluso si FREE=HOOD. No había líneas persistidas de estas familias al auditar.
+Regresiones de separación, cantidad, IGES original y aumento de materiales/costo.
+
+## [2026-10-30] update | Retira explicación de fórmulas HOOD/FREE
+
+Retirada la línea de fórmulas bajo HOOD/FREE en Simulador y formulario de
+cotización, a petición del usuario. Se conservan las aclaraciones breves de
+cada campo. Las reglas de cálculo y montaje siguen documentadas en tw_w_sm_hood.md.
+
+## [2026-10-30] update | Mayúscula inicial en aclaración FREE
+
+La aclaración y el título del campo FREE muestran «Parte visible del extractor»
+con P mayúscula en Simulador y formulario de cotizaciones.
+
+## [2026-10-30] ingest | Copiar sección completa de cotización
+
+Icono de copiar junto a eliminar; copia adyacente con sufijo -copia y renombrado
+habitual. Aplicada 0233 con RPC atómica y RLS, nuevos IDs y remapeo de grupos,
+conservando información y precios. Pruebas de datos, permisos, rollback, UI y PDF.
+Documentación en copiar_seccion_cotizacion.md.
+
+## [2026-10-30] update | HOOD con 46 tarugos de armado
+
+Aplicada 0234 para TW/W-SM-HOOD: entrepaño fijo 8, frente falso 10, gola 4 y
+refuerzos traseros 4 por pieza; base/tapa 8 cada una. Total individual 46 y
+costo por catálogo, manteniendo reglas de agrupación y modos de frentes.
+No había cotizaciones históricas con estas tipologías al auditar. Documentado
+y cubierto por regresiones en tw_w_sm_hood.md y pruebas HOOD.

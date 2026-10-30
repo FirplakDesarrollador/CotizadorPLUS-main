@@ -33,6 +33,7 @@ export type SimuladorModuloValues = {
   hornoAlto: string;
   mo: string;
   hood: string;
+  free: string;
 };
 
 export type SimuladorValues = SimuladorModuloValues & {
@@ -93,6 +94,7 @@ export const initialModuloValues: SimuladorModuloValues = {
   hornoAlto: '',
   mo: '',
   hood: '',
+  free: '',
 };
 
 const initialStateValues: SimuladorSnapshot = {
@@ -105,42 +107,44 @@ const initialStateValues: SimuladorSnapshot = {
   pendingDraft: null,
 };
 
-export const moduloFromValues = (values: SimuladorModuloValues, id: string): SimuladorModulo => ({
+export const moduloFromValues = (values: Partial<SimuladorModuloValues>, id: string): SimuladorModulo => ({
   id,
-  ...values,
-  preset: { ...values.preset },
-  herrajesExcl: [...values.herrajesExcl],
+  ...getModuloValues(values),
 });
 
-export const getModuloValues = (state: SimuladorModuloValues): SimuladorModuloValues => ({
-  tipoId: state.tipoId,
-  largo: state.largo,
-  alto: state.alto,
-  prof: state.prof,
-  perfilId: state.perfilId,
+const medidaGuardada = (value: unknown): string =>
+  typeof value === 'string' || typeof value === 'number' ? String(value) : '';
+
+export const getModuloValues = (state: Partial<SimuladorModuloValues>): SimuladorModuloValues => ({
+  tipoId: state.tipoId ?? '',
+  largo: medidaGuardada(state.largo),
+  alto: medidaGuardada(state.alto),
+  prof: medidaGuardada(state.prof),
+  perfilId: state.perfilId ?? '',
   preset: { ...state.preset },
-  cantoFrentes: state.cantoFrentes,
-  cantoCaja: state.cantoCaja,
-  conHerrajes: state.conHerrajes,
-  herrajesExcl: [...state.herrajesExcl],
-  npuertas: state.npuertas,
-  ncajones: state.ncajones,
-  nentrepanos: state.nentrepanos,
-  zocalo: state.zocalo,
-  puertaSup: state.puertaSup,
-  nbarras: state.nbarras,
-  dbTipo: state.dbTipo,
-  pcfdConfig: state.pcfdConfig,
-  rielCodigo: state.rielCodigo,
-  modoFrentes: state.modoFrentes,
-  sistemaFrente: state.sistemaFrente,
-  removible: state.removible,
-  door: state.door,
-  doorHand: state.doorHand,
-  hornoLargo: state.hornoLargo,
-  hornoAlto: state.hornoAlto,
-  mo: state.mo,
-  hood: state.hood,
+  cantoFrentes: state.cantoFrentes ?? '',
+  cantoCaja: state.cantoCaja ?? '',
+  conHerrajes: state.conHerrajes ?? true,
+  herrajesExcl: Array.isArray(state.herrajesExcl) ? [...state.herrajesExcl] : [],
+  npuertas: medidaGuardada(state.npuertas),
+  ncajones: medidaGuardada(state.ncajones),
+  nentrepanos: medidaGuardada(state.nentrepanos),
+  zocalo: medidaGuardada(state.zocalo),
+  puertaSup: medidaGuardada(state.puertaSup),
+  nbarras: medidaGuardada(state.nbarras),
+  dbTipo: state.dbTipo ?? '',
+  pcfdConfig: state.pcfdConfig ?? '',
+  rielCodigo: state.rielCodigo ?? initialModuloValues.rielCodigo,
+  modoFrentes: state.modoFrentes ?? 'normal',
+  sistemaFrente: state.sistemaFrente ?? 'manija',
+  removible: state.removible ?? false,
+  door: medidaGuardada(state.door),
+  doorHand: state.doorHand ?? 'R',
+  hornoLargo: medidaGuardada(state.hornoLargo),
+  hornoAlto: medidaGuardada(state.hornoAlto),
+  mo: medidaGuardada(state.mo),
+  hood: medidaGuardada(state.hood),
+  free: medidaGuardada(state.free),
 });
 
 const getSnapshot = (state: SimuladorState): SimuladorSnapshot => ({
@@ -226,33 +230,32 @@ export const useSimuladorStore = create<SimuladorState>()(
       // v3: el Breakdown ganó `m2`, `metros` y `desperdicio`. Un `result` guardado con
       // la forma anterior no los trae, así que `migrate` lo descarta (pone `result: null`)
       // y el Simulador pide recalcular en vez de renderizar campos ausentes.
-      version: 7,
+      version: 9,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {
           ...initialStateValues,
           ...state,
-          largo: state.largo == null ? initialModuloValues.largo : String(state.largo),
-          alto: state.alto == null ? initialModuloValues.alto : String(state.alto),
-          prof: state.prof == null ? initialModuloValues.prof : String(state.prof),
-          mo: state.mo == null ? initialModuloValues.mo : String(state.mo),
-          hood: state.hood == null ? initialModuloValues.hood : String(state.hood),
-          puertaSup: state.puertaSup == null ? initialModuloValues.puertaSup : String(state.puertaSup),
-          modulos: (state.modulos ?? []).map((modulo) => ({
-            ...modulo,
-            largo: String(modulo.largo),
-            alto: String(modulo.alto),
-            prof: String(modulo.prof),
-            mo: String(modulo.mo ?? ''),
-            hood: String(modulo.hood ?? ''),
-            puertaSup: String(modulo.puertaSup ?? ''),
-          })),
+          ...getModuloValues(state),
+          modulos: (state.modulos ?? []).map((modulo) => moduloFromValues(modulo, modulo.id)),
           editingId: null,
           pendingDraft: null,
           result: null,
           past: [],
           future: [],
         } as SimuladorState;
+      },
+      // También normaliza snapshots parciales de la versión actual y Fast Refresh.
+      merge: (persistedState, currentState) => {
+        const state = (persistedState ?? {}) as Partial<SimuladorState>;
+        return {
+          ...currentState,
+          ...state,
+          ...getModuloValues({ ...currentState, ...state }),
+          modulos: (state.modulos ?? currentState.modulos).map((modulo) => moduloFromValues(modulo, modulo.id)),
+          pendingDraft: state.pendingDraft ? getModuloValues(state.pendingDraft) : null,
+          past: [], future: [],
+        };
       },
       partialize: (state) => {
         const { past, future, ...persistedState } = state;

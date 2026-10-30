@@ -79,3 +79,5 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 
 - [Nombre del PDF de cotización](wiki/nombre_pdf_cotizacion.md) - Nombre sugerido con proyecto y fecha local de generación en todas las plantillas.
 - [Dashboard de cotizaciones y ubicación](wiki/dashboard_cotizaciones.md) - País/ciudad, filtros compartibles, agregados SQL con RLS, gráficas SVG, tabla paginada y exportación CSV.
+- [TW/W-SM-HOOD](wiki/tw_w_sm_hood.md) - Superiores de una/dos puertas, carcasa Alto−HOOD y frente falso extendido a 30 mm bajo las puertas, según IGES y tabla.
+- [Copiar sección de cotización](wiki/copiar_seccion_cotizacion.md) - Copia inmediata con grupos, muebles, adicionales y precios, transacción y RLS.

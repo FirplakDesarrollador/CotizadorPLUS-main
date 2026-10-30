@@ -1,4 +1,5 @@
 import 'server-only';
+import { usaHoodSm, validarHoodSm } from './hood-sm';
 import { leerCatalogoPaginado } from './catalogo-paginado';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -229,7 +230,16 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     ...(inp.overrides ?? {}),
     ...(inp.door != null ? { door: toInches(inp.door, inp.unidad) } : {}),
     ...(inp.doorHand ? { mano_derecha: inp.doorHand === 'R' ? 1 : 0 } : {}),
+    ...(usaHoodSm(tipo.pref) ? { n_puertas: tipo.pref === 'TW-SM-HOOD' ? 1 : 2 } : {}),
   };
+  if (usaHoodSm(tipo.pref)) {
+    const medidas=validarHoodSm(dims.A, inp.overrides?.HOOD, inp.overrides?.FREE);
+    dims.A=medidas.altoCarcasa;
+    const tc=Number(tablerosByCode[preset.caja]?.espesor_mm ?? 0)/25.4;
+    if (dims.A <= 200.85/25.4 + 2*tc) {
+      throw new Error('Alto − HOOD debe dejar espacio para el entrepaño fijo de 200,85 mm y la tapa.');
+    }
+  }
   if (usaPuertaParametrica(tipo.pref)) {
     if (!(inp.door != null && Number.isFinite(inp.door) && inp.door > 0)) throw new Error('Puerta es obligatoria y debe ser mayor que cero para esta tipología.');
     if (!inp.doorHand) throw new Error('Selecciona L o R para la apertura.');
