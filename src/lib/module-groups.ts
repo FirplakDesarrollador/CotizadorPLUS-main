@@ -51,8 +51,9 @@ export function convertirExacto(value: number, from: UnidadDim, to: UnidadDim): 
 // son de texto libre justamente para permitir este formato; sin este parseo,
 // Number("24 7/8") da NaN, que Supabase guarda como NULL y se lee de vuelta como 0
 // (un módulo "0x0x0" con costo casi nulo en una cotización real).
-export function parseMedida(raw: string | number): number {
+export function parseMedida(raw: string | number | null | undefined): number {
   if (typeof raw === 'number') return raw;
+  if (typeof raw !== 'string') return NaN;
   const s = raw.trim().replace(/["”]/g, '');
   if (s === '') return NaN;
   const directo = Number(s);
@@ -188,6 +189,7 @@ export function codigoComercial(input: CodigoComercialInput): string {
   const esSmg = prefNormalizado.split('-').includes('SMG');
   const esTw = prefNormalizado === 'TW';
   const esTwSmPush = prefNormalizado === 'TW-SM-PUSH';
+  const esTwSmHood = prefNormalizado === 'TW-SM-HOOD';
   let codigo = codigoModulo(pref, largo, unidad, sistema);
   // Las nuevas tipologías con sufijo propio (W-SM, OW-MO, W-SM-PUSH) conservan
   // ese sufijo al final: sus medidas variables se insertan antes de él.
@@ -196,7 +198,7 @@ export function codigoComercial(input: CodigoComercialInput): string {
     codigo = guion === -1 ? codigo + medida : codigo.slice(0, guion) + medida + codigo.slice(guion);
   };
   const esTorreTk = esTorreConDimensionesTk(prefNormalizado);
-  const altoSufijo = (incluyeAltoEnCodigo(pref) || esTw || esTwSmPush || esTorreTk)
+  const altoSufijo = (incluyeAltoEnCodigo(pref) || esTw || esTwSmPush || esTwSmHood || esTorreTk)
     ? anchoCodigo(alto, unidad, sistema)
     : '';
   if (altoSufijo) agregarMedida(altoSufijo);
@@ -252,10 +254,9 @@ export function codigoComercial(input: CodigoComercialInput): string {
     ? anchoCodigo(input.zocaloIn, 'in', sistema)
     : '';
   const finalizar = (valor: string) => tkMedida ? `${valor} TK${tkMedida}` : valor;
-  // Las tipologías SMG usan el nombre histórico sin sufijo para la combinación
-  // estándar y compactan el espesor cuando caja y frentes son de 18 mm: `-SMG18`.
-  if (esSmg) return finalizar(espesorCajaMm === 18 && espesorFrenteMm === 18
-    ? codigoBase.replace('-SMG', '-SMG18')
+  // SMG integra el espesor común en su segmento, igual que SM: SMG15/SMG18.
+  if (esSmg) return finalizar(espesorComun != null
+    ? codigoBase.replace('-SMG', `-SMG${espesorComun}`)
     : codigoBase);
   if (espesorComun == null) return finalizar(codigoBase);
   // En muebles superiores W/TW con sistema SM el indicador de espesor forma

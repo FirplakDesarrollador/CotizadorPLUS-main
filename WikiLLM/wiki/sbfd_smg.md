@@ -24,8 +24,9 @@ herraje para el perfil de gola metálica; no se inventa código ni precio.
 
 ## Código comercial y visualización
 
-Con caja de 15 mm el código es `SBFD<ancho>-SMG`. Si la caja seleccionada es de
-18 mm, el segmento completo pasa a `SMG18`: `SBFD<ancho>-SMG18`. El montaje de
+Con caja de 15 mm y frente de 18 mm el código es `SBFD<ancho>-SMG`. Si caja y
+frente son de 15 mm se usa `SMG15`; si ambos son de 18 mm se usa `SMG18`.
+El montaje de
 base, laterales, riel delantero, dos rieles traseros y puertas queda marcado
 como confirmado contra el IGES. El hueco de 30 mm sobre las puertas representa
 el sistema SMG.

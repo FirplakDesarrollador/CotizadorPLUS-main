@@ -68,6 +68,8 @@ class Consulta {
 }
 
 let recalculos = 0;
+let copiaResultado: { data: string | null; error: { message: string } | null } = { data: 'nueva-seccion', error: null };
+const copiaLlamadas: Array<{ nombre: string; argumentos: Record<string, unknown> }> = [];
 const catalogo = {
   tiposById: { w: { pref: 'W', pref_imperial: 'W', pref_metrico: 'W' } },
   tablerosByCode: { CLOSET: { espesor_mm: 18 } },
@@ -77,7 +79,9 @@ const original = loader._load;
 loader._load = function(id, ...args) {
   const name = id.replace(/\\/g, '/');
   if (name === 'server-only') return {};
-  if (name.includes('/lib/supabase/server')) return { createClient: async () => ({ from: (tabla: string) => new Consulta(tabla) }) };
+  if (name.includes('/lib/supabase/server')) return { createClient: async () => ({ from: (tabla: string) => new Consulta(tabla),
+    rpc: async (nombre: string, argumentos: Record<string, unknown>) => { copiaLlamadas.push({ nombre, argumentos }); return copiaResultado; },
+  }) };
   if (name === '@/lib/cotizar' || name.endsWith('/lib/cotizar.ts')) return {
     cargarCatalogoPrecompilado: async () => catalogo,
     cotizarGrupo: async (inputs: Array<{ preset: Record<string, string> }>) => {
@@ -90,6 +94,18 @@ loader._load = function(id, ...args) {
 };
 const api = requireLocal('../src/lib/cotizaciones.ts') as typeof import('../src/lib/cotizaciones');
 loader._load = original;
+
+test('copiar sección usa una sola RPC y conserva precios sin llamar al motor', async () => {
+  const antes = recalculos;
+  assert.equal(await api.duplicarCocina('origen', 'cotizacion'), 'nueva-seccion');
+  assert.deepEqual(copiaLlamadas.at(-1), { nombre: 'cot_duplicar_cocina', argumentos: { p_cotizacion_id: 'cotizacion', p_cocina_id: 'origen' } });
+  assert.equal(recalculos, antes);
+  copiaResultado = { data: null, error: { message: 'Permiso denegado' } };
+  await assert.rejects(() => api.duplicarCocina('origen', 'cotizacion'), /Permiso denegado/);
+  copiaResultado = { data: null, error: null };
+  await assert.rejects(() => api.duplicarCocina('origen', 'cotizacion'), /No se pudo copiar/);
+  copiaResultado = { data: 'nueva-seccion', error: null };
+});
 
 test('persistencia: sincroniza un W en área closet, recalcula importes y la segunda pasada es idempotente', async () => {
   tablas.cot_cotizaciones = [{ id: 'q', sistema_medida: 'metrico', config_default: { materialesCloset: { preset: { caja: 'CLOSET', frente: 'CLOSET' }, cantoCaja: '19x0,45', cantoFrentes: '22x1' } } }];

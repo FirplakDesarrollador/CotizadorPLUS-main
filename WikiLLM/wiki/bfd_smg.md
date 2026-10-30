@@ -26,7 +26,8 @@ en plano XZ y el entrepaño en plano XY.
 ## Código comercial
 
 La combinación estándar produce `BFD<ancho>-SMG`. Cuando caja y frentes son de
-18 mm, el segmento se compacta como `BFD<ancho>-SMG18`.
+18 mm, el segmento se compacta como `BFD<ancho>-SMG18`. Si ambos son de
+15 mm se usa `BFD<ancho>-SMG15`; con espesores distintos se conserva `SMG`.
 
 Implementación: `0202_bfd_smg.sql`. Regresiones: `tests/bfd-smg.test.ts` y
 `tests/module-groups.test.ts`.

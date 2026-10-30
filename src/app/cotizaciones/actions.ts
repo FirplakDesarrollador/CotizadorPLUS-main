@@ -4,7 +4,7 @@ import type { TipoMaterial } from '@/lib/materiales-linea';
 import { redirect } from 'next/navigation';
 import {
   crearCotizacion, agregarLinea, editarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
-  crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
+  crearCocina, actualizarCocina, eliminarCocina, duplicarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
   reordenarGruposCocina,
   guardarVersionCotizacion, restaurarVersionCotizacion,
   agregarComentarioCotizacion,
@@ -142,6 +142,21 @@ export async function actualizarCocinaAction(cotizacionId: string, cocinaId: str
 export async function eliminarCocinaAction(cotizacionId: string, cocinaId: string) {
   await eliminarCocina(cocinaId, cotizacionId);
   revalidatePath(`/cotizaciones/${cotizacionId}`);
+}
+
+export async function duplicarCocinaAction(cotizacionId: string, cocinaId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { user } = await getUserAndRole();
+    if (!user) throw new Error('No autorizado');
+    await duplicarCocina(cocinaId, cotizacionId);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    revalidatePath(`/cotizaciones/${cotizacionId}/imprimir`);
+    revalidatePath('/cotizaciones');
+    revalidatePath('/cotizaciones/dashboard');
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'No se pudo copiar la sección' };
+  }
 }
 
 export async function actualizarCotizacionAction(id: string, patch: { nombre?: string; cliente_nombre?: string; comprador_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }): Promise<{ ok: boolean; error?: string }> {

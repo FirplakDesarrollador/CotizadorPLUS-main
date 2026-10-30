@@ -1,4 +1,5 @@
 import { evalExpr, type Pieza } from './engine';
+import { usaHoodSm } from './hood-sm';
 import { isUpperCabinetGroup, normalizeUpperCabinetBaseAndTop, type GroupCalculation, type PreparedGroupMember } from './group-engine';
 import { inferirMontaje, validarMontaje, type FuncionMontaje, type MontajeConfig } from './visualizacion-config';
 
@@ -60,7 +61,9 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const verticalOffset=upperGroup?groupTop-A:0;
     const thickness=(rol: string) => Number(calc.tablerosByCode[calc.preset[rol]]?.espesor_mm ?? 0);
     const TC=thickness('caja') || 15, TF=thickness('frente') || 18, TB=thickness('fondo') || 6;
-    scene.modulos.push({pref,x:offset,z:verticalOffset,largo:L,alto:A,profundo:P});
+    // Incluye el tramo FREE sin tablero en la envolvente nominal del extractor.
+    const hoodEnvelope=usaHoodSm(pref)?HOOD:0;
+    scene.modulos.push({pref,x:offset,z:verticalOffset-hoodEnvelope,largo:L,alto:A+hoodEnvelope,profundo:P});
     const items: Item[]=[];
     const used=new Set<number>();
     calc.piezas.forEach((p, pi) => {
@@ -197,7 +200,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     items.forEach(i=>totals.set(i.funcion,(totals.get(i.funcion)||0)+i.count));
     // Place doors in horizontal rows; full-width doors naturally stack vertically.
     const doorSlots=new Map<string,{x:number;z:number}>();
-    const blind=items.find(i=>i.funcion==='frente_falso'&&i.h>innerH*.8);
+    const blind=usaHoodSm(pref) ? undefined : items.find(i=>i.funcion==='frente_falso'&&i.h>innerH*.8);
     const left=blind?blind.w:0, doorW=L-left;
     const doorRows:{entries:{item:Item;k:number;x:number}[];width:number;height:number}[]=[];
     for(const item of doors) for(let k=0;k<item.count;k++) {

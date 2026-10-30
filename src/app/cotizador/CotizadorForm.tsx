@@ -1,4 +1,6 @@
 'use client';
+import { usaHoodSm, validarHoodSm } from '@/lib/hood-sm';
+import { convertirExacto } from '@/lib/module-groups';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 import { cotizarGrupoAction } from './actions';
 import {
@@ -179,6 +181,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const setMo = (v: string) => setStore({ mo: v });
   const hood = store.hood ?? '';
   const setHood = (v: string) => setStore({ hood: v });
+  const free = store.free ?? '';
+  const setFree = (v: string) => setStore({ free: v });
 
   const result = store.result;
 
@@ -290,6 +294,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const usaDoor = usaPuertaParametrica(tipoPref);
   const usaHuecoHorno = usaHuecoHornoParametrico(tipoPref);
   const usaMoHood = [tipoActual?.pref, tipoActual?.pref_imperial, tipoActual?.pref_metrico].some(usaMedidasMoHood);
+  const usaHood = usaHoodSm(tipoActual?.pref);
   const usaRiel = (usaTipologiaDb && conHerrajes) || usaTipologiaDbSmFeSf || usaTipologiaDbSmg || usaTipologiaDbSmgFe || usaTipologiaDbSmgSf || esPCFD;
   function handleTipoChange(v: string) {
     const tipoSeleccionado = v === DB_SM_FE_SF_GROUP_VALUE
@@ -323,6 +328,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setRielCodigo('RIELTANDEM');
     setPcfdConfig('');
     setDoor('');
+    setFree('');
     setDoorHand('R');
     if (usaMedidasMoHood(tipoSeleccionado.pref)) {
       setMo(String(convertir(200, 'mm', unidad)));
@@ -384,7 +390,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (hornoLargo !== '' && Number.isFinite(parseMedida(hornoLargo))) setHornoLargo(String(convertir(parseMedida(hornoLargo), unidad, nu)));
     if (hornoAlto !== '' && Number.isFinite(parseMedida(hornoAlto))) setHornoAlto(String(convertir(parseMedida(hornoAlto), unidad, nu)));
     if (mo !== '' && Number.isFinite(parseMedida(mo))) setMo(String(convertir(parseMedida(mo), unidad, nu)));
-    if (hood !== '' && Number.isFinite(parseMedida(hood))) setHood(String(convertir(parseMedida(hood), unidad, nu)));
+    if (hood !== '' && Number.isFinite(parseMedida(hood))) setHood(String(usaHood ? convertirExacto(parseMedida(hood), unidad, nu) : convertir(parseMedida(hood), unidad, nu)));
+    if (free !== '' && Number.isFinite(parseMedida(free))) setFree(String(convertirExacto(parseMedida(free), unidad, nu)));
     if (zocalo !== '' && Number.isFinite(parseMedida(zocalo))) setZocalo(String(convertir(parseMedida(zocalo), unidad, nu)));
     if (puertaSup !== '' && Number.isFinite(parseMedida(puertaSup))) setPuertaSup(String(convertir(parseMedida(puertaSup), unidad, nu)));
     setUnidad(nu);
@@ -404,10 +411,14 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const dimensionesValidas = (values: Pick<SimuladorModuloValues, 'largo' | 'alto' | 'prof'>) =>
     [values.largo, values.alto, values.prof].every((value) => {
       const parsed = parseMedida(value);
-      return value.trim() !== '' && Number.isFinite(parsed) && parsed > 0;
+      return typeof value === 'string' && value.trim() !== '' && Number.isFinite(parsed) && parsed > 0;
     });
 
   function validarDimensionesActivas() {
+    if (usaHood) {
+      try { validarHoodSm(parseMedida(alto), hood.trim() === '' ? undefined : parseMedida(hood), free.trim() === '' ? undefined : parseMedida(free)); }
+      catch (error) { setError((error as Error).message); return false; }
+    }
     if (!dimensionesValidas({ largo, alto, prof })) {
       setError('Completa Largo, Alto y Prof con valores mayores que cero.');
       return false;
@@ -453,6 +464,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (usaMedidasMoHood(pref)) {
       overrides.MO = convertir(parseMedida(modulo.mo), unidad, 'in');
       overrides.HOOD = convertir(parseMedida(modulo.hood), unidad, 'in');
+    }
+    if (usaHoodSm(pref)) {
+      overrides.HOOD = convertirExacto(parseMedida(modulo.hood), unidad, 'in');
+      overrides.FREE = convertirExacto(parseMedida(modulo.free), unidad, 'in');
     }
     if (permiteTipologiaDb(pref) && modulo.dbTipo) {
       const dbT = DB_TIPOLOGIAS.find((x) => x.key === modulo.dbTipo);
@@ -827,6 +842,16 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
           </div>
         )}
 
+        {usaHood && <div className="grid grid-cols-2 gap-2">
+          <Field label="HOOD">
+            <input type="text" required value={hood} onChange={(e) => setHood(e.target.value)} title="Medida total por debajo de la carcasa" className="inp" />
+            <p className="mt-1 text-xs text-slate-500">Medida total por debajo de la carcasa</p>
+          </Field>
+          <Field label="FREE">
+            <input type="text" required value={free} onChange={(e) => setFree(e.target.value)} title="Parte visible del extractor" className="inp" />
+            <p className="mt-1 text-xs text-slate-500">Parte visible del extractor</p>
+          </Field>
+        </div>}
         {usaMoHood && (
           <div className="grid grid-cols-2 gap-2 items-end">
             <Field label="MO">
@@ -912,7 +937,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         </div>
 
         <div data-tour="opciones" className="grid grid-cols-2 gap-2 items-end">
-          <Field label="Nº puertas (override)"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
+          <Field label="Nº puertas (override)"><input type="number" placeholder="auto" disabled={usaHood} value={usaHood ? (tipoActual?.pref === 'TW-SM-HOOD' ? '1' : '2') : npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
           <Field label="Nº cajones (override)"><input type="number" min={0} step={1} placeholder="auto" value={ncajones} onChange={(e) => { setNcajones(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" /></Field>
           <Field label="Nº entrepaños (override)"><input type="number" min={0} step={1} placeholder="auto" value={nentrepanos} onChange={(e) => { setNentrepanos(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" /></Field>
           {esPCFD && (

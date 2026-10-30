@@ -248,3 +248,26 @@ La construcción de la tabla (`construirFilas`, nombres de producción, regla Co
 Nuevas dependencias: `jspdf` y `html2canvas-pro` (ninguna aparece en el reporte de vulnerabilidades de `npm audit`; las 11 que sí salen son todas de paquetes preexistentes — `next`, `postcss`, `sharp`, `xlsx`, etc. — sin relación con este cambio).
 
 *NOTA: Gran parte del diseño y la interacción fluye a través de Server Actions de Next.js, conectando directamente los componentes interactivos con funciones seguras del servidor (como `cotizar.ts`).*
+
+## Recuperación de medidas del Simulador (2026-10-30)
+
+El almacenamiento `simulador-storage` usa versión 9. `getModuloValues` y
+`moduloFromValues` normalizan medidas opcionales ausentes a cadena vacía,
+conservan medidas existentes, IDs, materiales y módulos combinados. La migración
+cubre versiones anteriores; el `merge` normaliza también snapshots incompletos
+de la misma versión. Los snapshots usados por deshacer/rehacer pasan por la
+misma normalización, cubriendo estados en memoria tras Fast Refresh.
+
+Una medida obligatoria ausente permanece incompleta: no se inventa un cero.
+`parseMedida(null/undefined)` devuelve NaN en lugar de invocar `.trim()`; las
+validaciones existentes muestran el campo pendiente. Esto corrige el Runtime
+TypeError al construir inputs desde estados guardados sin PUERTA SUP, HOOD,
+FREE u otros campos opcionales nuevos.
+
+Regresiones: `tests/simuladorStore.test.ts` (migración, hidratación de versión
+actual, campos incompletos, preservación e historial) y `tests/module-groups.test.ts`
+(parser ausente, cero real y fracciones). Verificación de navegador con Chrome
+mediante Playwright, ya que el plugin Browser no está disponible: recuperar
+estado incompleto → calcular individual/combinado → resultado sin overlay y
+sin borrar los módulos guardados; FREE ausente sigue siendo obligatorio.
+Resultado final: quality:plan → quality:impact → quality:gate aprobados (91 suites); quality:learn --strict sin hallazgos HIGH. La prueba en navegador no escribió cotizaciones ni modificó el almacenamiento del usuario.

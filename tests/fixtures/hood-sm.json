@@ -1,0 +1,486 @@
+{
+  "TW-SM-HOOD": [
+    {
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "cantos": {
+        "anchos": 0,
+        "largos": 2,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 8,
+      "soportes": 0,
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base_tapa",
+      "formula_largo_grupo": "LG-(2*TC)",
+      "visualizacion": {
+        "x": "TC",
+        "y": "0",
+        "z": "0",
+        "plano": "XY",
+        "funcion": "base",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "cantos": {
+        "anchos": 0,
+        "largos": 2,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 8,
+      "soportes": 0,
+      "modo_agrupacion": "continua",
+      "clave_fusion": "tapa",
+      "formula_largo_grupo": "LG-(2*TC)",
+      "visualizacion": {
+        "x": "TC",
+        "y": "0",
+        "z": "A-TC",
+        "plano": "XY",
+        "funcion": "tapa",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "cantos": {
+        "anchos": 0,
+        "largos": 2,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 0,
+      "soportes": 0,
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null,
+      "visualizacion": {
+        "x": "I*(L-TC)",
+        "y": "0",
+        "z": "0",
+        "plano": "YZ",
+        "funcion": "lateral",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "80/25.4",
+      "cantos": {
+        "anchos": 2,
+        "largos": 0,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 4,
+      "soportes": 0,
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)",
+      "visualizacion": {
+        "x": "TC",
+        "y": "P-TC",
+        "z": "I===0 ? TC : A-TC-H",
+        "plano": "XZ",
+        "funcion": "travesano_posterior",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "gola_madera",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "80/25.4",
+      "cantos": {
+        "anchos": 2,
+        "largos": 0,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 4,
+      "soportes": 0,
+      "modo_agrupacion": "continua_opcional",
+      "clave_fusion": "gola_hood",
+      "formula_largo_grupo": "LG-(2*TC)",
+      "visualizacion": {
+        "x": "TC",
+        "y": "20",
+        "z": "120.85",
+        "plano": "XZ",
+        "funcion": "gola",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "entrepano_fijo",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-23/25.4",
+      "cantos": {
+        "anchos": 0,
+        "largos": 2,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 8,
+      "soportes": 0,
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null,
+      "visualizacion": {
+        "x": "TC",
+        "y": "0",
+        "z": "200.85",
+        "plano": "XY",
+        "funcion": "estante",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-179.15/25.4",
+      "cantos": {
+        "anchos": 2,
+        "largos": 2,
+        "calibre": "19x2"
+      },
+      "tarugos": 0,
+      "soportes": 0,
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null,
+      "visualizacion": {
+        "x": "1.6+I*(W+3.2)",
+        "y": "-TF",
+        "z": "175.95",
+        "plano": "XZ",
+        "funcion": "frente",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "frente_falso",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L-RV",
+      "formula_ancho": "HOOD-FREE+145.95/25.4",
+      "cantos": {
+        "anchos": 2,
+        "largos": 2,
+        "calibre": "19x2"
+      },
+      "tarugos": 10,
+      "soportes": 0,
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null,
+      "visualizacion": {
+        "x": "1.6",
+        "y": "-TF",
+        "z": "145.95-H",
+        "nota": "Borde superior 30 mm bajo las puertas; borde inferior conserva HOOD-FREE.",
+        "plano": "XZ",
+        "funcion": "frente_falso",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-16/25.4",
+      "formula_ancho": "L-16/25.4",
+      "cantos": {},
+      "tarugos": 0,
+      "soportes": 0,
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-16/25.4",
+      "visualizacion": {
+        "x": "8",
+        "y": "P-TC-TB-1",
+        "z": "8",
+        "plano": "XZ",
+        "funcion": "respaldo",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": true
+      }
+    }
+  ],
+  "W-SM-HOOD": [
+    {
+      "nombre": "base",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "cantos": {
+        "anchos": 0,
+        "largos": 2,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 8,
+      "soportes": 0,
+      "modo_agrupacion": "continua",
+      "clave_fusion": "base_tapa",
+      "formula_largo_grupo": "LG-(2*TC)",
+      "visualizacion": {
+        "x": "TC",
+        "y": "0",
+        "z": "0",
+        "plano": "XY",
+        "funcion": "base",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "tapa",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P",
+      "cantos": {
+        "anchos": 0,
+        "largos": 2,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 8,
+      "soportes": 0,
+      "modo_agrupacion": "continua",
+      "clave_fusion": "tapa",
+      "formula_largo_grupo": "LG-(2*TC)",
+      "visualizacion": {
+        "x": "TC",
+        "y": "0",
+        "z": "A-TC",
+        "plano": "XY",
+        "funcion": "tapa",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "lateral",
+      "rol_tablero": "caja",
+      "formula_cantidad": "2",
+      "formula_largo": "A",
+      "formula_ancho": "P",
+      "cantos": {
+        "anchos": 0,
+        "largos": 2,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 0,
+      "soportes": 0,
+      "modo_agrupacion": "lateral_compartido",
+      "clave_fusion": null,
+      "formula_largo_grupo": null,
+      "visualizacion": {
+        "x": "I*(L-TC)",
+        "y": "0",
+        "z": "0",
+        "plano": "YZ",
+        "funcion": "lateral",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "refuerzo_trasero",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "2",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "80/25.4",
+      "cantos": {
+        "anchos": 2,
+        "largos": 0,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 4,
+      "soportes": 0,
+      "modo_agrupacion": "continua",
+      "clave_fusion": "refuerzo_trasero",
+      "formula_largo_grupo": "LG-(2*TC)",
+      "visualizacion": {
+        "x": "TC",
+        "y": "P-TC",
+        "z": "I===0 ? TC : A-TC-H",
+        "plano": "XZ",
+        "funcion": "travesano_posterior",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "gola_madera",
+      "rol_tablero": "caja",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "80/25.4",
+      "cantos": {
+        "anchos": 2,
+        "largos": 0,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 4,
+      "soportes": 0,
+      "modo_agrupacion": "continua_opcional",
+      "clave_fusion": "gola_hood",
+      "formula_largo_grupo": "LG-(2*TC)",
+      "visualizacion": {
+        "x": "TC",
+        "y": "20",
+        "z": "120.85",
+        "plano": "XZ",
+        "funcion": "gola",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "entrepano_fijo",
+      "rol_tablero": "refuerzo",
+      "formula_cantidad": "1",
+      "formula_largo": "L-2*TC",
+      "formula_ancho": "P-23/25.4",
+      "cantos": {
+        "anchos": 0,
+        "largos": 2,
+        "calibre": "19x0,45"
+      },
+      "tarugos": 8,
+      "soportes": 0,
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null,
+      "visualizacion": {
+        "x": "TC",
+        "y": "0",
+        "z": "200.85",
+        "plano": "XY",
+        "funcion": "estante",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "frente",
+      "rol_tablero": "frente",
+      "formula_cantidad": "n_puertas",
+      "formula_largo": "(L-n_puertas*RV)/n_puertas",
+      "formula_ancho": "A-179.15/25.4",
+      "cantos": {
+        "anchos": 2,
+        "largos": 2,
+        "calibre": "19x2"
+      },
+      "tarugos": 0,
+      "soportes": 0,
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null,
+      "visualizacion": {
+        "x": "1.6+I*(W+3.2)",
+        "y": "-TF",
+        "z": "175.95",
+        "plano": "XZ",
+        "funcion": "frente",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "frente_falso",
+      "rol_tablero": "frente",
+      "formula_cantidad": "1",
+      "formula_largo": "L-RV",
+      "formula_ancho": "HOOD-FREE+145.95/25.4",
+      "cantos": {
+        "anchos": 2,
+        "largos": 2,
+        "calibre": "19x2"
+      },
+      "tarugos": 10,
+      "soportes": 0,
+      "modo_agrupacion": "local",
+      "clave_fusion": null,
+      "formula_largo_grupo": null,
+      "visualizacion": {
+        "x": "1.6",
+        "y": "-TF",
+        "z": "145.95-H",
+        "nota": "Borde superior 30 mm bajo las puertas; borde inferior conserva HOOD-FREE.",
+        "plano": "XZ",
+        "funcion": "frente_falso",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": false
+      }
+    },
+    {
+      "nombre": "fondo",
+      "rol_tablero": "fondo",
+      "formula_cantidad": "1",
+      "formula_largo": "A-16/25.4",
+      "formula_ancho": "L-16/25.4",
+      "cantos": {},
+      "tarugos": 0,
+      "soportes": 0,
+      "modo_agrupacion": "continua",
+      "clave_fusion": "fondo",
+      "formula_largo_grupo": "LG-16/25.4",
+      "visualizacion": {
+        "x": "8",
+        "y": "P-TC-TB-1",
+        "z": "8",
+        "plano": "XZ",
+        "funcion": "respaldo",
+        "version": 1,
+        "confirmado": true,
+        "intercambiar": true
+      }
+    }
+  ]
+}
