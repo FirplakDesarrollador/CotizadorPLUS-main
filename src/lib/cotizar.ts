@@ -1,4 +1,5 @@
 import 'server-only';
+import { leerCatalogoPaginado } from './catalogo-paginado';
 import { createClient } from '@/lib/supabase/server';
 import {
   calcularMueble, toInches, normCalibre,
@@ -87,7 +88,7 @@ export async function cargarCatalogoPrecompilado(): Promise<CatalogoPrecompilado
   ] = await Promise.all([
     sb.from('cot_parametros').select('key,value'),
     sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,etiquetas_und,margen_key,usa_carton,categoria'),
-    sb.from('cot_piezas_plantilla').select('*').order('orden'),
+    leerCatalogoPaginado((desde, hasta) => sb.from('cot_piezas_plantilla').select('*').order('orden').order('id').range(desde, hasta)),
     sb.from('cot_reglas_config').select('*').eq('activo', true),
     sb.from('cot_herrajes_plantilla').select('*').order('orden'),
     sb.from('cot_cantos').select('calibre,precio'),

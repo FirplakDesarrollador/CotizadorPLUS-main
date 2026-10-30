@@ -50,3 +50,9 @@ Implementación: migraciones `0197_sbfd_smg.sql`,
 `0200_sbfd_smg_mecanizado_laterales.sql` y el retiro del refuerzo en
 `0201_sbfd_smg_retirar_refuerzo_delantero.sql`. Regresiones:
 `tests/sbfd-smg.test.ts` y `tests/module-groups.test.ts`.
+
+## Agrupación física
+
+Desde `0230_agrupacion_smg.sql`, esta familia y su variante -SF admiten
+agrupación con las reglas existentes. Véase [agrupación SMG](plan_agrupacion_modulos.md#agrupación-smg-2026-10-30).
+Se conserva su ausencia de entrepaño y gola de madera.

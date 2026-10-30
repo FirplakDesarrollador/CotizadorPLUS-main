@@ -30,3 +30,9 @@ La combinación estándar produce `BFD<ancho>-SMG`. Cuando caja y frentes son de
 
 Implementación: `0202_bfd_smg.sql`. Regresiones: `tests/bfd-smg.test.ts` y
 `tests/module-groups.test.ts`.
+
+## Agrupación física
+
+Desde `0230_agrupacion_smg.sql`, esta familia y su variante -SF admiten
+agrupación con las reglas existentes. Véase [agrupación SMG](plan_agrupacion_modulos.md#agrupación-smg-2026-10-30).
+Se conservan los mecanizados de 27 × 73 mm y el refuerzo frontal retirado 27 mm.

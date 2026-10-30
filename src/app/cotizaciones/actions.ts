@@ -13,6 +13,21 @@ import {
 } from '@/lib/cotizaciones';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
+import { normalizarUbicacion } from '@/lib/ubicacion-cotizacion';
+import { actualizarUbicacionCotizacion } from '@/lib/cotizaciones';
+import { getUserAndRole } from '@/lib/auth';
+
+export async function actualizarUbicacionCotizacionAction(id: string, pais: string, ciudad: string) {
+  try {
+    const { user } = await getUserAndRole();
+    if (!user) throw new Error('No autenticado');
+    await actualizarUbicacionCotizacion(id, pais, ciudad);
+    revalidatePath('/cotizaciones');
+    revalidatePath('/cotizaciones/dashboard');
+    revalidatePath(`/cotizaciones/${id}`);
+    return { ok: true };
+  } catch (error) { return { ok: false, error: error instanceof Error ? error.message : 'No se pudo guardar la ubicación.' }; }
+}
 
 export async function reordenarGruposCocinaAction(cocinaId: string, nuevosGrupoIds: string[]): Promise<{ ok: boolean; error?: string }> {
   try {
@@ -31,6 +46,7 @@ export async function crearCotizacionAction(
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
   try {
     const nombre = String(formData.get('nombre') || 'Cotización');
+    const ubicacion = normalizarUbicacion(String(formData.get('pais') ?? ''), String(formData.get('ciudad') ?? ''));
     const cliente_nombre = String(formData.get('cliente_nombre') || '');
     const comprador_nombre = String(formData.get('comprador_nombre') || '');
     const cotizador_por = String(formData.get('cotizador_por') || 'FIRPLAK') === 'CEMA' ? 'CEMA' : 'FIRPLAK';
@@ -46,7 +62,7 @@ export async function crearCotizacionAction(
     if (!Array.isArray(familias) || familias.length === 0) {
       throw new Error('Incluye al menos una familia de muebles en la cotización.');
     }
-    const id = await crearCotizacion({ nombre, cliente_nombre, comprador_nombre, cotizador_por, moneda, trm, sistema_medida, configDefault });
+    const id = await crearCotizacion({ nombre, ...ubicacion, cliente_nombre, comprador_nombre, cotizador_por, moneda, trm, sistema_medida, configDefault });
     revalidatePath('/cotizaciones');
     return { ok: true, id };
   } catch (e) {
