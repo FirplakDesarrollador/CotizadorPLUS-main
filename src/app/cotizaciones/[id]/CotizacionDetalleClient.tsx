@@ -14,6 +14,7 @@ import { CLAVE_CONFIG_FAMILIA, type FamiliaMaterial } from '@/lib/muebles';
 import { calcularMargenGlobalProyecto } from '@/lib/module-groups';
 import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario } from '@/lib/comentarios-cotizacion';
 import { crearGuardadoSecuencial } from '@/lib/guardado-secuencial';
+import UbicacionEditor from './UbicacionEditor';
 
 type LineaConfig = {
   preset?: Record<string, string>;
@@ -60,7 +61,7 @@ type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metr
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null; precio_m2: number };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; notas?: string | null; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
+type Cab = { pais?: string; ciudad?: string | null; id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; notas?: string | null; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
 export type ColumnasPrecio = { sinHerrajes: boolean; conHerrajes: boolean; usd: boolean; cop: boolean };
 type UnidadProyecto = 'in' | 'cm' | 'mm';
 
@@ -234,6 +235,7 @@ export default function CotizacionDetalleClient({
         </div>
       </div>
 
+      <UbicacionEditor id={cabecera.id} pais={cabecera.pais ?? 'Colombia'} ciudad={cabecera.ciudad ?? null}/>
       <section data-tour="config" className="space-y-2">
         <button
           type="button"

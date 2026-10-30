@@ -385,3 +385,38 @@ El módulo `/cotizador` reutiliza el motor físico sin crear proyecto, cocina ni
 - Un error del motor deja intacta la última configuración válida y bloquea nuevas confirmaciones hasta que cambie el formulario.
 - El resultado público es un desglose único del conjunto en modo combinado o del módulo en modo individual.
 - La sesión, incluido borrador, orden, edición y resultado, persiste en `simulador-storage` y participa en Undo/Redo.
+
+## Agrupación SMG (2026-10-30)
+
+La migración `0230_agrupacion_smg.sql` habilita BFD-SMG, SBFD-SMG y sus variantes
+-SF, que antes tenían la agrupación deshabilitada y piezas estructurales locales.
+Los catorce DB-SMG ya estaban habilitados. Se mantienen las reglas del motor:
+`n+1` laterales; base y refuerzos traseros continuos; refuerzo frontal opcional
+solo con montaje, sección, cantidad, material y cantos compatibles. Frentes,
+entrepaños y gavetas conservan su fabricación local. No se altera el mecanizado
+SMG ni se agrega una gola de madera. Agrupados omiten fondo y usan base `P-TC`,
+según la regla existente de inferiores SM/SMG; separados recuperan su despiece.
+Siguen vigentes profundidad, espesor, materiales, margen, longitud de tablero y
+cantidad unitaria del módulo. No se agrupan automáticamente líneas históricas.
+
+La carga precompilada pagina `cot_piezas_plantilla` de mil en mil, ordenada por
+`orden,id`: había 1.013 filas y PostgREST truncaba trece piezas. El helper
+`catalogo-paginado.ts` falla ante errores para impedir cálculos parciales.
+
+Verificación reproducible de solo lectura:
+`node --conditions=react-server --env-file=.env --import tsx db/tests/smg_agrupacion.ts`.
+Cubre las 18 variantes y 18 cruces con BFD-SMG, tres laterales por pareja,
+base continua, fondo individual/agrupado y rechazo de profundidad incompatible.
+Regresiones en `tests/bfd-smg.test.ts` y `tests/catalogo-paginado.test.ts`.
+
+Evidencia final (2026-10-30): grupo BFD24-SMG + SBFD24-SMG creado desde la
+interfaz autenticada y persistido como A1/A2, 48 pulgadas, tres laterales y una
+unión. En este cruce el refuerzo frontal permaneció local por diferencias de
+canto, tal como exige la homologación opcional. Dos generaciones independientes
+del PDF produjeron cuatro páginas con texto idéntico; se revisaron las ocho
+páginas renderizadas y los dos módulos en la programación. La cotización temporal
+fue eliminada. Auditoría de cotizaciones existentes: cero errores y diferencias.
+`quality:plan`, `quality:impact` y `quality:gate`: exit 0 (89 suites).
+`quality:learn -- --strict`: exit 0, cero HIGH. La advertencia MED por falta de
+`cotizar.test.ts` se cubre específicamente con el helper unitario paginado y la
+auditoría reproducible que carga el catálogo real y llama a `cotizarGrupo`.

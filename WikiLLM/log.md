@@ -2725,3 +2725,14 @@ Los adicionales se excluyen de muebles y programación de las tres plantillas y 
 ## [2026-10-29] update | Propagación visible de materiales globales y preparación de integración
 
 Se serializa el guardado de Características para impedir que peticiones anteriores sobrescriban cambios posteriores; se muestran progreso y errores. El editor abierto refleja el preset y los cantos guardados tras la actualización y la etiqueta de materiales globales solo confirma coincidencias reales. Se invalida también la vista imprimible. Se añaden pruebas de guardado concurrente e inmutable y el protocolo exige dos cambios reales desde la interfaz sobre PN, F, W y DFE de una sección closet. Validación exhaustiva: 84 archivos de pruebas.
+
+## [2026-10-30] ingest | Dashboard de cotizaciones y campos país/ciudad
+
+Se agrega la migración aditiva 0229 (país obligatorio con Colombia para el histórico, ciudad opcional e índices), edición independiente de ubicación y la ruta /cotizaciones/dashboard. La vista y los RPC SECURITY INVOKER preservan RLS; los mismos filtros alimentan agregados, tabla paginada y CSV. Se implementan KPIs y gráficas SVG propias sin dependencias nuevas, filtros en URL, orden, paginación, estados de carga/vacío/error y exportación UTF-8 para Excel. La arquitectura, semántica y pruebas se documentan en wiki/dashboard_cotizaciones.md. No se modifican archivos de PDF, variantes isazaale ni fuentes raw.
+
+## [2026-10-30] update | Agrupación física de muebles SMG
+
+Habilitadas BFD-SMG/SBFD-SMG y variantes -SF mediante 0230, aplicada en Supabase.
+Se conservan las reglas físicas y los mecanizados. Corregida la paginación del
+catálogo precompilado para recuperar las 1.013 piezas. Auditoría de 18 variantes
+y 18 cruces, pruebas de regresión y documentación en plan_agrupacion_modulos.md.

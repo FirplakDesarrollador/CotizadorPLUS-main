@@ -9,13 +9,18 @@
       "patterns": [
         "src/lib/group-engine.ts",
         "src/lib/group-result.ts",
-        "src/lib/module-groups.ts"
+        "src/lib/module-groups.ts",
+        "db/migrations/0230_agrupacion_smg.sql",
+        "db/tests/smg_agrupacion.ts"
       ],
       "tests": [
         "tests/module-groups.test.ts",
         "tests/group-engine.test.ts",
         "tests/group-result.test.ts",
-        "tests/margen-global.test.ts"
+        "tests/margen-global.test.ts",
+        "tests/bfd-smg.test.ts",
+        "tests/sbfd-smg.test.ts",
+        "tests/db-smg.test.ts"
       ]
     },
     {
@@ -37,6 +42,7 @@
       "description": "Preparación de cotizaciones, tarifas, overrides, consultas a Supabase y catálogo precompilado",
       "patterns": [
         "src/lib/cotizar.ts",
+        "src/lib/catalogo-paginado.ts",
         "src/lib/cotizaciones.ts",
         "src/lib/diseno.ts",
         "src/lib/admin.ts",
@@ -49,10 +55,16 @@
         "src/lib/materiales-proyecto.ts",
         "src/lib/propuesta-cotizacion.ts",
         "scripts/auditar-propuestas.ts",
-        "src/lib/guardado-secuencial.ts"
+        "src/lib/guardado-secuencial.ts",
+        "src/lib/dashboard-cotizaciones.ts",
+        "src/lib/dashboard-cotizaciones-datos.ts",
+        "src/lib/dashboard-csv.ts",
+        "src/lib/ubicacion-cotizacion.ts",
+        "db/migrations/0229_dashboard_cotizaciones_ubicacion.sql"
       ],
       "tests": [
         "tests/margen-global.test.ts",
+        "tests/catalogo-paginado.test.ts",
         "tests/group-result.test.ts",
         "tests/precio-herrajes.test.ts",
         "tests/consumo-materiales.test.ts",
@@ -64,7 +76,11 @@
         "tests/propuesta-cotizacion.test.ts",
         "tests/materiales-proyecto.test.ts",
         "tests/cotizaciones.test.ts",
-        "tests/guardado-secuencial.test.ts"
+        "tests/guardado-secuencial.test.ts",
+        "tests/dashboard-cotizaciones.test.ts",
+        "tests/dashboard-csv.test.ts",
+        "tests/ubicacion-cotizacion.test.ts",
+        "tests/dashboard-cotizaciones-datos.test.ts"
       ]
     },
     {
@@ -147,7 +163,11 @@
         "tests/propuesta-cotizacion.test.ts",
         "tests/materiales-proyecto.test.ts",
         "tests/cotizaciones.test.ts",
-        "tests/guardado-secuencial.test.ts"
+        "tests/guardado-secuencial.test.ts",
+        "tests/dashboard-cotizaciones.test.ts",
+        "tests/dashboard-csv.test.ts",
+        "tests/ubicacion-cotizacion.test.ts",
+        "tests/dashboard-cotizaciones-datos.test.ts"
       ]
     },
     {

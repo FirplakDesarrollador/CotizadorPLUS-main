@@ -27,6 +27,7 @@ export default async function CotizacionesPage() {
       <AppHeader nombre={nombre} email={user?.email} rol={rol} active="cotizaciones" />
       <div className="mx-auto w-full max-w-[1600px] px-4 pt-4 flex justify-end gap-2">
         <GuideButton steps={GUIA_LISTA} label="Guía de uso" />
+        <Link href="/cotizaciones/dashboard" className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">Dashboard</Link>
         <TooltipToggle />
       </div>
       <main className="cotizaciones-main-grid mx-auto w-full max-w-[1600px] px-4 pb-6">
