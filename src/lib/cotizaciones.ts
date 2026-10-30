@@ -175,6 +175,16 @@ export async function eliminarCocina(cocinaId: string, cotizacionId: string) {
   await recomputarTotales(cotizacionId);
 }
 
+export async function duplicarCocina(cocinaId: string, cotizacionId: string) {
+  const sb = await createClient();
+  const { data, error } = await sb.rpc('cot_duplicar_cocina', {
+    p_cotizacion_id: cotizacionId, p_cocina_id: cocinaId,
+  });
+  if (error) throw new Error(error.message);
+  if (typeof data !== 'string' || !data) throw new Error('No se pudo copiar la sección');
+  return data;
+}
+
 // ---- Módulos (líneas) dentro de una cocina ----
 export type AgregarLineaInput = CotizarInput & {
   cantidad: number; prefLabel?: string; dbTipo?: string;

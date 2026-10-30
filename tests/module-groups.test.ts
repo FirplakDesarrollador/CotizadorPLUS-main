@@ -230,6 +230,18 @@ test('codigoComercial agrega 15MM con las mismas reglas de integración SM', () 
   assert.equal(codigoComercial({ ...base, espesorCajaMm: 15, espesorFrenteMm: 18 }), 'WSM251514');
 });
 
+test('SMG integra 15 en todas sus variantes sin duplicar MM ni SF', () => {
+  const base = { largo:24,alto:30,prof:24,unidad:'in',sistema:'imperial',espesorCajaMm:15,espesorFrenteMm:15 } as const;
+  for(const pref of ['BFD-SMG','SBFD-SMG','DB-2S-SMG','DB-2-SMG-FE','DB-3-SMG-SF','DB-2-1INT-SMG-FE-SF']) {
+    const code=codigoComercial({...base,pref});
+    assert.ok(code.includes('-SMG15'),code);
+    assert.ok(!code.includes('15MM'),code);
+    assert.equal(code.split('-SF').length,pref.split('-SF').length,code);
+    assert.equal(codigoComercial({...base,pref,espesorFrenteMm:18}),code.replace('SMG15','SMG'));
+  }
+  assert.equal(codigoComercial({...base,pref:'BFD-SMG',conFondo:false}),'BFD24-SMG15-SF');
+});
+
 test('codigoComercial ordena SF después de SM y antes del espesor', () => {
   const base = { unidad: 'in', sistema: 'imperial' } as const;
   assert.equal(codigoComercial({
@@ -281,6 +293,15 @@ test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {
   assert.equal(parseMedida('24 7/8"'), 24.875);
   assert.ok(Number.isNaN(parseMedida('')));
   assert.ok(Number.isNaN(parseMedida('abc')));
+});
+
+test('una medida ausente no lanza trim ni se convierte en cero', () => {
+  for (const value of [undefined, null, '', '   ', 'undefined']) {
+    assert.equal(Number.isNaN(parseMedida(value)), true);
+  }
+  assert.equal(parseMedida(0), 0);
+  assert.equal(parseMedida('0'), 0);
+  assert.equal(parseMedida('24 7/8'), 24.875);
 });
 
 test('habilita tipologia DB solo en las familias de cajoneras compatibles', () => {

@@ -11,7 +11,12 @@
         "src/lib/group-result.ts",
         "src/lib/module-groups.ts",
         "db/migrations/0230_agrupacion_smg.sql",
-        "db/tests/smg_agrupacion.ts"
+        "db/migrations/0231_tw_w_sm_hood.sql",
+        "db/migrations/0232_hood_frente_falso_extension.sql",
+        "db/migrations/0234_hood_46_tarugos.sql",
+        "db/tests/hood_sm.ts",
+        "db/tests/smg_agrupacion.ts",
+        "scripts/actualizar-codigos-cotizaciones.ts"
       ],
       "tests": [
         "tests/module-groups.test.ts",
@@ -20,7 +25,8 @@
         "tests/margen-global.test.ts",
         "tests/bfd-smg.test.ts",
         "tests/sbfd-smg.test.ts",
-        "tests/db-smg.test.ts"
+        "tests/db-smg.test.ts",
+        "tests/hood-sm.test.ts"
       ]
     },
     {
@@ -33,7 +39,8 @@
       ],
       "tests": [
         "tests/visualizacion.test.ts",
-        "tests/visualizacion-b-fe.test.ts"
+        "tests/visualizacion-b-fe.test.ts",
+        "tests/hood-sm.test.ts"
       ]
     },
     {
@@ -42,8 +49,11 @@
       "description": "Preparación de cotizaciones, tarifas, overrides, consultas a Supabase y catálogo precompilado",
       "patterns": [
         "src/lib/cotizar.ts",
+        "src/lib/hood-sm.ts",
         "src/lib/catalogo-paginado.ts",
         "src/lib/cotizaciones.ts",
+        "db/migrations/0233_duplicar_seccion_cotizacion.sql",
+        "db/tests/duplicar_seccion.sql",
         "src/lib/diseno.ts",
         "src/lib/admin.ts",
         "src/lib/supabase/**",
@@ -65,6 +75,8 @@
       "tests": [
         "tests/margen-global.test.ts",
         "tests/catalogo-paginado.test.ts",
+        "tests/hood-sm.test.ts",
+        "tests/simuladorStore.test.ts",
         "tests/group-result.test.ts",
         "tests/precio-herrajes.test.ts",
         "tests/consumo-materiales.test.ts",
@@ -147,6 +159,7 @@
       "description": "Componentes de interfaz de usuario, formularios de cotizador y páginas Next.js",
       "patterns": [
         "src/app/**",
+        "src/store/simuladorStore.ts",
         "src/components/**"
       ],
       "tests": [
@@ -154,6 +167,8 @@
         "tests/module-groups.test.ts",
         "tests/optimizador-corte.test.ts",
         "tests/tooltips.test.ts",
+        "tests/simuladorStore.test.ts",
+        "tests/hood-sm.test.ts",
         "tests/combobox-filtro.test.ts",
         "tests/monedas-visibles.test.ts",
         "tests/iva.test.ts",

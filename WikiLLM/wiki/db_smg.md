@@ -70,6 +70,8 @@ Los códigos conservan la variante: `DB36-2S-SMG`, `DB36-2-SMG-FE` y
 `DB36-3-SMG-SF`. Cuando caja y frentes son ambos de 18 mm, el segmento se
 compacta por convención a `SMG18`, por ejemplo `DB36-2S-SMG18`,
 `DB36-2-SMG18-FE` y `DB36-3-SMG18-SF`.
+Si ambos son de 15 mm se integra `SMG15`, por ejemplo `DB36-2S-SMG15`,
+`DB36-2-SMG15-FE` y `DB36-3-SMG15-SF`. No se añade `-15MM` a SMG.
 
 ## Perfil metálico pendiente
 

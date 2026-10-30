@@ -3,7 +3,7 @@ import { Fragment, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AgregarMaterialForm from './AgregarMaterialForm';
 import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineForm';
-import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
+import { actualizarCocinaAction, eliminarCocinaAction, duplicarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
 import { colorGrupo, indiceALetras } from '@/lib/module-groups';
 import type { FamiliaMaterial } from '@/lib/muebles';
 import type { ColumnasPrecio } from './CotizacionDetalleClient';
@@ -179,6 +179,21 @@ export default function CocinaCard({
     router.refresh();
   }
 
+  async function copiarCocina() {
+    if (groupBusy) return;
+    setGroupBusy('copiar');
+    setGroupError(null);
+    try {
+      const res = await duplicarCocinaAction(cotizacionId, cocina.id);
+      if (!res.ok) setGroupError(res.error ?? 'No se pudo copiar la sección');
+      else router.refresh();
+    } catch (error) {
+      setGroupError(error instanceof Error ? error.message : 'No se pudo copiar la sección');
+    } finally {
+      setGroupBusy(null);
+    }
+  }
+
   async function delLinea(id: string) {
     await eliminarLineaAction(cotizacionId, id);
     router.refresh();
@@ -337,7 +352,7 @@ export default function CocinaCard({
   const totalColumnas = 1 + 3 + columnasMoneda + 1 + (columnasPrecio.sinHerrajes ? 2 * columnasMoneda : 0) + (columnasPrecio.conHerrajes ? 2 * columnasMoneda : 0) + 1;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200">
+    <div data-cocina-id={cocina.id} className="bg-white rounded-2xl border border-slate-200">
       <div className="flex items-center justify-between p-4 border-b border-slate-100 flex-wrap gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           {editName ? (
@@ -369,7 +384,15 @@ export default function CocinaCard({
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={delCocina} className="text-slate-300 hover:text-red-600" title="Eliminar cocina">🗑</button>
+          <button type="button" onClick={copiarCocina} disabled={groupBusy !== null}
+            className="text-slate-400 hover:text-blue-600 disabled:opacity-50 disabled:cursor-wait"
+            title={groupBusy === 'copiar' ? 'Copiando sección…' : 'Copiar sección'} aria-label={`Copiar sección ${cocina.nombre}`}>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`h-4 w-4 ${groupBusy === 'copiar' ? 'animate-pulse' : ''}`}>
+              <rect x="8" y="8" width="12" height="12" rx="2" />
+              <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" />
+            </svg>
+          </button>
+          <button onClick={delCocina} disabled={groupBusy === 'copiar'} className="text-slate-300 hover:text-red-600 disabled:opacity-50" title="Eliminar cocina">🗑</button>
         </div>
       </div>
 

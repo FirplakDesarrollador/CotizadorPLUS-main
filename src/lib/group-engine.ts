@@ -29,6 +29,7 @@ const mm = (inches: number) => inches * 25.4;
 const near = (a: number, b: number, tolerance = 0.0001) => Math.abs(a - b) <= tolerance;
 export const UPPER_CABINET_PREFS = new Set([
   'W', 'UW', 'OW', 'WSM', 'W-SM', 'TW', 'TW-SM-PUSH', 'W-SM-PUSH', 'W-SM-LOC', 'W-MO-HOOD',
+  'TW-SM-HOOD', 'W-SM-HOOD',
 ]);
 
 export function isUpperCabinetGroup(members: PreparedGroupMember[]) {

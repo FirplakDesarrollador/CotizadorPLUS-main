@@ -1,4 +1,6 @@
 'use client';
+import { usaHoodSm, validarHoodSm } from '@/lib/hood-sm';
+import { convertirExacto } from '@/lib/module-groups';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { agregarLineaAction, editarLineaAction } from '../actions';
@@ -234,6 +236,7 @@ export default function AddLineForm({
     ov?.HOOD != null ? String(convertir(ov.HOOD, 'in', unidad))
       : usaMedidasMoHood(tipoInicialPref) ? '0' : '',
   );
+  const [free, setFree] = useState(ov?.FREE != null ? String(convertir(ov.FREE, 'in', unidad)) : '');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -259,6 +262,7 @@ export default function AddLineForm({
   const usaDoor = usaPuertaParametrica(prefTipo);
   const usaHuecoHorno = usaHuecoHornoParametrico(prefTipo);
   const usaMoHood = [tipo?.pref, tipo?.pref_imperial, tipo?.pref_metrico].some(usaMedidasMoHood);
+  const usaHood = usaHoodSm(tipo?.pref);
   const usaTk = usaTkTorre(prefTipo);
   const usaPuertaSup = usaPuertaSupTorre(prefTipo);
   const usaMoPcfd = usaMoTorre(prefTipo);
@@ -384,6 +388,7 @@ export default function AddLineForm({
     setRielCodigo('RIELTANDEM');
     setPcfdConfig('');
     setDoor('');
+    setFree('');
     setDoorHand('R');
     const nuevoTipo = tipos.find((t) => t.id === resolvedId);
     if (usaMedidasMoHood(nuevoTipo?.pref)) {
@@ -466,6 +471,10 @@ export default function AddLineForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (usaHood) {
+      try { validarHoodSm(parseMedida(alto), hood.trim() === '' ? undefined : parseMedida(hood), free.trim() === '' ? undefined : parseMedida(free)); }
+      catch (error) { setError((error as Error).message); return; }
+    }
     const dimsInvalidas = [
       ['Largo', largo], ['Alto', alto], ['Prof', prof],
       ...(usaDoor ? [['Puerta', door]] : []),
@@ -517,6 +526,10 @@ export default function AddLineForm({
     if (usaMoHood) {
       overrides.MO = convertir(parseMedida(mo), unidad, 'in');
       overrides.HOOD = convertir(parseMedida(hood), unidad, 'in');
+    }
+    if (usaHood) {
+      overrides.HOOD = convertirExacto(parseMedida(hood), unidad, 'in');
+      overrides.FREE = convertirExacto(parseMedida(free), unidad, 'in');
     }
     if (esDB && dbTipo) {
       const dbT = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
@@ -640,6 +653,16 @@ export default function AddLineForm({
           </div>
         )}
 
+        {usaHood && <div className="grid grid-cols-2 gap-2 md:col-span-2">
+          <L label="HOOD">
+            <input type="text" required value={hood} onChange={(e) => setHood(e.target.value)} title="Medida total por debajo de la carcasa" className="inp" />
+            <p className="mt-1 text-xs text-slate-500">Medida total por debajo de la carcasa</p>
+          </L>
+          <L label="FREE">
+            <input type="text" required value={free} onChange={(e) => setFree(e.target.value)} title="Parte visible del extractor" className="inp" />
+            <p className="mt-1 text-xs text-slate-500">Parte visible del extractor</p>
+          </L>
+        </div>}
         {usaMoHood && (
           <div className="grid grid-cols-2 gap-1">
             <L label="MO">
@@ -724,7 +747,7 @@ export default function AddLineForm({
 
         <div className="grid grid-cols-3 gap-1 md:col-span-2">
           <L label="Nº puertas">
-            <input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" />
+            <input type="number" placeholder="auto" disabled={usaHood} value={usaHood ? (tipo?.pref === 'TW-SM-HOOD' ? '1' : '2') : npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" />
           </L>
           <L label="Nº cajones">
             <input type="number" min={0} step={1} placeholder="auto" value={ncajones} onChange={(e) => { setNcajones(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" />

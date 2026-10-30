@@ -179,6 +179,32 @@ contiene el segmento `-SM`, el indicador se integra inmediatamente después de
 `W2636-SM15`, `W332124-SM15-PUSH` o `TW302412-SM15-PUSH`. En esos casos no se
 agrega un sufijo separado al final.
 
+Las familias con segmento `SMG` integran también el espesor común: `SMG15`
+o `SMG18`, antes de FE/SF. Ejemplos: `BFD60-SMG15-SF` y
+`DB32-2S-SMG15-FE-SF`. Con caja/frente de distinto espesor se conserva `SMG`.
+
+### Actualización de cotizaciones históricas (2026-10-30)
+
+`scripts/actualizar-codigos-cotizaciones.ts` audita todas las líneas y grupos
+usando `codigoComercial`, el sistema de medida del proyecto y los espesores
+estructurados del catálogo. Omite adicionales sin tipología. Con `--apply`
+crea respaldo en el temporal del sistema y actualiza códigos de módulos,
+códigos concatenados de grupos y etiquetas de origen del despiece, en una
+transacción con comprobación de los códigos previos. No recalcula importes,
+cantidades ni materiales; los snapshots históricos permanecen inmutables.
+
+Ejecutar con `node --conditions=react-server --env-file=.env --import tsx
+scripts/actualizar-codigos-cotizaciones.ts` (añadir `--apply` para aplicar).
+Se auditaron 9 cotizaciones: 40 módulos y 25 grupos de MALECÓN 72 requerían
+SMG15; las demás líneas ya cumplían la convención. Segunda pasada: cero cambios.
+
+Verificación: 471 líneas comparadas con el respaldo; solo cambiaron los códigos
+y 161 etiquetas de origen. Precios, cantidades, materiales y totales de MALECÓN
+72 conservados. Dos generaciones independientes del PDF (diez páginas cada una)
+con texto idéntico, códigos SMG15 presentes y revisión de todas las páginas
+renderizadas. Regresiones de SMG15/SMG18, FE/SF, SM15 y espesores mixtos en
+`tests/module-groups.test.ts`. No se modificó el formato de impresión.
+
 La clasificación compartida de muebles superiores incluye explícitamente a
 `TW` y todas sus variantes `TW-*`, además de las tipologías determinadas por la
 familia `W`. Toda regla formulada para “muebles superiores” debe usar esta
