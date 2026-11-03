@@ -825,7 +825,7 @@ export async function duplicarLineaACocina(lineaId: string, nuevaCocinaId: strin
 }
 
 // Recalcula totales por cocina y del proyecto.
-async function recomputarTotales(cotizacionId: string) {
+async function recomputarTotales(cotizacionId: string, cocinasPermitidas?: ReadonlySet<string>) {
   const sb = await createClient();
   const { data: lineas } = await sb.from('cot_cotizacion_lineas')
     .select('cocina_id,precio_total_cop,precio_total_usd').eq('cotizacion_id', cotizacionId);
@@ -849,7 +849,9 @@ async function recomputarTotales(cotizacionId: string) {
     const base = porCocina[id] ?? { cop: 0, usd: 0 };
     const t_cop = base.cop * cant;
     const t_usd = base.usd * cant;
-    await sb.from('cot_cocinas').update({ total_cop: t_cop, total_usd: t_usd }).eq('id', id);
+    if (!cocinasPermitidas || cocinasPermitidas.has(id)) {
+      await sb.from('cot_cocinas').update({ total_cop: t_cop, total_usd: t_usd }).eq('id', id);
+    }
     total_cop += t_cop;
     total_usd += t_usd;
   }
@@ -894,7 +896,7 @@ async function resolverMaterialesDeInput(sb: Awaited<ReturnType<typeof createCli
 }
 
 /** Aplica las características vigentes y recalcula únicamente los grupos afectados. */
-export async function sincronizarMaterialesCotizacion(cotizacionId: string) {
+export async function sincronizarMaterialesCotizacion(cotizacionId: string, opciones?: { lineasPermitidas: readonly string[] }) {
   const sb = await createClient();
   const [proyecto, areas, lineas, tipos, tableros] = await Promise.all([
     sb.from('cot_cotizaciones').select('config_default').eq('id', cotizacionId).single(),
@@ -904,21 +906,31 @@ export async function sincronizarMaterialesCotizacion(cotizacionId: string) {
     tablerosDeProyecto(),
   ]);
   for (const result of [proyecto, areas, lineas, tipos]) if (result.error) throw new Error(result.error.message);
+  const permitidas = opciones ? new Set(opciones.lineasPermitidas) : undefined;
+  if (permitidas) {
+    const alcance = (lineas.data ?? []) as Array<{ id: string; grupo_id: string | null }>;
+    const gruposPermitidos = new Set(alcance.filter(l => permitidas.has(l.id)).map(l => l.grupo_id).filter(Boolean));
+    if (alcance.some(l => gruposPermitidos.has(l.grupo_id) && !permitidas.has(l.id))) {
+      throw new Error('La sincronización limitada no puede recalcular grupos con líneas fuera del alcance.');
+    }
+  }
   const cfg = structuredClone(proyecto.data?.config_default ?? {}) as ConfigMaterialesProyecto;
   const normalizarPreset = (preset: Record<string, string> | undefined) => preset && Object.fromEntries(Object.entries(preset).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, tableros)]));
   cfg.preset = normalizarPreset(cfg.preset);
   for (const key of ['materialesInferiores', 'materialesSuperiores', 'materialesCloset', 'materialesBanos'] as const) {
     if (cfg[key]?.preset) cfg[key]!.preset = normalizarPreset(cfg[key]!.preset);
   }
-  if (JSON.stringify(cfg) !== JSON.stringify(proyecto.data?.config_default ?? {})) {
+  if (!permitidas && JSON.stringify(cfg) !== JSON.stringify(proyecto.data?.config_default ?? {})) {
     const { error } = await sb.from('cot_cotizaciones').update({ config_default: cfg }).eq('id', cotizacionId);
     if (error) throw new Error(error.message);
   }
   const nombres = new Map<string, string>(((areas.data ?? []) as Array<{ id: string; nombre: string }>).map(a => [a.id, a.nombre]));
   const prefijos = new Map<string, string>(((tipos.data ?? []) as Array<{ id: string; pref: string }>).map(t => [t.id, t.pref]));
   const grupos = new Set<string>();
+  const areasAfectadas = new Set<string>();
   let corregidas = 0;
   for (const linea of lineas.data ?? []) {
+    if (permitidas && !permitidas.has(linea.id)) continue;
     if (!linea.tipo_mueble_id) {
       if (linea.config?.material && linea.config.clasificacionPdf !== 'herrajes_otros') {
         const { error } = await sb.from('cot_cotizacion_lineas').update({ config: { ...linea.config, clasificacionPdf: 'herrajes_otros' } }).eq('id', linea.id);
@@ -934,13 +946,14 @@ export async function sincronizarMaterialesCotizacion(cotizacionId: string) {
     const { error } = await sb.from('cot_cotizacion_lineas').update({ config }).eq('id', linea.id);
     if (error) throw new Error(error.message);
     if (linea.grupo_id) grupos.add(linea.grupo_id);
+    if (linea.cocina_id) areasAfectadas.add(linea.cocina_id);
     corregidas += 1;
   }
   if (grupos.size) {
     const catalogo = await cargarCatalogoPrecompilado();
     const sistema = await obtenerSistema(cotizacionId);
     for (const grupoId of grupos) await recalcularGrupo(grupoId, catalogo, sistema);
-    await recomputarTotales(cotizacionId);
+    await recomputarTotales(cotizacionId, permitidas ? areasAfectadas : undefined);
   }
   return { corregidas, grupos: grupos.size };
 }

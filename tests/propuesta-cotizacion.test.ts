@@ -37,17 +37,16 @@ test('conserva el precio persistido aunque el breakdown tenga decimales anterior
   assert.equal(esHerrajeOtroAdicional({ id: 'legacy', cantidad: 1, config: { clasificacionPdf: 'herrajes_otros' } }), true);
 });
 
-test('el HTML imprimible muestra los adicionales con cantidades, valores y unidades en su sección', () => {
+test('el HTML imprimible muestra los adicionales con cantidades y unidades sin precios en su sección', () => {
   const r = separarPropuesta([{ nombre: 'Casa D - Closet M-07', cantidad: 37, lineas: [modulo, extra('herraje')] }]);
   const html = renderToStaticMarkup(createElement(HerrajesOtrosPdf, { filas: r.adicionales, moneda: 'COP' }));
   assert.match(html, /data-pdf="herrajes-otros"/);
   assert.match(html, /55,5/);
-  assert.match(html, /4\.440/);
-  assert.match(html, /Valor unitario/);
+  assert.doesNotMatch(html, /Valor unitario|Valor total|Subtotal|4\.440|\$/);
   assert.match(html, /Casa D - Closet M-07/);
   assert.doesNotMatch(html, />BFD</);
   const usd = renderToStaticMarkup(createElement(HerrajesOtrosPdf, { filas: r.adicionales, moneda: 'USD' }));
-  assert.match(usd, /\$1\.11/);
+  assert.equal(usd, html, 'el detalle sin precios es igual en ambas monedas');
 });
 
 test('las especificaciones impresas corresponden a las características y no a textos genéricos', () => {
@@ -57,4 +56,29 @@ test('las especificaciones impresas corresponden a las características y no a t
   assert.match(html, /19x0,45/);
   assert.match(html, /22x1/);
   assert.doesNotMatch(html, /Tablero STANDARD|15 mm|5\.5 mm|por definir/);
+});
+
+
+test('agrupa referencias iguales entre áreas, suma cantidades y conserva unidades distintas', () => {
+  const linea = (id: string, codigo: string, cantidad: number, tipo: 'herraje' | 'canto' = 'herraje'): LineaPropuesta => ({
+    id, cantidad: 1, descripcion_es: `Herraje ${codigo} · ${cantidad} und`, precio_total_cop: 120, precio_total_usd: 0.03,
+    config: { material: { tipo, codigo, cantidad, precioUnitarioCop: 52 } },
+  });
+  const r = separarPropuesta([
+    { nombre: 'Cocina', cantidad: 1, lineas: [linea('1', 'CPTK', 5), linea('2', 'PTK4', 1)] },
+    { nombre: 'Isla', cantidad: 1, lineas: [linea('3', 'CPTK', 3), linea('4', 'PTK4', 1)] },
+    { nombre: 'Pilas', cantidad: 1, lineas: [linea('5', 'CPTK', 1)] },
+    { nombre: 'Baño', cantidad: 3, lineas: [linea('6', 'GFSM', 2), linea('7', 'LGP4118', 1), linea('8', 'CPTK', 0.5, 'canto')] },
+  ]);
+  const snapshot = structuredClone(r);
+  const html = renderToStaticMarkup(createElement(HerrajesOtrosPdf, { filas: r.adicionales, moneda: 'USD' }));
+  assert.equal((html.match(/<tbody>[\s\S]*<\/tbody>/)![0].match(/<tr /g) || []).length, 5);
+  assert.match(html, /Cocina, Isla, Pilas/);
+  for (const [codigo, cantidad] of [['CPTK', '9'], ['PTK4', '2'], ['GFSM', '6'], ['LGP4118', '3']]) {
+    assert.match(html, new RegExp(`<b>${codigo}</b></td><td[^>]*>.*?</td><td[^>]*>${cantidad}</td>`));
+  }
+  assert.match(html, />1,5<\/td><td[^>]*>m<\/td>/);
+  assert.doesNotMatch(html, /Valor unitario|Valor total|Subtotal|\$|· 5 und|· 3 und/);
+  assert.deepEqual(r, snapshot, 'agrupar para imprimir no modifica filas ni importes');
+  assert.equal(r.totalCop, 1680, 'las áreas repetidas conservan su importe en el total');
 });

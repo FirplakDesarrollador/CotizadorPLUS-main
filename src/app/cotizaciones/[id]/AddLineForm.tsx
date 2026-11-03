@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
-import { familiaMaterialDelArea } from '@/lib/materiales-proyecto';
+import { familiaMaterialDelArea, presetMaterialesTipologia, usaCajaMaterialFrente } from '@/lib/materiales-proyecto';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
@@ -153,12 +153,14 @@ export default function AddLineForm({
   const [herrajesExcl, setHerrajesExcl] = useState<string[]>(
     initial?.herrajesExcluidos ?? materialInicial?.herrajesExcl ?? projectDefaults?.herrajesExcl ?? [],
   );
-  const [preset, setPreset] = useState<Record<string, string>>(() => {
+  const [presetSeleccionado, setPreset] = useState<Record<string, string>>(() => {
     if (initial?.preset) return initial.preset;
     if (materialInicial?.preset) return materialInicial.preset;
     if (projectDefaults?.preset) return projectDefaults.preset;
     return presetDefault;
   });
+  const prefMaterial = tipos.find((t) => t.id === tipoId)?.pref;
+  const preset = presetMaterialesTipologia(presetSeleccionado, prefMaterial);
 
   const [cantoFrentesSel, setCantoFrentesSel] = useState(() => {
     if (initial?.cantoFrentes !== undefined) return initial.cantoFrentes;
@@ -242,7 +244,8 @@ export default function AddLineForm({
   const [error, setError] = useState<string | null>(null);
 
   // Mapeos y opciones
-  const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
+  const rolesBase = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
+  const roles = usaCajaMaterialFrente(prefMaterial) ? Array.from(new Set([...rolesBase, 'frente'])) : rolesBase;
   const prefTipo = tipos.find((t) => t.id === tipoId)?.pref ?? '';
   const fuerzaConFondo = esMuebleSuperior(prefTipo) || esIndependienteDeFondo(prefTipo);
   const tipo = tipos.find((t) => t.id === tipoId);
@@ -601,7 +604,8 @@ export default function AddLineForm({
     if (!esEdicion) {
       onMaterialesUsados?.({
         familia: familiaProyecto(prefTipo),
-        preset, cantoFrentes: cantoFrentesSel, cantoCaja: cantoCajaSel, perfilId, herrajesExcl,
+        // Recordar la selección de familia, sin convertir su caja global en frente.
+        preset: presetSeleccionado, cantoFrentes: cantoFrentesSel, cantoCaja: cantoCajaSel, perfilId, herrajesExcl,
       });
     }
     router.refresh();
@@ -614,7 +618,7 @@ export default function AddLineForm({
         <h2 className="font-semibold text-slate-900">{esEdicion ? 'Editar mueble' : 'Agregar mueble'}</h2>
         {projectDefaults && (
           <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
-            {Object.entries(materialProyecto(tipos.find(t => t.id === tipoId)?.pref ?? '')?.preset ?? {}).every(([rol, codigo]) => preset[rol] === codigo)
+            {Object.entries(presetMaterialesTipologia(materialProyecto(prefMaterial ?? '')?.preset ?? {}, prefMaterial)).every(([rol, codigo]) => preset[rol] === codigo)
               ? '✓ Materiales globales aplicados'
               : 'Materiales globales pendientes de aplicar'}
           </span>
@@ -882,6 +886,7 @@ export default function AddLineForm({
           <L key={rol} label={ROL_LABEL[rol] ?? `Tablero ${rol}`}>
             <Combobox
               value={preset[rol] ?? ''}
+              disabled={usaCajaMaterialFrente(prefMaterial) && (rol === 'caja' || rol === 'refuerzo')}
               options={tableroOptions}
               onChange={(v) => {
                 setPreset((p) => ({ ...p, [rol]: v, ...(rol === 'caja' ? { refuerzo: v } : {}) }));

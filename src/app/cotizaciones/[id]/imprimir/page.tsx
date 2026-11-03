@@ -23,7 +23,7 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
   const { id } = await params; const query = await searchParams;
   const { cabecera, cocinas } = await getCotizacion(id); if (!cabecera) notFound();
   const propuesta = separarPropuesta(cocinas as Cocina[]);
-  const materiales = especificacionesProyecto(cabecera.config_default ?? {}, await tablerosDeProyecto());
+  const materiales = especificacionesProyecto(cabecera.config_default ?? {}, await tablerosDeProyecto(), cocinas as Cocina[]);
   if (cabecera.cotizador_por === 'CEMA') {
     const stored = normalizarCemaTemplate(cabecera.plantilla_cema as Partial<CemaTemplate> | null);
     const created = new Date(cabecera.created_at);

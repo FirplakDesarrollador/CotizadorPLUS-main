@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { aplicarMaterialesProyecto, familiaMaterialDelArea, materialesDelDespieceCoinciden, resolverCodigoTablero, descripcionTableroProyecto } from '../src/lib/materiales-proyecto';
+import { aplicarMaterialesProyecto, familiaMaterialDelArea, materialesDelDespieceCoinciden, resolverCodigoTablero, descripcionTableroProyecto, presetMaterialesTipologia, especificacionesProyecto } from '../src/lib/materiales-proyecto';
 
 test('cualquier módulo de un área closet usa closet: KUNDARA, walk-in, mayúsculas y paneles', () => {
   for (const nombre of ['Casa D - Closet M-07', 'CLOSET CL1A LINEAL ', 'Walk-in closet', 'clóset principal']) {
@@ -39,4 +39,42 @@ test('un preset correcto no oculta un despiece calculado con otro material', () 
   const despiece = { maderaPorRol: [{ rol: 'caja', codigo: 'COCINA' }] };
   assert.equal(materialesDelDespieceCoinciden(despiece, { caja: 'CLOSET' }), false);
   assert.equal(materialesDelDespieceCoinciden(despiece, { caja: 'COCINA' }), true);
+});
+
+test('solo los abiertos solicitados asignan caja y refuerzos al frente global de su familia', () => {
+  const input = { preset: { caja: 'ANTERIOR', refuerzo: 'ANTERIOR', frente: 'HISTORICO', fondo: 'F6' }, cantoCaja: '19x0,45', largo: 60 };
+  const config = {
+    materialesInferiores: { preset: { caja: 'I15', refuerzo: 'I15', frente: 'I18' } },
+    materialesSuperiores: { preset: { caja: 'S15', refuerzo: 'S15', frente: 'S18' } },
+    materialesCloset: { preset: { caja: 'C15', refuerzo: 'C15', frente: 'C18' } },
+  };
+  for (const pref of ['OBFD', 'OBFD-SM', 'OSBFD-SM', 'OW', 'OBFD-SM-SF', ' obfd ']) {
+    for (const area of ['Cocina', 'Clóset principal']) {
+      const esperado = area.includes('Clóset') ? 'C18' : pref.trim() === 'OW' ? 'S18' : 'I18';
+      const r = aplicarMaterialesProyecto(input, config, pref, area);
+      assert.equal(r.preset.caja, esperado);
+      assert.equal(r.preset.refuerzo, esperado);
+      assert.equal(r.preset.frente, esperado);
+      assert.equal(r.preset.fondo, 'F6');
+      assert.equal(r.cantoCaja, '19x0,45');
+      assert.equal(r.largo, 60);
+    }
+  }
+  for (const pref of ['BFD', 'BFD-SM', 'OSBFD', 'W', 'OW-MO', 'TW', null]) {
+    assert.deepEqual(presetMaterialesTipologia(input.preset, pref), input.preset);
+  }
+  assert.equal(input.preset.caja, 'ANTERIOR', 'no muta el snapshot original');
+});
+
+test('abiertos históricos usan su frente conocido si no hay selección global y no inventan uno ausente', () => {
+  const input = { preset: { caja: 'C15', refuerzo: 'R15', frente: 'F18', fondo: 'F6' } };
+  assert.deepEqual(aplicarMaterialesProyecto(input, {}, 'OW').preset, { caja: 'F18', refuerzo: 'F18', frente: 'F18', fondo: 'F6' });
+  assert.deepEqual(presetMaterialesTipologia({ caja: 'C15' }, 'OW'), { caja: 'C15' });
+});
+
+test('el PDF describe la excepción únicamente en las familias donde hay abiertos', () => {
+  const config = { materialesSuperiores: { preset: { caja: 'C15', frente: 'F18' } }, materialesCloset: { preset: { caja: 'CC15', frente: 'FC18' } } };
+  const bloques = especificacionesProyecto(config, [], [{ nombre: 'Closet', lineas: [{ pref: 'OW' }] }, { nombre: 'Cocina', lineas: [{ pref: 'W' }] }]);
+  assert.equal(bloques.find(b => b.familia === 'superior')!.filas.some(([rol]) => rol.includes('OBFD')), false);
+  assert.equal(bloques.find(b => b.familia === 'closet')!.filas.find(([rol]) => rol.includes('OBFD'))![1], 'FC18 · Referencia no encontrada en catálogo');
 });
