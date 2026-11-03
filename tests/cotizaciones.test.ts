@@ -68,6 +68,7 @@ class Consulta {
 }
 
 let recalculos = 0;
+let cajaEsperada = 'CLOSET';
 let copiaResultado: { data: string | null; error: { message: string } | null } = { data: 'nueva-seccion', error: null };
 const copiaLlamadas: Array<{ nombre: string; argumentos: Record<string, unknown> }> = [];
 const catalogo = {
@@ -86,7 +87,7 @@ loader._load = function(id, ...args) {
     cargarCatalogoPrecompilado: async () => catalogo,
     cotizarGrupo: async (inputs: Array<{ preset: Record<string, string> }>) => {
       recalculos++;
-      assert.equal(inputs[0].preset.caja, 'CLOSET', 'el motor recibe los materiales de closet');
+      assert.equal(inputs[0].preset.caja, cajaEsperada, 'el motor recibe los materiales resueltos del proyecto');
       return { preparados: inputs.map(input => ({ prefMetrico: 'W', prefImperial: 'W', margen: 0.6, calc: { preset: input.preset, tablerosByCode: catalogo.tablerosByCode } })), lineas: inputs.map(() => ({ vars: {}, piezas: [], costoSinHerrajes: 40, costoHerrajes: 0, costoConHerrajes: 40, precioCop: 100, precioUsd: 0.025, precioConHerrajesCop: 100, precioConHerrajesUsd: 0.025, trm: 4000, margen: 0.6 })) };
     },
   };
@@ -125,4 +126,47 @@ test('persistencia: sincroniza un W en área closet, recalcula importes y la seg
   assert.equal(tablas.cot_cotizaciones[0].total_cop, 7400, '2 módulos x 37 áreas x 100 COP');
   assert.deepEqual(await api.sincronizarMaterialesCotizacion('q'), { corregidas: 0, grupos: 0 });
   assert.equal(recalculos, 1, 'no recalcula nuevamente lo que ya está correcto');
+});
+
+test('persistencia: los cuatro abiertos heredan el frente global y la segunda sincronización no recalcula', async () => {
+  for (const pref of ['OBFD', 'OBFD-SM', 'OSBFD-SM', 'OW']) {
+    catalogo.tiposById.w.pref = pref;
+    cajaEsperada = 'CLOSET';
+    const antes = recalculos;
+    tablas.cot_cotizaciones = [{ id: 'q', sistema_medida: 'metrico', config_default: {
+      materialesInferiores: { preset: { caja: 'CAJA15', refuerzo: 'CAJA15', frente: 'CLOSET' } },
+      materialesSuperiores: { preset: { caja: 'CAJA15', refuerzo: 'CAJA15', frente: 'CLOSET' } },
+    } }];
+    tablas.cot_cocinas = [{ id: 'a', cotizacion_id: 'q', nombre: 'Cocina', cantidad: 2 }];
+    tablas.cot_tipos_mueble = [{ id: 'w', pref }];
+    tablas.cot_tableros = [{ codigo: 'CLOSET', espesor_mm: 18 }, { codigo: 'CAJA15', espesor_mm: 15 }, { codigo: 'F6', espesor_mm: 6 }];
+    tablas.cot_grupos_modulos = [{ id: 'g', cocina_id: 'a', cotizacion_id: 'q' }];
+    tablas.cot_cotizacion_lineas = [{ id: 'l', cocina_id: 'a', cotizacion_id: 'q', grupo_id: 'g', tipo_mueble_id: 'w', pref, posicion_grupo: 1, cantidad: 1, largo: 60, alto: 80, prof: 30, unidad_dim: 'cm', config: { preset: { caja: 'CAJA15', refuerzo: 'CAJA15', frente: 'CAJA15', fondo: 'F6' } } }];
+    assert.deepEqual(await api.sincronizarMaterialesCotizacion('q'), { corregidas: 1, grupos: 1 });
+    assert.deepEqual((tablas.cot_cotizacion_lineas[0].config as Row).preset, { caja: 'CLOSET', refuerzo: 'CLOSET', frente: 'CLOSET', fondo: 'F6' });
+    assert.equal(tablas.cot_cotizaciones[0].total_cop, 200);
+    assert.deepEqual(await api.sincronizarMaterialesCotizacion('q'), { corregidas: 0, grupos: 0 });
+    assert.equal(recalculos, antes + 1);
+  }
+  catalogo.tiposById.w.pref = 'W';
+});
+
+test('sincronización limitada deja intactas las líneas y áreas ajenas y rechaza grupos mezclados antes de escribir', async () => {
+  catalogo.tiposById.w.pref = 'OW';
+  tablas.cot_cotizaciones = [{ id: 'q', sistema_medida: 'metrico', config_default: { materialesSuperiores: { preset: { caja: 'C15', refuerzo: 'C15', frente: 'CLOSET' } } } }];
+  tablas.cot_cocinas = [{ id: 'a', cotizacion_id: 'q', nombre: 'Cocina', cantidad: 1 }, { id: 'otra', cotizacion_id: 'q', nombre: 'Otra', cantidad: 1, total_cop: 50, total_usd: 0.01 }];
+  tablas.cot_tipos_mueble = [{ id: 'w', pref: 'OW' }];
+  tablas.cot_tableros = [{ codigo: 'CLOSET', espesor_mm: 18 }, { codigo: 'C15', espesor_mm: 15 }];
+  tablas.cot_grupos_modulos = [{ id: 'g', cocina_id: 'a', cotizacion_id: 'q' }];
+  const ajena = { id: 'ajena', cocina_id: 'otra', cotizacion_id: 'q', grupo_id: 'otro', cantidad: 1, precio_total_cop: 50, precio_total_usd: 0.01, config: { material: { tipo: 'herraje', codigo: 'X', cantidad: 1 } } };
+  tablas.cot_cotizacion_lineas = [{ id: 'l', cocina_id: 'a', cotizacion_id: 'q', grupo_id: 'g', tipo_mueble_id: 'w', pref: 'OW', posicion_grupo: 1, cantidad: 1, largo: 60, alto: 80, prof: 30, unidad_dim: 'cm', config: { preset: { caja: 'C15', refuerzo: 'C15', frente: 'CLOSET' } } }, ajena];
+  const snapshot = structuredClone({ ajena, area: tablas.cot_cocinas[1], config: tablas.cot_cotizaciones[0].config_default });
+  assert.deepEqual(await api.sincronizarMaterialesCotizacion('q', { lineasPermitidas: ['l'] }), { corregidas: 1, grupos: 1 });
+  assert.deepEqual({ ajena, area: tablas.cot_cocinas[1], config: tablas.cot_cotizaciones[0].config_default }, snapshot);
+  assert.equal(tablas.cot_cotizaciones[0].total_cop, 150);
+  ajena.grupo_id = 'g';
+  const antes = structuredClone(tablas);
+  await assert.rejects(() => api.sincronizarMaterialesCotizacion('q', { lineasPermitidas: ['l'] }), /fuera del alcance/);
+  assert.deepEqual(tablas, antes, 'un grupo mixto falla antes de cualquier escritura');
+  catalogo.tiposById.w.pref = 'W';
 });

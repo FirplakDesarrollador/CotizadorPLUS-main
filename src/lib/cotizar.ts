@@ -14,6 +14,7 @@ import { construirVisualizacion } from './visualizacion';
 import { codigoComercial } from './module-groups';
 import { ajustarPiezasSinFondo, usaHuecoHornoParametrico, usaPuertaParametrica } from './muebles';
 import { aplicarPreciosTableros, type PreciosTablerosCotizacion } from './precios-tableros';
+import { presetMaterialesTipologia } from './materiales-proyecto';
 
 export type CotizarInput = {
   tipoId: string;
@@ -183,7 +184,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     herrajesPlant = herrajesPlantDb ?? [];
 
     const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
-    const preset = { ...presetDefault, ...inp.preset };
+    const preset = presetMaterialesTipologia({ ...presetDefault, ...inp.preset }, tipo.pref);
     const codes = [...new Set(Object.values(preset).filter(Boolean))];
     const { data: tablerosDb } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato').in('codigo', codes);
 
@@ -197,7 +198,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
 
   // Preset final
   const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
-  const preset = { ...presetDefault, ...inp.preset };
+  const preset = presetMaterialesTipologia({ ...presetDefault, ...inp.preset }, tipo.pref);
   tablerosByCode = aplicarPreciosTableros(tablerosByCode, inp.preciosTableros);
 
   // Riel override para muebles DB
