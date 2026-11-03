@@ -2797,3 +2797,11 @@ refuerzos traseros 4 por pieza; base/tapa 8 cada una. Total individual 46 y
 costo por catálogo, manteniendo reglas de agrupación y modos de frentes.
 No había cotizaciones históricas con estas tipologías al auditar. Documentado
 y cubierto por regresiones en tw_w_sm_hood.md y pruebas HOOD.
+
+## [2026-11-03] update | Adicionales del PDF agrupados y sin precios en el detalle
+
+HerrajesOtrosPdf suma cantidades por referencia y unidad entre áreas, conserva las áreas de origen y elimina las columnas monetarias y el subtotal de esta tabla. Los importes del resumen general permanecen intactos. Regresión de cantidades, fracciones, repeticiones, monedas e inmutabilidad; auditoría estricta de las 10 cotizaciones sin errores. Dos generaciones independientes de Casa Poro, KUNDARA y Milán con texto idéntico y páginas renderizadas revisadas. Quality gate aprobado (91 suites); protocolo e índice actualizados. Sin cambios en WikiLLM/raw.
+
+## [2026-11-03] update | Caja y refuerzos de abiertos con el material global de frentes
+
+OBFD, OBFD-SM, OSBFD-SM y OW derivan caja/refuerzo del frente seleccionado, respetando familia y prioridad closet. Regla compartida por proyecto, preparador del motor y editor; especificaciones del PDF actualizadas. Aplicación histórica limitada a 7 OW de KUNDARA y las dos versiones de Casa Poro, con respaldo previo; las otras 355 líneas de esos proyectos quedaron intactas. Totales recalculados, auditoría estricta sin errores y segunda simulación sin pendientes. Gate aprobado con 92 suites y quality:learn sin HIGH. Detalles, importes y límites en materiales_tipologias_abiertas.md. Sin cambios en WikiLLM/raw.

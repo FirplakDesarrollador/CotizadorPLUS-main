@@ -11,6 +11,16 @@ export type ConfigMaterialesProyecto = {
   materialesBanos?: MaterialesFamilia;
 };
 
+/** Incluye las variantes sin fondo derivadas, sin alcanzar OW-MO ni OSBFD. */
+export function usaCajaMaterialFrente(pref: string | null | undefined): boolean {
+  return /^(?:OBFD|OBFD-SM|OSBFD-SM|OW)(?:-SF)?$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export function presetMaterialesTipologia(preset: Record<string, string>, pref: string | null | undefined): Record<string, string> {
+  if (!usaCajaMaterialFrente(pref) || !preset.frente) return { ...preset };
+  return { ...preset, caja: preset.frente, refuerzo: preset.frente };
+}
+
 /** El nombre del área tiene prioridad sobre la tipología de cada módulo. */
 export function familiaMaterialDelArea(pref: string | null | undefined, nombreArea = ''): FamiliaMaterial {
   const nombre = nombreArea.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -29,7 +39,7 @@ export function aplicarMaterialesProyecto<T extends { preset: Record<string, str
   const materiales = materialesDelProyecto(config, pref, nombreArea);
   return {
     ...input,
-    preset: { ...input.preset, ...materiales.preset },
+    preset: presetMaterialesTipologia({ ...input.preset, ...materiales.preset }, pref),
     ...(materiales.cantoCaja ? { cantoCaja: materiales.cantoCaja } : {}),
     ...(materiales.cantoFrentes ? { cantoFrentes: materiales.cantoFrentes } : {}),
   };
@@ -62,16 +72,18 @@ export function materialesDelDespieceCoinciden(breakdown: Record<string, unknown
 }
 
 export type EspecificacionProyecto = { familia: FamiliaMaterial; titulo: string; filas: Array<[string, string]> };
-export function especificacionesProyecto(config: ConfigMaterialesProyecto, catalogo: readonly TableroProyecto[]): EspecificacionProyecto[] {
+export function especificacionesProyecto(config: ConfigMaterialesProyecto, catalogo: readonly TableroProyecto[], areas: readonly { nombre: string; lineas: readonly { pref?: string | null }[] }[] = []): EspecificacionProyecto[] {
   const familias: Array<[FamiliaMaterial, string]> = [['superior', 'Muebles superiores cocina'], ['inferior', 'Muebles inferiores cocina'], ['closet', 'Closet / Walk in closet'], ['banos', 'Baños / Auxiliares']];
   return familias.flatMap(([familia, titulo]) => {
     const seleccion = config[CLAVE_CONFIG_FAMILIA[familia] as keyof ConfigMaterialesProyecto] as MaterialesFamilia | undefined;
     const materiales = seleccion ?? (familia === 'inferior' ? { preset: config.preset, cantoCaja: config.cantoCaja, cantoFrentes: config.cantoFrentes } : undefined);
     if (!materiales?.preset) return [];
+    const tieneAbiertos = areas.some(area => area.lineas.some(linea => usaCajaMaterialFrente(linea.pref) && familiaMaterialDelArea(linea.pref, area.nombre) === familia));
     return [{ familia, titulo, filas: [
       ['Caja / refuerzos', descripcionTableroProyecto(materiales.preset.caja, catalogo)],
       ['Refuerzo', descripcionTableroProyecto(materiales.preset.refuerzo ?? materiales.preset.caja, catalogo)],
       ['Frentes / paneles / rellenos', descripcionTableroProyecto(materiales.preset.frente, catalogo)],
+      ...(tieneAbiertos ? [['Caja / refuerzos de OBFD, OBFD-SM, OSBFD-SM y OW (incluidas variantes sin fondo)', descripcionTableroProyecto(materiales.preset.frente, catalogo)]] : []),
       ['Fondo seleccionado (se usa donde el módulo lleva espaldar)', descripcionTableroProyecto(materiales.preset.fondo, catalogo)],
       ['Canto de caja', materiales.cantoCaja || 'No configurado'],
       ['Canto de frentes', materiales.cantoFrentes || 'No configurado'],

@@ -11,6 +11,8 @@
 
 ## Implementación y persistencia
 
+- Excepción de materiales para OBFD, OBFD-SM, OSBFD-SM y OW: caja y refuerzos toman el frente global de su familia (también variantes sin fondo). Las especificaciones imprimen la excepción sin cambiar el fondo ni los cantos seleccionados. Véase [materiales de tipologías abiertas](materiales_tipologias_abiertas.md).
+- `HerrajesOtrosPdf` consolida exclusivamente la presentación por referencia exacta y unidad, sumando las cantidades ya multiplicadas de todas las áreas y mostrando las áreas de origen sin duplicarlas. Las referencias vacías se mantienen por ID. El detalle no imprime valor unitario, valor total ni subtotal; los importes originales siguen incluidos una sola vez en el resumen general. Se elimina el sufijo generado de cantidad de la descripción para evitar contradicciones con la cantidad consolidada. No se modifican datos persistidos ni el cálculo de `separarPropuesta`.
 - `src/lib/propuesta-cotizacion.ts` separa las líneas y conserva los importes persistidos, evitando diferencias por redondeo del breakdown. Lo consumen las plantillas FIRPLAK, CEMA y general.
 - `src/lib/materiales-proyecto.ts` comparte resolución de familia y especificaciones entre cliente, servidor y auditoría.
 - `sincronizarMaterialesCotizacion` normaliza referencias, aplica los materiales elegidos y recalcula grupos, áreas y cabecera. Se ejecuta al guardar características, renombrar áreas y restaurar versiones. Agregar, editar, mover o recalcular módulos resuelve los materiales del área en el servidor.
@@ -42,6 +44,15 @@ Antes de publicar cambios de propagación se debe probar el flujo real **abrir u
 `tests/propuesta-cotizacion.test.ts` verifica separación, multiplicadores, importes y HTML imprimible. `tests/materiales-proyecto.test.ts` verifica prioridad closet y referencias. `tests/cotizaciones.test.ts` prueba la sincronización persistida, recálculo y segunda pasada idempotente, además de sus pruebas anteriores de tipología con/sin fondo. Las suites se incluyen en los lanes de persistencia y frontend del manifiesto de calidad.
 
 Relacionados: [FIRPLAK](plantilla_propuesta_firplak.md), [CEMA](plantilla_propuesta_cema.md), [material suelto](lineas_material_suelto.md), [nombre de PDF](nombre_pdf_cotizacion.md).
+
+## Verificación del detalle consolidado: 2026-11-03
+
+- Auditoría estricta de solo lectura de las 10 cotizaciones: cero diferencias de materiales, referencias faltantes, grupos inválidos o errores de conciliación.
+- Regresión del fragmento suministrado: CPTK 9, PTK4 2, GFSM 6 y LGP4118 3; también cantidades fraccionarias, áreas repetidas, unidades distintas, ausencia de precios en COP/USD e inmutabilidad de importes.
+- Se abrieron las 10 vistas reales en localhost con Chromium y Playwright (Browser plugin no disponible), viewport 1440×1000, sin errores de aplicación ni overlay de Next. Sesión temporal autenticada sin envío de correo.
+- Dos cargas independientes y dos ejecuciones de Guardar e imprimir por proyecto: Casa Poro (22 líneas adicionales → 10 referencias, 8 páginas), KUNDARA (51 → 7, 9 páginas) y Milán Closet (sin adicionales, 4 páginas). Cantidades contrastadas contra consulta independiente de las líneas guardadas; texto completo idéntico entre las dos generaciones. En Casa Poro el listado completo suma CPTK 11 y PTK4 4 por incluir también la Parrilla, fuera del fragmento aportado.
+- PDF generados con estilos de impresión, texto extraído con pypdf y páginas renderizadas con PDFium. Revisados los mosaicos de todas las páginas y la página del detalle a tamaño completo: filas legibles y agrupadas sin precios. La revisión se limita a Chromium local; no incluye impresión física, despliegue remoto ni otros navegadores. No se cambiaron selecciones de materiales ni líneas de cotizaciones.
+- `quality:gate` aprobado con 91 suites y sin regresiones de TypeScript o ESLint. `quality:learn -- --strict`: cero HIGH; quedan dos avisos MED y uno LOW de latencia de las pruebas del optimizador, ajenos al detalle del PDF.
 
 ## Evidencia de aplicación: 2026-10-29
 
