@@ -49,3 +49,8 @@ pieza se conservan sin cambios.
   - Habilita `permite_agrupacion = true` en `B-FE`, `UB-FE`, `V-FE`.
   - Configura el despiece continuo homologado con `B`, `UB` y `V`.
   - Asigna metadatos `visualizacion` confirmados a las 13 piezas.
+
+
+## DB-FE sin Gola
+
+La tipología [DB-FE](db_fe.md) conserva carcasa y frentes de DB y parametriza las cajas de madera FE de la familia DB-SM-FE. Su variante 2-1INT reutiliza el orden de montaje de cajas pequeña/grande/interior y el contacto del contraparche interior, sin añadir Gola.

@@ -7,6 +7,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
+- [DB-FE paramétrica](wiki/db_fe.md) - Copia de la DB vigente con cajas de gaveta FE y riel RIELFE500; seis variantes internas, persistencia y pruebas.
 - [Ordenar secciones de una cotización](wiki/orden_secciones_cotizacion.md) - Arrastre y flechas para cocinas, closets y baños; persistencia atómica, permisos, manejo de errores y orden en el resumen PDF/Excel.
 - [Fondos del color del frente en abiertos](wiki/fondos_color_abiertos.md) - Alcance OW y otros abiertos, fondo real de 6 mm, validación de catálogo, consumo/costo y evidencia del OW de ELEVEN.
 - [Inferiores B, OW-MO y programación opcional](wiki/inferiores_b_ow_mo_programacion_pdf.md) - Dimensiones variables en códigos B, fondo de OW-MO del color del frente e interruptor persistido de programación FIRPLAK/CEMA y aplicación a cotizaciones existentes.
