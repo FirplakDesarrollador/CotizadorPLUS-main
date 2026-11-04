@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import {
   crearCotizacion, agregarLinea, editarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
   crearCocina, actualizarCocina, eliminarCocina, duplicarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
-  reordenarGruposCocina,
+  reordenarGruposCocina, reordenarCocinas,
   guardarVersionCotizacion, restaurarVersionCotizacion,
   agregarComentarioCotizacion,
   agregarLineaMaterial, getMaterialesDisponibles, type MaterialDisponible,
@@ -27,6 +27,17 @@ export async function actualizarUbicacionCotizacionAction(id: string, pais: stri
     revalidatePath(`/cotizaciones/${id}`);
     return { ok: true };
   } catch (error) { return { ok: false, error: error instanceof Error ? error.message : 'No se pudo guardar la ubicación.' }; }
+}
+
+export async function reordenarCocinasAction(cotizacionId: string, cocinaIds: string[]): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await reordenarCocinas(cotizacionId, cocinaIds);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    revalidatePath(`/cotizaciones/${cotizacionId}/imprimir`);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'No se pudo guardar el orden de las secciones.' };
+  }
 }
 
 export async function reordenarGruposCocinaAction(cocinaId: string, nuevosGrupoIds: string[]): Promise<{ ok: boolean; error?: string }> {

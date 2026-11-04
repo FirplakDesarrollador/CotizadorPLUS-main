@@ -7,6 +7,9 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
+- [Ordenar secciones de una cotización](wiki/orden_secciones_cotizacion.md) - Arrastre y flechas para cocinas, closets y baños; persistencia atómica, permisos, manejo de errores y orden en el resumen PDF/Excel.
+- [Fondos del color del frente en abiertos](wiki/fondos_color_abiertos.md) - Alcance OW y otros abiertos, fondo real de 6 mm, validación de catálogo, consumo/costo y evidencia del OW de ELEVEN.
+- [Inferiores B, OW-MO y programación opcional](wiki/inferiores_b_ow_mo_programacion_pdf.md) - Dimensiones variables en códigos B, fondo de OW-MO del color del frente e interruptor persistido de programación FIRPLAK/CEMA y aplicación a cotizaciones existentes.
 - [Material de tipologías abiertas](wiki/materiales_tipologias_abiertas.md) - OBFD, OBFD-SM, OSBFD-SM y OW usan el frente global en caja/refuerzos; aplicación histórica limitada, respaldo y recálculo.
 - [Cálculos automáticos del catálogo de tableros](wiki/calculos_automaticos_catalogo_tableros.md) - Área derivada del formato y sincronización bidireccional entre precio y precio por m² en altas y ediciones de tableros.
 - [Mejora de UX en tabla de catálogos](wiki/ux_catalogo_materiales_parametros.md) - Barra de scroll horizontal visible, columna sticky, editor inline responsivo y adaptado sin scroll, y acciones de fila accesibles.

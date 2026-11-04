@@ -198,7 +198,15 @@ export function codigoComercial(input: CodigoComercialInput): string {
     codigo = guion === -1 ? codigo + medida : codigo.slice(0, guion) + medida + codigo.slice(guion);
   };
   const esTorreTk = esTorreConDimensionesTk(prefNormalizado);
-  const altoSufijo = (incluyeAltoEnCodigo(pref) || esTw || esTwSmPush || esTwSmHood || esTorreTk)
+  // Los inferiores B omiten únicamente sus dimensiones estándar. Se compara
+  // en cm antes de formatear para no perder cambios por redondeo imperial.
+  const esInferiorB = prefNormalizado.startsWith('B');
+  const altoCm = convertirExacto(alto, unidad, 'cm');
+  const profCm = prof == null ? NaN : convertirExacto(prof, unidad, 'cm');
+  const altoBVariable = esInferiorB && Number.isFinite(altoCm) && Math.abs(altoCm - 76.2) > 0.001;
+  const profBVariable = esInferiorB && Number.isFinite(profCm)
+    && Math.abs(profCm - 60.96) > 0.001 && Math.abs(profCm - 60.9) > 0.001;
+  const altoSufijo = (altoBVariable || incluyeAltoEnCodigo(pref) || esTw || esTwSmPush || esTwSmHood || esTorreTk)
     ? anchoCodigo(alto, unidad, sistema)
     : '';
   if (altoSufijo) agregarMedida(altoSufijo);
@@ -208,6 +216,7 @@ export function codigoComercial(input: CodigoComercialInput): string {
   // el mismo módulo de forma idéntica.
   const esDfe = prefNormalizado.split('-')[0] === 'DFE';
   const incluyeProfundidad = (esMuebleSuperior(prefNormalizado) && prefNormalizado !== 'WCC')
+    || profBVariable
     || esTorreTk
     || esDfe;
   const profSufijo = incluyeProfundidad && prof != null

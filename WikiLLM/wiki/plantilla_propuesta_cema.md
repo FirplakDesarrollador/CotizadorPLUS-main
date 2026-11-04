@@ -44,3 +44,8 @@ plantilla fue abierta directamente, navega a `/cotizaciones/[id]` como respaldo.
 
 La migración 0177 fue aplicada al Supabase conectado el 2026-10-04 y se verificó
 la columna obligatoria con default `{}`.
+
+
+## Programación opcional (2026-11-04)
+
+El interruptor situado antes de CABINET SCHEDULE persiste `showModuleSchedule` en `plantilla_cema`. Las plantillas antiguas usan ON. OFF elimina toda la sección y renumera las posteriores, sin aviso impreso ni hueco en la numeración. Ver [aplicación y evidencia](inferiores_b_ow_mo_programacion_pdf.md).

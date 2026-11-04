@@ -186,6 +186,16 @@ export async function duplicarCocina(cocinaId: string, cotizacionId: string) {
 }
 
 // ---- Módulos (líneas) dentro de una cocina ----
+export async function reordenarCocinas(cotizacionId: string, cocinaIds: string[]) {
+  if (new Set(cocinaIds).size !== cocinaIds.length) throw new Error('No se pueden repetir secciones al ordenar.');
+  const sb = await createClient();
+  const { data, error } = await sb.rpc('cot_reordenar_cocinas', {
+    p_cotizacion_id: cotizacionId, p_cocina_ids: cocinaIds,
+  });
+  if (error) throw new Error(error.message);
+  if (data !== cotizacionId) throw new Error('No se pudo guardar el orden de las secciones.');
+}
+
 export type AgregarLineaInput = CotizarInput & {
   cantidad: number; prefLabel?: string; dbTipo?: string;
   // Texto libre exclusivo de esta línea; no forma parte de la tipología.

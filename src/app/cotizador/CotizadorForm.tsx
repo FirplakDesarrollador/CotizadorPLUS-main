@@ -20,6 +20,7 @@ import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
+import { presetMaterialesTipologia, usaCajaMaterialFrente, usaFondoMaterialFrente } from '@/lib/materiales-proyecto';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -98,13 +99,15 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   // Validar que los códigos del store persisten contra los tableros disponibles.
   // Si un código fue eliminado del catálogo, usar el preset por defecto.
   const validCodes = new Set(tableros.map((t) => t.codigo));
-  const preset = (() => {
+  const presetSeleccionado = (() => {
     const stored = store.preset;
     if (!Object.keys(stored).length) return presetDefault;
     return Object.fromEntries(
       Object.entries(stored).map(([rol, cod]) => [rol, validCodes.has(cod) ? cod : (presetDefault[rol] ?? '')])
     );
   })();
+  const prefMaterial = tipos.find((t) => t.id === tipoId)?.pref;
+  const preset = presetMaterialesTipologia(presetSeleccionado, prefMaterial);
   const setPreset = (v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => setStore({ preset: typeof v === 'function' ? v(preset) : v });
 
   const frenteBoardDefault = tableros.find((t) => t.codigo === preset.frente);
@@ -260,7 +263,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   if (!isMounted) return null;
 
-  const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
+  const rolesBase = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
+  const roles = usaCajaMaterialFrente(prefMaterial) ? Array.from(new Set([...rolesBase, 'frente'])) : rolesBase;
   const tipoActual = tipos.find((t) => t.id === tipoId);
   const tipoPref = tipoActual?.pref ?? '';
   const usaTipologiaDb = permiteTipologiaDb(tipoPref);
@@ -687,9 +691,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   // el código sigue la unidad con la que se está simulando.
   const sistemaCodigo: SistemaMedida = unidad === 'in' ? 'imperial' : 'metrico';
 
-  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'zocalo' | 'sistemaFrente' | 'dbTipo' | 'ncajones' | 'door' | 'doorHand'>) => {
+  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'zocalo' | 'sistemaFrente' | 'dbTipo' | 'ncajones' | 'door' | 'doorHand'> & { preset?: Record<string, string> }) => {
     const pref = tipos.find((item) => item.id === valores.tipoId)?.pref ?? '';
     if (!pref) return '';
+    const materiales = presetMaterialesTipologia(valores.preset ?? preset, pref);
     return codigoComercial({
       pref,
       largo: parseMedida(valores.largo),
@@ -703,8 +708,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       pcfdCajones: pref === 'PCFD' ? Number(valores.ncajones) : null,
       door: usaPuertaParametrica(pref) && valores.door !== '' ? parseMedida(valores.door) : null,
       doorHand: usaPuertaParametrica(pref) ? valores.doorHand : null,
-      espesorCajaMm: tableros.find((tablero) => tablero.codigo === preset.caja)?.espesor_mm,
-      espesorFrenteMm: tableros.find((tablero) => tablero.codigo === preset.frente)?.espesor_mm,
+      espesorCajaMm: tableros.find((tablero) => tablero.codigo === materiales.caja)?.espesor_mm,
+      espesorFrenteMm: tableros.find((tablero) => tablero.codigo === materiales.frente)?.espesor_mm,
     });
   };
 
@@ -906,6 +911,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
                 rendered.push(
                   <Field key="caja-refuerzo" label="caja / refuerzos">
                     <Combobox value={preset.caja ?? ''} options={tableroOptions}
+                      disabled={usaCajaMaterialFrente(prefMaterial)}
                       onChange={(v) => {
                         setPreset((p) => ({ ...p, caja: v, refuerzo: v }));
                         const b = tableros.find((t) => t.codigo === v);
@@ -919,6 +925,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
                 rendered.push(
                   <Field key={rol} label={ROL_LABEL[rol] ?? rol}>
                     <Combobox value={preset[rol] ?? ''} options={tableroOptions}
+                      disabled={rol === 'fondo' && usaFondoMaterialFrente(prefMaterial)}
                       onChange={(v) => {
                         setPreset((p) => ({ ...p, [rol]: v }));
                         if (rol === 'frente') {

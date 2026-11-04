@@ -1,4 +1,5 @@
 export type FirplakTemplate = {
+  showModuleSchedule: boolean;
   projectAddress: string; proposalDate: string; validityDays: number; deliveryScope: string;
   depositPercent: number; balancePercent: number; leadTimeDays: number;
   upperBoard: string; upperBack: string; upperCase: string; upperDoors: string; upperFillers: string;
@@ -11,6 +12,7 @@ export type FirplakTemplate = {
 };
 
 export const FIRPLAK_TEMPLATE_DEFAULTS: FirplakTemplate = {
+  showModuleSchedule: true,
   projectAddress: '', proposalDate: '', validityDays: 30, deliveryScope: 'Entrega en Colombia',
   depositPercent: 50, balancePercent: 50, leadTimeDays: 90,
   upperBoard: 'Tablero STANDARD', upperBack: 'MDF 5.5 mm, blanco', upperCase: 'Tablero 15 mm, canto 0.45 mm, blanco',

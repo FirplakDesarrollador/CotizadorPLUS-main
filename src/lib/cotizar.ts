@@ -14,7 +14,7 @@ import { construirVisualizacion } from './visualizacion';
 import { codigoComercial } from './module-groups';
 import { ajustarPiezasSinFondo, usaHuecoHornoParametrico, usaPuertaParametrica } from './muebles';
 import { aplicarPreciosTableros, type PreciosTablerosCotizacion } from './precios-tableros';
-import { presetMaterialesTipologia } from './materiales-proyecto';
+import { presetMaterialesTipologia, usaFondoMaterialFrente } from './materiales-proyecto';
 
 export type CotizarInput = {
   tipoId: string;
@@ -199,6 +199,12 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
   // Preset final
   const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
   const preset = presetMaterialesTipologia({ ...presetDefault, ...inp.preset }, tipo.pref);
+  if (usaFondoMaterialFrente(tipo.pref) && inp.conFondo !== false && !/-SF$/i.test(tipo.pref)) {
+    const fondo = tablerosByCode[preset.fondo];
+    if (!fondo || Number(fondo.espesor_mm) !== 6) {
+      throw new Error(`Fondo del color del frente no disponible en 6 mm: ${preset.fondo || 'sin referencia'}. Revise el catálogo; no se sustituye por blanco.`);
+    }
+  }
   tablerosByCode = aplicarPreciosTableros(tablerosByCode, inp.preciosTableros);
 
   // Riel override para muebles DB

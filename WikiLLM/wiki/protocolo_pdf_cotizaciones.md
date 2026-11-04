@@ -64,3 +64,11 @@ Relacionados: [FIRPLAK](plantilla_propuesta_firplak.md), [CEMA](plantilla_propue
 - Se comprobaron las 51 filas de adicionales, sus cantidades multiplicadas por área, el subtotal independiente, su exclusión del schedule y las referencias reales de tableros. Se extrajo texto de los PDF y se revisaron páginas renderizadas con Poppler y PDFium. Los subtotales aparecen una sola vez, las filas no se dividen y los encabezados continúan en las páginas siguientes. Resultado: KUNDARA 11 páginas, Milán 4 páginas.
 - `quality:gate` ejecutó 83 archivos de pruebas con exit 0. La cobertura incluye cantidades fraccionarias, COP/USD, HTML imprimible, prioridad closet y persistencia idempotente. La prueba de persistencia usa un cliente en memoria y comprueba el input del motor y los totales guardados, sin escribir en Supabase desde la suite.
 - Límite de la revisión visual: escritorio e impresión de Chromium en local. No se verificó despliegue remoto, impresión física ni diseño móvil. Las cotizaciones CEMA existentes no tienen módulos; la separación de adicionales usa la función compartida probada y se abrió su vista vacía durante el barrido.
+
+
+## Extensión OW-MO y programación opcional (2026-11-04)
+
+OW-MO usa frente en caja/refuerzos y fondo de 6 mm del mismo color. Las plantillas FIRPLAK y CEMA guardan un interruptor que elimina toda la programación en OFF. Se aplicaron con respaldo las reglas a las 11 cotizaciones existentes; auditoría estricta y de códigos sin pendientes. Ver [evidencia, pestañas y respaldos](inferiores_b_ow_mo_programacion_pdf.md).
+
+
+Actualización de alcance: [todos los abiertos usan fondo del color del frente en 6 mm](fondos_color_abiertos.md). La auditoría general más reciente tiene tres diferencias recurrentes de caja/refuerzos en Condominio V, aunque los fondos están correctos; no reutilizar la afirmación anterior de cero pendientes fuera de su fecha y ejecución.

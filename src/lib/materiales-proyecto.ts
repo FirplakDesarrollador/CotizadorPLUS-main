@@ -11,14 +11,22 @@ export type ConfigMaterialesProyecto = {
   materialesBanos?: MaterialesFamilia;
 };
 
-/** Incluye las variantes sin fondo derivadas, sin alcanzar OW-MO ni OSBFD. */
+/** Incluye las variantes sin fondo derivadas y OW-MO, sin alcanzar OSBFD. */
 export function usaCajaMaterialFrente(pref: string | null | undefined): boolean {
-  return /^(?:OBFD|OBFD-SM|OSBFD-SM|OW)(?:-SF)?$/.test(String(pref ?? '').trim().toUpperCase());
+  return /^(?:OBFD|OBFD-SM|OSBFD-SM|OW|OW-MO)(?:-SF)?$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+/** En abiertos, el espaldar visible debe conservar el color del frente. */
+export function usaFondoMaterialFrente(pref: string | null | undefined): boolean {
+  return usaCajaMaterialFrente(pref);
 }
 
 export function presetMaterialesTipologia(preset: Record<string, string>, pref: string | null | undefined): Record<string, string> {
   if (!usaCajaMaterialFrente(pref) || !preset.frente) return { ...preset };
-  return { ...preset, caja: preset.frente, refuerzo: preset.frente };
+  // El código de tablero conserva proveedor, sustrato y color; solo cambia
+  // el espesor del frente por 6 mm para el espaldar visible del abierto.
+  const fondo = preset.frente.replace(/\d+(?:[.,]\d+)?/, '6');
+  return { ...preset, caja: preset.frente, refuerzo: preset.frente, fondo };
 }
 
 /** El nombre del área tiene prioridad sobre la tipología de cada módulo. */
@@ -83,8 +91,9 @@ export function especificacionesProyecto(config: ConfigMaterialesProyecto, catal
       ['Caja / refuerzos', descripcionTableroProyecto(materiales.preset.caja, catalogo)],
       ['Refuerzo', descripcionTableroProyecto(materiales.preset.refuerzo ?? materiales.preset.caja, catalogo)],
       ['Frentes / paneles / rellenos', descripcionTableroProyecto(materiales.preset.frente, catalogo)],
-      ...(tieneAbiertos ? [['Caja / refuerzos de OBFD, OBFD-SM, OSBFD-SM y OW (incluidas variantes sin fondo)', descripcionTableroProyecto(materiales.preset.frente, catalogo)]] : []),
-      ['Fondo seleccionado (se usa donde el módulo lleva espaldar)', descripcionTableroProyecto(materiales.preset.fondo, catalogo)],
+      ...(tieneAbiertos ? [['Caja / refuerzos de OBFD, OBFD-SM, OSBFD-SM, OW y OW-MO (incluidas variantes sin fondo)', descripcionTableroProyecto(materiales.preset.frente, catalogo)]] : []),
+      ...(tieneAbiertos ? [['Fondo de abiertos OBFD, OBFD-SM, OSBFD-SM, OW y OW-MO (6 mm, color del frente; solo con fondo)', descripcionTableroProyecto(presetMaterialesTipologia(materiales.preset, 'OW').fondo, catalogo)]] : []),
+      ['Fondo general (solo donde lleva espaldar; los abiertos usan el fondo indicado arriba)', descripcionTableroProyecto(materiales.preset.fondo, catalogo)],
       ['Canto de caja', materiales.cantoCaja || 'No configurado'],
       ['Canto de frentes', materiales.cantoFrentes || 'No configurado'],
     ] as Array<[string, string]> }];

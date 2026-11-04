@@ -6,6 +6,7 @@ import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, SISTEMAS_FRENTE, esTipologiaDbSmFe,
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { codigoComercial, parseMedida } from '@/lib/module-groups';
+import { presetMaterialesTipologia } from '@/lib/materiales-proyecto';
 import type { CotizarResult } from '@/lib/cotizar';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
@@ -157,13 +158,14 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     setExportandoTodas(null);
   }
 
+  const materialesCodigo = presetMaterialesTipologia(presetDefault, tipoSel?.pref);
   const codigo = tipoSel
     ? codigoComercial({
         pref: tipoSel.pref, largo, alto, prof, unidad, sistema: 'imperial', sistemaFrente,
         door: usaDoor && door !== '' ? parseMedida(door) : null,
         doorHand: usaDoor ? doorHand : null,
-        espesorCajaMm: tableros.find((tablero) => tablero.codigo === presetDefault.caja)?.espesor_mm,
-        espesorFrenteMm: tableros.find((tablero) => tablero.codigo === presetDefault.frente)?.espesor_mm,
+        espesorCajaMm: tableros.find((tablero) => tablero.codigo === materialesCodigo.caja)?.espesor_mm,
+        espesorFrenteMm: tableros.find((tablero) => tablero.codigo === materialesCodigo.frente)?.espesor_mm,
       })
     : '';
 
