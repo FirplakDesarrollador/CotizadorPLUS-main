@@ -15,3 +15,8 @@ El panel permite completar dirección, vigencia, pagos, plazo, alcance, embalaje
 Incluye resumen comercial, especificaciones de materiales reales por familia, herrajes incorporados, herrajes/otros adicionales, términos y programación de módulos. Los recursos originales reutilizados viven en `public/firplak-template/`. “Volver” retorna al detalle en la misma pestaña y usa la ruta directa como respaldo. La palabra **closet** en el nombre del área da prioridad a los materiales de Closet/Walk-in closet para todos sus módulos. Consultar el [protocolo de verificación y reparación histórica](protocolo_pdf_cotizaciones.md).
 
 La barra superior conserva las mismas tres acciones de CEMA: **Volver**, **Guardar** y **Guardar e imprimir / PDF**. Los controles permiten salto de línea para que ninguno quede recortado en ventanas angostas.
+
+
+## Programación opcional (2026-11-04)
+
+El interruptor situado antes del listado guarda `showModuleSchedule` en la plantilla. Predeterminado ON; OFF elimina por completo la página de programación al imprimir, sin afectar importes ni resumen. Ver [reglas y evidencia](inferiores_b_ow_mo_programacion_pdf.md).

@@ -69,3 +69,8 @@ Resultado: 91 suites aprobadas en quality:gate y cero HIGH en quality:learn
 verificado también a 390 px. Dos PDF de cinco páginas con texto idéntico y
 revisión de páginas renderizadas; adicionales separados de muebles y total
 incluido una vez. Cotización temporal y copias eliminadas al finalizar.
+
+
+## Orden personalizado
+
+Además de insertarse debajo del origen al copiar, cualquier sección puede moverse completa con el asa o las flechas de su cabecera. Véase [ordenar secciones](orden_secciones_cotizacion.md).

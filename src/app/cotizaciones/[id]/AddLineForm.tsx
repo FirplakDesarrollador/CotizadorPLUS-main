@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
-import { familiaMaterialDelArea, presetMaterialesTipologia, usaCajaMaterialFrente } from '@/lib/materiales-proyecto';
+import { familiaMaterialDelArea, presetMaterialesTipologia, usaCajaMaterialFrente, usaFondoMaterialFrente } from '@/lib/materiales-proyecto';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
@@ -886,7 +886,8 @@ export default function AddLineForm({
           <L key={rol} label={ROL_LABEL[rol] ?? `Tablero ${rol}`}>
             <Combobox
               value={preset[rol] ?? ''}
-              disabled={usaCajaMaterialFrente(prefMaterial) && (rol === 'caja' || rol === 'refuerzo')}
+              disabled={(usaCajaMaterialFrente(prefMaterial) && (rol === 'caja' || rol === 'refuerzo'))
+                || (rol === 'fondo' && usaFondoMaterialFrente(prefMaterial))}
               options={tableroOptions}
               onChange={(v) => {
                 setPreset((p) => ({ ...p, [rol]: v, ...(rol === 'caja' ? { refuerzo: v } : {}) }));

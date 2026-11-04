@@ -119,3 +119,17 @@ test('cada moneda se formatea con su convencion', () => {
   assert.ok(cop.includes('924'), cop);
   assert.ok(!cop.includes(',00'), 'los pesos no llevan decimales');
 });
+
+
+test('la visibilidad de programaci?n es compatible con plantillas antiguas y conserva OFF', () => {
+  assert.equal(normalizarFirplakTemplate(null).showModuleSchedule, true);
+  assert.equal(normalizarFirplakTemplate({ showModuleSchedule: false }).showModuleSchedule, false);
+  assert.equal(normalizarFirplakTemplate(JSON.parse(JSON.stringify(normalizarFirplakTemplate({ showModuleSchedule: false })))).showModuleSchedule, false);
+});
+
+
+test('CEMA conserva el interruptor OFF y completa plantillas anteriores', async () => {
+  const { normalizarCemaTemplate } = await import('../src/lib/cema-template');
+  assert.equal(normalizarCemaTemplate(null).showModuleSchedule, true);
+  assert.equal(normalizarCemaTemplate({ showModuleSchedule: false }).showModuleSchedule, false);
+});
