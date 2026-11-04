@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
+import { DB_TIPOLOGIAS, tipologiasDbParaPrefijo } from '../src/lib/muebles';
 
 const migration = fs.readFileSync('db/migrations/0192_desactivar_superiores_legacy.sql', 'utf8');
 const alMigration = fs.readFileSync('db/migrations/0193_desactivar_al.sql', 'utf8');
@@ -65,11 +66,12 @@ test('BFD permanece activa aunque su alias métrico sea IP', () => {
 test('todas las configuraciones DB se ofrecen en Simulador y Cotizaciones', () => {
   assert.match(muebles, /DB_TIPOLOGIAS_COTIZABLES\s*=\s*DB_TIPOLOGIAS/);
   assert.doesNotMatch(muebles, /DB_TIPOLOGIAS_NO_COTIZABLES/);
+  for (const pref of ['DB', 'DB-FE']) assert.deepEqual(tipologiasDbParaPrefijo(pref).map(t => t.key), DB_TIPOLOGIAS.map(t => t.key));
   for (const key of ['DB-1S', 'DB-2S', 'DB-2', 'DB-3', 'DB-4', 'DB2-1OP']) {
     assert.match(muebles, new RegExp(`key: '${key}'`));
   }
-  assert.match(simulador, /DB_TIPOLOGIAS_COTIZABLES\.map/);
-  assert.match(cotizaciones, /DB_TIPOLOGIAS_COTIZABLES\.map/);
+  assert.match(simulador, /tipologiasDbParaPrefijo\(tipoPref\)\.map/);
+  assert.match(cotizaciones, /tipologiasDbParaPrefijo\(prefTipo\)\.map/);
 });
 
 test('todas las filas DB e IC se reactivan sin afectar otras familias', () => {

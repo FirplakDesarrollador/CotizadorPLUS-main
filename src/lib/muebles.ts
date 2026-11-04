@@ -333,6 +333,30 @@ export const DB_TIPOLOGIAS: DbTipologia[] = [
 // En sistema métrico sus etiquetas se presentan con el prefijo IC equivalente.
 export const DB_TIPOLOGIAS_COTIZABLES = DB_TIPOLOGIAS;
 
+export function esTipologiaDbFe(pref: string | null | undefined): boolean {
+  return /^DB-FE(?:-SF)?$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export const DB_FE_TIPOLOGIAS: DbTipologia[] = DB_TIPOLOGIAS.map(t => ({
+  ...t, nb: 0, desc: `${t.desc.split(' · ')[0]} · Full Extension`,
+}));
+
+export function tipologiasDbParaPrefijo(pref: string | null | undefined): DbTipologia[] {
+  return esTipologiaDbFe(pref) ? DB_FE_TIPOLOGIAS : DB_TIPOLOGIAS;
+}
+
+/** La tipología fija geometría y riel incluso si llega un estado heredado de DB. */
+export function aplicarConfiguracionDbFe<T extends { dbTipo?: string; rielCodigo?: string; sistemaFrente?: string; overrides?: Record<string, number> }>(input: T, pref: string | null | undefined): T {
+  if (!esTipologiaDbFe(pref)) return input;
+  const variante = input.dbTipo ? DB_FE_TIPOLOGIAS.find(t => t.key === input.dbTipo) : undefined;
+  if (input.dbTipo && !variante) throw new Error('Variante DB-FE no válida.');
+  return { ...input, rielCodigo: 'RIELFE500', sistemaFrente: 'manija', overrides: {
+    ...input.overrides,
+    ...(variante ? { n_cajones: variante.nc, n_cajones_pequenos: variante.npeq, n_cajones_ocultos: variante.noculto ?? 0 } : {}),
+    gola: 0, n_barras: 0,
+  } };
+}
+
 // Cajoneras que comparten el selector comercial de tipologias DB. Mantener
 // esta decision en una sola funcion evita que una ruta aplique el selector sin
 // incluir sus overrides, el riel o el sufijo del codigo.
@@ -340,7 +364,7 @@ export const PREFS_CON_TIPOLOGIA_DB = ['DB', 'UDB', 'UDV'] as const;
 
 export function permiteTipologiaDb(pref: string | null | undefined): boolean {
   const p = String(pref ?? '').toUpperCase();
-  return (PREFS_CON_TIPOLOGIA_DB as readonly string[]).includes(p);
+  return esTipologiaDbFe(p) || (PREFS_CON_TIPOLOGIA_DB as readonly string[]).includes(p);
 }
 
 // Cómo se **muestra** una tipología en el selector, según el tipo elegido: un
@@ -355,6 +379,9 @@ export function etiquetaTipologiaDb(key: string, pref: string | null | undefined
   // La clave histórica DB2-1OP se conserva en cálculos y datos persistidos;
   // únicamente su nombre comercial visible cambia a DB-2-1INT.
   const etiqueta = key === 'DB2-1OP' ? 'DB-2-1INT' : key;
+  if (esTipologiaDbFe(base) || /^IC-FE(?:-SF)?$/.test(base)) {
+    return `${etiqueta.replace(/^DB/, base.startsWith('IC') ? 'IC' : 'DB')}-FE${base.endsWith('-SF') ? '-SF' : ''}`;
+  }
   if (!base || base === 'DB') return etiqueta;
   // `DB-1S` → `UDV-1S`; `DB-2-1INT` → `UDV-2-1INT`.
   return etiqueta.replace(/^DB/, base);

@@ -1,0 +1,1684 @@
+{
+  "params": {
+    "desperdicio_canto": {
+      "22x1": 0.05,
+      "19x0.45": 0.05,
+      "polar19x0.45": 0.05
+    },
+    "lamina": {
+      "cm2": 44652,
+      "formato_grande_m2": 4.4652,
+      "formato_pequeno_m2": 3.7332
+    },
+    "factores_sm": {
+      "w": 0.01755779,
+      "SBFD": 0.0624177,
+      "DBxx-2s": 0.0586283
+    },
+    "pulgada_cm": 2.54,
+    "trm": {
+      "modo": "auto",
+      "valor": 3200
+    },
+    "preset_default": {
+      "caja": "ECOCARB15COLOR",
+      "fondo": "PRICARB6CANDELARIA (POLAR)",
+      "frente": "ECOCARB18COLOR",
+      "refuerzo": "ECOCARB15ARLINGTON"
+    },
+    "desperdicio_madera": 0.15,
+    "recargo_extra": 0,
+    "optimizador": {
+      "pilas": [
+        {
+          "laminas": 4,
+          "espesorMm": 15
+        },
+        {
+          "laminas": 3,
+          "espesorMm": 18
+        }
+      ],
+      "discoMm": 4.4,
+      "maquina": "Seccionadora Holz-Her",
+      "criterio": [
+        "desperdicio",
+        "laminas",
+        "sobrante_ultima",
+        "cortes"
+      ],
+      "formatos": [
+        {
+          "activo": true,
+          "codigo": "183X244",
+          "anchoMm": 1830,
+          "largoMm": 2440
+        },
+        {
+          "activo": true,
+          "codigo": "124X246",
+          "anchoMm": 1240,
+          "largoMm": 2460
+        }
+      ],
+      "texturas": [
+        {
+          "nombre": "Soft",
+          "rotaVeta": true
+        },
+        {
+          "nombre": "Rustick",
+          "rotaVeta": false
+        },
+        {
+          "nombre": "Amazonas",
+          "rotaVeta": false
+        }
+      ],
+      "giraLamina": true,
+      "refiladoMm": 5,
+      "nivelesCorte": 3,
+      "piezasPorDia": 100,
+      "refiladoMaxMm": 5,
+      "desperdicioMaxPct": 10,
+      "sobranteMinAnchoMm": 500,
+      "sobranteMinLargoMm": 1000,
+      "refilarSoloZonaUsada": true,
+      "sobranteEnUltimaLamina": true
+    },
+    "margen_herraje": 0.35,
+    "margenes": {
+      "pn_tk": 0.6,
+      "fillers": 0.6,
+      "muebles": 0.6
+    }
+  },
+  "tipos": [
+    {
+      "id": "9e016fc5-4ad0-4699-95af-008576695dab",
+      "pref": "DB",
+      "pref_imperial": "DB",
+      "pref_metrico": "IC",
+      "permite_agrupacion": true,
+      "etiquetas_und": 4,
+      "margen_key": "muebles",
+      "usa_carton": true,
+      "categoria": "inferior"
+    },
+    {
+      "id": "a01be36f-510d-4a05-80de-20e46783df95",
+      "pref": "DB-FE",
+      "pref_imperial": "DB-FE",
+      "pref_metrico": "DB-FE",
+      "permite_agrupacion": true,
+      "etiquetas_und": 4,
+      "margen_key": "muebles",
+      "usa_carton": true,
+      "categoria": "inferior"
+    }
+  ],
+  "piezas": {
+    "9e016fc5-4ad0-4699-95af-008576695dab": [
+      {
+        "id": "b86ad931-3654-4c44-a395-4b240abca366",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "lateral",
+        "rol_tablero": "caja",
+        "formula_cantidad": "2",
+        "formula_largo": "A",
+        "formula_ancho": "P",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 10,
+        "notas": null,
+        "created_at": "2026-05-30T15:35:09.798646+00:00",
+        "updated_at": "2026-10-02T16:49:08.995063+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "lateral_compartido",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "YZ",
+          "funcion": "lateral",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "30ec8c62-1988-4cc1-a47a-1da30649bb8b",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "base",
+        "rol_tablero": "caja",
+        "formula_cantidad": "1",
+        "formula_largo": "L-2*TC",
+        "formula_ancho": "P-0.70866-TB",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 20,
+        "notas": null,
+        "created_at": "2026-05-30T15:35:09.798646+00:00",
+        "updated_at": "2026-10-02T16:49:08.995063+00:00",
+        "tarugos": 8,
+        "soportes": 0,
+        "modo_agrupacion": "continua",
+        "clave_fusion": "base",
+        "formula_largo_grupo": "LG-(2*TC)",
+        "visualizacion": {
+          "plano": "XY",
+          "funcion": "base",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "dfbcc6b8-39ab-44b2-b38d-bd0166111eb0",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "refuerzo_trasero",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "2",
+        "formula_largo": "L-2*TC",
+        "formula_ancho": "3.14961",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 30,
+        "notas": null,
+        "created_at": "2026-05-30T15:35:09.798646+00:00",
+        "updated_at": "2026-10-02T16:49:08.995063+00:00",
+        "tarugos": 4,
+        "soportes": 0,
+        "modo_agrupacion": "continua",
+        "clave_fusion": "refuerzo_trasero",
+        "formula_largo_grupo": "LG-(2*TC)",
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "travesano_posterior",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "25fae39e-2636-45eb-9d6b-aaa5ce3edd79",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "refuerzo_delantero",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "(n_cajones)-gola",
+        "formula_largo": "L-2*TC",
+        "formula_ancho": "3.14961",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 40,
+        "notas": null,
+        "created_at": "2026-05-30T15:35:09.798646+00:00",
+        "updated_at": "2026-10-02T16:49:08.995063+00:00",
+        "tarugos": 4,
+        "soportes": 0,
+        "modo_agrupacion": "continua_opcional",
+        "clave_fusion": "refuerzo_frontal",
+        "formula_largo_grupo": "LG-(2*TC)",
+        "visualizacion": {
+          "plano": "XY",
+          "funcion": "travesano_frontal",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "6550a4de-93a5-45d0-a4a4-896518ea4390",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "frente_gaveta_exterior",
+        "rol_tablero": "frente",
+        "formula_cantidad": "n_cajones_ocultos>0 ? (n_cajones-n_cajones_ocultos) : 0",
+        "formula_largo": "L-RV",
+        "formula_ancho": "(A-(n_cajones-n_cajones_ocultos)*RV-gola*2.11024)/(n_cajones-n_cajones_ocultos)",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2
+        },
+        "orden": 40,
+        "notas": "Frentes de fachada exterior para tipologías con gavetas ocultas (DB2-1OP)",
+        "created_at": "2026-09-11T02:53:42.625239+00:00",
+        "updated_at": "2026-09-11T02:53:42.625239+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente_gaveta"
+        }
+      },
+      {
+        "id": "2ed5877e-0c01-4846-8a03-38da0a3f6c2f",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "frente_gaveta_interior",
+        "rol_tablero": "frente",
+        "formula_cantidad": "n_cajones_ocultos",
+        "formula_largo": "L-2*TC-RV",
+        "formula_ancho": "100/25.4",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2
+        },
+        "orden": 41,
+        "notas": "Frente interior de gaveta oculta (100mm de alto embutido en luz interior)",
+        "created_at": "2026-09-11T02:53:42.625239+00:00",
+        "updated_at": "2026-09-11T02:53:42.625239+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente_interior"
+        }
+      },
+      {
+        "id": "0ff0a2e5-03b1-4218-ab60-10a08d0c7336",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "gola_perfil",
+        "rol_tablero": "caja",
+        "formula_cantidad": "gola*2",
+        "formula_largo": "L-2*TC",
+        "formula_ancho": "3.14961",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45",
+          "despEdges": 0
+        },
+        "orden": 45,
+        "notas": "Perfil de gola en melamina; solo cuando gola=1",
+        "created_at": "2026-09-08T20:19:25.409343+00:00",
+        "updated_at": "2026-09-10T21:00:40.455384+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "gola",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "a558c689-80f8-4735-b35d-0e8e2bdd659c",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "base_gaveta",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "n_cajones",
+        "formula_largo": "L-4.13386",
+        "formula_ancho": "P-4.63",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 50,
+        "notas": "0053: base de gaveta a L-105mm exactos segun hoja DB18-1S (antes L-4.13)",
+        "created_at": "2026-05-30T15:35:09.798646+00:00",
+        "updated_at": "2026-10-02T16:49:08.995063+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XY",
+          "funcion": "base_gaveta",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "08664f85-1dbe-4f68-847e-bc04d68cf26d",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "trasero_gaveta_pequena",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "n_cajones_ocultos>0 ? 2 : (n_cajones_pequenos>0 ? n_cajones_pequenos : (n_cajones==4 ? n_cajones : 0))",
+        "formula_largo": "L-4.607",
+        "formula_ancho": "68/25.4",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 1,
+          "calibre": "19x0,45",
+          "despEdges": 0
+        },
+        "orden": 61,
+        "notas": "Trasero pequeno de 68 mm: 2 con gaveta oculta; gavetas pequenas de DB-1S/DB-2S; todas las de DB-4.",
+        "created_at": "2026-08-11T16:26:56.264218+00:00",
+        "updated_at": "2026-10-02T21:55:39.697868+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "trasero_gaveta",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "f9ac28fb-05b2-4373-8e1b-95ebf52b7548",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "trasero_gaveta_grande",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "n_cajones_ocultos>0 ? 1 : (n_cajones_pequenos>0 ? n_cajones-n_cajones_pequenos : (n_cajones==4 ? 0 : n_cajones))",
+        "formula_largo": "L-4.607",
+        "formula_ancho": "183/25.4",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 1,
+          "calibre": "19x0,45",
+          "despEdges": 0
+        },
+        "orden": 62,
+        "notas": "Trasero grande de 183 mm: 1 con gaveta oculta; gavetas grandes de DB-1S/DB-2S; todas las de DB-2/DB-3.",
+        "created_at": "2026-08-11T16:26:56.264218+00:00",
+        "updated_at": "2026-10-02T21:55:39.697868+00:00",
+        "tarugos": 6,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "trasero_gaveta",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "a2560c56-ed76-49fc-9b8c-6fa03fe77e33",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "frente",
+        "rol_tablero": "frente",
+        "formula_cantidad": "n_cajones_pequenos>0 || n_cajones_ocultos>0 ? 0 : n_cajones",
+        "formula_largo": "L-RV",
+        "formula_ancho": "n_cajones == 4 && !gola ? (A-0.440945)/4 : (A-n_cajones*RV-gola*2.11024)/n_cajones",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2,
+          "calibre": "22x1"
+        },
+        "orden": 70,
+        "notas": null,
+        "created_at": "2026-05-30T15:35:09.798646+00:00",
+        "updated_at": "2026-10-02T16:49:08.995063+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "a905eb16-b28c-47b3-8aca-5574f7df89cd",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "frente_gaveta_pequena",
+        "rol_tablero": "frente",
+        "formula_cantidad": "n_cajones_pequenos",
+        "formula_largo": "L-RV",
+        "formula_ancho": "alto_frente_pequeno",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2,
+          "calibre": "22x1"
+        },
+        "orden": 71,
+        "notas": null,
+        "created_at": "2026-08-11T16:26:56.264218+00:00",
+        "updated_at": "2026-09-10T21:00:40.455384+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente_gaveta",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "929fdbd8-e463-4240-a429-3cf83ace3cde",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "frente_gaveta_grande",
+        "rol_tablero": "frente",
+        "formula_cantidad": "n_cajones_pequenos>0?n_cajones-n_cajones_pequenos:0",
+        "formula_largo": "L-RV",
+        "formula_ancho": "(n_cajones-n_cajones_pequenos)>0 ? (A-n_cajones*RV-gola*2.11024-n_cajones_pequenos*alto_frente_pequeno)/(n_cajones-n_cajones_pequenos) : 0",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2,
+          "calibre": "22x1"
+        },
+        "orden": 72,
+        "notas": null,
+        "created_at": "2026-08-11T16:26:56.264218+00:00",
+        "updated_at": "2026-09-10T21:00:40.455384+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente_gaveta",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "273d56e4-689e-4d4b-a837-c923ad07745e",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "nombre": "fondo",
+        "rol_tablero": "fondo",
+        "formula_cantidad": "1",
+        "formula_largo": "A-0.07874",
+        "formula_ancho": "L-0.62992",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {},
+        "orden": 80,
+        "notas": null,
+        "created_at": "2026-09-30T19:41:58.123508+00:00",
+        "updated_at": "2026-09-30T19:41:58.123508+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "continua",
+        "clave_fusion": "fondo",
+        "formula_largo_grupo": "LG-TC",
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "respaldo",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": true
+        }
+      }
+    ],
+    "a01be36f-510d-4a05-80de-20e46783df95": [
+      {
+        "id": "b86c3251-20b5-49eb-bdc1-2bdb0f7a0a00",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "lateral",
+        "rol_tablero": "caja",
+        "formula_cantidad": "2",
+        "formula_largo": "A",
+        "formula_ancho": "P",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 10,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "lateral_compartido",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "YZ",
+          "funcion": "lateral",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "274d5f8d-226f-4c68-bf05-5650d58d7de8",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "base",
+        "rol_tablero": "caja",
+        "formula_cantidad": "1",
+        "formula_largo": "L-2*TC",
+        "formula_ancho": "P-0.70866-TB",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 20,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 8,
+        "soportes": 0,
+        "modo_agrupacion": "continua",
+        "clave_fusion": "base",
+        "formula_largo_grupo": "LG-(2*TC)",
+        "visualizacion": {
+          "plano": "XY",
+          "funcion": "base",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "d9b0d778-3293-463b-90f8-653313aec115",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "refuerzo_trasero",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "2",
+        "formula_largo": "L-2*TC",
+        "formula_ancho": "3.14961",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 30,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 4,
+        "soportes": 0,
+        "modo_agrupacion": "continua",
+        "clave_fusion": "refuerzo_trasero",
+        "formula_largo_grupo": "LG-(2*TC)",
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "travesano_posterior",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "a5d8caf1-6e99-4f9c-ab91-59c6b34299e1",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "frente_gaveta_exterior",
+        "rol_tablero": "frente",
+        "formula_cantidad": "n_cajones_ocultos>0 ? (n_cajones-n_cajones_ocultos) : 0",
+        "formula_largo": "L-RV",
+        "formula_ancho": "(A-(n_cajones-n_cajones_ocultos)*RV-gola*2.11024)/(n_cajones-n_cajones_ocultos)",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2
+        },
+        "orden": 40,
+        "notas": "Frentes de fachada exterior para tipologías con gavetas ocultas (DB2-1OP)",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente_gaveta"
+        }
+      },
+      {
+        "id": "fcaecd95-c77c-4920-82d1-3f14a0a4843a",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "refuerzo_delantero",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "(n_cajones)-gola",
+        "formula_largo": "L-2*TC",
+        "formula_ancho": "3.14961",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 40,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 4,
+        "soportes": 0,
+        "modo_agrupacion": "continua_opcional",
+        "clave_fusion": "refuerzo_frontal",
+        "formula_largo_grupo": "LG-(2*TC)",
+        "visualizacion": {
+          "plano": "XY",
+          "funcion": "travesano_frontal",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "fda8fc5f-671e-498f-b00c-202ce8bbdf84",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "frente_gaveta_interior",
+        "rol_tablero": "frente",
+        "formula_cantidad": "n_cajones_ocultos",
+        "formula_largo": "L-2*TC-RV",
+        "formula_ancho": "100/25.4",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2
+        },
+        "orden": 41,
+        "notas": "Frente interior de gaveta oculta (100mm de alto embutido en luz interior)",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente_interior"
+        }
+      },
+      {
+        "id": "a117014b-4a7c-450f-bcb8-cb04f4142075",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "gola_perfil",
+        "rol_tablero": "caja",
+        "formula_cantidad": "gola*2",
+        "formula_largo": "L-2*TC",
+        "formula_ancho": "3.14961",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45",
+          "despEdges": 0
+        },
+        "orden": 45,
+        "notas": "Perfil de gola en melamina; solo cuando gola=1",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "gola",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "aca5c1a9-4153-488b-9aea-21261e9f0e39",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "lateral_gaveta_pequena",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "2*(n_cajones_ocultos>0 ? 2 : (n_cajones_pequenos>0 ? n_cajones_pequenos : (n_cajones==4 ? n_cajones : 0)))",
+        "formula_largo": "19.68504",
+        "formula_ancho": "3.93701",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 1,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 60,
+        "notas": "Laterales de las dos gavetas pequenas: 500 x 100 mm; canto blanco.",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "YZ",
+          "funcion": "lateral_gaveta",
+          "version": 1,
+          "confirmado": true,
+          "intercambiar": true
+        }
+      },
+      {
+        "id": "0c21a66b-a28f-4cc4-b503-e3c1358c352a",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "trasero_gaveta_pequena",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "(n_cajones_ocultos>0 ? 2 : (n_cajones_pequenos>0 ? n_cajones_pequenos : (n_cajones==4 ? n_cajones : 0)))",
+        "formula_largo": "L-3.38583",
+        "formula_ancho": "3.14961",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 70,
+        "notas": "Traseros pequenos: L-86 mm x 80 mm; canto blanco. | Cuatro tarugos: dos al lado derecho y dos al izquierdo. | 0151: riel FE; enchape en ambos lados largos.",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 4,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "trasero_gaveta",
+          "version": 1,
+          "confirmado": true,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "9edbe97a-531e-4cd7-aa1f-d6c855b0026d",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "frente",
+        "rol_tablero": "frente",
+        "formula_cantidad": "n_cajones_pequenos>0 || n_cajones_ocultos>0 ? 0 : n_cajones",
+        "formula_largo": "L-RV",
+        "formula_ancho": "n_cajones == 4 && !gola ? (A-0.440945)/4 : (A-n_cajones*RV-gola*2.11024)/n_cajones",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2,
+          "calibre": "22x1"
+        },
+        "orden": 70,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "d44957c7-f2bb-4258-a1f8-b41c9bc4799d",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "frente_gaveta_pequena",
+        "rol_tablero": "frente",
+        "formula_cantidad": "n_cajones_pequenos",
+        "formula_largo": "L-RV",
+        "formula_ancho": "alto_frente_pequeno",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2,
+          "calibre": "22x1"
+        },
+        "orden": 71,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente_gaveta",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "50f5f16f-6e05-45c8-a88d-d2cb5df678b1",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "frente_gaveta_grande",
+        "rol_tablero": "frente",
+        "formula_cantidad": "n_cajones_pequenos>0?n_cajones-n_cajones_pequenos:0",
+        "formula_largo": "L-RV",
+        "formula_ancho": "(n_cajones-n_cajones_pequenos)>0 ? (A-n_cajones*RV-gola*2.11024-n_cajones_pequenos*alto_frente_pequeno)/(n_cajones-n_cajones_pequenos) : 0",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2,
+          "calibre": "22x1"
+        },
+        "orden": 72,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente_gaveta",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "41467fdd-2fe0-489c-90fb-2631d301e8bf",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "contraparche_pequeno",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "(n_cajones_ocultos>0 ? 2 : (n_cajones_pequenos>0 ? n_cajones_pequenos : (n_cajones==4 ? n_cajones : 0)))",
+        "formula_largo": "L-3.38583",
+        "formula_ancho": "3.93701",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 80,
+        "notas": "Contraplacas pequenas: L-86 mm x 100 mm; canto blanco. | Cuatro tarugos: dos al lado derecho y dos al izquierdo.",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 4,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente_interior",
+          "version": 1,
+          "confirmado": true,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "97b8646d-b755-4078-8805-d1d611c05846",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "fondo",
+        "rol_tablero": "fondo",
+        "formula_cantidad": "1",
+        "formula_largo": "A-0.07874",
+        "formula_ancho": "L-0.62992",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {},
+        "orden": 80,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "continua",
+        "clave_fusion": "fondo",
+        "formula_largo_grupo": "LG-TC",
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "respaldo",
+          "version": 1,
+          "confirmado": false,
+          "intercambiar": true
+        }
+      },
+      {
+        "id": "7cf126f9-0e6e-4abb-bf29-c6b32ad77986",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "lateral_gaveta_grande",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "2*(n_cajones_ocultos>0 ? 1 : (n_cajones_pequenos>0 ? n_cajones-n_cajones_pequenos : (n_cajones==4 ? 0 : n_cajones)))",
+        "formula_largo": "19.68504",
+        "formula_ancho": "7.87402",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 1,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 90,
+        "notas": "Laterales de gaveta grande: 500 x 200 mm; canto blanco.",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "YZ",
+          "funcion": "lateral_gaveta",
+          "version": 1,
+          "confirmado": true,
+          "intercambiar": true
+        }
+      },
+      {
+        "id": "c55c23fd-694a-4e0a-ba2a-b15512afebd5",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "trasero_gaveta_grande",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "(n_cajones_ocultos>0 ? 1 : (n_cajones_pequenos>0 ? n_cajones-n_cajones_pequenos : (n_cajones==4 ? 0 : n_cajones)))",
+        "formula_largo": "L-3.38583",
+        "formula_ancho": "7.08661",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 100,
+        "notas": "Traseros grandes: L-86 mm x 180 mm; canto blanco. | Seis tarugos: tres al lado derecho y tres al izquierdo. | 0151: riel FE; enchape en ambos lados largos.",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 6,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "trasero_gaveta",
+          "version": 1,
+          "confirmado": true,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "3b872cec-397a-43a5-93fa-a346a88705db",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "contraparche_grande",
+        "rol_tablero": "refuerzo",
+        "formula_cantidad": "(n_cajones_ocultos>0 ? 1 : (n_cajones_pequenos>0 ? n_cajones-n_cajones_pequenos : (n_cajones==4 ? 0 : n_cajones)))",
+        "formula_largo": "L-3.38583",
+        "formula_ancho": "7.87402",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 0,
+          "largos": 2,
+          "calibre": "19x0,45"
+        },
+        "orden": 110,
+        "notas": "Contraplacas grandes: L-86 mm x 200 mm; canto blanco. | Seis tarugos: tres al lado derecho y tres al izquierdo.",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 6,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XZ",
+          "funcion": "frente_interior",
+          "version": 1,
+          "confirmado": true,
+          "intercambiar": false
+        }
+      },
+      {
+        "id": "eb1858b9-dda6-4ae1-b29c-99e48508ebc7",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "nombre": "fondo_gaveta",
+        "rol_tablero": "fondo",
+        "formula_cantidad": "n_cajones",
+        "formula_largo": "492/25.4",
+        "formula_ancho": "L-2.83465",
+        "resta_largo": 0,
+        "resta_ancho": 0,
+        "cantos": {
+          "anchos": 2
+        },
+        "orden": 120,
+        "notas": "Fondos de gaveta FE: 508 mm x (L-72 mm). | DB-2S-SM-FE: base de gaveta de 492mm.",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00",
+        "tarugos": 0,
+        "soportes": 0,
+        "modo_agrupacion": "local",
+        "clave_fusion": null,
+        "formula_largo_grupo": null,
+        "visualizacion": {
+          "plano": "XY",
+          "funcion": "base_gaveta",
+          "version": 1,
+          "confirmado": true,
+          "intercambiar": true
+        }
+      }
+    ]
+  },
+  "reglas": {
+    "9e016fc5-4ad0-4699-95af-008576695dab": [
+      {
+        "id": "fe723b0a-bff7-4d45-9686-d7468350525e",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "variable": "n_cajones",
+        "condicion": "true",
+        "valor": "2",
+        "prioridad": 5,
+        "activo": true,
+        "notas": "DB: 2 cajones por defecto (override)",
+        "created_at": "2026-05-30T16:09:15.497414+00:00",
+        "updated_at": "2026-05-30T16:56:05.066581+00:00"
+      },
+      {
+        "id": "054c4e56-dac1-4a2a-8810-de119b9763ec",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "variable": "n_puertas",
+        "condicion": "true",
+        "valor": "0",
+        "prioridad": 5,
+        "activo": true,
+        "notas": "DB: sin puertas",
+        "created_at": "2026-05-30T16:09:15.497414+00:00",
+        "updated_at": "2026-05-30T16:56:05.066581+00:00"
+      },
+      {
+        "id": "04a738e5-bde2-4e8b-96b6-625156b97729",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "variable": "n_cajones_pequenos",
+        "condicion": "true",
+        "valor": "0",
+        "prioridad": 5,
+        "activo": true,
+        "notas": null,
+        "created_at": "2026-08-11T16:26:56.264218+00:00",
+        "updated_at": "2026-08-11T16:26:56.264218+00:00"
+      },
+      {
+        "id": "e515442e-8d3f-4291-beb8-3141d3faf67c",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "variable": "alto_frente_pequeno_base",
+        "condicion": "n_cajones_pequenos>=2",
+        "valor": "(A-4*RV)/4",
+        "prioridad": 10,
+        "activo": true,
+        "notas": "DB-2S: rejilla de 4 unidades; la pequeña toma 1 unidad",
+        "created_at": "2026-09-08T20:19:25.409343+00:00",
+        "updated_at": "2026-09-08T20:19:25.409343+00:00"
+      },
+      {
+        "id": "cbb7fa81-63fe-4036-aa02-f1bceac46afb",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "variable": "alto_frente_pequeno_base",
+        "condicion": "n_cajones_pequenos==1",
+        "valor": "6",
+        "prioridad": 20,
+        "activo": true,
+        "notas": "DB-1S: la gaveta pequeña mide 6 in fijas",
+        "created_at": "2026-09-08T20:19:25.409343+00:00",
+        "updated_at": "2026-09-08T20:19:25.409343+00:00"
+      },
+      {
+        "id": "05df1a9e-d431-42b1-86f7-e71a17fe8fef",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "variable": "alto_frente_pequeno_base",
+        "condicion": "true",
+        "valor": "0",
+        "prioridad": 99,
+        "activo": true,
+        "notas": "Tipologías parejas (DB-2/3/4): no hay gaveta pequeña",
+        "created_at": "2026-09-08T20:19:25.409343+00:00",
+        "updated_at": "2026-09-08T20:19:25.409343+00:00"
+      },
+      {
+        "id": "2dac3179-43fd-4f52-bfb2-bb06136a04cb",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "variable": "alto_frente_pequeno",
+        "condicion": "true",
+        "valor": "alto_frente_pequeno_base*(A-n_cajones*RV-gola*2.11024)/(A-n_cajones*RV)",
+        "prioridad": 10,
+        "activo": true,
+        "notas": "Alto de la gaveta pequeña, ya descontada la gola",
+        "created_at": "2026-09-08T20:19:25.409343+00:00",
+        "updated_at": "2026-09-08T20:19:25.409343+00:00"
+      },
+      {
+        "id": "d3b3b17c-0baa-4f68-bce0-b5599d031076",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "variable": "n_cajones_ocultos",
+        "condicion": "true",
+        "valor": "0",
+        "prioridad": 5,
+        "activo": true,
+        "notas": "DB: gavetas ocultas (default 0, sobreescrito por DB2-1OP)",
+        "created_at": "2026-09-11T02:53:42.625239+00:00",
+        "updated_at": "2026-09-11T02:53:42.625239+00:00"
+      },
+      {
+        "id": "a24ce8ef-1419-4dbf-bc89-27279398c1b2",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "variable": "n_patas",
+        "condicion": "L>36",
+        "valor": "5",
+        "prioridad": 4,
+        "activo": true,
+        "notas": "Quinta pata para largos mayores de 36 pulgadas.",
+        "created_at": "2026-10-02T16:26:13.964629+00:00",
+        "updated_at": "2026-10-02T16:26:13.964629+00:00"
+      }
+    ],
+    "a01be36f-510d-4a05-80de-20e46783df95": [
+      {
+        "id": "7a8f6360-0ddd-4438-95a3-57bdff32dc3d",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "n_cajones",
+        "condicion": "true",
+        "valor": "2",
+        "prioridad": 5,
+        "activo": true,
+        "notas": "DB: 2 cajones por defecto (override)",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "da8a2b9a-6c75-4431-a42a-fd0f21dd9ff9",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "n_puertas",
+        "condicion": "true",
+        "valor": "0",
+        "prioridad": 5,
+        "activo": true,
+        "notas": "DB: sin puertas",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "b6938073-8adb-467e-85c7-06dc931fe668",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "n_cajones_pequenos",
+        "condicion": "true",
+        "valor": "0",
+        "prioridad": 5,
+        "activo": true,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "1b2cada4-7e67-4de3-8edc-75793119ce11",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "alto_frente_pequeno_base",
+        "condicion": "n_cajones_pequenos>=2",
+        "valor": "(A-4*RV)/4",
+        "prioridad": 10,
+        "activo": true,
+        "notas": "DB-2S: rejilla de 4 unidades; la pequeña toma 1 unidad",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "e2dee834-9143-444e-b0f4-1608b20696d4",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "alto_frente_pequeno_base",
+        "condicion": "n_cajones_pequenos==1",
+        "valor": "6",
+        "prioridad": 20,
+        "activo": true,
+        "notas": "DB-1S: la gaveta pequeña mide 6 in fijas",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "0fd5ed03-c9a2-4bd3-bf76-6a449890fc42",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "alto_frente_pequeno_base",
+        "condicion": "true",
+        "valor": "0",
+        "prioridad": 99,
+        "activo": true,
+        "notas": "Tipologías parejas (DB-2/3/4): no hay gaveta pequeña",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "4bca9530-75ca-481c-b66c-ba49909b005f",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "alto_frente_pequeno",
+        "condicion": "true",
+        "valor": "alto_frente_pequeno_base*(A-n_cajones*RV-gola*2.11024)/(A-n_cajones*RV)",
+        "prioridad": 10,
+        "activo": true,
+        "notas": "Alto de la gaveta pequeña, ya descontada la gola",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "9a93ed51-03da-4030-8a30-850033bf16e8",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "n_cajones_ocultos",
+        "condicion": "true",
+        "valor": "0",
+        "prioridad": 5,
+        "activo": true,
+        "notas": "DB: gavetas ocultas (default 0, sobreescrito por DB2-1OP)",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "a884a549-03de-40ef-9311-76bf314c8874",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "n_patas",
+        "condicion": "L>36",
+        "valor": "5",
+        "prioridad": 4,
+        "activo": true,
+        "notas": "Quinta pata para largos mayores de 36 pulgadas.",
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "17ee91a8-0473-4e03-97b4-0d31a183d015",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "gola",
+        "condicion": "true",
+        "valor": "0",
+        "prioridad": 1000,
+        "activo": true,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "8cb33b6c-5559-4422-88af-84200402f722",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "variable": "n_barras",
+        "condicion": "true",
+        "valor": "0",
+        "prioridad": 1000,
+        "activo": true,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      }
+    ]
+  },
+  "reglasGlobales": [
+    {
+      "id": "2de00272-d18f-4647-9c36-025912a15995",
+      "tipo_mueble_id": null,
+      "variable": "n_puertas",
+      "condicion": "L <= 21",
+      "valor": "1",
+      "prioridad": 10,
+      "activo": true,
+      "notas": "dibujo cocina: hasta 21\" = 1 puerta",
+      "created_at": "2026-05-29T03:30:48.639256+00:00",
+      "updated_at": "2026-05-29T03:30:48.639256+00:00"
+    },
+    {
+      "id": "dafaebe7-d986-4ba3-8229-64281964656a",
+      "tipo_mueble_id": null,
+      "variable": "n_puertas",
+      "condicion": "L >= 24",
+      "valor": "2",
+      "prioridad": 20,
+      "activo": true,
+      "notas": "dibujo cocina: >=24\" = 2 puertas",
+      "created_at": "2026-05-29T03:30:48.639256+00:00",
+      "updated_at": "2026-05-29T03:30:48.639256+00:00"
+    },
+    {
+      "id": "8a28e593-6d76-4d8d-849b-9d495cbf3f86",
+      "tipo_mueble_id": null,
+      "variable": "n_puertas",
+      "condicion": "true",
+      "valor": "1",
+      "prioridad": 99,
+      "activo": true,
+      "notas": "Default (22-23\"): 1 puerta",
+      "created_at": "2026-05-29T03:30:48.639256+00:00",
+      "updated_at": "2026-05-29T03:30:48.639256+00:00"
+    },
+    {
+      "id": "84d3ebb0-67b9-4e37-bfa8-3f8731ecd3dc",
+      "tipo_mueble_id": null,
+      "variable": "n_entrepanos",
+      "condicion": "A <= 16",
+      "valor": "0",
+      "prioridad": 10,
+      "activo": true,
+      "notas": "dibujo cocina: sin entrepaño hasta 16\"",
+      "created_at": "2026-05-29T03:30:48.639256+00:00",
+      "updated_at": "2026-05-29T03:30:48.639256+00:00"
+    },
+    {
+      "id": "94404a63-fc5f-41b9-8d48-25c1966c00ad",
+      "tipo_mueble_id": null,
+      "variable": "n_entrepanos",
+      "condicion": "A <= 24",
+      "valor": "1",
+      "prioridad": 20,
+      "activo": true,
+      "notas": "dibujo cocina: 1 entrepaño de 17 a 24\"",
+      "created_at": "2026-05-29T03:30:48.639256+00:00",
+      "updated_at": "2026-05-29T03:30:48.639256+00:00"
+    },
+    {
+      "id": "0e04bb40-2334-4c36-b941-aa3d73859155",
+      "tipo_mueble_id": null,
+      "variable": "n_entrepanos",
+      "condicion": "A <= 36",
+      "valor": "2",
+      "prioridad": 30,
+      "activo": true,
+      "notas": "dibujo cocina: 2 entrepaños de 25 a 36\"",
+      "created_at": "2026-05-29T03:30:48.639256+00:00",
+      "updated_at": "2026-05-29T03:30:48.639256+00:00"
+    },
+    {
+      "id": "b166b648-d031-47b9-ae7d-a6348f364b9a",
+      "tipo_mueble_id": null,
+      "variable": "n_entrepanos",
+      "condicion": "true",
+      "valor": "3",
+      "prioridad": 99,
+      "activo": true,
+      "notas": "dibujo cocina: 3 entrepaños hasta 42\"",
+      "created_at": "2026-05-29T03:30:48.639256+00:00",
+      "updated_at": "2026-05-29T03:30:48.639256+00:00"
+    },
+    {
+      "id": "b79c06bd-c879-445d-836f-05f27fe117fd",
+      "tipo_mueble_id": null,
+      "variable": "n_patas",
+      "condicion": "true",
+      "valor": "4",
+      "prioridad": 100,
+      "activo": true,
+      "notas": "Default: 4 patas (muebles de piso)",
+      "created_at": "2026-05-30T16:09:15.497414+00:00",
+      "updated_at": "2026-05-30T16:09:15.497414+00:00"
+    },
+    {
+      "id": "a5e929f8-de15-4d6b-bd7a-613fbee1c805",
+      "tipo_mueble_id": null,
+      "variable": "n_cajones",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 100,
+      "activo": true,
+      "notas": "Default: sin cajones",
+      "created_at": "2026-05-30T16:09:15.497414+00:00",
+      "updated_at": "2026-05-30T16:09:15.497414+00:00"
+    },
+    {
+      "id": "f57c8864-94a6-491b-b957-6e99f1499ed8",
+      "tipo_mueble_id": null,
+      "variable": "zocalo",
+      "condicion": "true",
+      "valor": "5.25",
+      "prioridad": 100,
+      "activo": true,
+      "notas": "Alto de zócalo/toe-kick por defecto (in)",
+      "created_at": "2026-05-31T02:45:21.106878+00:00",
+      "updated_at": "2026-05-31T02:45:21.106878+00:00"
+    },
+    {
+      "id": "99ec5399-200a-4ad4-90a7-c5afae92fa66",
+      "tipo_mueble_id": null,
+      "variable": "n_barras",
+      "condicion": "true",
+      "valor": "-1",
+      "prioridad": 100,
+      "activo": true,
+      "notas": null,
+      "created_at": "2026-06-18T14:21:17.754274+00:00",
+      "updated_at": "2026-06-18T14:27:36.521406+00:00"
+    },
+    {
+      "id": "0e1be00b-289f-49ca-a107-ed8ceefd00c6",
+      "tipo_mueble_id": null,
+      "variable": "gola",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5,
+      "activo": true,
+      "notas": "Sistema de frente: 0 = manija, 1 = gola. Override por línea.",
+      "created_at": "2026-09-08T20:19:25.409343+00:00",
+      "updated_at": "2026-09-08T20:19:25.409343+00:00"
+    },
+    {
+      "id": "0aaac8d9-c7a0-47c0-9d0f-6e47932f76f2",
+      "tipo_mueble_id": null,
+      "variable": "removible",
+      "condicion": "true",
+      "valor": "0",
+      "prioridad": 5,
+      "activo": true,
+      "notas": "Variante de panel removible. Override por línea; solo familias verificadas.",
+      "created_at": "2026-09-08T20:19:41.903594+00:00",
+      "updated_at": "2026-09-08T20:19:41.903594+00:00"
+    }
+  ],
+  "herrajes": {
+    "9e016fc5-4ad0-4699-95af-008576695dab": [
+      {
+        "id": "f9a24fb2-7f27-45d1-88b1-16dc7aca1bb6",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "rol": "pata",
+        "herraje_codigo": "PATA10AJUST",
+        "selector_key": "pata",
+        "formula_cantidad": "n_patas",
+        "orden": 10,
+        "notas": null,
+        "created_at": "2026-05-30T16:09:15.497414+00:00",
+        "updated_at": "2026-05-30T16:09:15.497414+00:00"
+      },
+      {
+        "id": "b5be3338-9b99-4900-b9b8-9e9e078bc658",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "rol": "tornillo",
+        "herraje_codigo": "TORNILLO858",
+        "selector_key": "tornillo",
+        "formula_cantidad": "n_patas*4",
+        "orden": 20,
+        "notas": null,
+        "created_at": "2026-05-30T16:09:15.497414+00:00",
+        "updated_at": "2026-05-30T16:09:15.497414+00:00"
+      },
+      {
+        "id": "c514bfd7-4c24-4fd7-9c67-b36a078734fd",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "rol": "manija",
+        "herraje_codigo": "MANIJA415",
+        "selector_key": "manija",
+        "formula_cantidad": "n_puertas + n_cajones",
+        "orden": 30,
+        "notas": null,
+        "created_at": "2026-05-30T16:09:15.497414+00:00",
+        "updated_at": "2026-05-30T16:09:15.497414+00:00"
+      },
+      {
+        "id": "7ab1b6f5-b90b-4392-8682-2a9693dfc0cf",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "rol": "riel",
+        "herraje_codigo": "RIELTANDEM",
+        "selector_key": "riel",
+        "formula_cantidad": "n_cajones",
+        "orden": 40,
+        "notas": null,
+        "created_at": "2026-05-30T16:09:15.497414+00:00",
+        "updated_at": "2026-05-30T16:09:15.497414+00:00"
+      },
+      {
+        "id": "46a3ceb3-8ea2-4478-9f9a-1afa41cfb510",
+        "tipo_mueble_id": "9e016fc5-4ad0-4699-95af-008576695dab",
+        "rol": "barra",
+        "herraje_codigo": "BARRAEST",
+        "selector_key": "barra",
+        "formula_cantidad": "n_barras >= 0 ? n_barras : (n_cajones <= 2 ? n_cajones : 0)",
+        "orden": 50,
+        "notas": null,
+        "created_at": "2026-05-30T16:09:15.497414+00:00",
+        "updated_at": "2026-06-18T14:27:36.521406+00:00"
+      }
+    ],
+    "a01be36f-510d-4a05-80de-20e46783df95": [
+      {
+        "id": "b6f27bb3-55e7-490e-a96e-961204b08880",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "rol": "pata",
+        "herraje_codigo": "PATA10AJUST",
+        "selector_key": "pata",
+        "formula_cantidad": "n_patas",
+        "orden": 10,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "4ead384b-392f-4ff8-8189-5265535a7e22",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "rol": "tornillo",
+        "herraje_codigo": "TORNILLO858",
+        "selector_key": "tornillo",
+        "formula_cantidad": "n_patas*4",
+        "orden": 20,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "e840131b-fd32-4da9-aae2-4f5f04f0cf93",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "rol": "manija",
+        "herraje_codigo": "MANIJA415",
+        "selector_key": "manija",
+        "formula_cantidad": "n_puertas + n_cajones",
+        "orden": 30,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      },
+      {
+        "id": "02af1ae7-900b-41a8-92bd-5db350fd7c63",
+        "tipo_mueble_id": "a01be36f-510d-4a05-80de-20e46783df95",
+        "rol": "riel",
+        "herraje_codigo": "RIELFE500",
+        "selector_key": "riel_fe",
+        "formula_cantidad": "n_cajones",
+        "orden": 40,
+        "notas": null,
+        "created_at": "2026-11-04T16:48:15.287532+00:00",
+        "updated_at": "2026-11-04T16:48:15.287532+00:00"
+      }
+    ]
+  },
+  "herrajesByCode": {
+    "PATA10AJUST": {
+      "codigo": "PATA10AJUST",
+      "precio": 1987,
+      "selector_key": "pata",
+      "categoria": "pata"
+    },
+    "MANIJA415": {
+      "codigo": "MANIJA415",
+      "precio": 7450,
+      "selector_key": "manija",
+      "categoria": "manija"
+    },
+    "RIELTANDEM": {
+      "codigo": "RIELTANDEM",
+      "precio": 49706.8,
+      "selector_key": "riel",
+      "categoria": "riel"
+    },
+    "BARRAEST": {
+      "codigo": "BARRAEST",
+      "precio": 9800,
+      "selector_key": "barra",
+      "categoria": "barra"
+    },
+    "RIELFE500": {
+      "codigo": "RIELFE500",
+      "precio": 31064,
+      "selector_key": "riel_fe",
+      "categoria": "riel"
+    },
+    "TORNILLO858": {
+      "codigo": "TORNILLO858",
+      "precio": 24.58,
+      "selector_key": "tornillo",
+      "categoria": "tornillo"
+    }
+  }
+}

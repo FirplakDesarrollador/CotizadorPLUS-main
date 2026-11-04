@@ -12,7 +12,7 @@ import { calcularGrupoFisico, type GroupCalculation, type PreparedGroupMember } 
 import { consolidarGrupo, type CotizarGrupoResult } from '@/lib/group-result';
 import { construirVisualizacion } from './visualizacion';
 import { codigoComercial } from './module-groups';
-import { ajustarPiezasSinFondo, usaHuecoHornoParametrico, usaPuertaParametrica } from './muebles';
+import { ajustarPiezasSinFondo, usaHuecoHornoParametrico, usaPuertaParametrica, esTipologiaDbFe, aplicarConfiguracionDbFe } from './muebles';
 import { aplicarPreciosTableros, type PreciosTablerosCotizacion } from './precios-tableros';
 import { presetMaterialesTipologia, usaFondoMaterialFrente } from './materiales-proyecto';
 
@@ -38,6 +38,7 @@ export type CotizarInput = {
   // Si se especifica, se reemplaza el precio del riel por defecto (RIELTANDEM) con
   // el precio del riel elegido, manteniendo la plantilla de herrajes sin tocar.
   rielCodigo?: string;
+  dbTipo?: string;
   door?: number;
   doorHand?: 'L' | 'R';
   conFondo?: boolean;
@@ -197,6 +198,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
   }
 
   // Preset final
+  inp = aplicarConfiguracionDbFe(inp, tipo.pref);
   const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
   const preset = presetMaterialesTipologia({ ...presetDefault, ...inp.preset }, tipo.pref);
   if (usaFondoMaterialFrente(tipo.pref) && inp.conFondo !== false && !/-SF$/i.test(tipo.pref)) {
@@ -208,7 +210,10 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
   tablerosByCode = aplicarPreciosTableros(tablerosByCode, inp.preciosTableros);
 
   // Riel override para muebles DB
-  if (inp.rielCodigo && inp.rielCodigo !== 'RIELTANDEM') {
+  if (esTipologiaDbFe(tipo.pref)) {
+    if (!herrajesByCode.RIELFE500) throw new Error('No está disponible el riel RIELFE500 requerido por DB-FE.');
+  }
+  if (!esTipologiaDbFe(tipo.pref) && inp.rielCodigo && inp.rielCodigo !== 'RIELTANDEM') {
     const rielElegido = herrajesByCode[inp.rielCodigo];
     if (rielElegido) {
       herrajesByCode['RIELTANDEM'] = { ...herrajesByCode['RIELTANDEM'], precio: Number(rielElegido.precio) };
@@ -328,6 +333,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
       espesorCajaMm: tablerosByCode[preset.caja]?.espesor_mm,
       espesorFrenteMm: tablerosByCode[preset.frente]?.espesor_mm,
       conFondo: inp.conFondo,
+      dbTipo: inp.dbTipo,
     }),
     prefImperial: tipo.pref_imperial || tipo.pref,
     prefMetrico: tipo.pref_metrico || tipo.pref,

@@ -18,7 +18,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
 import { presetMaterialesTipologia, usaCajaMaterialFrente, usaFondoMaterialFrente } from '@/lib/materiales-proyecto';
 
@@ -163,7 +163,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const pcfdConfig = store.pcfdConfig ?? '';
   const setPcfdConfig = (v: string) => setStore({ pcfdConfig: v });
 
-  const rielCodigo = store.rielCodigo ?? 'RIELTANDEM';
+  const rielCodigo = esTipologiaDbFe(tipos.find(t => t.id === tipoId)?.pref) ? 'RIELFE500' : store.rielCodigo ?? 'RIELTANDEM';
   const setRielCodigo = (v: string) => setStore({ rielCodigo: v });
   
   const modoFrentes = store.modoFrentes;
@@ -359,7 +359,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (altoDefecto != null) setAlto(String(convertir(altoDefecto, 'in', unidad)));
     if (tipoSeleccionado.pref === 'W') setProf(String(convertir(12, 'in', unidad)));
     if (tipoSeleccionado.pref === 'WSM') setProf(String(convertir(14, 'in', unidad)));
-    if (tipoSeleccionado.pref === 'F' || tipoSeleccionado.pref === 'DB') setSistemaFrente('manija');
+    if (tipoSeleccionado.pref === 'F' || (tipoSeleccionado.pref === 'DB' || esTipologiaDbFe(tipoSeleccionado.pref))) setSistemaFrente('manija');
     if (esTipologiaDbSmFeSf(tipoSeleccionado.pref) || esTipologiaDbSmG(tipoSeleccionado.pref) || esTipologiaDbSmGFe(tipoSeleccionado.pref) || esTipologiaDbSmGSf(tipoSeleccionado.pref)) {
       setSistemaFrente('gola');
       setRielCodigo(esTipologiaDbSmFeSf(tipoSeleccionado.pref) || esTipologiaDbSmGFe(tipoSeleccionado.pref) ? 'RIELFE500' : 'RIELTANDEM');
@@ -371,7 +371,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   }
   function aplicarDbTipo(k: string) {
     setDbTipo(k);
-    const t = DB_TIPOLOGIAS.find((x) => x.key === k);
+    const t = tipologiasDbParaPrefijo(tipoPref).find((x) => x.key === k);
     if (t) { setNcajones(String(t.nc)); setNbarras(String(t.nb)); }
   }
   function aplicarPcfdConfig(k: string) {
@@ -474,7 +474,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       overrides.FREE = convertirExacto(parseMedida(modulo.free), unidad, 'in');
     }
     if (permiteTipologiaDb(pref) && modulo.dbTipo) {
-      const dbT = DB_TIPOLOGIAS.find((x) => x.key === modulo.dbTipo);
+      const dbT = tipologiasDbParaPrefijo(pref).find((x) => x.key === modulo.dbTipo);
       overrides.n_cajones_pequenos = dbT?.npeq ?? 0;
       overrides.n_cajones_ocultos = dbT?.noculto ?? 0;
     }
@@ -484,7 +484,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     // "manija" no puede desactivar sus dos golas ni alterar sus frentes.
     const esDbSm = esTipologiaDbSm(pref) || esTipologiaDbSmFe(pref) || esTipologiaDbSmFeSf(pref) || esTipologiaDbSmSf(pref)
       || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref);
-    overrides.gola = esDbSm ? 1 : pref === 'DB' ? 0 : modulo.sistemaFrente === 'gola' ? 1 : 0;
+    overrides.gola = esDbSm ? 1 : (pref === 'DB' || esTipologiaDbFe(pref)) ? 0 : modulo.sistemaFrente === 'gola' ? 1 : 0;
     if (permiteRemovible(pref)) overrides.removible = modulo.removible ? 1 : 0;
     return {
       tipoId: modulo.tipoId,
@@ -493,6 +493,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       prof: parseMedida(modulo.prof),
       unidad,
       preset: modulo.preset,
+      dbTipo: permiteTipologiaDb(pref) ? modulo.dbTipo : undefined,
       conHerrajes: modulo.conHerrajes,
       trm,
       modoFrentes: modulo.modoFrentes,
@@ -500,7 +501,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       herrajesExcluidos: modulo.conHerrajes && modulo.herrajesExcl.length ? modulo.herrajesExcl : undefined,
       cantoFrentes: modulo.cantoFrentes || undefined,
       cantoCaja: modulo.cantoCaja || undefined,
-      rielCodigo: (permiteTipologiaDb(pref) || esTipologiaDbSmFeSf(pref) || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref) || pref === 'PCFD') && modulo.rielCodigo ? modulo.rielCodigo : undefined,
+      rielCodigo: (permiteTipologiaDb(pref) || esTipologiaDbSmFeSf(pref) || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref) || pref === 'PCFD') && modulo.rielCodigo ? (esTipologiaDbFe(pref) ? 'RIELFE500' : modulo.rielCodigo) : undefined,
       door: usaPuertaParametrica(pref) && modulo.door !== '' ? parseMedida(modulo.door) : undefined,
       doorHand: usaPuertaParametrica(pref) ? modulo.doorHand : undefined,
     };
@@ -962,7 +963,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
             <Field label={`Tipología ${tipoPref || 'DB'}`}>
               <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
                 <option value="">— manual —</option>
-                {DB_TIPOLOGIAS_COTIZABLES.map((t) => (
+                {tipologiasDbParaPrefijo(tipoPref).map((t) => (
                   <option key={t.key} value={t.key} title={t.desc}>{etiquetaTipologiaDb(t.key, tipoPref)} · {t.desc}</option>
                 ))}
               </select>
@@ -1045,10 +1046,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               </select>
             </Field>
           )}
-          {usaTipologiaDb && <Field label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></Field>}
+          {usaTipologiaDb && !esTipologiaDbFe(tipoPref) && <Field label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></Field>}
           {usaRiel && (
             <Field label="Tipo de riel">
-              <select value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
+              <select disabled={esTipologiaDbFe(tipoPref)} value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
                 {DB_RIELES.map((r) => (
                   <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
                 ))}
@@ -1060,7 +1061,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               <option value="normal">Completo</option><option value="sin_frentes">Sin frentes (open)</option><option value="solo_frentes">Solo kit de frentes</option>
             </select>
           </Field>
-          {tipoPref !== 'DB' && (
+          {tipoPref !== 'DB' && !esTipologiaDbFe(tipoPref) && (
             <Field label="Sistema de frente">
               <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
                 {SISTEMAS_FRENTE.map((s) => <option key={s.key} value={s.key} title={s.desc}>{s.label}</option>)}

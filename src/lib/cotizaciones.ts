@@ -6,7 +6,7 @@ import {
   distribuirResiduoMoneda, redondearMoneda, precioUnitario,
   type SistemaMedida,
 } from '@/lib/module-groups';
-import { contarEntrepanos, esElementoPlano, etiquetaDescripcion } from '@/lib/muebles';
+import { contarEntrepanos, esElementoPlano, etiquetaDescripcion, aplicarConfiguracionDbFe } from '@/lib/muebles';
 import { calcularPrecioMaterial, descripcionMaterial, grupoSeSaltaElMotor, type TipoMaterial } from '@/lib/materiales-linea';
 import { normalizarPreciosTableros } from '@/lib/precios-tableros';
 import { siguienteOrdenGrupo as siguienteOrden } from '@/lib/grupos-orden';
@@ -413,7 +413,8 @@ async function recalcularGrupo(
   for (const result of [proyecto, area]) if (result.error) throw new Error(result.error.message);
   const codigosTableros = Object.keys(catalogo.tablerosByCode).map(codigo => ({ codigo }));
   const inputs = lineas.map(linea => {
-    const input = aplicarMaterialesProyecto(inputDesdeLinea(linea), proyecto.data?.config_default ?? {}, catalogo.tiposById[linea.tipo_mueble_id!]?.pref, area.data?.nombre ?? '');
+    const pref = catalogo.tiposById[linea.tipo_mueble_id!]?.pref;
+    const input = aplicarConfiguracionDbFe(aplicarMaterialesProyecto(inputDesdeLinea(linea), proyecto.data?.config_default ?? {}, pref, area.data?.nombre ?? ''), pref);
     return { ...input, preset: Object.fromEntries(Object.entries(input.preset).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, codigosTableros)])) };
   });
   const sistema = sistemaPrefetch ?? await obtenerSistema(grupo.cotizacion_id);
@@ -901,7 +902,7 @@ async function resolverMaterialesDeInput(sb: Awaited<ReturnType<typeof createCli
     tablerosDeProyecto(),
   ]);
   for (const result of [area, proyecto, tipo]) if (result.error) throw new Error(result.error.message);
-  const resuelto = aplicarMaterialesProyecto(input, proyecto.data?.config_default ?? {}, tipo.data?.pref, area.data?.nombre ?? '');
+  const resuelto = aplicarConfiguracionDbFe(aplicarMaterialesProyecto(input, proyecto.data?.config_default ?? {}, tipo.data?.pref, area.data?.nombre ?? ''), tipo.data?.pref);
   return { ...resuelto, preset: Object.fromEntries(Object.entries(resuelto.preset).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, tableros)])) };
 }
 

@@ -8,7 +8,7 @@ import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { familiaMaterialDelArea, presetMaterialesTipologia, usaCajaMaterialFrente, usaFondoMaterialFrente } from '@/lib/materiales-proyecto';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
@@ -206,7 +206,7 @@ export default function AddLineForm({
     : usaPuertaSupTorre(tipoInicialPref) ? String(convertir(30, 'in', unidad)) : '');
   const [nbarras, setNbarras] = useState(ov?.n_barras != null ? String(ov.n_barras) : '');
   const [dbTipo, setDbTipo] = useState(initial?.dbTipo ?? '');
-  const [rielCodigo, setRielCodigo] = useState(initial?.rielCodigo ?? 'RIELTANDEM');
+  const [rielSeleccionado, setRielCodigo] = useState(initial?.rielCodigo ?? 'RIELTANDEM');
   const [pcfdConfig, setPcfdConfig] = useState(() => {
     if (ov?.n_cajones === 2 && ov?.n_entrepanos === 3) return '2OP';
     if (ov?.n_cajones === 4 && ov?.n_entrepanos === 3) return '4OP';
@@ -250,7 +250,8 @@ export default function AddLineForm({
   const fuerzaConFondo = esMuebleSuperior(prefTipo) || esIndependienteDeFondo(prefTipo);
   const tipo = tipos.find((t) => t.id === tipoId);
   const esDB = permiteTipologiaDb(prefTipo);
-  const esDbTradicional = prefTipo === 'DB';
+  const esDbTradicional = prefTipo === 'DB' || esTipologiaDbFe(prefTipo);
+  const rielCodigo = esTipologiaDbFe(prefTipo) ? 'RIELFE500' : rielSeleccionado;
   const usaTipologiaDbSm = esTipologiaDbSm(prefTipo);
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(prefTipo);
   const usaTipologiaDbSmFeSf = esTipologiaDbSmFeSf(prefTipo);
@@ -455,7 +456,7 @@ export default function AddLineForm({
 
   function aplicarDbTipo(k: string) {
     setDbTipo(k);
-    const t = DB_TIPOLOGIAS.find((x) => x.key === k);
+    const t = tipologiasDbParaPrefijo(prefTipo).find((x) => x.key === k);
     if (t) {
       setNcajones(String(t.nc));
       setNbarras(String(t.nb));
@@ -535,7 +536,7 @@ export default function AddLineForm({
       overrides.FREE = convertirExacto(parseMedida(free), unidad, 'in');
     }
     if (esDB && dbTipo) {
-      const dbT = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
+      const dbT = tipologiasDbParaPrefijo(prefTipo).find((x) => x.key === dbTipo);
       overrides.n_cajones_pequenos = dbT?.npeq ?? 0;
       overrides.n_cajones_ocultos = dbT?.noculto ?? 0;
     }
@@ -777,11 +778,11 @@ export default function AddLineForm({
             <L label={`Tipología ${prefTipo || 'DB'}`}>
               <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
                 <option value="">— manual —</option>
-                {DB_TIPOLOGIAS_COTIZABLES.map((t) => <option key={t.key} value={t.key} title={t.desc}>{etiquetaTipologiaDb(t.key, prefTipo)}</option>)}
+                {tipologiasDbParaPrefijo(prefTipo).map((t) => <option key={t.key} value={t.key} title={t.desc}>{etiquetaTipologiaDb(t.key, prefTipo)}</option>)}
               </select>
             </L>
             <L label="Nº barras (pares)">
-              <input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" />
+              <input disabled={esTipologiaDbFe(prefTipo)} type="number" placeholder="0" value={esTipologiaDbFe(prefTipo) ? '0' : nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" />
             </L>
           </div>
         )}
@@ -873,7 +874,7 @@ export default function AddLineForm({
         {usaRiel && (
           <div className="grid grid-cols-1 gap-1">
             <L label="Tipo de riel">
-              <select value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
+              <select disabled={esTipologiaDbFe(prefTipo)} value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
                 {DB_RIELES.map((r) => (
                   <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
                 ))}

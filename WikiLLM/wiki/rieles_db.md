@@ -57,3 +57,8 @@ Fluye desde el formulario → `CotizarInput` → `AgregarLineaInput` (por herenc
 - Por defecto está en `RIELTANDEM` para mantener compatibilidad con cotizaciones existentes.
 - Muestra nombre + precio formateado en COP para facilitar la elección.
 - El precio del riel seleccionado reemplaza al de `RIELTANDEM` en el cálculo; el desglose de herrajes mostrará el costo correcto.
+
+
+## Tipología DB-FE
+
+[DB-FE](db_fe.md) es una tipología propia con las seis variantes de DB en un selector interno. Incluye geometría de caja de gaveta de madera FE y fija RIELFE500 tanto en pantalla como en servidor; no consiste en sustituir únicamente el precio del riel de una DB Tandem. No lleva barras estabilizadoras ni Gola.

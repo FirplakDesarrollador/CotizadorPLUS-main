@@ -2830,3 +2830,13 @@ Asa de arrastre y flechas en cocinas/closets/baños, guardado optimista con reve
 ## [2026-11-04] update | Preparación de publicación LIz a DEV y main, y Supabase actualizado
 
 Migración 0235 aplicada y registrada mediante Management API; prueba SQL transaccional aprobada. Suite completa de release: 92 suites, exit 0. Sincronización limitada con respaldo de tres OW-MO de Condominio V y corrección de 14 códigos posteriores en Condominio V/ELEVEN. Auditoría estricta de las 11 cotizaciones: cero diferencias y errores; auditoría de códigos: cero pendientes. Evidencia y nombres de respaldo en [fondos](wiki/fondos_color_abiertos.md) y [orden de secciones](wiki/orden_secciones_cotizacion.md).
+
+
+## [2026-11-04] update | DB-FE principal con seis variantes internas y riel Full Extension
+
+Migración 0236 aplicada y registrada: copia de DB sin alterar su carcasa/frentes, cajas de madera FE con laterales de 500 mm, fondo de gaveta de 492 mm y riel RIELFE500 por gaveta, sin barras ni Gola. Selector interno en cotizaciones, simulador y HDR; normalización compartida de guardado/cálculo y códigos de variante antes de FE. 93 suites aprobadas, learn sin HIGH, catálogo verificado en SQL; alta/edición real de seis variantes y dos PDF revisados en cotización temporal eliminada al terminar. Se documenta un descuadre general ajeno en Condominio V, sin modificar sus líneas. [Reglas y evidencia](wiki/db_fe.md).
+
+
+## [2026-11-04] update | Preparación de publicación DB-FE a DEV y main
+
+Verificada migración 0236 registrada en Supabase, DB-FE activa/agrupable con 18 piezas y RIELFE500; prueba SQL aprobada. Suite completa de release: 93 suites, exit 0. Auditoría estricta posterior de 11 cotizaciones: cero diferencias y errores, sin reaplicar ni modificar sus importes. Se preparan todos los cambios de tipología, selectores, persistencia, visualización, pruebas y wiki para el flujo LIz a DEV a main solicitado. [Evidencia DB-FE](wiki/db_fe.md).

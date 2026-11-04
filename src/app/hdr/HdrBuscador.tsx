@@ -2,11 +2,11 @@
 import { useMemo, useRef, useState } from 'react';
 import { previewAction } from '../admin/diseno/actions';
 import { modulosDeCotizacionAction, type ModuloHDR } from './actions';
-import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, SISTEMAS_FRENTE, esTipologiaDbSmFe, esTipologiaDbSmFeSf, obtenerTipologiasDbSmFeSf, permiteTipologiaDb, usaPuertaParametrica, type SistemaFrente } from '@/lib/muebles';
+import { etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_FE_TIPOLOGIAS, SISTEMAS_FRENTE, esTipologiaDbSmFe, esTipologiaDbSmFeSf, obtenerTipologiasDbSmFeSf, permiteTipologiaDb, usaPuertaParametrica, type SistemaFrente } from '@/lib/muebles';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { codigoComercial, parseMedida } from '@/lib/module-groups';
-import { presetMaterialesTipologia } from '@/lib/materiales-proyecto';
+import { presetMaterialesTipologia, resolverCodigoTablero } from '@/lib/materiales-proyecto';
 import type { CotizarResult } from '@/lib/cotizar';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
@@ -17,6 +17,7 @@ const DB_SM_FE_SF_GROUP_VALUE = '__DB_SM_FE_SF__';
 
 export default function HdrBuscador({ tipos, presetDefault, tableros, cotizaciones }:
   { tipos: Tipo[]; presetDefault: Record<string, string>; tableros: Tablero[]; cotizaciones: CotizacionHeader[] }) {
+  const presetResuelto = Object.fromEntries(Object.entries(presetDefault).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, tableros)]));
   const [tipoId, setTipoId] = useState('');
   const [largo, setLargo] = useState(30);
   const [alto, setAlto] = useState(30);
@@ -63,7 +64,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   }, [tipos]);
   const tipoSel = tipos.find((t) => t.id === tipoId);
   const esDB = permiteTipologiaDb(tipoSel?.pref);
-  const esDbTradicional = tipoSel?.pref === 'DB';
+  const esDbTradicional = (tipoSel?.pref === 'DB' || esTipologiaDbFe(tipoSel?.pref));
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(tipoSel?.pref);
   const usaTipologiaDbSmFeSf = esTipologiaDbSmFeSf(tipoSel?.pref);
   const tipologiasDbSmFeSf = obtenerTipologiasDbSmFeSf(tipos);
@@ -92,7 +93,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     if (!pref.startsWith('DB')) setDbTipo('');
     if (pref === 'W') setProf(unidad === 'in' ? 12 : unidad === 'cm' ? 30.48 : 304.8);
     if (pref === 'WSM') setProf(unidad === 'in' ? 14 : unidad === 'cm' ? 35.56 : 355.6);
-    if (pref === 'F' || pref === 'DB') setSistemaFrente('manija');
+    if (pref === 'F' || (pref === 'DB' || esTipologiaDbFe(pref))) setSistemaFrente('manija');
     if (esTipologiaDbSmFeSf(pref)) setSistemaFrente('gola');
   }
 
@@ -109,14 +110,14 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     setLoading(true);
     const overrides: Record<string, number> = { gola: esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0 };
     if (esDB && dbTipo) {
-      const t = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
+      const t = tipologiasDbParaPrefijo(tipoSel?.pref).find((x) => x.key === dbTipo);
       if (t) {
         overrides.n_cajones = t.nc;
         overrides.n_cajones_pequenos = t.npeq;
       }
     }
     const r = await previewAction({
-      tipoId, largo, alto, prof, unidad, preset: presetDefault, conHerrajes: false, overrides,
+      tipoId, largo, alto, prof, unidad, preset: presetResuelto, conHerrajes: false, overrides, dbTipo: esDB ? dbTipo : undefined,
       door: usaDoor ? parseMedida(door) : undefined,
       doorHand: usaDoor ? doorHand : undefined,
     });
@@ -158,10 +159,10 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     setExportandoTodas(null);
   }
 
-  const materialesCodigo = presetMaterialesTipologia(presetDefault, tipoSel?.pref);
+  const materialesCodigo = presetMaterialesTipologia(presetResuelto, tipoSel?.pref);
   const codigo = tipoSel
     ? codigoComercial({
-        pref: tipoSel.pref, largo, alto, prof, unidad, sistema: 'imperial', sistemaFrente,
+        pref: tipoSel.pref, largo, alto, prof, unidad, sistema: 'imperial', sistemaFrente, dbTipo: esDB ? dbTipo : null,
         door: usaDoor && door !== '' ? parseMedida(door) : null,
         doorHand: usaDoor ? doorHand : null,
         espesorCajaMm: tableros.find((tablero) => tablero.codigo === materialesCodigo.caja)?.espesor_mm,
@@ -255,10 +256,10 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
           )}
 
           {esDB && (
-            <Campo label="Tipología DB">
+            <Campo label={`Tipología ${tipoSel?.pref || 'DB'}`}>
               <select value={dbTipo} onChange={(e) => setDbTipo(e.target.value)} className="inp">
                 <option value="">— manual —</option>
-                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{t.key}</option>)}
+                {tipologiasDbParaPrefijo(tipoSel?.pref).map((t) => <option key={t.key} value={t.key} title={t.desc}>{etiquetaTipologiaDb(t.key, tipoSel?.pref)}</option>)}
               </select>
             </Campo>
           )}
