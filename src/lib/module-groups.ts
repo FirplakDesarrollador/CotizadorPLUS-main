@@ -223,7 +223,13 @@ export function codigoComercial(input: CodigoComercialInput): string {
     ? anchoCodigo(prof, unidad, sistema)
     : '';
   if (profSufijo) agregarMedida(profSufijo);
-  const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
+  let dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
+  const esDbFe = /^(DB|IC)-FE(?:-SF)?$/.test(prefNormalizado);
+  if (esDbFe && input.dbTipo === 'DB2-1OP') dbSufijo = '-2-1INT';
+  if (esDbFe && dbSufijo) {
+    codigo = codigo.replace('-FE', `${dbSufijo}-FE`);
+    dbSufijo = '';
+  }
   const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
   const llevaSmPropio = prefNormalizado.split('-').some((segmento) => segmento === 'SM' || segmento === 'SMG')
     || prefNormalizado === 'WSM';
@@ -231,7 +237,7 @@ export function codigoComercial(input: CodigoComercialInput): string {
   // DB2-1OP) no son variantes SM. Las familias con Gola son tipos separados
   // DB-*-SM / DB-*-SM-FE, por lo que un estado heredado nunca debe convertir
   // DB en `DBXX-...-SM`.
-  const bloqueaSmTransversal = prefNormalizado === 'DB';
+  const bloqueaSmTransversal = prefNormalizado === 'DB' || esDbFe;
   const bblfdSufijo = prefNormalizado === 'BBLFD'
     && input.door != null
     && Number.isFinite(input.door)

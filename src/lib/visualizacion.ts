@@ -53,7 +53,8 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     ].includes(pref);
     const esDbSmg = /^DB-.+-SMG(-FE|-SF)?$/.test(pref);
     const esDbSmEspecial = esDbSmMaderaEspecial || esDbSmg;
-    const esDb21IntSmFe = pref === 'DB-2-1INT-SM-FE' || pref === 'DB-2-1INT-SMG-FE';
+    const esDb21IntSmFe = pref === 'DB-2-1INT-SM-FE' || pref === 'DB-2-1INT-SMG-FE'
+      || (/^DB-FE(?:-SF)?$/.test(pref) && Number(result.vars.n_cajones_ocultos ?? 0) > 0);
     const vars=result.vars;
     const L=mm(calc.dims.L), A=mm(calc.dims.A), P=mm(calc.dims.P);
     const MO=mm(Number(vars.MO ?? 0)), HOOD=mm(Number(vars.HOOD ?? 0));
