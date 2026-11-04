@@ -1,4 +1,5 @@
 export type CemaTemplate = {
+  showModuleSchedule: boolean;
   projectAddress: string; quoteReference: string; proposalDate: string; pricingBasis: string;
   validityDays: number; bathrooms: number; countertopAmountUsd: number; leadTimeDays: number;
   depositPercent: number; materialPaymentPercent: number;
@@ -9,6 +10,7 @@ export type CemaTemplate = {
 };
 
 export const CEMA_TEMPLATE_DEFAULTS: CemaTemplate = {
+  showModuleSchedule: true,
   projectAddress: '', quoteReference: '', proposalDate: '', pricingBasis: 'Delivered & Installed',
   validityDays: 30, bathrooms: 0, countertopAmountUsd: 0, leadTimeDays: 90,
   depositPercent: 50, materialPaymentPercent: 100,

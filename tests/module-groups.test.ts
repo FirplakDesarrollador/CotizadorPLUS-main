@@ -148,8 +148,8 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'WER', largo: 24, alto: 36, prof: 12, sistemaFrente: 'gola' }), 'WER243612-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UW', largo: 12, alto: 36, prof: 13 }), 'UW123613');
   assert.equal(codigoComercial({ ...base, pref: 'OW', largo: 30, alto: 18, prof: 12 }), 'OW301812');
-  // Sin alto en el código: el alto no entra aunque venga en el input.
-  assert.equal(codigoComercial({ ...base, pref: 'B', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-SM');
+  // Con alto variable en el código: se incluye al diferir de 30 pulgadas.
+  assert.equal(codigoComercial({ ...base, pref: 'B', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B1234 1/2-SM');
   // DB tradicional nunca adopta SM: las cajoneras con Gola son tipos separados.
   assert.equal(codigoComercial({ ...base, pref: 'DB', largo: 18, alto: 34.5, dbTipo: 'DB-1S', sistemaFrente: 'gola' }), 'DB18-1S');
   for (const dbTipo of ['DB-1S', 'DB-2S', 'DB-2', 'DB-3', 'DB-4', 'DB2-1OP']) {
@@ -162,7 +162,7 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'DB-3-SM', largo: 26, alto: 30 }), 'DB26-3-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UDB', largo: 18, alto: 28.75, dbTipo: 'DB-2S' }), 'UDB18-2S');
   assert.equal(codigoComercial({ ...base, pref: 'UDV', largo: 24, alto: 28.75, dbTipo: 'DB-3' }), 'UDV24-3');
-  assert.equal(codigoComercial({ ...base, pref: 'B-FE', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-FE-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'B-FE', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B1234 1/2-FE-SM');
   assert.equal(codigoComercial({ ...base, pref: 'F', largo: 6, alto: 30, sistemaFrente: 'manija' }), 'F630');
   assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36 }), 'PN12 7/836');
   assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36.75 }), 'PN12 7/836 3/4');
@@ -214,7 +214,7 @@ test('codigoComercial agrega 18MM solo cuando caja y frente son de 18mm', () => 
 test('codigoComercial agrega 15MM con las mismas reglas de integración SM', () => {
   const base = { pref: 'WSM', largo: 25, alto: 15, prof: 14, unidad: 'in', sistema: 'imperial' } as const;
   assert.equal(codigoComercial({ ...base, espesorCajaMm: 15, espesorFrenteMm: 15 }), 'WSM251514-15MM');
-  assert.equal(codigoComercial({ ...base, pref: 'B', largo: 30, alto: 34.5, espesorCajaMm: 15, espesorFrenteMm: 15 }), 'B30-15MM');
+  assert.equal(codigoComercial({ ...base, pref: 'B', largo: 30, alto: 34.5, espesorCajaMm: 15, espesorFrenteMm: 15 }), 'B3034 1/214-15MM');
   assert.equal(codigoComercial({
     ...base, pref: 'W-SM-PUSH', largo: 33, alto: 21, prof: 24,
     espesorCajaMm: 15, espesorFrenteMm: 15,
@@ -376,4 +376,17 @@ test('presenta los frentes de gaveta como alto por ancho una sola vez', () => {
     orientarPieza({ rol: 'frente', largoIn: 657.2 / 25.4, anchoIn: 173.9 / 25.4 }),
     { largoIn: 173.9 / 25.4, anchoIn: 657.2 / 25.4 },
   );
+});
+
+
+test('inferiores B incluyen cada dimensión no estándar antes de los sufijos', () => {
+  const base = { pref: 'BFD', largo: 45, alto: 76.2, prof: 60.96, unidad: 'cm' as const, sistema: 'metrico' as const };
+  assert.equal(codigoComercial(base), 'BFD45');
+  assert.equal(codigoComercial({ ...base, prof: 60.9 }), 'BFD45');
+  assert.equal(codigoComercial({ ...base, alto: 77, prof: 60 }), 'BFD457760');
+  assert.equal(codigoComercial({ ...base, alto: 77 }), 'BFD4577');
+  assert.equal(codigoComercial({ ...base, prof: 55 }), 'BFD4555');
+  assert.equal(codigoComercial({ ...base, pref: 'BFD-SM', alto: 77, prof: 60 }), 'BFD457760-SM');
+  assert.equal(codigoComercial({ ...base, largo: 24, alto: 31.5, prof: 25, unidad: 'in', sistema: 'imperial' }), 'BFD2431 1/225');
+  assert.equal(codigoComercial({ ...base, largo: 24, alto: 30, prof: 24, unidad: 'in', sistema: 'imperial' }), 'BFD24');
 });

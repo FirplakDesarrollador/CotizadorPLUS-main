@@ -55,12 +55,12 @@ test('solo los abiertos solicitados asignan caja y refuerzos al frente global de
       assert.equal(r.preset.caja, esperado);
       assert.equal(r.preset.refuerzo, esperado);
       assert.equal(r.preset.frente, esperado);
-      assert.equal(r.preset.fondo, 'F6');
+      assert.equal(r.preset.fondo, esperado.replace('18', '6'));
       assert.equal(r.cantoCaja, '19x0,45');
       assert.equal(r.largo, 60);
     }
   }
-  for (const pref of ['BFD', 'BFD-SM', 'OSBFD', 'W', 'OW-MO', 'TW', null]) {
+  for (const pref of ['BFD', 'BFD-SM', 'OSBFD', 'W', 'TW', null]) {
     assert.deepEqual(presetMaterialesTipologia(input.preset, pref), input.preset);
   }
   assert.equal(input.preset.caja, 'ANTERIOR', 'no muta el snapshot original');
@@ -77,4 +77,16 @@ test('el PDF describe la excepción únicamente en las familias donde hay abiert
   const bloques = especificacionesProyecto(config, [], [{ nombre: 'Closet', lineas: [{ pref: 'OW' }] }, { nombre: 'Cocina', lineas: [{ pref: 'W' }] }]);
   assert.equal(bloques.find(b => b.familia === 'superior')!.filas.some(([rol]) => rol.includes('OBFD')), false);
   assert.equal(bloques.find(b => b.familia === 'closet')!.filas.find(([rol]) => rol.includes('OBFD'))![1], 'FC18 · Referencia no encontrada en catálogo');
+});
+
+
+test('OW-MO usa frente en caja y refuerzos y el mismo color en fondo de 6 mm', () => {
+  const preset = { caja: 'OTRO', refuerzo: 'OTRO', frente: 'PRIRH15CONSTRUCTOR', fondo: 'BLANCO' };
+  for (const pref of ['OW', 'OW-SF', 'OW-MO', 'OW-MO-SF', 'OBFD', 'OBFD-SM', 'OSBFD-SM']) {
+    assert.deepEqual(presetMaterialesTipologia(preset, pref), {
+      caja: 'PRIRH15CONSTRUCTOR', refuerzo: 'PRIRH15CONSTRUCTOR',
+      frente: 'PRIRH15CONSTRUCTOR', fondo: 'PRIRH6CONSTRUCTOR',
+    });
+  }
+  assert.equal(preset.fondo, 'BLANCO');
 });

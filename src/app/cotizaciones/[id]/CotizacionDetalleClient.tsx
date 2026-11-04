@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ProyectoHeader from './ProyectoHeader';
 import CocinaCard from './CocinaCard';
@@ -7,7 +7,7 @@ import AddCocina from './AddCocina';
 import GuideButton from '@/components/GuideButton';
 import TooltipToggle from '@/components/TooltipToggle';
 import ProjectConfigPanel, { type ProjectDefaults } from './ProjectConfigPanel';
-import { eliminarCotizacionAction, actualizarCotizacionAction } from '../actions';
+import { eliminarCotizacionAction, actualizarCotizacionAction, reordenarCocinasAction } from '../actions';
 import VersionesCotizacion from './VersionesCotizacion';
 import type { CotizacionVersion } from '@/lib/cotizaciones';
 import { CLAVE_CONFIG_FAMILIA, type FamiliaMaterial } from '@/lib/muebles';
@@ -169,6 +169,52 @@ export default function CotizacionDetalleClient({
   const [columnasPrecio, setColumnasPrecio] = useState<ColumnasPrecio>({ sinHerrajes: true, conHerrajes: true, usd: true, cop: true });
 
   const router = useRouter();
+  const [ordenSecciones, setOrdenSecciones] = useState<string[] | null>(null);
+  const [seccionArrastrada, setSeccionArrastrada] = useState<string | null>(null);
+  const [seccionDestino, setSeccionDestino] = useState<string | null>(null);
+  const [guardandoOrden, setGuardandoOrden] = useState(false);
+  const [mensajeOrden, setMensajeOrden] = useState('');
+  const [errorOrden, setErrorOrden] = useState('');
+  const ordenEnCurso = useRef(false);
+  const [seccionesPrevias, setSeccionesPrevias] = useState(cocinas);
+  if (seccionesPrevias !== cocinas) {
+    setSeccionesPrevias(cocinas);
+    setOrdenSecciones(null);
+  }
+  const seccionesPorId = new Map(cocinas.map(c => [c.id, c]));
+  const seccionesOrdenadas = ordenSecciones
+    ? ordenSecciones.flatMap(id => { const seccion = seccionesPorId.get(id); return seccion ? [seccion] : []; })
+    : cocinas;
+
+  async function moverSeccion(origenId: string, destinoId: string) {
+    setSeccionArrastrada(null);
+    setSeccionDestino(null);
+    if (ordenEnCurso.current || origenId === destinoId) return;
+    const ordenAnterior = seccionesOrdenadas.map(c => c.id);
+    const ids = [...ordenAnterior];
+    const origen = ids.indexOf(origenId);
+    const destino = ids.indexOf(destinoId);
+    if (origen < 0 || destino < 0) return;
+    ids.splice(origen, 1);
+    ids.splice(destino, 0, origenId);
+    ordenEnCurso.current = true;
+    setOrdenSecciones(ids);
+    setGuardandoOrden(true);
+    setErrorOrden('');
+    setMensajeOrden('');
+    try {
+      const resultado = await reordenarCocinasAction(cotizacionId, ids);
+      if (!resultado.ok) throw new Error(resultado.error || 'No se pudo guardar el orden.');
+      setMensajeOrden('Orden de secciones guardado.');
+    } catch (error) {
+      setOrdenSecciones(ordenAnterior);
+      setErrorOrden(error instanceof Error ? error.message : 'No se pudo guardar el orden.');
+    } finally {
+      ordenEnCurso.current = false;
+      setGuardandoOrden(false);
+      router.refresh();
+    }
+  }
   const [guardadoMateriales, setGuardadoMateriales] = useState({ pendientes: 0, error: null as string | null });
   const guardarEnOrden = useMemo(() => crearGuardadoSecuencial<ProjectDefaults>(async next => {
     const resultado = await actualizarCotizacionAction(cotizacionId, { configDefault: next });
@@ -319,12 +365,51 @@ export default function CotizacionDetalleClient({
       </div>
 
       <div className="space-y-4" data-tour="cocinas">
-        {cocinas.map((c) => (
+        <p role="status" className="text-xs text-slate-500">{guardandoOrden ? 'Guardando orden de secciones…' : mensajeOrden || (cocinas.length > 1 ? 'Arrastra el asa de una sección o usa las flechas para cambiar su orden.' : '')}</p>
+        {errorOrden && <p role="alert" className="text-sm text-red-600">{errorOrden}</p>}
+        {seccionesOrdenadas.map((c, index) => (
+          <div key={c.id} data-seccion-id={c.id}
+            className={`rounded-2xl ${seccionDestino === c.id ? 'ring-2 ring-blue-400' : ''} ${seccionArrastrada === c.id ? 'opacity-50' : ''}`}
+            onDragOver={event => {
+              if (!event.dataTransfer.types.includes('application/x-cotizador-seccion') || guardandoOrden) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
+              setSeccionDestino(c.id);
+            }}
+            onDrop={event => {
+              const origen = event.dataTransfer.getData('application/x-cotizador-seccion');
+              if (!seccionesPorId.has(origen)) return;
+              event.preventDefault();
+              event.stopPropagation();
+              void moverSeccion(origen, c.id);
+            }}>
           <CocinaCard
-            key={c.id}
             cotizacionId={cotizacionId}
             cocina={c}
-            allCocinas={cocinas}
+            allCocinas={seccionesOrdenadas}
+            controlesOrden={
+              <div className="flex shrink-0 items-center gap-1 text-slate-400">
+                <button type="button" draggable={!guardandoOrden && cocinas.length > 1}
+                  disabled={guardandoOrden || cocinas.length < 2}
+                  aria-label={`Arrastrar sección ${c.nombre}`} title="Arrastrar sección"
+                  className="cursor-grab rounded px-1 text-lg font-bold hover:text-blue-600 active:cursor-grabbing disabled:cursor-default disabled:opacity-20"
+                  onDragStart={event => {
+                    event.stopPropagation();
+                    event.dataTransfer.setData('application/x-cotizador-seccion', c.id);
+                    event.dataTransfer.effectAllowed = 'move';
+                    setSeccionArrastrada(c.id);
+                  }}
+                  onDragEnd={() => { setSeccionArrastrada(null); setSeccionDestino(null); }}>⋮⋮</button>
+                <div className="flex flex-col text-[9px] font-bold leading-tight">
+                  <button type="button" aria-label={`Mover sección ${c.nombre} arriba`} title="Mover sección arriba"
+                    disabled={guardandoOrden || index === 0} className="hover:text-blue-600 disabled:opacity-20"
+                    onClick={() => void moverSeccion(c.id, seccionesOrdenadas[index - 1].id)}>▲</button>
+                  <button type="button" aria-label={`Mover sección ${c.nombre} abajo`} title="Mover sección abajo"
+                    disabled={guardandoOrden || index === seccionesOrdenadas.length - 1} className="hover:text-blue-600 disabled:opacity-20"
+                    onClick={() => void moverSeccion(c.id, seccionesOrdenadas[index + 1].id)}>▼</button>
+                </div>
+              </div>
+            }
             tipos={tipos}
             tableros={tableros}
             cantos={cantos}
@@ -339,6 +424,7 @@ export default function CotizacionDetalleClient({
             onMaterialesUsados={handleMaterialesUsados}
             columnasPrecio={columnasPrecio}
           />
+          </div>
         ))}
         <div data-tour="add-cocina"><AddCocina cotizacionId={cotizacionId} /></div>
       </div>

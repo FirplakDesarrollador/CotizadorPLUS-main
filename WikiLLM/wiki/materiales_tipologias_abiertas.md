@@ -2,7 +2,7 @@
 
 ## Regla
 
-OBFD, OBFD-SM, OSBFD-SM y OW usan el tablero de **frentes** también en los roles **caja** y **refuerzo**. Incluye sus variantes sin fondo `-SF`, pero no OSBFD, OW-MO ni otros tipos. Aplica igualmente a entrepaños y golas que consuman esos roles. El fondo y los cantos conservan su selección; no se añaden puertas.
+OBFD, OBFD-SM, OSBFD-SM, OW y OW-MO usan el tablero de **frentes** también en los roles **caja** y **refuerzo**. Incluye sus variantes sin fondo `-SF`, pero no OSBFD ni otros tipos. Aplica igualmente a entrepaños y golas que consuman esos roles. El fondo de todos estos abiertos toma el color del frente en 6 mm; los cantos conservan su selección; no se añaden puertas.
 
 La selección procede de Características del proyecto según la familia de la tipología; un área cuyo nombre contiene closet conserva prioridad. Sin selección global de frente, se utiliza el frente ya conocido de la línea. Si tampoco existe, no se inventa una referencia.
 
@@ -38,3 +38,9 @@ En Chromium local, viewport 1440×1000, se abrió el editor de OW: caja deshabil
 Se abrieron las 10 vistas de impresión y se generaron dos PDF desde recargas independientes de Casa Poro (8 páginas), su versión Color Tendencia (7), KUNDARA (9) y Milán Closet (4). En cada pasada se ejecutó Guardar e imprimir; texto completo idéntico entre pares, cantidades de adicionales contrastadas con una consulta independiente. Se revisaron los mosaicos de todas las páginas y la página de especificaciones renderizada a tamaño completo con PDFium. Browser plugin no disponible: se usó Playwright. No se verificaron otros navegadores, impresión física ni despliegue remoto.
 
 Relacionados: [Protocolo de PDF](protocolo_pdf_cotizaciones.md), [Arquitectura frontend](arquitectura_frontend.md).
+
+
+Actualización 2026-11-04: [regla OW-MO y verificación actual](inferiores_b_ow_mo_programacion_pdf.md). La evidencia histórica anterior corresponde a su fecha; los cuatro OW-MO pendientes ya fueron sincronizados con respaldo y autorización explícita; auditoría final de 11 cotizaciones sin diferencias.
+
+
+Extensión vigente: [fondos del color del frente en todos los abiertos](fondos_color_abiertos.md). La evidencia histórica que menciona fondos conservados describe el comportamiento anterior. La auditoría más reciente distingue los fondos correctos de las tres diferencias recurrentes de caja/refuerzos de Condominio V.

@@ -2805,3 +2805,28 @@ HerrajesOtrosPdf suma cantidades por referencia y unidad entre áreas, conserva 
 ## [2026-11-03] update | Caja y refuerzos de abiertos con el material global de frentes
 
 OBFD, OBFD-SM, OSBFD-SM y OW derivan caja/refuerzo del frente seleccionado, respetando familia y prioridad closet. Regla compartida por proyecto, preparador del motor y editor; especificaciones del PDF actualizadas. Aplicación histórica limitada a 7 OW de KUNDARA y las dos versiones de Casa Poro, con respaldo previo; las otras 355 líneas de esos proyectos quedaron intactas. Totales recalculados, auditoría estricta sin errores y segunda simulación sin pendientes. Gate aprobado con 92 suites y quality:learn sin HIGH. Detalles, importes y límites en materiales_tipologias_abiertas.md. Sin cambios en WikiLLM/raw.
+
+
+## [2026-11-04] update | Dimensiones variables B, materiales OW-MO y programación FIRPLAK opcional
+
+Reglas compartidas de nombres y materiales; interruptor persistido que elimina la programación del PDF. Gate 92 suites aprobado y learn sin HIGH. Dos generaciones independientes por estado en KUNDARA y Milán, con revisión de texto y páginas. Auditoría de solo lectura: cuatro módulos históricos pendientes de recálculo; no se modificaron sus datos. Detalle en [wiki](wiki/inferiores_b_ow_mo_programacion_pdf.md).
+
+
+## [2026-11-04] update | Aplicación histórica y verificación de pestañas
+
+Autorización explícita con respaldo: cuatro OW-MO sincronizados, 44 nombres de línea y 34 grupos actualizados. Auditoría estricta de 11 cotizaciones sin pendientes; importes de las 705 líneas conservados por la corrección final de nombres. Selectores del simulador y editor alineados con material efectivo; buscador HDR corregido; interruptor también en CEMA con renumeración. Detalle e impresión de todas las cotizaciones, pruebas de simulador/HDR/Optimizador y 12 PDF revisados en dos generaciones por estado. Incidencia de guardados posteriores de Condominio V y respaldos documentados. Gate 92 suites, exit 0; learn sin HIGH. [Evidencia y alcance](wiki/inferiores_b_ow_mo_programacion_pdf.md).
+
+
+## [2026-11-04] update | Fondo de color para OW y demás abiertos, consumo y precio reales
+
+Se extendió la regla de 6 mm del color del frente a OBFD, OBFD-SM, OSBFD-SM y OW, además de OW-MO. Selector derivado, validación de catálogo/espesor y especificación PDF. Guardado real de OW803030.4-SM15: PRIRH6CONSTRUCTOR, 0,248727 m2 y costo de fondo 7517,26 COP. Auditoría independiente de 28 abiertos con fondos correctos; se documentan tres diferencias concurrentes de caja/refuerzos en Condominio V, sin afirmar auditoría general limpia. Gate 92 suites, learn sin HIGH; seis PDF de dos generaciones revisados. [Evidencia, respaldo y límites](wiki/fondos_color_abiertos.md).
+
+
+## [2026-11-04] update | Orden personalizado de secciones completas de cotización
+
+Asa de arrastre y flechas en cocinas/closets/baños, guardado optimista con reversión de errores y RPC atómica con RLS (migración 0235 aplicada). Prueba SQL transaccional sin datos residuales; navegador con nueve secciones: arrastre, flechas, teclado, recarga y fallo de red. Las 67 líneas y los importes permanecen intactos; orden original restaurado al terminar. Dos PDF con texto idéntico y resumen en el orden elegido, renderizados y revisados. Gate 92 suites aprobado; learn sin HIGH. [Documentación y evidencia](wiki/orden_secciones_cotizacion.md).
+
+
+## [2026-11-04] update | Preparación de publicación LIz a DEV y main, y Supabase actualizado
+
+Migración 0235 aplicada y registrada mediante Management API; prueba SQL transaccional aprobada. Suite completa de release: 92 suites, exit 0. Sincronización limitada con respaldo de tres OW-MO de Condominio V y corrección de 14 códigos posteriores en Condominio V/ELEVEN. Auditoría estricta de las 11 cotizaciones: cero diferencias y errores; auditoría de códigos: cero pendientes. Evidencia y nombres de respaldo en [fondos](wiki/fondos_color_abiertos.md) y [orden de secciones](wiki/orden_secciones_cotizacion.md).

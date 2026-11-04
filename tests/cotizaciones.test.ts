@@ -131,24 +131,47 @@ test('persistencia: sincroniza un W en área closet, recalcula importes y la seg
 test('persistencia: los cuatro abiertos heredan el frente global y la segunda sincronización no recalcula', async () => {
   for (const pref of ['OBFD', 'OBFD-SM', 'OSBFD-SM', 'OW']) {
     catalogo.tiposById.w.pref = pref;
-    cajaEsperada = 'CLOSET';
+    cajaEsperada = 'PRIRH18CONSTRUCTOR';
+    Object.assign(catalogo.tablerosByCode, { PRIRH18CONSTRUCTOR: { espesor_mm: 18 }, PRIRH6CONSTRUCTOR: { espesor_mm: 6 } });
     const antes = recalculos;
     tablas.cot_cotizaciones = [{ id: 'q', sistema_medida: 'metrico', config_default: {
-      materialesInferiores: { preset: { caja: 'CAJA15', refuerzo: 'CAJA15', frente: 'CLOSET' } },
-      materialesSuperiores: { preset: { caja: 'CAJA15', refuerzo: 'CAJA15', frente: 'CLOSET' } },
+      materialesInferiores: { preset: { caja: 'CAJA15', refuerzo: 'CAJA15', frente: 'PRIRH18CONSTRUCTOR' } },
+      materialesSuperiores: { preset: { caja: 'CAJA15', refuerzo: 'CAJA15', frente: 'PRIRH18CONSTRUCTOR' } },
     } }];
     tablas.cot_cocinas = [{ id: 'a', cotizacion_id: 'q', nombre: 'Cocina', cantidad: 2 }];
     tablas.cot_tipos_mueble = [{ id: 'w', pref }];
-    tablas.cot_tableros = [{ codigo: 'CLOSET', espesor_mm: 18 }, { codigo: 'CAJA15', espesor_mm: 15 }, { codigo: 'F6', espesor_mm: 6 }];
+    tablas.cot_tableros = [{ codigo: 'PRIRH18CONSTRUCTOR', espesor_mm: 18 }, { codigo: 'CAJA15', espesor_mm: 15 }, { codigo: 'F6', espesor_mm: 6 }];
     tablas.cot_grupos_modulos = [{ id: 'g', cocina_id: 'a', cotizacion_id: 'q' }];
     tablas.cot_cotizacion_lineas = [{ id: 'l', cocina_id: 'a', cotizacion_id: 'q', grupo_id: 'g', tipo_mueble_id: 'w', pref, posicion_grupo: 1, cantidad: 1, largo: 60, alto: 80, prof: 30, unidad_dim: 'cm', config: { preset: { caja: 'CAJA15', refuerzo: 'CAJA15', frente: 'CAJA15', fondo: 'F6' } } }];
     assert.deepEqual(await api.sincronizarMaterialesCotizacion('q'), { corregidas: 1, grupos: 1 });
-    assert.deepEqual((tablas.cot_cotizacion_lineas[0].config as Row).preset, { caja: 'CLOSET', refuerzo: 'CLOSET', frente: 'CLOSET', fondo: 'F6' });
+    assert.deepEqual((tablas.cot_cotizacion_lineas[0].config as Row).preset, { caja: 'PRIRH18CONSTRUCTOR', refuerzo: 'PRIRH18CONSTRUCTOR', frente: 'PRIRH18CONSTRUCTOR', fondo: 'PRIRH6CONSTRUCTOR' });
     assert.equal(tablas.cot_cotizaciones[0].total_cop, 200);
     assert.deepEqual(await api.sincronizarMaterialesCotizacion('q'), { corregidas: 0, grupos: 0 });
     assert.equal(recalculos, antes + 1);
   }
   catalogo.tiposById.w.pref = 'W';
+});
+
+test('persistencia OW-MO corrige un preset heredado y conserva el fondo del frente en segunda pasada', async () => {
+  catalogo.tiposById.w.pref = 'OW-MO';
+  cajaEsperada = 'PRIRH18CONSTRUCTOR';
+  Object.assign(catalogo.tablerosByCode, { PRIRH18CONSTRUCTOR: { espesor_mm: 18 }, PRIRH6CONSTRUCTOR: { espesor_mm: 6 } });
+  tablas.cot_cotizaciones = [{ id: 'q', sistema_medida: 'metrico', config_default: {
+    materialesSuperiores: { preset: { caja: 'CAJA15', refuerzo: 'CAJA15', frente: 'PRIRH18CONSTRUCTOR', fondo: 'OTRO6' } },
+  } }];
+  tablas.cot_cocinas = [{ id: 'a', cotizacion_id: 'q', nombre: 'Cocina', cantidad: 2 }];
+  tablas.cot_tipos_mueble = [{ id: 'w', pref: 'OW-MO' }];
+  tablas.cot_tableros = [{ codigo: 'PRIRH18CONSTRUCTOR', espesor_mm: 18 }, { codigo: 'PRIRH6CONSTRUCTOR', espesor_mm: 6 }];
+  tablas.cot_grupos_modulos = [{ id: 'g', cocina_id: 'a', cotizacion_id: 'q' }];
+  tablas.cot_cotizacion_lineas = [{ id: 'l', cocina_id: 'a', cotizacion_id: 'q', grupo_id: 'g', tipo_mueble_id: 'w', pref: 'OW-MO', posicion_grupo: 1, cantidad: 1, largo: 60, alto: 80, prof: 30, unidad_dim: 'cm', config: { preset: { caja: 'CAJA15', refuerzo: 'CAJA15', frente: 'PRIRH18CONSTRUCTOR', fondo: 'OTRO6' } } }];
+  assert.deepEqual(await api.sincronizarMaterialesCotizacion('q'), { corregidas: 1, grupos: 1 });
+  assert.deepEqual((tablas.cot_cotizacion_lineas[0].config as Row).preset, {
+    caja: 'PRIRH18CONSTRUCTOR', refuerzo: 'PRIRH18CONSTRUCTOR', frente: 'PRIRH18CONSTRUCTOR', fondo: 'PRIRH6CONSTRUCTOR',
+  });
+  const snapshot = structuredClone(tablas.cot_cotizacion_lineas);
+  assert.deepEqual(await api.sincronizarMaterialesCotizacion('q'), { corregidas: 0, grupos: 0 });
+  assert.deepEqual(tablas.cot_cotizacion_lineas, snapshot);
+  cajaEsperada = 'CLOSET';
 });
 
 test('sincronización limitada deja intactas las líneas y áreas ajenas y rechaza grupos mezclados antes de escribir', async () => {
@@ -169,4 +192,21 @@ test('sincronización limitada deja intactas las líneas y áreas ajenas y recha
   await assert.rejects(() => api.sincronizarMaterialesCotizacion('q', { lineasPermitidas: ['l'] }), /fuera del alcance/);
   assert.deepEqual(tablas, antes, 'un grupo mixto falla antes de cualquier escritura');
   catalogo.tiposById.w.pref = 'W';
+});
+
+
+test('ordenar secciones usa una sola RPC, propaga errores y no llama al motor', async () => {
+  const antes = recalculos;
+  copiaResultado = { data: 'cotizacion', error: null };
+  await api.reordenarCocinas('cotizacion', ['b', 'a']);
+  assert.deepEqual(copiaLlamadas.at(-1), { nombre: 'cot_reordenar_cocinas', argumentos: { p_cotizacion_id: 'cotizacion', p_cocina_ids: ['b', 'a'] } });
+  const llamadasAntes = copiaLlamadas.length;
+  await assert.rejects(() => api.reordenarCocinas('cotizacion', ['a', 'a']), /repetir secciones/);
+  assert.equal(copiaLlamadas.length, llamadasAntes);
+  copiaResultado = { data: null, error: { message: 'Las secciones cambiaron' } };
+  await assert.rejects(() => api.reordenarCocinas('cotizacion', ['b', 'a']), /Las secciones cambiaron/);
+  copiaResultado = { data: null, error: null };
+  await assert.rejects(() => api.reordenarCocinas('cotizacion', ['b', 'a']), /No se pudo guardar/);
+  assert.equal(recalculos, antes);
+  copiaResultado = { data: 'nueva-seccion', error: null };
 });

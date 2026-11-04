@@ -77,7 +77,7 @@ const preciosLinea = (linea: Linea, trm: number) => {
 };
 
 export default function CocinaCard({
-  cotizacionId, cocina, allCocinas, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, onMaterialesUsados, columnasPrecio
+  cotizacionId, cocina, allCocinas, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, onMaterialesUsados, columnasPrecio, controlesOrden
 }: {
   cotizacionId: string;
   cocina: Cocina;
@@ -95,6 +95,7 @@ export default function CocinaCard({
   projectDefaults?: ProjectDefaults;
   onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] }) => void;
   columnasPrecio: ColumnasPrecio;
+  controlesOrden?: React.ReactNode;
 }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
@@ -355,6 +356,7 @@ export default function CocinaCard({
     <div data-cocina-id={cocina.id} className="bg-white rounded-2xl border border-slate-200">
       <div className="flex items-center justify-between p-4 border-b border-slate-100 flex-wrap gap-2">
         <div className="flex items-center gap-2 flex-wrap">
+          {controlesOrden}
           {editName ? (
             <>
               <input value={nombre} onChange={(e) => setNombre(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-1 text-sm font-semibold" />
