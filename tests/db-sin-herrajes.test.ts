@@ -24,3 +24,21 @@ test('una tipología DB puede excluir todos sus herrajes', () => {
   assert.equal(sinHerrajes.costoHerrajes,0);
   assert.deepEqual(sinHerrajes.herrajes,[]);
 });
+
+test('DB65: desmarcar riel y barra elimina sus costos y volver a marcar los recupera', () => {
+  const plantilla = [
+    { rol: 'pata', herraje_codigo: 'PATA', selector_key: 'pata', formula_cantidad: '4' },
+    { rol: 'tornillo', herraje_codigo: 'TORNILLO', selector_key: 'tornillo', formula_cantidad: '16' },
+    { rol: 'riel', herraje_codigo: 'RIEL', selector_key: 'riel', formula_cantidad: '3' },
+    { rol: 'barra', herraje_codigo: 'BARRA', selector_key: 'barra', formula_cantidad: '2' },
+  ];
+  const input = { ...base, herrajesPlantilla: plantilla, herrajesByCode: { ...base.herrajesByCode, PATA: { codigo: 'PATA', precio: 10 }, TORNILLO: { codigo: 'TORNILLO', precio: 1 } } };
+  const con = calcularMueble(input);
+  const sin = calcularMueble({ ...input, herrajesExcluidos: ['riel', 'barra'] });
+  assert.deepEqual(sin.herrajes.map(h => [h.rol, h.cant]), [['pata', 4], ['tornillo', 16]]);
+  assert.equal(sin.costoHerrajes, 56);
+  assert.equal(con.costoHerrajes - sin.costoHerrajes, 340);
+  assert.deepEqual(calcularMueble({ ...input, herrajesExcluidos: [] }), con);
+  const heredada = calcularMueble({ ...input, herrajesPlantilla: plantilla.filter(h => h.rol !== 'barra'), herrajesExcluidos: ['riel', 'barra'] });
+  assert.equal(heredada.costoHerrajes, 56, 'la barra automática tampoco debe reaparecer');
+});
