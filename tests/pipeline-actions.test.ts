@@ -36,3 +36,10 @@ test('se guardan cambios válidos sin perder identidad histórica ni origen; err
  fallo=true;assert.equal((await api.editarPipelineAction('fila',{notas:'No persistir'})).ok,false);fallo=false;assert.equal(rows[0].notas,'Edición manual');
  userId=null;assert.equal((await api.registrarPipelineAction(null,form())).ok,false);userId='dueño';
 });
+
+test('editar un campo desconocido lo mantiene nulo hasta recibir un valor conocido',async()=>{
+ rows=[{id:'fila',creado_por:'dueño',cotizacion_id:null,campos_desconocidos:[]}];userId='dueño';rol='vendedor';
+ assert.equal((await api.editarPipelineAction('fila',{instalado:'__desconocido__'})).ok,true);assert.equal(rows[0].instalado,null);assert.deepEqual(rows[0].campos_desconocidos,['instalado']);
+ assert.equal((await api.editarPipelineAction('fila',{instalado:'false'})).ok,true);assert.equal(rows[0].instalado,false);assert.deepEqual(rows[0].campos_desconocidos,[]);
+ assert.equal((await api.editarPipelineAction('fila',{moneda:'__desconocido__'})).ok,false);
+});
