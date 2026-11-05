@@ -2840,3 +2840,11 @@ Migración 0236 aplicada y registrada: copia de DB sin alterar su carcasa/frente
 ## [2026-11-04] update | Preparación de publicación DB-FE a DEV y main
 
 Verificada migración 0236 registrada en Supabase, DB-FE activa/agrupable con 18 piezas y RIELFE500; prueba SQL aprobada. Suite completa de release: 93 suites, exit 0. Auditoría estricta posterior de 11 cotizaciones: cero diferencias y errores, sin reaplicar ni modificar sus importes. Se preparan todos los cambios de tipología, selectores, persistencia, visualización, pruebas y wiki para el flujo LIz a DEV a main solicitado. [Evidencia DB-FE](wiki/db_fe.md).
+
+## [2026-11-05] update | Preferencias de herrajes persistentes y patas/tornillos BOV
+
+Corregida la pérdida de activación/exclusiones al reconstruir módulos y cambiar TRM; el editor conserva una selección sin exclusiones frente a los defaults del proyecto. Incorporadas plantillas BOV/BOV-SF con PATA10AJUST y TORNILLO858, con autorización y respaldo previo; recalculados 18 grupos de seis proyectos. Dos auditorías de 11 cotizaciones/814 módulos y contraste estricto de herrajes, precios, materiales y totales sin diferencias. Caso DB65 de Condominio V verificado con tres guardados y recargas en una copia temporal eliminada: excluir/incluir/excluir rieles y barras produce precios reversibles; el original mantiene su selección por decisión del usuario. Once vistas de impresión abiertas; 14 PDF (dos por proyecto con BOV y Milán Closet), texto idéntico entre pasadas, totales y cantidades contrastados con consulta independiente, páginas renderizadas revisadas. Quality gate: 93 suites, exit 0; learn sin HIGH. [Contrato, respaldos, importes y límites](wiki/preferencias_herrajes_bov.md).
+
+## [2026-11-05] update | Registro Supabase y preparación de publicación de herrajes
+
+Migración 0237 aplicada y registrada mediante Management API con versión 20261105160555, sin duplicar las plantillas existentes ni modificar selecciones de cotizaciones. Ambas auditorías estrictas posteriores aprobadas: 11 cotizaciones, 814 módulos, 18 BOV; cero diferencias de herrajes/precios y cero errores de materiales, grupos o conciliación. Se prepara el commit de todos los cambios y la promoción autorizada LIz → DEV → main, con retorno final a LIz. [Evidencia](wiki/preferencias_herrajes_bov.md).

@@ -311,11 +311,11 @@ export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     largo: Number(linea.largo), alto: Number(linea.alto), prof: Number(linea.prof),
     unidad: linea.unidad_dim,
     preset: (c.preset ?? {}) as Record<string, string>,
-    conHerrajes: true,
+    conHerrajes: c.conHerrajes !== false,
     trm: c.trm == null ? undefined : Number(c.trm),
     overrides: (c.overrides ?? undefined) as Record<string, number> | undefined,
     modoFrentes: (c.modoFrentes ?? 'normal') as CotizarInput['modoFrentes'],
-    herrajesExcluidos: undefined,
+    herrajesExcluidos: Array.isArray(c.herrajesExcluidos) ? c.herrajesExcluidos.filter((rol): rol is string => typeof rol === 'string') : undefined,
     margenOverride: c.margenOverride == null ? undefined : Number(c.margenOverride),
     tarifaMadera: c.tarifaMadera == null ? undefined : Number(c.tarifaMadera),
     tarifaHerrajes: c.tarifaHerrajes == null ? undefined : Number(c.tarifaHerrajes),
@@ -379,7 +379,7 @@ async function normalizarGrupos(cocinaId: string) {
   }
 }
 
-async function recalcularGrupo(
+export async function recalcularGrupo(
   grupoId: string,
   catalogoPrefetch?: CatalogoPrecompilado,
   sistemaPrefetch?: SistemaMedida
@@ -750,8 +750,6 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
       const configUpdates: Record<string, unknown> = {};
       if (patch.trm !== undefined) {
         configUpdates.trm = Number(patch.trm);
-        configUpdates.conHerrajes = true;
-        configUpdates.herrajesExcluidos = null;
       }
       if (nuevoMargenOverride !== undefined) {
         configUpdates.margenOverride = nuevoMargenOverride;
@@ -836,7 +834,7 @@ export async function duplicarLineaACocina(lineaId: string, nuevaCocinaId: strin
 }
 
 // Recalcula totales por cocina y del proyecto.
-async function recomputarTotales(cotizacionId: string, cocinasPermitidas?: ReadonlySet<string>) {
+export async function recomputarTotales(cotizacionId: string, cocinasPermitidas?: ReadonlySet<string>) {
   const sb = await createClient();
   const { data: lineas } = await sb.from('cot_cotizacion_lineas')
     .select('cocina_id,precio_total_cop,precio_total_usd').eq('cotizacion_id', cotizacionId);

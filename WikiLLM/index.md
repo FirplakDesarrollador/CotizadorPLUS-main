@@ -26,6 +26,8 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Sistema de Calidad y Trinquete (Ratchet)](wiki/sistema_calidad_ratchet.md) - Sistema de calidad modular basado en impacto (lanes), compuerta de trinquete de deuda (Ratchet) y módulo consultivo continuo quality:learn.
 
 ## Infraestructura de Datos
+
+- [Preferencias de herrajes y BOV](wiki/preferencias_herrajes_bov.md) - Persistencia de exclusiones individuales, corrección del DB65, patas/tornillos BOV y auditoría de cotizaciones existentes.
 - [Esquema de Base de Datos](wiki/esquema_base_datos.md) - Tablas, políticas, comprador y configuración persistente de cotizaciones en Supabase.
 - [Clientes de Supabase y la frontera de RLS](wiki/clientes_supabase_rls.md) - Cuándo `createClient()` respeta RLS y cuándo devuelve el cliente elevado; el `catch` demasiado ancho de v1.0.3 y su corrección.
 - [Rieles de Cajón DB](wiki/rieles_db.md) - Catálogo de tipos de riel para muebles DB, mecanismo de override y archivos modificados.
