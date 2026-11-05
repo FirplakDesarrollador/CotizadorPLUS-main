@@ -9,6 +9,6 @@ export function enlacePipeline(f: FiltrosPipeline, pagina = f.pagina) {
   const params = new URLSearchParams({ vista: 'pipeline', ppagina: String(pagina), pq: f.q, pestado: f.estado, ppais: f.pais, pasesor: f.asesor, pestimador: f.estimador, pdireccion: f.direccion });
   return `/cotizaciones?${params}`;
 }
-export const CAMPOS_EXTRA_PIPELINE = ['codigo','zona','estado','estado_planos','fase_cotizacion','link_planner','link_tarea_planos','monto_fob_usd','monto_fob_cop','nuevo_valor_usd','nuevo_valor_cop','trm','fecha_ingreso'] as const;
+export const CAMPOS_EXTRA_PIPELINE = ['zona','estado','estado_planos','fase_cotizacion','link_planner','link_tarea_planos','monto_fob_usd','monto_fob_cop','nuevo_valor_usd','nuevo_valor_cop','trm','fecha_ingreso'] as const;
 export const NUMEROS_PIPELINE = ['tarifa','monto_fob_usd','monto_fob_cop','nuevo_valor_usd','nuevo_valor_cop','trm'];
 export const ETIQUETAS_EXTRA_PIPELINE: Record<string, string> = { codigo:'Código', zona:'Zona', estado:'Estado', estado_planos:'Estado de planos', fase_cotizacion:'Fase de cotización', link_planner:'Link Planner', link_tarea_planos:'Link tarea de planos', monto_fob_usd:'Monto FOB USD', monto_fob_cop:'Monto FOB COP', nuevo_valor_usd:'Nuevo valor USD', nuevo_valor_cop:'Nuevo valor COP', trm:'TRM', fecha_ingreso:'Fecha de ingreso' };

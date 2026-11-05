@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { getUserAndRole } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import { CAMPOS_PIPELINE, validarRegistroPipeline, validarUrlPipeline, validarFechaPipeline } from '@/lib/pipeline-campos';
+import { CAMPOS_PIPELINE, DESCONOCIDO_PIPELINE, validarRegistroPipeline, validarUrlPipeline, validarFechaPipeline } from '@/lib/pipeline-campos';
 import { CAMPOS_EXTRA_PIPELINE, NUMEROS_PIPELINE } from '@/lib/pipeline';
 import { ESTADOS_COTIZACION } from '@/lib/pipeline-estados';
 export async function registrarPipelineAction(_prev: unknown, form: FormData): Promise<{ ok: boolean; error?: string; id?: string }> {
@@ -25,10 +25,13 @@ export async function editarPipelineAction(id: string, cambios: Record<string,st
     const actual=await sb.from('cot_pipeline').select('*').eq('id',id).single();
     if(actual.error || !actual.data || (actual.data.creado_por!==user.id && rol!=='admin')) throw new Error('No tienes permiso para editar esta oportunidad.');
     const permitidos=new Set([...CAMPOS_PIPELINE.map(c=>c.key),...CAMPOS_EXTRA_PIPELINE]);
+    const desconocidos=new Set<string>(actual.data.campos_desconocidos??[]);
     const patch: Record<string,string|number|boolean|null>={};
     for(const [key,raw] of Object.entries(cambios)) {
       if(!permitidos.has(key))throw new Error('Campo no editable.');
       const value=String(raw).trim();if(value.length>10000)throw new Error('Texto demasiado largo.');
+      if(value===DESCONOCIDO_PIPELINE){if(!CAMPOS_PIPELINE.find(c=>c.key===key)?.permiteDesconocido)throw new Error('Este campo requiere información conocida.');patch[key]=null;desconocidos.add(key);continue;}
+      if(value)desconocidos.delete(key);
       if(key==='estado' && actual.data.cotizacion_id)throw new Error('El estado se cambia desde la cotización vinculada.');
       if(key==='estado' && !(ESTADOS_COTIZACION as readonly string[]).includes(value))throw new Error('Estado inválido.');
       if(key==='moneda' && !['COP','USD'].includes(value))throw new Error('Moneda inválida.');
@@ -43,7 +46,7 @@ export async function editarPipelineAction(id: string, cambios: Record<string,st
       if(key.startsWith('fecha_'))patch[key]=validarFechaPipeline(value);
     }
     if(!Object.keys(patch).length)return {ok:true,row:actual.data};
-    const result=await sb.from('cot_pipeline').update(patch).eq('id',id).select('*').single();
+    const result=await sb.from('cot_pipeline').update({...patch,campos_desconocidos:[...desconocidos]}).eq('id',id).select('*').single();
     if(result.error)throw new Error('No se pudieron guardar los cambios.');
     revalidatePath('/cotizaciones');return {ok:true,row:result.data};
   }catch(e){return {ok:false,error:e instanceof Error?e.message:'Error al guardar.'};}

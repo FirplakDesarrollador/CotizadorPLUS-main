@@ -183,6 +183,32 @@ Validación de publicación: suite completa aprobada con 101 archivos de pruebas
 20 casos específicos Pipeline aprobados y learn estricto sin HIGH. Sin
 regresiones de TypeScript, ESLint o tests y sin cambios de la línea base.
 
+## Referencias y datos desconocidos: 2026-11-05
+
+La columna Código muestra exclusivamente la referencia de la cotización PLUS
+vinculada y abre `/cotizaciones/{id}`. Sin vínculo muestra un guion, sin inventar
+referencias. `referenciaCotizacion` comparte la prioridad de impresión: referencia
+CEMA, código guardado o primeros ocho caracteres del UUID en mayúsculas.
+El código histórico permanece en `codigo` y `origen_excel`, pero deja de ser
+editable y se elimina del prefijo del nombre cuando coincide exactamente.
+La búsqueda admite también la referencia PLUS; no cambia la cotización.
+
+La migración 0242 incorpora `campos_desconocidos` y permite instalado nulo.
+Los campos del registro requieren una respuesta explícita: los opcionales
+admiten Desconocido, que guarda null más su marcador. Nombre, cliente, país y
+moneda requieren valores concretos. Los históricos sin marcador conservan
+Sin dato. Al editar con un valor conocido se elimina el marcador correspondiente.
+
+`scripts/sincronizar-referencias-pipeline.ts` permite revisar y aplicar relaciones
+explícitas uno a uno, con respaldo previo y control de concurrencia por updated_at.
+Se limpiaron 374 nombres y vincularon ocho coincidencias claras de 437 registros.
+Las 11 cotizaciones se compararon antes y después sin modificaciones.
+Tras confirmación explícita del usuario se agregaron Satori cocinas a 26080
+DYCO Satori y ELEVEN Apto modelo a 26053 Eleven Showroom (no Cocina Modelo).
+El usuario identificó después Condominio V como 26041 Ramstack - CONDOS V,
+Costa Rica. Se vincula esa oportunidad, sin asociar Condominio el Roble.
+El total queda en once oportunidades vinculadas a las once cotizaciones.
+
 Relacionados: [Dashboard](dashboard_cotizaciones.md),
 [protocolo PDF](protocolo_pdf_cotizaciones.md),
 [ubicación y RLS](clientes_supabase_rls.md).

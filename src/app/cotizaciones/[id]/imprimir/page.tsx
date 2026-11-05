@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import {referenciaCotizacion} from '@/lib/referencia-cotizacion';
 import { getCotizacion, nombresDeHerrajes, tablerosDeProyecto } from '@/lib/cotizaciones';
 import PrintButton from './PrintButton';
 import PrintDocumentTitle from './PrintDocumentTitle';
@@ -29,7 +30,7 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
     const created = new Date(cabecera.created_at);
     const template: CemaTemplate = {
       ...stored,
-      quoteReference: stored.quoteReference || cabecera.codigo || id.slice(0, 8).toUpperCase(),
+      quoteReference: stored.quoteReference || referenciaCotizacion({id,codigo:cabecera.codigo}),
       proposalDate: stored.proposalDate || created.toISOString().slice(0, 10),
     };
     const scheduleMap = new Map<string, CemaScheduleRow>();
@@ -92,7 +93,7 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
       for (const line of cocina.lineas) { const sku=line.codigo_modulo??line.pref??'SIN SKU'; const lineQuantity=Number(line.cantidad||0)*quantity; const current=scheduleMap.get(sku); if(current) current.quantity+=lineQuantity; else scheduleMap.set(sku,{sku,description:line.descripcion_es??'',quantity:lineQuantity,grupo:grupoDeLinea(line.pref??line.codigo_modulo)}); }
       return { name:cocina.nombre, quantity, unitUsd, totalUsd:unitUsd*quantity, unitCop, totalCop:unitCop*quantity };
     });
-    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||'Proyecto sin nombre', builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:cabecera.codigo||id.slice(0,8).toUpperCase(), totalUsd:propuesta.totalUsd, totalCop:propuesta.totalCop, moneda:monedaElegida, template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), materiales, adicionales:propuesta.adicionales, herrajes }} />;
+    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||'Proyecto sin nombre', builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:referenciaCotizacion({id,codigo:cabecera.codigo}), totalUsd:propuesta.totalUsd, totalCop:propuesta.totalCop, moneda:monedaElegida, template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), materiales, adicionales:propuesta.adicionales, herrajes }} />;
   }
   const mostrarSin = query.sinHerrajes !== '0'; const mostrarCon = query.conHerrajes !== '0'; const mostrarUsd = query.usd !== '0'; const mostrarCop = query.cop !== '0'; const trm = Number(cabecera.trm || 0);
   const proyecto = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 };
