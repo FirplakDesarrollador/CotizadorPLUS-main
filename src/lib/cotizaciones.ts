@@ -115,7 +115,7 @@ export async function getCotizacion(id: string) {
   return { cabecera: cab, cocinas: cocinasConLineas, lineasSinCocina: lineasByCocina['sin'] ?? [] };
 }
 
-export async function crearCotizacion(input: { nombre: string; pais?: string; ciudad?: string | null; cliente_nombre?: string; comprador_nombre?: string; cotizador_por?: 'FIRPLAK' | 'CEMA'; moneda?: 'COP' | 'USD'; trm?: number; sistema_medida?: SistemaMedida; configDefault?: Record<string, unknown> | null }) {
+export async function crearCotizacion(input: { nombre: string; pais?: string; ciudad?: string | null; cliente_nombre?: string; comprador_nombre?: string; cotizador_por?: 'FIRPLAK' | 'CEMA'; moneda?: 'COP' | 'USD'; trm?: number; sistema_medida?: SistemaMedida; configDefault?: Record<string, unknown> | null; pipelineId?: string }) {
   const sb = await createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) throw new Error('No autenticado');
@@ -130,6 +130,7 @@ export async function crearCotizacion(input: { nombre: string; pais?: string; ci
     sistema_medida: input.sistema_medida ?? 'imperial',
     config_default: input.configDefault ?? null,
     creado_por: user.id,
+    ...(input.pipelineId ? { pipeline_origen_id: input.pipelineId } : {}),
   }).select('id').single();
   if (error) throw new Error(error.message);
   // Toda cotización arranca con una cocina por defecto.

@@ -24,6 +24,7 @@ export function parseComentariosCotizacion(raw: unknown): ComentarioCotizacion[]
 }
 
 export function estadoRequiereAlertaComentario(estado: string) {
+  // Pausas, reprocesos y descartes no equivalen a una propuesta emitida/aprobada.
   const normalizado = estado.trim().toLowerCase();
   return normalizado === 'enviada' || normalizado === 'aprobada';
 }

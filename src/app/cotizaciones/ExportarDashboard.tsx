@@ -1,7 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { enlaceDashboard, type FiltrosDashboard } from '@/lib/dashboard-cotizaciones';
-import { exportarDashboardAction } from './actions';
+import { exportarDashboardAction } from './dashboard-actions';
 import { normalizarBomCsv } from '@/lib/dashboard-csv';
 
 export default function ExportarDashboard({ filtros }: { filtros: FiltrosDashboard }) {

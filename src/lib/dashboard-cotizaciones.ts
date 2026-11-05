@@ -53,9 +53,9 @@ export function opcionesFiltro(opciones: readonly string[], seleccion: string): 
   return seleccion && !opciones.includes(seleccion) ? [...opciones, seleccion] : opciones;
 }
 export function enlaceDashboard(f: FiltrosDashboard, patch: Partial<FiltrosDashboard> = {}) {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({ vista: 'dashboard' });
   for (const [k, v] of Object.entries({ ...f, ...patch })) if (v !== '') params.set(k, String(v));
-  return `/cotizaciones/dashboard?${params}`;
+  return `/cotizaciones?${params}`;
 }
 export function variacionPorcentual(actual: number, anterior: number): number | null {
   return anterior === 0 ? (actual === 0 ? 0 : null) : (actual - anterior) / anterior * 100;
@@ -71,4 +71,4 @@ export function puntosSerie(valores: readonly number[], ancho = 720, alto = 220,
 }
 export type FilaDashboard = { id: string; codigo: string | null; nombre: string | null; cliente_nombre: string | null; comprador_nombre: string | null; pais: string; ciudad: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; estado: string; total_cop: number; total_usd: number; created_at: string; fecha_local: string };
 export type DistribucionDashboard = { etiqueta: string; cantidad: number };
-export type ResumenDashboard = { total: number; cop: number; usd: number; ticketCop: number; ticketUsd: number; borradores: number; enviadasCerradas: number; mesActual: number; mesAnterior: number; mensual: { mes: string; valor: number; cantidad: number }[]; paises: DistribucionDashboard[]; empresas: DistribucionDashboard[]; estados: DistribucionDashboard[] };
+export type ResumenDashboard = { total: number; cop: number; usd: number; ticketCop: number; ticketUsd: number; borradores: number; enviadasCerradas: number; pendientes: number; enCurso: number; cerradas: number; perdidas: number; mesActual: number; mesAnterior: number; mensual: { mes: string; valor: number; cantidad: number }[]; paises: DistribucionDashboard[]; empresas: DistribucionDashboard[]; estados: DistribucionDashboard[] };

@@ -1,5 +1,6 @@
 'use client';
-import { useActionState, useMemo, useState, useEffect } from 'react';
+import { useActionState, useMemo, useState, useEffect, useSyncExternalStore } from 'react';
+import { CLAVE_PRESELECCION_PIPELINE, leerPreseleccionPipeline, type PreseleccionPipeline } from '@/lib/pipeline-preseleccion';
 import { useRouter } from 'next/navigation';
 import { crearCotizacionAction } from './actions';
 import Combobox from '@/components/Combobox';
@@ -12,6 +13,7 @@ type Tipo = { id: string; pref: string; categoria?: string | null };
 type HerrajeOpcion = { rol: string; codigo: string | null };
 
 interface Props {
+  pipelineOrigen?: string;
   tableros: Tablero[];
   cantos: string[];
   presetDefault: Record<string, string>;
@@ -30,12 +32,21 @@ const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.replace(',', '.').toLowerCase() === target.replace(',', '.').toLowerCase()) ??
   target;
 
-export default function NuevoCotizacionForm({
+const suscribirPreseleccion = (notify:()=>void) => { window.addEventListener('storage',notify);window.addEventListener('pipeline-preseleccion',notify);return()=>{window.removeEventListener('storage',notify);window.removeEventListener('pipeline-preseleccion',notify);}; };
+const snapshotPreseleccion = () => {try{return localStorage.getItem(CLAVE_PRESELECCION_PIPELINE)??'';}catch{return '';}};
+export default function NuevoCotizacionForm(props:Props) {
+  const raw=useSyncExternalStore(suscribirPreseleccion,snapshotPreseleccion,()=> '');
+  const parsed=useMemo(()=>leerPreseleccionPipeline(raw),[raw]);
+  const preseleccion=parsed?.pipelineId===props.pipelineOrigen?parsed:null;
+  return <FormularioCotizacion key={preseleccion?.pipelineId??'normal'} {...props} preseleccion={preseleccion}/>;
+}
+function FormularioCotizacion({
   tableros, cantos, presetDefault, trmDefault, tipos, herrajesByTipo,
-}: Props) {
+  preseleccion,
+}: Props & {preseleccion:PreseleccionPipeline|null}) {
   const router = useRouter();
-  const [pais, setPais] = useState('Colombia');
-  const [ciudad, setCiudad] = useState('');
+  const [pais, setPais] = useState(preseleccion?.pais || 'Colombia');
+  const [ciudad, setCiudad] = useState(preseleccion?.ciudad ?? '');
 
   const [moneda, setMoneda] = useState<'USD' | 'COP'>('USD');
   const [conFondo, setConFondo] = useState(true);
@@ -202,23 +213,26 @@ export default function NuevoCotizacionForm({
 
   useEffect(() => {
     if (state?.ok && state.id) {
+      if(preseleccion){try{localStorage.removeItem(CLAVE_PRESELECCION_PIPELINE);}catch{/* El proyecto ya está guardado. */}}
       router.push(`/cotizaciones/${state.id}?cfg=${configEncoded}`);
     }
-  }, [state, configEncoded, router]);
+  }, [state, configEncoded, router, preseleccion]);
 
   return (
     <form action={formAction} data-tour="nuevo" className="h-fit space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
       <input type="hidden" name="config_default" value={JSON.stringify(configObj)} />
+      <input type="hidden" name="pipeline_id" value={preseleccion?.pipelineId??''}/>
+      {preseleccion&&<p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">Datos precargados desde Pipeline. Completa materiales, moneda y TRM para crear la cotización.</p>}
       <h2 className="font-semibold text-slate-900">Nuevo proyecto / cotización</h2>
 
       {/* ── Datos del proyecto ── */}
       <section className="grid gap-3 md:grid-cols-2 md:items-start">
       <UbicacionCotizacion pais={pais} ciudad={ciudad} onPaisChange={setPais} onCiudadChange={setCiudad}/>
       <F label="Nombre del proyecto *">
-        <input name="nombre" required placeholder="Ej. Cocina Torre A — Apto 502" className="inp" />
+        <input name="nombre" defaultValue={preseleccion?.nombre_proyecto??''} required placeholder="Ej. Cocina Torre A — Apto 502" className="inp" />
       </F>
       <F label="Constructora">
-        <input name="cliente_nombre" placeholder="Constructora" className="inp" />
+        <input name="cliente_nombre" defaultValue={preseleccion?.cliente??''} placeholder="Constructora" className="inp" />
       </F>
       <F label="Comprador">
         <input name="comprador_nombre" placeholder="Comprador" className="inp" />
