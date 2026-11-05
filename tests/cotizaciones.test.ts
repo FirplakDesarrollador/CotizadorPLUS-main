@@ -68,6 +68,7 @@ class Consulta {
 }
 
 let recalculos = 0;
+let ultimosInputs: Array<{ conHerrajes?: boolean; herrajesExcluidos?: string[] }> = [];
 let cajaEsperada = 'CLOSET';
 let copiaResultado: { data: string | null; error: { message: string } | null } = { data: 'nueva-seccion', error: null };
 const copiaLlamadas: Array<{ nombre: string; argumentos: Record<string, unknown> }> = [];
@@ -85,7 +86,8 @@ loader._load = function(id, ...args) {
   }) };
   if (name === '@/lib/cotizar' || name.endsWith('/lib/cotizar.ts')) return {
     cargarCatalogoPrecompilado: async () => catalogo,
-    cotizarGrupo: async (inputs: Array<{ preset: Record<string, string> }>) => {
+    cotizarGrupo: async (inputs: Array<{ preset: Record<string, string>; conHerrajes?: boolean; herrajesExcluidos?: string[] }>) => {
+      ultimosInputs = inputs;
       recalculos++;
       assert.equal(inputs[0].preset.caja, cajaEsperada, 'el motor recibe los materiales resueltos del proyecto');
       return { preparados: inputs.map(input => ({ prefMetrico: 'W', prefImperial: 'W', margen: 0.6, calc: { preset: input.preset, tablerosByCode: catalogo.tablerosByCode } })), lineas: inputs.map(() => ({ vars: {}, piezas: [], costoSinHerrajes: 40, costoHerrajes: 0, costoConHerrajes: 40, precioCop: 100, precioUsd: 0.025, precioConHerrajesCop: 100, precioConHerrajesUsd: 0.025, trm: 4000, margen: 0.6 })) };
@@ -95,6 +97,18 @@ loader._load = function(id, ...args) {
 };
 const api = requireLocal('../src/lib/cotizaciones.ts') as typeof import('../src/lib/cotizaciones');
 loader._load = original;
+
+test('reconstruir un módulo conserva activación y exclusiones de herrajes', () => {
+  const linea = { id: 'l', cotizacion_id: 'q', cocina_id: 'a', grupo_id: 'g', posicion_grupo: 1,
+    tipo_mueble_id: 'w', pref: 'W', largo: 60, alto: 80, prof: 30, unidad_dim: 'cm' as const,
+    cantidad: 2, config: { conHerrajes: false, herrajesExcluidos: ['pata', 'tornillo'] } };
+  const input = api.inputDesdeLinea(linea);
+  assert.equal(input.conHerrajes, false);
+  assert.deepEqual(input.herrajesExcluidos, ['pata', 'tornillo']);
+  assert.equal(api.inputDesdeLinea({ ...linea, config: {} }).conHerrajes, true);
+  assert.equal(api.inputDesdeLinea({ ...linea, config: { conHerrajes: true, herrajesExcluidos: null } }).herrajesExcluidos, undefined);
+  assert.deepEqual(api.inputDesdeLinea({ ...linea, config: { conHerrajes: true, herrajesExcluidos: ['tornillo'] } }).herrajesExcluidos, ['tornillo']);
+});
 
 test('copiar sección usa una sola RPC y conserva precios sin llamar al motor', async () => {
   const antes = recalculos;
@@ -126,6 +140,23 @@ test('persistencia: sincroniza un W en área closet, recalcula importes y la seg
   assert.equal(tablas.cot_cotizaciones[0].total_cop, 7400, '2 módulos x 37 áreas x 100 COP');
   assert.deepEqual(await api.sincronizarMaterialesCotizacion('q'), { corregidas: 0, grupos: 0 });
   assert.equal(recalculos, 1, 'no recalcula nuevamente lo que ya está correcto');
+});
+
+test('cambiar TRM conserva exclusiones individuales en el motor y la fila guardada', async () => {
+  tablas.cot_cotizaciones = [{ id: 'q', sistema_medida: 'metrico', config_default: {} }];
+  tablas.cot_cocinas = [{ id: 'a', cotizacion_id: 'q', nombre: 'Cocina', cantidad: 1 }];
+  tablas.cot_grupos_modulos = [{ id: 'g', cocina_id: 'a', cotizacion_id: 'q' }];
+  const linea = { id: 'l', cocina_id: 'a', cotizacion_id: 'q', grupo_id: 'g', tipo_mueble_id: 'w', pref: 'W', posicion_grupo: 1, cantidad: 1,
+    largo: 60, alto: 80, prof: 30, unidad_dim: 'cm', config: { preset: { caja: 'CLOSET' }, conHerrajes: false, herrajesExcluidos: ['pata', 'tornillo'] } };
+  tablas.cot_cotizacion_lineas = [linea];
+  await api.actualizarCotizacion('q', { trm: 4100 });
+  assert.equal(ultimosInputs[0].conHerrajes, false);
+  assert.deepEqual(ultimosInputs[0].herrajesExcluidos, ['pata', 'tornillo']);
+  assert.equal(linea.config.conHerrajes, false);
+  assert.deepEqual(linea.config.herrajesExcluidos, ['pata', 'tornillo']);
+  await api.actualizarCotizacion('q', { trm: 4200 });
+  assert.equal(linea.config.conHerrajes, false, 'una segunda actualización tampoco reactiva herrajes');
+  assert.deepEqual(linea.config.herrajesExcluidos, ['pata', 'tornillo']);
 });
 
 test('persistencia: los cuatro abiertos heredan el frente global y la segunda sincronización no recalcula', async () => {

@@ -151,7 +151,7 @@ export default function AddLineForm({
   const [prof, setProf] = useState(initial?.prof != null ? String(initial.prof) : (projectDefaults?.prof ?? String(convertir(24, 'in', unidad))));
   const [perfilId, setPerfilId] = useState(initial ? '' : (materialInicial?.perfilId ?? projectDefaults?.perfilId ?? perfilDefaultId));
   const [herrajesExcl, setHerrajesExcl] = useState<string[]>(
-    initial?.herrajesExcluidos ?? materialInicial?.herrajesExcl ?? projectDefaults?.herrajesExcl ?? [],
+    initial ? (initial.herrajesExcluidos ?? []) : (materialInicial?.herrajesExcl ?? projectDefaults?.herrajesExcl ?? []),
   );
   const [presetSeleccionado, setPreset] = useState<Record<string, string>>(() => {
     if (initial?.preset) return initial.preset;
