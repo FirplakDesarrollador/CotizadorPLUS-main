@@ -2860,3 +2860,18 @@ Registro, Pipeline y Dashboard se separan de Guía/Tips y pasan a una fila propi
 ## [2026-11-05] update | Preparación de publicación Pipeline CEFI y navegación
 
 Promoción autorizada de todos los cambios LIz → DEV → main con retorno a LIz. Migraciones 0238–0241 verificadas mediante apply-migration: ya registradas, sin reaplicación. Preflight de importación: 437 históricos existentes, cero pendientes y siete vacías omitidas; las 11 cotizaciones conservan siete borrador y cuatro enviadas. Se incluye el PDF de referencia intacto y se conservan los respaldos y el Excel fuera de Git. Suite completa requerida antes de crear el commit. [Evidencia de arquitectura y publicación](wiki/pipeline_cotizaciones.md).
+## [2026-11-05] update | Referencias navegables y datos desconocidos en Pipeline
+
+Código muestra la referencia PLUS y abre su cotización; el origen histórico permanece conservado. Migración 0242 aplicada, 374 nombres normalizados y ocho relaciones verificadas, sin alterar las 11 cotizaciones. Registro exige valor o elección explícita Desconocido en campos habilitados. Pruebas de navegación y registro temporal aprobadas; gate con 103 archivos sin regresiones. [Detalles](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-05] update | Relaciones Pipeline confirmadas por el usuario
+
+Satori cocinas se vincula a 26080 DYCO Satori y ELEVEN Apto modelo a 26053 Eleven Showroom. Condominio V queda sin relación. Total: diez vínculos de 437 oportunidades; aplicación con respaldo y comparación de las 11 cotizaciones sin cambios. [Pipeline](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-05] update | Condominio V vinculado por identificación del usuario
+
+La oportunidad 26041 Ramstack - CONDOS V de Costa Rica se relaciona con Condominio V. Total: once vínculos. Se conserva respaldo y se comprueba que las once cotizaciones permanecen intactas. [Pipeline](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-05] update | Publicación de referencias Pipeline y opción Desconocido
+
+Promoción autorizada LIz → DEV → main, con retorno a LIz. Migración 0242 verificada en Supabase sin reaplicación; once relaciones confirmadas y cotizaciones intactas. Incluye referencias compartidas con impresión, registro explícito de datos desconocidos, sincronizador con respaldo y pruebas de regresión. Validación completa y auditoría consultiva antes del commit. [Pipeline](wiki/pipeline_cotizaciones.md).

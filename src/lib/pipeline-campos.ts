@@ -1,6 +1,7 @@
 export const PRODUCTOS_PIPELINE = ['Gabinetes de cocina', 'Gabinetes de Baño', 'Mesones', 'Closets'];
-export type CampoPipeline = { key: string; label: string; tipo?: 'text' | 'date' | 'number' | 'url' | 'textarea'; opciones?: readonly string[]; obligatorio?: boolean };
-export const CAMPOS_PIPELINE: CampoPipeline[] = [
+export const DESCONOCIDO_PIPELINE = '__desconocido__';
+export type CampoPipeline = { key: string; label: string; tipo?: 'text' | 'date' | 'number' | 'url' | 'textarea'; opciones?: readonly string[]; obligatorio?: boolean; permiteDesconocido?: boolean };
+const DEFINICION_CAMPOS: CampoPipeline[] = [
   { key: 'nombre_proyecto', label: '1. Nombre del Proyecto', obligatorio: true },
   { key: 'cliente', label: '2. Cliente', obligatorio: true },
   { key: 'pais', label: '3. País', obligatorio: true }, { key: 'ciudad', label: 'Ciudad' },
@@ -27,6 +28,7 @@ export const CAMPOS_PIPELINE: CampoPipeline[] = [
   { key: 'adjunto_url', label: '24. Adjunto (URL)', tipo: 'url' },
   { key: 'asesor', label: '25. Asesor' }, { key: 'estimador', label: '26. Estimador' },
 ];
+export const CAMPOS_PIPELINE: CampoPipeline[]=DEFINICION_CAMPOS.map(c=>({...c,obligatorio:true,permiteDesconocido:!['nombre_proyecto','cliente','pais','moneda'].includes(c.key)}));
 export function validarUrlPipeline(value: string) {
   if (!value) return null;
   try { const url = new URL(value); if (['http:', 'https:'].includes(url.protocol)) return value; } catch { /* error de validación */ }
@@ -37,10 +39,17 @@ export function validarFechaPipeline(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(`${value}T00:00:00Z`)) || new Date(`${value}T00:00:00Z`).toISOString().slice(0,10) !== value) throw new Error('Fecha inválida.');
   return value;
 }
-export function validarRegistroPipeline(form: FormData): Record<string, string | number | boolean | null> & { tarifa: number; instalado: boolean; estado: 'borrador' } {
+export function validarRegistroPipeline(form: FormData): Record<string, string | number | boolean | string[] | null> & { tarifa: number|null; instalado: boolean|null; estado: 'borrador';campos_desconocidos:string[] } {
   const datos: Record<string, string | number | boolean | null> = {};
+  const desconocidos:string[]=[];
   for (const campo of CAMPOS_PIPELINE) {
     const values = form.getAll(campo.key).map(v => String(v).trim());
+    const desconocido=form.get(`desconocido_${campo.key}`)==='si'||values.includes(DESCONOCIDO_PIPELINE);
+    if(desconocido){
+      if(!campo.permiteDesconocido)throw new Error(`Completa ${campo.label}.`);
+      if(values.some(v=>v&&v!==DESCONOCIDO_PIPELINE))throw new Error('Desconocido no puede combinarse con un valor conocido.');
+      desconocidos.push(campo.key);datos[campo.key]=null;continue;
+    }
     const value = campo.key === 'productos' ? values.filter(Boolean).join(' | ') : values[0] ?? '';
     if (campo.obligatorio && !value) throw new Error(`Completa ${campo.label.replace(/^\d+\. /, '')}.`);
     if (value.length > 10000) throw new Error('Un campo supera el límite de 10.000 caracteres.');
@@ -49,7 +58,7 @@ export function validarRegistroPipeline(form: FormData): Record<string, string |
     datos[campo.key] = campo.tipo === 'url' ? validarUrlPipeline(value) : campo.tipo === 'date' ? validarFechaPipeline(value) : value || null;
   }
   if (String(datos.pais).length > 100 || String(datos.ciudad ?? '').length > 160) throw new Error('Ubicación demasiado larga.');
-  const tarifa = Number(datos.tarifa);
-  if (!Number.isFinite(tarifa) || tarifa < 0) throw new Error('Tarifa inválida.');
-  return { ...datos, tarifa, instalado: datos.instalado === 'Sí', estado: 'borrador' as const };
+  const tarifa = datos.tarifa==null?null:Number(datos.tarifa);
+  if (tarifa!==null&&(!Number.isFinite(tarifa) || tarifa < 0)) throw new Error('Tarifa inválida.');
+  return { ...datos, tarifa, instalado: datos.instalado==null?null:datos.instalado === 'Sí', estado: 'borrador' as const,campos_desconocidos:desconocidos };
 }
