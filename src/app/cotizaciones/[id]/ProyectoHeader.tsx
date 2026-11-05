@@ -6,6 +6,7 @@ import { actualizarCotizacionAction } from '../actions';
 import { monedasVisibles, type ColumnasMoneda } from '@/lib/monedas-visibles';
 import ComentariosProyecto from './ComentariosProyecto';
 import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario, parseComentariosCotizacion } from '@/lib/comentarios-cotizacion';
+import { ESTADOS_COTIZACION, ETIQUETAS_ESTADO } from '@/lib/pipeline-estados';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -138,7 +139,7 @@ export default function ProyectoHeader({
           <div className="space-y-3">
             <label className="block max-w-xs"><span className="block text-xs text-slate-500 mb-1">Estado</span>
               <select value={estado} onChange={(e) => setEstado(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                <option value="borrador">borrador</option><option value="enviada">enviada</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option>
+                {ESTADOS_COTIZACION.map(estado => <option key={estado} value={estado}>{ETIQUETAS_ESTADO[estado]}</option>)}
               </select></label>
             {error && <p className="text-sm text-red-600">{error}</p>}
             <div className="flex gap-2">

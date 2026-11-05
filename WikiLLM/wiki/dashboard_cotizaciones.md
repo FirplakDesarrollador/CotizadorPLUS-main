@@ -2,7 +2,7 @@
 
 ## Alcance y puntos de entrada
 
-La ruta fija es `/cotizaciones/dashboard`. El botón **Dashboard** está junto a la guía de `/cotizaciones`, con `next/link` en la misma pestaña. No se agregó ninguna entrada a la navegación principal ni un rol nuevo. La página es un Server Component; los filtros, las gráficas SVG y la descarga son componentes cliente. Se conserva `AppHeader` y la paleta slate/blanco existente.
+El dashboard único se abre en `/cotizaciones?vista=dashboard`, desde la barra Registro · Pipeline · Dashboard. La ruta antigua `/cotizaciones/dashboard` responde HTTP 301 conservando filtros; solo queda un Route Handler de compatibilidad. `DashboardVista` es un Server Component reutilizable; filtros, gráficas SVG y descarga son componentes cliente. No se agrega un rol nuevo. Se conserva `AppHeader` y la paleta slate/blanco.
 
 La migración **0229_dashboard_cotizaciones_ubicacion.sql** continúa la numeración real del repositorio (0228), superior a la 0036 mencionada como referencia inicial. Se aplicó al Supabase configurado. Agrega `pais text not null default 'Colombia'` y `ciudad text`, los índices de país, país/fecha y fecha, y una restricción que impide países vacíos.
 
@@ -34,7 +34,7 @@ Los filtros se combinan por intersección y se guardan en `searchParams`: `rango
 - Las fechas representan días de Bogotá; el límite final SQL es exclusivo, a medianoche del día siguiente. Mes/año también se evalúan en Bogotá y restringen el rango elegido.
 - País utiliza opciones presentes en BD; empresa admite FIRPLAK/CEMA/Todos; estados proceden de los datos. La búsqueda trata `%`, `_` y comillas como texto literal, sin interpolarlos en SQL.
 - COP y USD son sumas separadas de los importes persistidos, sin convertir un total agregado por una TRM. El ticket muestra los promedios en ambas monedas, incluyendo cotizaciones de valor cero.
-- El KPI de pipeline cuenta borradores y enviadas/aprobadas (también admite el código histórico `cerrada`, si existiese); no se creó ningún estado nuevo. La gráfica muestra los estados realmente presentes.
+- El catálogo compartido tiene siete estados. Los grupos de cotizaciones son pendientes=borrador, en curso=en_pausa+reproceso, cerradas=enviada+aprobada y perdidas=rechazada+descartada. `cerrada` no existe en el CHECK. El bloque Pipeline CEFI consulta oportunidades independientes, no las suma a los importes de cotizaciones; muestra su histórico completo, cantidades por estado, vencidas y FOB USD/COP. Ver [arquitectura e importación](pipeline_cotizaciones.md).
 - La comparación de cantidades del mes actual y anterior usa el conjunto filtrado. Si el anterior es cero y el actual es positivo se muestra **Sin base de comparación**, sin inventar un porcentaje. Ambos meses en cero producen 0%.
 - La línea tiene doce meses consecutivos hasta el mes final del rango y rellena con cero los meses sin cotizaciones que cumplan los filtros. Países muestra top 5 más Otros, conciliando el total. Empresa usa barras apiladas y pipeline barras por estado.
 
@@ -69,7 +69,7 @@ El CSV usa separador `;`, BOM UTF-8, finales CRLF, comillas escapadas, ciudad va
 | Postgres | `db/migrations/0229_dashboard_cotizaciones_ubicacion.sql`, `db/tests/dashboard_cotizaciones.sql` |
 | Datos y helpers | `src/lib/cotizaciones.ts`, `ubicacion-cotizacion.ts`, `dashboard-cotizaciones.ts`, `dashboard-cotizaciones-datos.ts`, `dashboard-csv.ts` (los últimos cuatro también en `src/lib/`) |
 | Ubicación y acceso | `src/components/UbicacionCotizacion.tsx`, `src/app/cotizaciones/NuevoCotizacionForm.tsx`, `src/app/cotizaciones/actions.ts`, `src/app/cotizaciones/page.tsx`, `src/app/cotizaciones/[id]/UbicacionEditor.tsx`, `src/app/cotizaciones/[id]/CotizacionDetalleClient.tsx` |
-| Dashboard | `page.tsx`, `FiltrosDashboard.tsx`, `GraficasDashboard.tsx`, `ExportarDashboard.tsx`, `actions.ts`, `loading.tsx`, `error.tsx`, todos en `src/app/cotizaciones/dashboard/` |
+| Dashboard | `DashboardVista.tsx`, `FiltrosDashboard.tsx`, `GraficasDashboard.tsx`, `ExportarDashboard.tsx`, `dashboard-actions.ts` y `PipelineResumenDashboard.tsx` en `src/app/cotizaciones/`; `dashboard/route.ts` conserva el 301 |
 | Pruebas y calidad | Los cuatro archivos `tests/` citados arriba y `quality/manifest.json` |
 | Wiki | Esta página, `WikiLLM/index.md` y `WikiLLM/log.md` |
 

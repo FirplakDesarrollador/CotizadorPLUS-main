@@ -4,6 +4,11 @@ import { argumentosDashboard, desplazarDia, enlaceDashboard, escalaLineal, fecha
 
 const ahora = new Date('2026-10-30T02:00:00Z'); // Aún es 29 de octubre en Bogotá.
 
+test('el dashboard comparte la ruta de cotizaciones y siempre conserva su vista',()=>{
+ const url=new URL(enlaceDashboard(normalizarFiltrosDashboard({},ahora)),'https://cotizador.test');
+ assert.equal(url.pathname,'/cotizaciones');assert.equal(url.searchParams.get('vista'),'dashboard');
+});
+
 test('los rangos rápidos usan Bogotá e incluyen el día completo, no el huso del servidor', () => {
   assert.equal(fechaBogota(ahora), '2026-10-29');
   const siete = normalizarFiltrosDashboard({ rango: '7' }, ahora);
