@@ -23,7 +23,7 @@ export async function actualizarUbicacionCotizacionAction(id: string, pais: stri
     if (!user) throw new Error('No autenticado');
     await actualizarUbicacionCotizacion(id, pais, ciudad);
     revalidatePath('/cotizaciones');
-    revalidatePath('/cotizaciones/dashboard');
+    revalidatePath('/cotizaciones');
     revalidatePath(`/cotizaciones/${id}`);
     return { ok: true };
   } catch (error) { return { ok: false, error: error instanceof Error ? error.message : 'No se pudo guardar la ubicación.' }; }
@@ -73,7 +73,15 @@ export async function crearCotizacionAction(
     if (!Array.isArray(familias) || familias.length === 0) {
       throw new Error('Incluye al menos una familia de muebles en la cotización.');
     }
-    const id = await crearCotizacion({ nombre, ...ubicacion, cliente_nombre, comprador_nombre, cotizador_por, moneda, trm, sistema_medida, configDefault });
+    const pipelineId = String(formData.get('pipeline_id') ?? '') || undefined;
+    if (pipelineId) {
+      if (!/^[a-f\d]{8}-(?:[a-f\d]{4}-){3}[a-f\d]{12}$/i.test(pipelineId)) throw new Error('Oportunidad inválida.');
+      const { getPipelineParaCrear } = await import('@/lib/pipeline-vinculo');
+      const oportunidad = await getPipelineParaCrear(pipelineId);
+      if (oportunidad.cotizacion_id) return { ok: true, id: oportunidad.cotizacion_id };
+    }
+    // El trigger enlaza Pipeline dentro de este mismo INSERT: no queda una cotización huérfana si el enlace falla.
+    const id = await crearCotizacion({ nombre, ...ubicacion, cliente_nombre, comprador_nombre, cotizador_por, moneda, trm, sistema_medida, configDefault, pipelineId });
     revalidatePath('/cotizaciones');
     return { ok: true, id };
   } catch (e) {
@@ -163,7 +171,7 @@ export async function duplicarCocinaAction(cotizacionId: string, cocinaId: strin
     revalidatePath(`/cotizaciones/${cotizacionId}`);
     revalidatePath(`/cotizaciones/${cotizacionId}/imprimir`);
     revalidatePath('/cotizaciones');
-    revalidatePath('/cotizaciones/dashboard');
+    revalidatePath('/cotizaciones');
     return { ok: true };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : 'No se pudo copiar la sección' };
@@ -172,7 +180,9 @@ export async function duplicarCocinaAction(cotizacionId: string, cocinaId: strin
 
 export async function actualizarCotizacionAction(id: string, patch: { nombre?: string; cliente_nombre?: string; comprador_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }): Promise<{ ok: boolean; error?: string }> {
   try {
+    // El trigger de BD propaga estado a Pipeline de forma atómica y bajo RLS.
     await actualizarCotizacion(id, patch);
+    revalidatePath('/cotizaciones');
     revalidatePath(`/cotizaciones/${id}`);
     revalidatePath(`/cotizaciones/${id}/imprimir`);
     return { ok: true };

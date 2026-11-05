@@ -2848,3 +2848,15 @@ Corregida la pérdida de activación/exclusiones al reconstruir módulos y cambi
 ## [2026-11-05] update | Registro Supabase y preparación de publicación de herrajes
 
 Migración 0237 aplicada y registrada mediante Management API con versión 20261105160555, sin duplicar las plantillas existentes ni modificar selecciones de cotizaciones. Ambas auditorías estrictas posteriores aprobadas: 11 cotizaciones, 814 módulos, 18 BOV; cero diferencias de herrajes/precios y cero errores de materiales, grupos o conciliación. Se prepara el commit de todos los cambios y la promoción autorizada LIz → DEV → main, con retorno final a LIz. [Evidencia](wiki/preferencias_herrajes_bov.md).
+
+## [2026-11-05] ingest | Módulo Pipeline CEFI, form de registro y dashboard unificado
+
+Fases secuenciales con respaldo y conteos constantes (11 cotizaciones: 7 borrador y 4 enviada). Migraciones aditivas 0238–0241: catálogo de siete estados, cot_pipeline con RLS, vínculo atómico y RPC invoker. Registro de 26 campos, tabla/drawer editable, preselección limitada, sincronización hacia adelante y dashboard único en ?vista=dashboard con 301 de compatibilidad. Importación autorizada de 437 registros y 7 filas vacías omitidas; segunda corrida insertó cero. Se preservan las 39 columnas originales, datos incompletos y tipo Excel/TEOWIN/Plus; tasas auxiliares no asignadas a oportunidades. Dos fechas textuales se resolvieron con confirmación expresa antes de insertar. Pruebas de RLS, interfaz, filtros, CSV y responsive aprobadas; fixtures transaccionales o propios de Pipeline, sin UPDATE/DELETE de cotizaciones existentes. [Arquitectura, decisiones, riesgos y evidencia](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-05] update | Botones de vistas sobre la tarjeta de cotizaciones
+
+Registro, Pipeline y Dashboard se separan de Guía/Tips y pasan a una fila propia en la columna derecha, inmediatamente encima del listado. Tamaño visual aumentado un 0,5 % (scale 1.005). Las vistas de ancho completo conservan la navegación junto a Volver. Cambio solo de distribución visual; no altera datos ni cálculos. [Navegación Pipeline](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-05] update | Preparación de publicación Pipeline CEFI y navegación
+
+Promoción autorizada de todos los cambios LIz → DEV → main con retorno a LIz. Migraciones 0238–0241 verificadas mediante apply-migration: ya registradas, sin reaplicación. Preflight de importación: 437 históricos existentes, cero pendientes y siete vacías omitidas; las 11 cotizaciones conservan siete borrador y cuatro enviadas. Se incluye el PDF de referencia intacto y se conservan los respaldos y el Excel fuera de Git. Suite completa requerida antes de crear el commit. [Evidencia de arquitectura y publicación](wiki/pipeline_cotizaciones.md).
