@@ -7,6 +7,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
+- [Tablero Gaveta de 15 mm en DB](wiki/tablero_gaveta_db.md) - Material separado en simulador y cotizaciones, referencias elegibles de rieles y barras, aplicación histórica y auditoría.
 - [Pipeline CEFI y cotizaciones](wiki/pipeline_cotizaciones.md) - Registro con opción Desconocido, referencias navegables de Cotizador PLUS, oportunidades con RLS, importación histórica y dashboard único.
 - [DB-FE paramétrica](wiki/db_fe.md) - Copia de la DB vigente con cajas de gaveta FE y riel RIELFE500; seis variantes internas, persistencia y pruebas.
 - [Ordenar secciones de una cotización](wiki/orden_secciones_cotizacion.md) - Arrastre y flechas para cocinas, closets y baños; persistencia atómica, permisos, manejo de errores y orden en el resumen PDF/Excel.

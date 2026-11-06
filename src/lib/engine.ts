@@ -44,7 +44,7 @@ export type Pieza = {
 export type HerrajePlantilla = { rol: string; herraje_codigo: string | null; selector_key: string | null; formula_cantidad: string };
 export type Tablero = { codigo: string; precio_m2: number; espesor_mm?: number | null; formato?: string | null };
 export type Canto = { calibre: string; precio: number };
-export type Herraje = { codigo: string; precio: number };
+export type Herraje = { codigo: string; precio: number; categoria?: string | null };
 export type Parametros = {
   desperdicio_madera: number;
   margenes: Record<string, number>;
@@ -79,6 +79,7 @@ export type CalcInput = {
   cantoFrentes?: string;        // override de calibre de canto para piezas de frente (por proyecto)
   cantoCaja?: string;           // override de calibre de canto para piezas de caja (por proyecto)
   rielCodigo?: string;          // código de riel ('RIELTANDEM', etc.)
+  barraCodigo?: string;
 };
 
 // Convierte dimensiones de la unidad de entrada a pulgadas (el motor trabaja en pulgadas).
@@ -216,6 +217,7 @@ export function calcularMueble(inp: CalcInput): Breakdown {
 
   const modo = inp.modoFrentes ?? 'normal';
   for (const pz of inp.piezas) {
+    if (pz.rol_tablero === 'gaveta' && Number(inp.tablerosByCode[inp.preset.gaveta]?.espesor_mm) !== 15) throw new Error('Tablero Gaveta debe ser de 15 mm.');
     const esFrente = pz.rol_tablero === 'frente' || /frente/i.test(pz.nombre);
     if (modo === 'sin_frentes' && esFrente) continue;       // open: caja sin puertas/frentes
     if (modo === 'solo_frentes' && !esFrente) continue;     // kit de frentes: solo puertas/frentes
@@ -371,18 +373,22 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     const esBarra = rolHerraje === 'barra';
     if (esBarra) tieneBarraPlantilla = true;
     const cant = esBarra ? paresBarras : num(hp.formula_cantidad);
-    const precio = Number((inp.herrajesByCode[hp.herraje_codigo || ''] || {}).precio || 0);
+    if (cant > 0 && ((rolHerraje === 'riel' && inp.rielCodigo === '') || (esBarra && inp.barraCodigo === ''))) throw new Error(`Selecciona el tipo de ${rolHerraje}.`);
+    const codigo = rolHerraje === 'riel' ? (inp.rielCodigo || hp.herraje_codigo) : esBarra ? (inp.barraCodigo || hp.herraje_codigo) : hp.herraje_codigo;
+    const precio = Number((inp.herrajesByCode[codigo || ''] || {}).precio || 0);
     const costo = cant * precio;
     costoHerrajes += costo;
-    herrajesDet.push({ rol: hp.rol, codigo: hp.herraje_codigo, cant, precio, costo: +costo.toFixed(2) });
+    herrajesDet.push({ rol: hp.rol, codigo, cant, precio, costo: +costo.toFixed(2) });
   }
   // Algunas plantillas heredadas no incluyen la fila de barra. Si el cálculo
   // lleva herrajes y existen traseros de 183mm, se agrega el par estándar.
   if (paresBarras > 0 && !tieneBarraPlantilla && inp.herrajesPlantilla?.length && modo !== 'solo_frentes' && !excluidos.has('barra')) {
-    const precio = Number(inp.herrajesByCode.BARRAEST?.precio || 0);
+    if (inp.barraCodigo === '') throw new Error('Selecciona el tipo de barra.');
+    const codigo = inp.barraCodigo || 'BARRAEST';
+    const precio = Number(inp.herrajesByCode[codigo]?.precio || 0);
     const costo = paresBarras * precio;
     costoHerrajes += costo;
-    herrajesDet.push({ rol: 'barra', codigo: 'BARRAEST', cant: paresBarras, precio, costo: +costo.toFixed(2) });
+    herrajesDet.push({ rol: 'barra', codigo, cant: paresBarras, precio, costo: +costo.toFixed(2) });
   }
 
   const costoConHerrajes = costoSinHerrajes + costoHerrajes;

@@ -1,4 +1,5 @@
 import { CLAVE_CONFIG_FAMILIA, familiaMaterialPorPrefijo, type FamiliaMaterial } from './muebles';
+import { usaTableroGaveta } from './gavetas';
 
 export type MaterialesFamilia = { preset?: Record<string, string>; cantoCaja?: string; cantoFrentes?: string };
 export type ConfigMaterialesProyecto = {
@@ -45,9 +46,10 @@ export function aplicarMaterialesProyecto<T extends { preset: Record<string, str
   input: T, config: ConfigMaterialesProyecto, pref: string | null | undefined, nombreArea = '',
 ): T {
   const materiales = materialesDelProyecto(config, pref, nombreArea);
+  const { gaveta, ...presetFamilia } = materiales.preset ?? {};
   return {
     ...input,
-    preset: presetMaterialesTipologia({ ...input.preset, ...materiales.preset }, pref),
+    preset: presetMaterialesTipologia({ ...input.preset, ...presetFamilia, ...(usaTableroGaveta(pref) && gaveta ? { gaveta } : {}) }, pref),
     ...(materiales.cantoCaja ? { cantoCaja: materiales.cantoCaja } : {}),
     ...(materiales.cantoFrentes ? { cantoFrentes: materiales.cantoFrentes } : {}),
   };
@@ -90,6 +92,7 @@ export function especificacionesProyecto(config: ConfigMaterialesProyecto, catal
     return [{ familia, titulo, filas: [
       ['Caja / refuerzos', descripcionTableroProyecto(materiales.preset.caja, catalogo)],
       ['Refuerzo', descripcionTableroProyecto(materiales.preset.refuerzo ?? materiales.preset.caja, catalogo)],
+      ...(materiales.preset.gaveta ? [['Tablero Gaveta (15 mm)', descripcionTableroProyecto(materiales.preset.gaveta, catalogo)]] : []),
       ['Frentes / paneles / rellenos', descripcionTableroProyecto(materiales.preset.frente, catalogo)],
       ...(tieneAbiertos ? [['Caja / refuerzos de OBFD, OBFD-SM, OSBFD-SM, OW y OW-MO (incluidas variantes sin fondo)', descripcionTableroProyecto(materiales.preset.frente, catalogo)]] : []),
       ...(tieneAbiertos ? [['Fondo de abiertos OBFD, OBFD-SM, OSBFD-SM, OW y OW-MO (6 mm, color del frente; solo con fondo)', descripcionTableroProyecto(presetMaterialesTipologia(materiales.preset, 'OW').fondo, catalogo)]] : []),

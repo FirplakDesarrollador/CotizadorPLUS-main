@@ -23,6 +23,7 @@ export type SimuladorModuloValues = {
   dbTipo: string;
   pcfdConfig: string;
   rielCodigo: string;
+  barraCodigo: string;
   modoFrentes: 'normal' | 'sin_frentes' | 'solo_frentes';
   // Variantes transversales (ver src/lib/muebles.ts).
   sistemaFrente: SistemaFrente;
@@ -84,7 +85,8 @@ export const initialModuloValues: SimuladorModuloValues = {
   nbarras: '',
   dbTipo: '',
   pcfdConfig: '',
-  rielCodigo: 'RIELTANDEM',
+  rielCodigo: '',
+  barraCodigo: '',
   modoFrentes: 'normal',
   sistemaFrente: 'manija',
   removible: false,
@@ -135,6 +137,7 @@ export const getModuloValues = (state: Partial<SimuladorModuloValues>): Simulado
   dbTipo: state.dbTipo ?? '',
   pcfdConfig: state.pcfdConfig ?? '',
   rielCodigo: state.rielCodigo ?? initialModuloValues.rielCodigo,
+  barraCodigo: state.barraCodigo ?? initialModuloValues.barraCodigo,
   modoFrentes: state.modoFrentes ?? 'normal',
   sistemaFrente: state.sistemaFrente ?? 'manija',
   removible: state.removible ?? false,
@@ -230,7 +233,8 @@ export const useSimuladorStore = create<SimuladorState>()(
       // v3: el Breakdown ganó `m2`, `metros` y `desperdicio`. Un `result` guardado con
       // la forma anterior no los trae, así que `migrate` lo descarta (pone `result: null`)
       // y el Simulador pide recalcular en vez de renderizar campos ausentes.
-      version: 9,
+      // v10: descarta resultados anteriores al material separado de gaveta.
+      version: 10,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {
@@ -239,7 +243,7 @@ export const useSimuladorStore = create<SimuladorState>()(
           ...getModuloValues(state),
           modulos: (state.modulos ?? []).map((modulo) => moduloFromValues(modulo, modulo.id)),
           editingId: null,
-          pendingDraft: null,
+          pendingDraft: state.pendingDraft ? getModuloValues(state.pendingDraft) : null,
           result: null,
           past: [],
           future: [],
