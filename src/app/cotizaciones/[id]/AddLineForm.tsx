@@ -1,4 +1,6 @@
 'use client';
+import { usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from '@/lib/gavetas';
+import HerrajesGaveta from '@/components/HerrajesGaveta';
 import { usaHoodSm, validarHoodSm } from '@/lib/hood-sm';
 import { convertirExacto } from '@/lib/module-groups';
 import { useMemo, useState } from 'react';
@@ -8,7 +10,7 @@ import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { familiaMaterialDelArea, presetMaterialesTipologia, usaCajaMaterialFrente, usaFondoMaterialFrente } from '@/lib/materiales-proyecto';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
@@ -68,6 +70,7 @@ export type LineaInicial = {
   cantoCaja?: string;
   dbTipo?: string;
   rielCodigo?: string;
+  barraCodigo?: string;
   // Variantes transversales (ver src/lib/muebles.ts).
   sistemaFrente?: SistemaFrente;
   removible?: boolean;
@@ -77,7 +80,7 @@ export type LineaInicial = {
   anotaciones?: string | null;
 };
 
-const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente (también Filler, Panel y Zócalo)', fondo: 'Tablero fondo' };
+const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente (también Filler, Panel y Zócalo)', gaveta: 'Tablero Gaveta (15 mm)', fondo: 'Tablero fondo' };
 const DB_SM_GROUP_VALUE = '__DB_SM__';
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
 const DB_SM_FE_SF_GROUP_VALUE = '__DB_SM_FE_SF__';
@@ -160,7 +163,7 @@ export default function AddLineForm({
     return presetDefault;
   });
   const prefMaterial = tipos.find((t) => t.id === tipoId)?.pref;
-  const preset = presetMaterialesTipologia(presetSeleccionado, prefMaterial);
+  const preset = presetMaterialesTipologia({ ...presetSeleccionado, gaveta: presetSeleccionado.gaveta || tableroGaveta15(presetSeleccionado.caja, tableros) }, prefMaterial);
 
   const [cantoFrentesSel, setCantoFrentesSel] = useState(() => {
     if (initial?.cantoFrentes !== undefined) return initial.cantoFrentes;
@@ -206,7 +209,8 @@ export default function AddLineForm({
     : usaPuertaSupTorre(tipoInicialPref) ? String(convertir(30, 'in', unidad)) : '');
   const [nbarras, setNbarras] = useState(ov?.n_barras != null ? String(ov.n_barras) : '');
   const [dbTipo, setDbTipo] = useState(initial?.dbTipo ?? '');
-  const [rielSeleccionado, setRielCodigo] = useState(initial?.rielCodigo ?? 'RIELTANDEM');
+  const [barraCodigo, setBarraCodigo] = useState(initial?.barraCodigo ?? (initial ? "BARRAEST" : ""));
+  const [rielSeleccionado, setRielCodigo] = useState(initial?.rielCodigo ?? (initial ? 'RIELTANDEM' : ''));
   const [pcfdConfig, setPcfdConfig] = useState(() => {
     if (ov?.n_cajones === 2 && ov?.n_entrepanos === 3) return '2OP';
     if (ov?.n_cajones === 4 && ov?.n_entrepanos === 3) return '4OP';
@@ -244,14 +248,14 @@ export default function AddLineForm({
   const [error, setError] = useState<string | null>(null);
 
   // Mapeos y opciones
-  const rolesBase = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
+  const rolesBase = Array.from(new Set([...(rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo']), ...(usaTableroGaveta(prefMaterial) ? ['gaveta'] : [])]));
   const roles = usaCajaMaterialFrente(prefMaterial) ? Array.from(new Set([...rolesBase, 'frente'])) : rolesBase;
   const prefTipo = tipos.find((t) => t.id === tipoId)?.pref ?? '';
   const fuerzaConFondo = esMuebleSuperior(prefTipo) || esIndependienteDeFondo(prefTipo);
   const tipo = tipos.find((t) => t.id === tipoId);
   const esDB = permiteTipologiaDb(prefTipo);
   const esDbTradicional = prefTipo === 'DB' || esTipologiaDbFe(prefTipo);
-  const rielCodigo = esTipologiaDbFe(prefTipo) ? 'RIELFE500' : rielSeleccionado;
+  const rielCodigo = herrajesFijosDbFe(prefTipo) ? 'RIELFE500' : rielSeleccionado;
   const usaTipologiaDbSm = esTipologiaDbSm(prefTipo);
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(prefTipo);
   const usaTipologiaDbSmFeSf = esTipologiaDbSmFeSf(prefTipo);
@@ -270,7 +274,7 @@ export default function AddLineForm({
   const usaTk = usaTkTorre(prefTipo);
   const usaPuertaSup = usaPuertaSupTorre(prefTipo);
   const usaMoPcfd = usaMoTorre(prefTipo);
-  const usaRiel = esDB || usaTipologiaDbSmFeSf || usaTipologiaDbSmg || usaTipologiaDbSmgFe || usaTipologiaDbSmgSf || esPCFD;
+  const usaRiel = usaTableroGaveta(prefTipo) || esDB || usaTipologiaDbSmFeSf || usaTipologiaDbSmg || usaTipologiaDbSmgFe || usaTipologiaDbSmgSf || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
 
   const prefProyecto = (t: Tipo | undefined) => sistemaMedida === 'metrico'
@@ -389,7 +393,8 @@ export default function AddLineForm({
     setPuertaSup('');
     setNbarras('');
     setDbTipo('');
-    setRielCodigo('RIELTANDEM');
+    setRielCodigo('');
+    setBarraCodigo('');
     setPcfdConfig('');
     setDoor('');
     setFree('');
@@ -414,7 +419,8 @@ export default function AddLineForm({
     if (esTipologiaDbSmG(nuevoTipo?.pref) || esTipologiaDbSmGFe(nuevoTipo?.pref) || esTipologiaDbSmGSf(nuevoTipo?.pref)) {
       setSistemaFrente('gola');
       setConFondo(!esTipologiaDbSmGSf(nuevoTipo?.pref));
-      setRielCodigo(esTipologiaDbSmGFe(nuevoTipo?.pref) ? 'RIELFE500' : 'RIELTANDEM');
+      setRielCodigo(herrajesFijosDbFe(nuevoTipo?.pref) ? 'RIELFE500' : '');
+      setBarraCodigo('');
     }
     if (usaHuecoHornoParametrico(nuevoTipo?.pref)) {
       setHornoLargo(String(convertir(219.2, 'mm', unidad)));
@@ -585,6 +591,7 @@ export default function AddLineForm({
       margenOverride: margenInput !== '' ? Number(margenInput) / 100 : undefined,
       cantoFrentes: cantoFrentesSel !== '' ? cantoFrentesSel : undefined,
       cantoCaja: cantoCajaSel !== '' ? cantoCajaSel : undefined,
+      barraCodigo: usaTableroGaveta(prefTipo) && !herrajesFijosDbFe(prefTipo) ? barraCodigo : undefined,
       rielCodigo: usaRiel && rielCodigo ? rielCodigo : undefined,
       dbTipo: esDB && dbTipo ? dbTipo : undefined,
       door: usaDoor ? parseMedida(door) : undefined,
@@ -871,17 +878,7 @@ export default function AddLineForm({
           </div>
         )}
 
-        {usaRiel && (
-          <div className="grid grid-cols-1 gap-1">
-            <L label="Tipo de riel">
-              <select disabled={esTipologiaDbFe(prefTipo)} value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
-                {DB_RIELES.map((r) => (
-                  <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
-                ))}
-              </select>
-            </L>
-          </div>
-        )}
+        {usaRiel && <HerrajesGaveta riel={rielCodigo} barra={barraCodigo} onRiel={setRielCodigo} onBarra={setBarraCodigo} fe={herrajesFijosDbFe(prefTipo)} />}
 
         {roles.filter((r) => r !== 'refuerzo').map((rol) => (
           <L key={rol} label={ROL_LABEL[rol] ?? `Tablero ${rol}`}>
@@ -889,7 +886,7 @@ export default function AddLineForm({
               value={preset[rol] ?? ''}
               disabled={(usaCajaMaterialFrente(prefMaterial) && (rol === 'caja' || rol === 'refuerzo'))
                 || (rol === 'fondo' && usaFondoMaterialFrente(prefMaterial))}
-              options={tableroOptions}
+              options={rol === 'gaveta' ? tableroOptions.filter(o => Number(tableros.find(t => t.codigo === o.value)?.espesor_mm) === 15) : tableroOptions}
               onChange={(v) => {
                 setPreset((p) => ({ ...p, [rol]: v, ...(rol === 'caja' ? { refuerzo: v } : {}) }));
                 const board = tableros.find((t) => t.codigo === v);
@@ -964,7 +961,7 @@ export default function AddLineForm({
           <div className="col-span-full rounded-lg border border-slate-200 p-2.5">
             <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes del módulo</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-              {herrajesTipo.map((h) => (
+              {herrajesTipo.filter(h => !herrajesFijosDbFe(prefTipo) || h.rol !== 'barra').map((h) => (
                 <label key={h.rol} className="flex cursor-pointer items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-sm text-slate-700 capitalize">
                   <input
                     type="checkbox"
@@ -972,7 +969,7 @@ export default function AddLineForm({
                     onChange={() => setHerrajesExcl((actual) => actual.includes(h.rol) ? actual.filter((rol) => rol !== h.rol) : [...actual, h.rol])}
                   />
                   {h.rol}
-                  {h.codigo ? <span className="text-slate-400 normal-case">· {h.codigo}</span> : null}
+                  {h.codigo ? <span className="text-slate-400 normal-case">· {h.rol === 'riel' ? (rielCodigo || 'Seleccionar riel') : h.rol === 'barra' ? (barraCodigo || 'Seleccionar barra') : h.codigo}</span> : null}
                 </label>
               ))}
             </div>

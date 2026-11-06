@@ -318,6 +318,7 @@ function FormularioCotizacion({
           <Combobox value={preset['frente'] ?? ''} options={tableroOptions}
             onChange={(v) => handleTablero('frente', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
         </F>
+        <F label="Tablero Gaveta (15 mm)"><Combobox value={preset.gaveta ?? ''} options={tableroOptions.filter(o => Number(tableros.find(t => t.codigo === o.value)?.espesor_mm) === 15)} onChange={(v) => handleTablero('gaveta', v)} placeholder="Seleccionar tablero de 15 mm" allowEmpty /></F>
         <F label="Tablero fondo" disabled={!conFondo}>
           <Combobox value={preset['fondo'] ?? ''} options={tableroOptions} disabled={!conFondo}
             onChange={(v) => handleTablero('fondo', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
@@ -359,7 +360,8 @@ function FormularioCotizacion({
             <Combobox value={presetSuperior['frente'] ?? ''} options={tableroOptions}
               onChange={(v) => handleTableroSuperior('frente', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
           </F>
-          <F label="Tablero fondo">
+          <F label="Tablero Gaveta (15 mm)"><Combobox value={presetSuperior.gaveta ?? ''} options={tableroOptions.filter(o => Number(tableros.find(t => t.codigo === o.value)?.espesor_mm) === 15)} onChange={(v) => handleTableroSuperior('gaveta', v)} placeholder="Seleccionar tablero de 15 mm" allowEmpty /></F>
+        <F label="Tablero fondo">
             <Combobox value={presetSuperior['fondo'] ?? ''} options={tableroOptions}
               onChange={(v) => handleTableroSuperior('fondo', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
           </F>
@@ -399,7 +401,8 @@ function FormularioCotizacion({
             <Combobox value={presetCloset['frente'] ?? ''} options={tableroOptions}
               onChange={(v) => handleTableroCloset('frente', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
           </F>
-          <F label="Tablero fondo">
+          <F label="Tablero Gaveta (15 mm)"><Combobox value={presetCloset.gaveta ?? ''} options={tableroOptions.filter(o => Number(tableros.find(t => t.codigo === o.value)?.espesor_mm) === 15)} onChange={(v) => handleTableroCloset('gaveta', v)} placeholder="Seleccionar tablero de 15 mm" allowEmpty /></F>
+        <F label="Tablero fondo">
             <Combobox value={presetCloset['fondo'] ?? ''} options={tableroOptions}
               onChange={(v) => handleTableroCloset('fondo', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
           </F>
@@ -434,7 +437,8 @@ function FormularioCotizacion({
             <Combobox value={presetBanos['frente'] ?? ''} options={tableroOptions}
               onChange={(v) => handleTableroBanos('frente', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
           </F>
-          <F label="Tablero fondo" disabled={!conFondo}>
+          <F label="Tablero Gaveta (15 mm)"><Combobox value={presetBanos.gaveta ?? ''} options={tableroOptions.filter(o => Number(tableros.find(t => t.codigo === o.value)?.espesor_mm) === 15)} onChange={(v) => handleTableroBanos('gaveta', v)} placeholder="Seleccionar tablero de 15 mm" allowEmpty /></F>
+        <F label="Tablero fondo" disabled={!conFondo}>
             <Combobox value={presetBanos['fondo'] ?? ''} options={tableroOptions} disabled={!conFondo}
               onChange={(v) => handleTableroBanos('fondo', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
           </F>

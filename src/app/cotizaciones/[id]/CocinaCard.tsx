@@ -24,6 +24,7 @@ type LineaConfig = {
   cantoCaja?: string;
   dbTipo?: string;
   rielCodigo?: string;
+  barraCodigo?: string;
   door?: number;
   doorHand?: 'L' | 'R';
   conFondo?: boolean;
@@ -162,6 +163,7 @@ export default function CocinaCard({
     dbTipo: l.config?.dbTipo ?? undefined,
     anotaciones: l.anotaciones,
     rielCodigo: l.config?.rielCodigo ?? undefined,
+    barraCodigo: l.config?.barraCodigo ?? undefined,
     door: l.config?.door ?? undefined,
     doorHand: l.config?.doorHand ?? undefined,
     conFondo: l.config?.conFondo ?? projectDefaults?.conFondo ?? true,

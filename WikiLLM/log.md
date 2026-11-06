@@ -2875,3 +2875,11 @@ La oportunidad 26041 Ramstack - CONDOS V de Costa Rica se relaciona con Condomin
 ## [2026-11-05] update | Publicación de referencias Pipeline y opción Desconocido
 
 Promoción autorizada LIz → DEV → main, con retorno a LIz. Migración 0242 verificada en Supabase sin reaplicación; once relaciones confirmadas y cotizaciones intactas. Incluye referencias compartidas con impresión, registro explícito de datos desconocidos, sincronizador con respaldo y pruebas de regresión. Validación completa y auditoría consultiva antes del commit. [Pipeline](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-06] update | Tablero Gaveta de 15 mm y herrajes elegibles en DB
+
+Migración 0243 aplicada; 12 cotizaciones configuradas y 39 módulos DB recalculados con respaldo previo y equivalencias confirmadas. Selectores de material de 15 mm, riel y barra con referencias reales, persistencia por módulo y excepción FE conservada. Auditorías de materiales, precios y totales sin diferencias; pruebas de interfaz y doble generación PDF verificadas. [Detalles y alcance](wiki/tablero_gaveta_db.md).
+
+## [2026-11-06] update | Publicación de Tablero Gaveta y selección de herrajes DB
+
+Promoción autorizada LIz → DEV → main con retorno a LIz. Migración 0243 verificada en Supabase sin reaplicación y auditoría de 12 cotizaciones, 39 módulos y 68 plantillas sin errores. Publicación sujeta a suite completa y learn estricto sin HIGH. [Detalle](wiki/tablero_gaveta_db.md).
