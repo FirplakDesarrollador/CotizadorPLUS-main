@@ -14,7 +14,8 @@ import { construirVisualizacion } from './visualizacion';
 import { codigoComercial } from './module-groups';
 import { ajustarPiezasSinFondo, usaHuecoHornoParametrico, usaPuertaParametrica, esTipologiaDbFe, aplicarConfiguracionDbFe } from './muebles';
 import { aplicarPreciosTableros, type PreciosTablerosCotizacion } from './precios-tableros';
-import { presetMaterialesTipologia, usaFondoMaterialFrente } from './materiales-proyecto';
+import { presetMaterialesTipologia, usaFondoMaterialFrente, resolverCodigoTablero } from './materiales-proyecto';
+import { piezasConTableroGaveta, usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from './gavetas';
 
 export type CotizarInput = {
   tipoId: string;
@@ -38,6 +39,7 @@ export type CotizarInput = {
   // Si se especifica, se reemplaza el precio del riel por defecto (RIELTANDEM) con
   // el precio del riel elegido, manteniendo la plantilla de herrajes sin tocar.
   rielCodigo?: string;
+  barraCodigo?: string;
   dbTipo?: string;
   door?: number;
   doorHand?: 'L' | 'R';
@@ -184,10 +186,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     reglas = reglasDb ?? [];
     herrajesPlant = herrajesPlantDb ?? [];
 
-    const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
-    const preset = presetMaterialesTipologia({ ...presetDefault, ...inp.preset }, tipo.pref);
-    const codes = [...new Set(Object.values(preset).filter(Boolean))];
-    const { data: tablerosDb } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato').in('codigo', codes);
+    const { data: tablerosDb } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato').eq('activo', true);
 
     tablerosByCode = Object.fromEntries(((tablerosDb ?? []) as any[]).map((t: any) => [t.codigo, t as Tablero]));
     cantosByCalibre = Object.fromEntries(((cantosDb ?? []) as any[]).map((c: any) => [normCalibre(c.calibre), c as Canto]));
@@ -199,8 +198,10 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
 
   // Preset final
   inp = aplicarConfiguracionDbFe(inp, tipo.pref);
+  if (herrajesFijosDbFe(tipo.pref)) inp = { ...inp, rielCodigo: 'RIELFE500', barraCodigo: undefined, herrajesExcluidos: [...new Set([...(inp.herrajesExcluidos ?? []), 'barra'])] };
   const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
-  const preset = presetMaterialesTipologia({ ...presetDefault, ...inp.preset }, tipo.pref);
+  const preset = presetMaterialesTipologia(Object.fromEntries(Object.entries({ ...presetDefault, ...inp.preset }).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, Object.values(tablerosByCode))])), tipo.pref);
+  if (usaTableroGaveta(tipo.pref) && !preset.gaveta) preset.gaveta = tableroGaveta15(preset.caja, Object.values(tablerosByCode));
   if (usaFondoMaterialFrente(tipo.pref) && inp.conFondo !== false && !/-SF$/i.test(tipo.pref)) {
     const fondo = tablerosByCode[preset.fondo];
     if (!fondo || Number(fondo.espesor_mm) !== 6) {
@@ -209,15 +210,15 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
   }
   tablerosByCode = aplicarPreciosTableros(tablerosByCode, inp.preciosTableros);
 
+  if (usaTableroGaveta(tipo.pref) && Number(tablerosByCode[preset.gaveta]?.espesor_mm) !== 15) {
+    throw new Error('Selecciona un Tablero Gaveta de 15 mm.');
+  }
+  for (const [rol, codigo] of [['riel', inp.rielCodigo], ['barra', inp.barraCodigo]] as const) {
+    if (codigo && (!herrajesByCode[codigo] || (herrajesByCode[codigo].categoria ? herrajesByCode[codigo].categoria !== rol : !codigo.toUpperCase().startsWith(rol.toUpperCase())))) throw new Error(`Referencia de ${rol} no disponible: ${codigo}`);
+  }
   // Riel override para muebles DB
   if (esTipologiaDbFe(tipo.pref)) {
     if (!herrajesByCode.RIELFE500) throw new Error('No está disponible el riel RIELFE500 requerido por DB-FE.');
-  }
-  if (!esTipologiaDbFe(tipo.pref) && inp.rielCodigo && inp.rielCodigo !== 'RIELTANDEM') {
-    const rielElegido = herrajesByCode[inp.rielCodigo];
-    if (rielElegido) {
-      herrajesByCode['RIELTANDEM'] = { ...herrajesByCode['RIELTANDEM'], precio: Number(rielElegido.precio) };
-    }
   }
 
   const margenes = (P.margenes ?? {}) as Record<string, number>;
@@ -286,7 +287,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
   // La regla vive en `muebles.ts`, que no importa `server-only` y por tanto sí
   // se puede ejercer desde una prueba. Allí se documenta por qué los muebles
   // superiores quedan fuera.
-  const piezasAjustadas = ajustarPiezasSinFondo((piezas ?? []) as Pieza[], tipo.pref, inp.conFondo);
+  const piezasAjustadas = piezasConTableroGaveta(ajustarPiezasSinFondo((piezas ?? []) as Pieza[], tipo.pref, inp.conFondo), tipo.pref);
 
   const calc: CalcInput = {
     dims,
@@ -311,7 +312,8 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     descuento: inp.descuento,
     cantoFrentes: inp.cantoFrentes,
     cantoCaja: inp.cantoCaja,
-    rielCodigo: inp.rielCodigo ?? 'RIELTANDEM',
+    rielCodigo: inp.rielCodigo,
+    barraCodigo: inp.barraCodigo,
   };
 
   return {
@@ -425,7 +427,9 @@ export async function getCotizadorData() {
   const perfilesList = (perfiles ?? []) as { id: string; nombre: string; descripcion: string | null; valores: Record<string, string>; es_default: boolean; orden: number }[];
   const presetParam = (P.preset_default ?? {}) as Record<string, string>;
   const perfilDefault = perfilesList.find((p) => p.es_default) ?? perfilesList[0];
-  const presetDefault = perfilDefault?.valores ?? presetParam;
+  const presetBase = perfilDefault?.valores ?? presetParam;
+  const presetNormalizado = Object.fromEntries(Object.entries(presetBase).map(([rol,codigo])=>[rol,resolverCodigoTablero(codigo,tableros??[])]));
+  const presetDefault = { ...presetNormalizado, gaveta: tableroGaveta15(presetNormalizado.caja, tableros ?? []) };
 
   return {
     // Defensa adicional a `activo = true`: evita exponer tipologías retiradas

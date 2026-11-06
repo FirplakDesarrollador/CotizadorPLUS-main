@@ -23,6 +23,8 @@
         "tests/group-engine.test.ts",
         "tests/group-result.test.ts",
         "tests/margen-global.test.ts",
+        "tests/gavetas.test.ts",
+        "tests/cotizar.test.ts",
         "tests/bfd-smg.test.ts",
         "tests/sbfd-smg.test.ts",
         "tests/db-smg.test.ts",
@@ -49,6 +51,10 @@
       "description": "Preparación de cotizaciones, tarifas, overrides, consultas a Supabase y catálogo precompilado",
       "patterns": [
         "src/lib/cotizar.ts",
+        "src/lib/gavetas.ts",
+        "scripts/sincronizar-tablero-gaveta.ts",
+        "scripts/auditar-tablero-gaveta.ts",
+        "db/migrations/0243_tablero_gaveta_db.sql",
         "src/lib/hood-sm.ts",
         "src/lib/catalogo-paginado.ts",
         "src/lib/cotizaciones.ts",
@@ -91,6 +97,8 @@
       ],
       "tests": [
         "tests/margen-global.test.ts",
+        "tests/gavetas.test.ts",
+        "tests/cotizar.test.ts",
         "tests/pipeline-estados.test.ts",
         "tests/pipeline-importar.test.ts",
         "tests/pipeline-preseleccion.test.ts",
@@ -192,6 +200,8 @@
       ],
       "tests": [
         "tests/margen-global.test.ts",
+        "tests/gavetas.test.ts",
+        "tests/cotizar.test.ts",
         "tests/module-groups.test.ts",
         "tests/optimizador-corte.test.ts",
         "tests/tooltips.test.ts",

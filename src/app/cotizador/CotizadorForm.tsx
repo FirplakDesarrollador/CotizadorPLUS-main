@@ -1,4 +1,6 @@
 'use client';
+import { usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from '@/lib/gavetas';
+import HerrajesGaveta from '@/components/HerrajesGaveta';
 import { usaHoodSm, validarHoodSm } from '@/lib/hood-sm';
 import { convertirExacto } from '@/lib/module-groups';
 import { useMemo, useState, useSyncExternalStore } from 'react';
@@ -18,7 +20,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
 import { presetMaterialesTipologia, usaCajaMaterialFrente, usaFondoMaterialFrente } from '@/lib/materiales-proyecto';
 
@@ -35,7 +37,7 @@ type HerrajeTipo = { rol: string; codigo: string | null };
 const fmtCOP = (n: number) => n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', fondo: 'fondo' }
+const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', gaveta: 'Tablero Gaveta (15 mm)', fondo: 'fondo' }
 const DB_SM_GROUP_VALUE = '__DB_SM__';
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
 const DB_SM_FE_SF_GROUP_VALUE = '__DB_SM_FE_SF__';
@@ -107,7 +109,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     );
   })();
   const prefMaterial = tipos.find((t) => t.id === tipoId)?.pref;
-  const preset = presetMaterialesTipologia(presetSeleccionado, prefMaterial);
+  const preset = presetMaterialesTipologia({ ...presetSeleccionado, gaveta: presetSeleccionado.gaveta || tableroGaveta15(presetSeleccionado.caja, tableros) }, prefMaterial);
   const setPreset = (v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => setStore({ preset: typeof v === 'function' ? v(preset) : v });
 
   const frenteBoardDefault = tableros.find((t) => t.codigo === preset.frente);
@@ -163,8 +165,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const pcfdConfig = store.pcfdConfig ?? '';
   const setPcfdConfig = (v: string) => setStore({ pcfdConfig: v });
 
-  const rielCodigo = esTipologiaDbFe(tipos.find(t => t.id === tipoId)?.pref) ? 'RIELFE500' : store.rielCodigo ?? 'RIELTANDEM';
+  const rielCodigo = herrajesFijosDbFe(tipos.find(t => t.id === tipoId)?.pref) ? 'RIELFE500' : store.rielCodigo ?? '';
   const setRielCodigo = (v: string) => setStore({ rielCodigo: v });
+  const barraCodigo = store.barraCodigo ?? "";
+  const setBarraCodigo = (v: string) => setStore({ barraCodigo: v });
   
   const modoFrentes = store.modoFrentes;
   const setModoFrentes = (v: 'normal' | 'sin_frentes' | 'solo_frentes') => setStore({ modoFrentes: v });
@@ -263,7 +267,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   if (!isMounted) return null;
 
-  const rolesBase = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
+  const rolesBase = Array.from(new Set([...(rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo']), ...(usaTableroGaveta(prefMaterial) ? ['gaveta'] : [])]));
   const roles = usaCajaMaterialFrente(prefMaterial) ? Array.from(new Set([...rolesBase, 'frente'])) : rolesBase;
   const tipoActual = tipos.find((t) => t.id === tipoId);
   const tipoPref = tipoActual?.pref ?? '';
@@ -299,7 +303,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const usaHuecoHorno = usaHuecoHornoParametrico(tipoPref);
   const usaMoHood = [tipoActual?.pref, tipoActual?.pref_imperial, tipoActual?.pref_metrico].some(usaMedidasMoHood);
   const usaHood = usaHoodSm(tipoActual?.pref);
-  const usaRiel = (usaTipologiaDb && conHerrajes) || usaTipologiaDbSmFeSf || usaTipologiaDbSmg || usaTipologiaDbSmgFe || usaTipologiaDbSmgSf || esPCFD;
+  const usaRiel = usaTableroGaveta(tipoPref) || (usaTipologiaDb && conHerrajes) || usaTipologiaDbSmFeSf || usaTipologiaDbSmg || usaTipologiaDbSmgFe || usaTipologiaDbSmgSf || esPCFD;
   function handleTipoChange(v: string) {
     const tipoSeleccionado = v === DB_SM_FE_SF_GROUP_VALUE
       ? tipologiasDbSmFeSf[0]
@@ -329,7 +333,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setPuertaSup('');
     setNbarras('');
     setDbTipo('');
-    setRielCodigo('RIELTANDEM');
+    setRielCodigo('');
+    setBarraCodigo('');
     setPcfdConfig('');
     setDoor('');
     setFree('');
@@ -362,7 +367,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (tipoSeleccionado.pref === 'F' || (tipoSeleccionado.pref === 'DB' || esTipologiaDbFe(tipoSeleccionado.pref))) setSistemaFrente('manija');
     if (esTipologiaDbSmFeSf(tipoSeleccionado.pref) || esTipologiaDbSmG(tipoSeleccionado.pref) || esTipologiaDbSmGFe(tipoSeleccionado.pref) || esTipologiaDbSmGSf(tipoSeleccionado.pref)) {
       setSistemaFrente('gola');
-      setRielCodigo(esTipologiaDbSmFeSf(tipoSeleccionado.pref) || esTipologiaDbSmGFe(tipoSeleccionado.pref) ? 'RIELFE500' : 'RIELTANDEM');
+      setRielCodigo(herrajesFijosDbFe(tipoSeleccionado.pref) ? 'RIELFE500' : '');
+      setBarraCodigo('');
     }
   }
   function aplicarDbSmTipo(pref: string) {
@@ -419,6 +425,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     });
 
   function validarDimensionesActivas() {
+    if (usaTableroGaveta(prefMaterial) && conHerrajes && !herrajesFijosDbFe(prefMaterial) && ((!herrajesExcl.includes("riel") && !rielCodigo) || (!herrajesExcl.includes("barra") && Number(nbarras) > 0 && !barraCodigo))) { setError("Selecciona el tipo de riel y de barra que deseas incluir."); return false; }
     if (usaHood) {
       try { validarHoodSm(parseMedida(alto), hood.trim() === '' ? undefined : parseMedida(hood), free.trim() === '' ? undefined : parseMedida(free)); }
       catch (error) { setError((error as Error).message); return false; }
@@ -501,7 +508,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       herrajesExcluidos: modulo.conHerrajes && modulo.herrajesExcl.length ? modulo.herrajesExcl : undefined,
       cantoFrentes: modulo.cantoFrentes || undefined,
       cantoCaja: modulo.cantoCaja || undefined,
-      rielCodigo: (permiteTipologiaDb(pref) || esTipologiaDbSmFeSf(pref) || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref) || pref === 'PCFD') && modulo.rielCodigo ? (esTipologiaDbFe(pref) ? 'RIELFE500' : modulo.rielCodigo) : undefined,
+      barraCodigo: usaTableroGaveta(pref) && !herrajesFijosDbFe(pref) ? (modulo.barraCodigo ?? '') : undefined,
+      rielCodigo: (usaTableroGaveta(pref) || permiteTipologiaDb(pref) || esTipologiaDbSmFeSf(pref) || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref) || pref === 'PCFD') && modulo.rielCodigo ? (esTipologiaDbFe(pref) ? 'RIELFE500' : modulo.rielCodigo) : undefined,
       door: usaPuertaParametrica(pref) && modulo.door !== '' ? parseMedida(modulo.door) : undefined,
       doorHand: usaPuertaParametrica(pref) ? modulo.doorHand : undefined,
     };
@@ -1047,15 +1055,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
             </Field>
           )}
           {usaTipologiaDb && !esTipologiaDbFe(tipoPref) && <Field label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></Field>}
-          {usaRiel && (
-            <Field label="Tipo de riel">
-              <select disabled={esTipologiaDbFe(tipoPref)} value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
-                {DB_RIELES.map((r) => (
-                  <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
-                ))}
-              </select>
-            </Field>
-          )}
+          {usaRiel && <HerrajesGaveta riel={rielCodigo} barra={barraCodigo} onRiel={setRielCodigo} onBarra={setBarraCodigo} fe={herrajesFijosDbFe(tipoPref)} />}
           <Field label="Frentes">
             <select value={modoFrentes} onChange={(e) => setModoFrentes(e.target.value as 'normal' | 'sin_frentes' | 'solo_frentes')} className="inp">
               <option value="normal">Completo</option><option value="sin_frentes">Sin frentes (open)</option><option value="solo_frentes">Solo kit de frentes</option>
@@ -1102,10 +1102,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
           <div className="rounded-lg border border-slate-200 p-2.5">
             <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes incluidos (destilda para excluir)</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-              {herrajesTipo.map((h) => (
+              {herrajesTipo.filter(h => !herrajesFijosDbFe(tipoPref) || h.rol !== 'barra').map((h) => (
                 <label key={h.rol} className="flex items-center gap-1.5 text-sm text-slate-700 capitalize">
                   <input type="checkbox" checked={!herrajesExcl.includes(h.rol)} onChange={() => toggleHerraje(h.rol)} />
-                  {h.rol}{h.codigo ? <span className="text-slate-400 normal-case">· {h.codigo}</span> : null}
+                  {h.rol}{h.codigo ? <span className="text-slate-400 normal-case">· {h.rol === 'riel' ? (rielCodigo || 'Seleccionar riel') : h.rol === 'barra' ? (barraCodigo || 'Seleccionar barra') : h.codigo}</span> : null}
                 </label>
               ))}
             </div>

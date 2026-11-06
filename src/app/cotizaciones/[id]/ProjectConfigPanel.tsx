@@ -49,6 +49,7 @@ const ROLE_FIELDS = [
   ['caja', 'Tablero caja / refuerzos'],
   ['frente', 'Tablero frente (también Filler, Panel y Zócalo)'],
   ['fondo', 'Tablero fondo'],
+  ['gaveta', 'Tablero Gaveta (15 mm)'],
 ] as const;
 
 export default function ProjectConfigPanel({ tableros, cantos, defaults, onChange }: ProjectConfigPanelProps) {
@@ -149,7 +150,7 @@ export default function ProjectConfigPanel({ tableros, cantos, defaults, onChang
                       const precio = precioTableroCotizacion(codigo, tableros, defaults.preciosTableros);
                       return (
                         <F key={rol} label={label}>
-                          <Combobox value={codigo} options={tableroOptions} onChange={(value) => setPresetRol(familia, rol, value)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
+                          <Combobox value={codigo} options={rol === 'gaveta' ? tableroOptions.filter(o => Number(tableros.find(t => t.codigo === o.value)?.espesor_mm) === 15) : tableroOptions} onChange={(value) => setPresetRol(familia, rol, value)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
                           <PrecioTableroInput key={`${codigo}:${precio ?? ''}`} codigo={codigo} precio={precio} onCommit={setPrecioTablero} />
                         </F>
                       );

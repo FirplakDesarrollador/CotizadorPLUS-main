@@ -247,6 +247,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
       sistemaFrente: input.sistemaFrente ?? 'manija',
       removible: input.removible ?? false,
       rielCodigo: input.rielCodigo ?? null,
+      barraCodigo: input.barraCodigo ?? null,
       door: input.door ?? null,
       doorHand: input.doorHand ?? null,
       conFondo: input.conFondo !== false,
@@ -324,6 +325,7 @@ export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     cantoFrentes: c.cantoFrentes == null ? undefined : String(c.cantoFrentes),
     cantoCaja: c.cantoCaja == null ? undefined : String(c.cantoCaja),
     rielCodigo: c.rielCodigo == null ? undefined : String(c.rielCodigo),
+    barraCodigo: c.barraCodigo == null ? undefined : String(c.barraCodigo),
     cantidad: Number(linea.cantidad || 1),
     prefLabel: linea.pref ?? undefined,
     dbTipo: (c.dbTipo ?? undefined) as string | undefined,
@@ -415,7 +417,9 @@ export async function recalcularGrupo(
   const codigosTableros = Object.keys(catalogo.tablerosByCode).map(codigo => ({ codigo }));
   const inputs = lineas.map(linea => {
     const pref = catalogo.tiposById[linea.tipo_mueble_id!]?.pref;
-    const input = aplicarConfiguracionDbFe(aplicarMaterialesProyecto(inputDesdeLinea(linea), proyecto.data?.config_default ?? {}, pref, area.data?.nombre ?? ''), pref);
+    const guardado = inputDesdeLinea(linea);
+    const input = aplicarConfiguracionDbFe(aplicarMaterialesProyecto(guardado, proyecto.data?.config_default ?? {}, pref, area.data?.nombre ?? ''), pref);
+    if (guardado.preset.gaveta) input.preset.gaveta = guardado.preset.gaveta;
     return { ...input, preset: Object.fromEntries(Object.entries(input.preset).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, codigosTableros)])) };
   });
   const sistema = sistemaPrefetch ?? await obtenerSistema(grupo.cotizacion_id);
@@ -772,7 +776,7 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
     await Promise.all(Array.from(grupos).map((grupoId) => recalcularGrupo(grupoId, catalogo, sistema)));
     await recomputarTotales(id);
   }
-  if (patch.configDefault !== undefined) await sincronizarMaterialesCotizacion(id);
+  if (patch.configDefault !== undefined) await sincronizarMaterialesCotizacion(id, { aplicarGavetaGlobal: true });
 }
 
 export async function eliminarLinea(cotizacionId: string, lineaId: string) {
@@ -902,11 +906,12 @@ async function resolverMaterialesDeInput(sb: Awaited<ReturnType<typeof createCli
   ]);
   for (const result of [area, proyecto, tipo]) if (result.error) throw new Error(result.error.message);
   const resuelto = aplicarConfiguracionDbFe(aplicarMaterialesProyecto(input, proyecto.data?.config_default ?? {}, tipo.data?.pref, area.data?.nombre ?? ''), tipo.data?.pref);
+  if (input.preset.gaveta) resuelto.preset.gaveta = input.preset.gaveta;
   return { ...resuelto, preset: Object.fromEntries(Object.entries(resuelto.preset).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, tableros)])) };
 }
 
 /** Aplica las características vigentes y recalcula únicamente los grupos afectados. */
-export async function sincronizarMaterialesCotizacion(cotizacionId: string, opciones?: { lineasPermitidas: readonly string[] }) {
+export async function sincronizarMaterialesCotizacion(cotizacionId: string, opciones?: { lineasPermitidas?: readonly string[]; aplicarGavetaGlobal?: boolean }) {
   const sb = await createClient();
   const [proyecto, areas, lineas, tipos, tableros] = await Promise.all([
     sb.from('cot_cotizaciones').select('config_default').eq('id', cotizacionId).single(),
@@ -916,7 +921,7 @@ export async function sincronizarMaterialesCotizacion(cotizacionId: string, opci
     tablerosDeProyecto(),
   ]);
   for (const result of [proyecto, areas, lineas, tipos]) if (result.error) throw new Error(result.error.message);
-  const permitidas = opciones ? new Set(opciones.lineasPermitidas) : undefined;
+  const permitidas = opciones?.lineasPermitidas ? new Set(opciones.lineasPermitidas) : undefined;
   if (permitidas) {
     const alcance = (lineas.data ?? []) as Array<{ id: string; grupo_id: string | null }>;
     const gruposPermitidos = new Set(alcance.filter(l => permitidas.has(l.id)).map(l => l.grupo_id).filter(Boolean));
@@ -950,6 +955,7 @@ export async function sincronizarMaterialesCotizacion(cotizacionId: string, opci
     }
     const actual = inputDesdeLinea(linea as LineaPersistida);
     const siguiente = aplicarMaterialesProyecto(actual, cfg, prefijos.get(linea.tipo_mueble_id), nombres.get(linea.cocina_id) ?? '');
+    if (!opciones?.aplicarGavetaGlobal && actual.preset.gaveta) siguiente.preset.gaveta = actual.preset.gaveta;
     siguiente.preset = normalizarPreset(siguiente.preset) ?? {};
     if (JSON.stringify(actual.preset) === JSON.stringify(siguiente.preset) && actual.cantoCaja === siguiente.cantoCaja && actual.cantoFrentes === siguiente.cantoFrentes && materialesDelDespieceCoinciden(linea.breakdown, siguiente.preset)) continue;
     const config = { ...linea.config, preset: siguiente.preset, cantoCaja: siguiente.cantoCaja, cantoFrentes: siguiente.cantoFrentes };
