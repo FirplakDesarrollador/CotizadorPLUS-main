@@ -4,6 +4,8 @@ import Image from 'next/image';
 import type { CotizarResult } from '@/lib/cotizar';
 import { exportarNodoAPdf, nombreArchivoPdf } from './pdfExport';
 import { orientarPieza } from '@/lib/muebles';
+import { indiceALetras } from '@/lib/module-groups';
+import { ordenarPiezasHdr } from './ordenPiezas';
 
 export type Tablero = { codigo: string; espesor_mm: number | null };
 export type HdrTablaHandle = { exportarPdf: () => Promise<void> };
@@ -78,13 +80,11 @@ function construirFilas(res: CotizarResult, tableros: Tablero[]): FilaHDR[] {
 
   const filas: FilaHDR[] = [];
   let letraIdx = 0;
-  const siguienteLetra = () => {
-    const l = String.fromCharCode(65 + (letraIdx % 26));
-    letraIdx++;
-    return l;
-  };
+  // No reiniciar en A después de Z: la letra identifica tanto la fila de React
+  // como su color editable. Repetirla mezclaba los datos de piezas distintas.
+  const siguienteLetra = () => indiceALetras(letraIdx++);
 
-  for (const p of res.piezas.filter((p) => p.cant > 0)) {
+  for (const p of ordenarPiezasHdr(res.piezas.filter((p) => p.cant > 0), tienePuertas)) {
     const nombreBase = nombreProduccion(p.pieza, tienePuertas);
     const sufijo = SUFIJO_ROL[p.rol] ?? '';
     const visible = esVisible(p.pieza);

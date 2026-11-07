@@ -1,4 +1,4 @@
-/** Solo códigos: --apply respalda y actualiza atómicamente, sin recalcular precios. */
+/** Solo nombres/códigos: --apply respalda y actualiza atómicamente, sin recalcular precios. */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,6 +8,7 @@ import { cargarCatalogoPrecompilado } from '../src/lib/cotizar';
 import { codigoComercial, codigoGrupo, type CodigoComercialInput } from '../src/lib/module-groups';
 import { leerCatalogoPaginado } from '../src/lib/catalogo-paginado';
 import { inputDesdeLinea, type LineaPersistida } from '../src/lib/cotizaciones';
+import { esPanel, nombrePanel } from '../src/lib/nombres-modulos';
 
 async function main() {
   const sb=await createClient();
@@ -20,6 +21,7 @@ async function main() {
   if(quotes.error) throw new Error(quotes.error.message);
   const proyectos=quotes.data as {id:string;nombre:string;sistema_medida:string;total_cop:number;total_usd:number}[];
   const cambios:{id:string;antes:string|null;despues:string}[]=[];
+  const descripciones:{id:string;antes:string|null;despues:string}[]=[];
   const porProyecto:Record<string,number>={};
   const rows=lines.data as (LineaPersistida & {codigo_modulo:string|null})[];
   const codes=new Map<string,string>();
@@ -37,7 +39,9 @@ async function main() {
       pref:(sistema==='metrico'?tipo.pref_metrico:tipo.pref_imperial)||tipo.pref,
       sistema,zocaloIn:input.overrides?.zocalo,
       espesorCajaMm:Number(caja.espesor_mm),espesorFrenteMm:Number(frente.espesor_mm),
+      pcfdCajones: tipo.pref==='PCFD'?input.overrides?.n_cajones:undefined,
     });
+    if(esPanel(tipo.pref) && row.descripcion_es!==nombrePanel(row.anotaciones)) descripciones.push({id:row.id,antes:row.descripcion_es??null,despues:nombrePanel(row.anotaciones)});
     codes.set(row.id,despues);
     if(despues!==row.codigo_modulo) {
       cambios.push({id:row.id,antes:row.codigo_modulo,despues});
@@ -50,8 +54,8 @@ async function main() {
     const despues=codigoGrupo(members.map(l=>codes.get(l.id)!));
     return despues===g.codigo_grupo?[]:[{id:g.id,antes:g.codigo_grupo as string|null,despues}];
   });
-  console.log(JSON.stringify({cotizaciones:quotes.data?.length,lineas:cambios.length,grupos:grupos.length,porProyecto,ejemplos:cambios.slice(0,8)},null,2));
-  if(!process.argv.includes('--apply') || !cambios.length && !grupos.length) return;
+  console.log(JSON.stringify({cotizaciones:quotes.data?.length,lineas:cambios.length,grupos:grupos.length,descripciones:descripciones.length,porProyecto,ejemplos:cambios.slice(0,8)},null,2));
+  if(!process.argv.includes('--apply') || !cambios.length && !grupos.length && !descripciones.length) return;
   const backup=path.join(os.tmpdir(),`cotizador-respaldo-codigos-${Date.now()}.json`);
   fs.writeFileSync(backup,JSON.stringify({quotes:quotes.data,lineas:lines.data,grupos:groups.data}),{flag:'wx'});
   // Literales JSON escapados como SQL estándar; no se interpolan en un shell.
@@ -59,9 +63,11 @@ async function main() {
   const sql=`begin;
   create temporary table cambios_lineas as select * from jsonb_to_recordset(${literal(cambios)}) as x(id uuid,antes text,despues text);
   create temporary table cambios_grupos as select * from jsonb_to_recordset(${literal(grupos)}) as x(id uuid,antes text,despues text);
+  create temporary table cambios_descripciones as select * from jsonb_to_recordset(${literal(descripciones)}) as x(id uuid,antes text,despues text);
   do $$ begin
     if exists(select 1 from cambios_lineas c left join cot_cotizacion_lineas l on l.id=c.id where l.id is null or l.codigo_modulo is distinct from c.antes)
     or exists(select 1 from cambios_grupos c left join cot_grupos_modulos g on g.id=c.id where g.id is null or g.codigo_grupo is distinct from c.antes)
+    or exists(select 1 from cambios_descripciones c left join cot_cotizacion_lineas l on l.id=c.id where l.id is null or l.descripcion_es is distinct from c.antes)
     then raise exception 'Los códigos cambiaron durante la auditoría; vuelve a ejecutar'; end if;
   end $$;
   update cot_cotizacion_lineas l set codigo_modulo=c.despues,
@@ -74,6 +80,7 @@ async function main() {
       else l.breakdown end
     from cambios_lineas c where l.id=c.id;
   update cot_grupos_modulos g set codigo_grupo=c.despues from cambios_grupos c where g.id=c.id;
+  update cot_cotizacion_lineas l set descripcion_es=c.despues from cambios_descripciones c where l.id=c.id;
   commit;`;
   const file=path.join(os.tmpdir(),`cotizador-codigos-${Date.now()}.sql`);
   fs.writeFileSync(file,sql,{flag:'wx'});

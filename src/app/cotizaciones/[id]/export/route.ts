@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import ExcelJS from 'exceljs';
+import { descripcionConNotas } from '@/lib/nombres-modulos';
 import { getCotizacion } from '@/lib/cotizaciones';
 import { createClient } from '@/lib/supabase/server';
 import { aplicaIva, calcularIva, etiquetaIva, totalConIva } from '@/lib/iva';
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     for (const l of c.lineas) {
       const p = precios(l, trm); const count = c.lineas.filter((x) => x.grupo_id === l.grupo_id).length;
       const costoCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0);
-      const descripcion = [l.descripcion_es, l.anotaciones].filter(Boolean).join(' · ');
+      const descripcion = descripcionConNotas(l);
       const row: (string | number)[] = [count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? ''), l.codigo_modulo || l.pref || '', count > 1 ? (l.grupo?.codigo_grupo ?? '') : '', descripcion];
       if (mostrarUsd) row.push(trm > 0 ? costoCop / trm : 0);
       if (mostrarCop) row.push(costoCop);

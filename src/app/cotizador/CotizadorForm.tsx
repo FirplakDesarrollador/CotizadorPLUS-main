@@ -23,6 +23,7 @@ import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
 import { presetMaterialesTipologia, usaCajaMaterialFrente, usaFondoMaterialFrente } from '@/lib/materiales-proyecto';
+import { esPanel, nombrePanel, etiquetaTipoModulo } from '@/lib/nombres-modulos';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
@@ -255,7 +256,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         }
         continue;
       }
-      options.push({ value: tipo.id, label: ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM', 'BLS', 'BLS-RS-SM', 'BOMH-1', 'BOMH-1-FE'].includes(tipo.pref) ? (tipo.nombre_es ?? tipo.pref) : `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
+      options.push({ value: tipo.id, label: etiquetaTipoModulo(tipo.pref, tipo.nombre_es) });
     }
     return options;
   }, [tipos]);
@@ -774,6 +775,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
                     <div>
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Módulo {index + 1}</div>
                       <div className="font-semibold text-slate-900">{moduleTitle(modulo)}</div>
+                      {esPanel(tipos.find(t => t.id === modulo.tipoId)?.pref) && <div className="text-xs text-slate-600">{nombrePanel(modulo.anotaciones)}</div>}
                       <div className="text-xs text-slate-500">{modulo.largo} × {modulo.alto} × {modulo.prof} {unidad}</div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -1084,13 +1086,14 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
             </select>
           </Field>
           <Field label="Canto caja">
-            <select value={cantoCaja} onChange={(e) => setCantoCaja(e.target.value)} className="inp">
+            <select value={usaCajaMaterialFrente(prefMaterial) ? cantoFrentes : cantoCaja} disabled={usaCajaMaterialFrente(prefMaterial)} title={usaCajaMaterialFrente(prefMaterial) ? 'Todas las piezas usan el canto de frente' : undefined} onChange={(e) => setCantoCaja(e.target.value)} className="inp">
               <option value="">Por defecto</option>
               {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </Field>
         </div>
 
+        {esPanel(prefMaterial) && <Field label="Notas del panel"><input value={store.anotaciones ?? ''} onChange={e => setStore({ anotaciones: e.target.value })} placeholder="Ej. lateral" className="inp" /></Field>}
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input
             type="checkbox"
@@ -1137,7 +1140,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       {/* ---- Resultado ---- */}
       <div data-tour="resultado" className="space-y-4">
         {!result && <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400">Ingresa los datos y calcula para ver el precio y el desglose.</div>}
-        {result && <ResultadoView result={result} codigo={codigoResultado} moneda={moneda} setMoneda={setMoneda} />}
+        {result && <ResultadoView result={result} codigo={codigoResultado} descripcion={esPanel(prefMaterial) && !store.modulos.length ? nombrePanel(store.anotaciones) : undefined} moneda={moneda} setMoneda={setMoneda} />}
       </div>
 
       <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.4rem .6rem;font-size:.875rem}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}`}</style>
@@ -1150,8 +1153,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <Campo label={label} info={TIPS_COTIZADOR[label]}>{children}</Campo>;
 }
 
-function ResultadoView({ result, codigo, moneda, setMoneda }:
-  { result: CotizarGrupoResult; codigo: string; moneda: 'COP' | 'USD'; setMoneda: (m: 'COP' | 'USD') => void }) {
+function ResultadoView({ result, codigo, descripcion, moneda, setMoneda }:
+  { result: CotizarGrupoResult; codigo: string; descripcion?: string; moneda: 'COP' | 'USD'; setMoneda: (m: 'COP' | 'USD') => void }) {
   const precioSin = result.precioCop;
   const precioHerr = result.precioHerrajesCop;
   const precioCon = result.precioConHerrajesCop;
@@ -1192,6 +1195,7 @@ function ResultadoView({ result, codigo, moneda, setMoneda }:
             <span className="inline-block rounded-md border border-slate-300 bg-slate-50 px-2 py-0.5 font-mono text-sm font-semibold tracking-wide text-slate-700" title="Código comercial del módulo">
               {codigo}
             </span>
+            {descripcion && <span className="ml-2 text-sm text-slate-700">{descripcion}</span>}
           </div>
         )}
         <p className="text-sm text-slate-500 mt-1">

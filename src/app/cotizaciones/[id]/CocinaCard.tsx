@@ -5,6 +5,7 @@ import AgregarMaterialForm from './AgregarMaterialForm';
 import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineForm';
 import { actualizarCocinaAction, eliminarCocinaAction, duplicarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
 import { colorGrupo, indiceALetras } from '@/lib/module-groups';
+import { descripcionConNotas } from '@/lib/nombres-modulos';
 import type { FamiliaMaterial } from '@/lib/muebles';
 import type { ColumnasPrecio } from './CotizacionDetalleClient';
 
@@ -107,6 +108,7 @@ export default function CocinaCard({
   const [cantCocina, setCantCocina] = useState<number>(cocina.cantidad ?? 1);
   const [groupBusy, setGroupBusy] = useState<string | null>(null);
   const [groupError, setGroupError] = useState<string | null>(null);
+  const [avisoEdicion, setAvisoEdicion] = useState<string | null>(null);
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
 
   // Sincroniza cantCocina con el prop cuando cambia desde afuera (ej. tras guardar),
@@ -401,6 +403,7 @@ export default function CocinaCard({
       </div>
 
       {groupError && <div className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{groupError}</div>}
+      {avisoEdicion && <p role="status" className="mx-4 mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{avisoEdicion}</p>}
       <div className="overflow-x-auto"><table className={`${columnasPrecio.usd && columnasPrecio.cop ? 'min-w-[1660px]' : 'min-w-[1180px]'} w-full text-sm`}>
         <thead>
           <tr className="bg-slate-100/90 text-slate-900 text-xs font-bold border-b border-slate-200">
@@ -537,8 +540,7 @@ export default function CocinaCard({
                         {members > 1 && block.codigoGrupo && <div className="max-w-48 truncate text-[10px] font-normal text-slate-500" title={block.codigoGrupo}>{block.codigoGrupo}</div>}
                       </td>
                       <td className="px-3 py-2 text-slate-600 leading-5">
-                        <span>{l.descripcion_es}</span>
-                        {l.anotaciones && <span className="whitespace-pre-wrap text-slate-700"> · {l.anotaciones}</span>}
+                        <span className="whitespace-pre-wrap">{descripcionConNotas(l)}</span>
                       </td>
                       {columnasPrecio.usd && <td className="px-2 text-right font-medium text-slate-700 whitespace-nowrap">{fmtUSD(unitCostoUsd)}</td>}
                       {columnasPrecio.cop && <td className="px-2 text-right font-medium text-slate-700 whitespace-nowrap">{fmtCOP(unitCostoCop)}</td>}
@@ -577,7 +579,7 @@ export default function CocinaCard({
                               sistemaMedida={sistemaMedida}
                               projectDefaults={projectDefaults}
                               initial={toInicial(l)}
-                              onDone={() => setEditId(null)}
+                              onDone={(mensaje) => { setEditId(null); setAvisoEdicion(mensaje ?? null); }}
                             />
                           </div>
                         </td>

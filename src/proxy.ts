@@ -1,7 +1,9 @@
-import { type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
 export async function proxy(request: NextRequest) {
+  // El handler autentica este POST y responde 403 sin redirigir a una página HTML.
+  if (request.method === 'POST' && request.nextUrl.pathname === '/optimizador/export') return NextResponse.next();
   return updateSession(request);
 }
 

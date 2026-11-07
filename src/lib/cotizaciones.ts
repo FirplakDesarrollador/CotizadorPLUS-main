@@ -10,12 +10,15 @@ import { contarEntrepanos, esElementoPlano, etiquetaDescripcion, aplicarConfigur
 import { calcularPrecioMaterial, descripcionMaterial, grupoSeSaltaElMotor, type TipoMaterial } from '@/lib/materiales-linea';
 import { normalizarPreciosTableros } from '@/lib/precios-tableros';
 import { siguienteOrdenGrupo as siguienteOrden } from '@/lib/grupos-orden';
+import { requiereSepararModulo } from '@/lib/reglas-fabricacion';
+import { esPanel, nombrePanel, normalizarNombresLineas, type TipoParaNombre, type TableroParaNombre } from '@/lib/nombres-modulos';
+import { leerCatalogoPaginado } from '@/lib/catalogo-paginado';
 import { resolverTipologiaFondo } from '@/lib/sin-fondo';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
 import type { ComentarioCotizacion } from '@/lib/comentarios-cotizacion';
 import { normalizarUbicacion } from '@/lib/ubicacion-cotizacion';
-import { aplicarMaterialesProyecto, materialesDelDespieceCoinciden, resolverCodigoTablero, type ConfigMaterialesProyecto, type TableroProyecto } from '@/lib/materiales-proyecto';
+import { aplicarMaterialesProyecto, personalizarMaterialesLinea, materialesDelDespieceCoinciden, resolverCodigoTablero, type ConfigMaterialesProyecto, type TableroProyecto, type PersonalizacionMateriales } from '@/lib/materiales-proyecto';
 
 export type CotizacionHeader = {
   pais: string; ciudad: string | null;
@@ -92,15 +95,25 @@ export async function restaurarVersionCotizacion(cotizacionId: string, versionId
 // Proyecto con sus cocinas y, dentro de cada cocina, sus módulos (líneas).
 export async function getCotizacion(id: string) {
   const sb = await createClient();
-  const [{ data: cab }, { data: cocinas }, { data: grupos }, { data: lineas }] = await Promise.all([
+  const [{ data: cab }, { data: cocinas }, { data: grupos }, { data: lineas }, tipos, tableros] = await Promise.all([
     sb.from('cot_cotizaciones').select('*').eq('id', id).single(),
     sb.from('cot_cocinas').select('*').eq('cotizacion_id', id).order('orden'),
     sb.from('cot_grupos_modulos').select('*').eq('cotizacion_id', id).order('orden'),
     sb.from('cot_cotizacion_lineas').select('*').eq('cotizacion_id', id).order('orden'),
+    leerCatalogoPaginado<TipoParaNombre>((a, b) => sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico').order('id').range(a, b)),
+    leerCatalogoPaginado<TableroParaNombre>((a, b) => sb.from('cot_tableros').select('codigo,espesor_mm').order('codigo').range(a, b)),
   ]);
-  const gruposById = Object.fromEntries(((grupos ?? []) as Array<{ id: string }>).map((g: any) => [g.id, g]));
+  const lineasActuales = normalizarNombresLineas((lineas ?? []) as LineaPersistida[], tipos.data, tableros.data, cab?.sistema_medida === 'metrico' ? 'metrico' : 'imperial');
+  const gruposActuales = (grupos ?? []).map((grupo: { id: string; codigo_grupo?: string | null }) => {
+    const miembros = lineasActuales.filter(l => l.grupo_id === grupo.id);
+    if (miembros.length && miembros.every(l => l.tipo_mueble_id)) {
+      return { ...grupo, codigo_grupo: codigoGrupo(miembros.sort((a, b) => Number(a.posicion_grupo ?? 1) - Number(b.posicion_grupo ?? 1)).map(l => l.codigo_modulo ?? l.pref ?? '')) };
+    }
+    return grupo;
+  });
+  const gruposById = Object.fromEntries((gruposActuales as Array<{ id: string }>).map((g) => [g.id, g]));
   const lineasByCocina: Record<string, unknown[]> = {};
-  for (const l of (lineas ?? [])) {
+  for (const l of lineasActuales) {
     const k = (l as { cocina_id: string | null }).cocina_id ?? 'sin';
     const grupo = gruposById[(l as { grupo_id?: string }).grupo_id ?? ''];
     (lineasByCocina[k] ||= []).push({ ...l, grupo });
@@ -198,6 +211,7 @@ export async function reordenarCocinas(cotizacionId: string, cocinaIds: string[]
 }
 
 export type AgregarLineaInput = CotizarInput & {
+  personalizacionMateriales?: PersonalizacionMateriales;
   cantidad: number; prefLabel?: string; dbTipo?: string;
   // Texto libre exclusivo de esta línea; no forma parte de la tipología.
   anotaciones?: string | null;
@@ -224,7 +238,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
   // `contarEntrepanos`. Se omite el contador cuando es cero, igual que ya se
   // hacía con puertas y gavetas, en vez de anunciar "0 entrepaño(s)".
   const entrepanos = contarEntrepanos(res.piezas);
-  const desc = esElementoPlano(input.prefLabel) ? medidas : medidas
+  const desc = esPanel(input.prefLabel) ? nombrePanel(input.anotaciones) : esElementoPlano(input.prefLabel) ? medidas : medidas
     + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '')
     + (res.vars.n_cajones ? ` · ${res.vars.n_cajones} gaveta(s)` : '')
     + (entrepanos ? ` · ${entrepanos} entrepaño(s)` : '');
@@ -234,6 +248,7 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
     largo: input.largo, alto: input.alto, prof: input.prof, unidad_dim: input.unidad,
     config: {
       preset: input.preset, conHerrajes: input.conHerrajes, /* recargoPct: input.recargoPct, */
+      personalizacionMateriales: input.personalizacionMateriales ?? null,
       overrides: input.overrides ?? null, modoFrentes: input.modoFrentes ?? 'normal',
       herrajesExcluidos: input.herrajesExcluidos ?? null,
       trm: res.trm, margen: res.margen, margenHerraje: res.margenHerraje,
@@ -313,6 +328,7 @@ export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     largo: Number(linea.largo), alto: Number(linea.alto), prof: Number(linea.prof),
     unidad: linea.unidad_dim,
     preset: (c.preset ?? {}) as Record<string, string>,
+    personalizacionMateriales: (c.personalizacionMateriales ?? undefined) as PersonalizacionMateriales | undefined,
     conHerrajes: c.conHerrajes !== false,
     trm: c.trm == null ? undefined : Number(c.trm),
     overrides: (c.overrides ?? undefined) as Record<string, number> | undefined,
@@ -444,6 +460,7 @@ export async function recalcularGrupo(
       sistema,
       sistemaFrente: inputs[i].sistemaFrente,
       dbTipo: inputs[i].dbTipo,
+      pcfdCajones: pref === 'PCFD' ? inputs[i].overrides?.n_cajones : undefined,
       door: inputs[i].door,
       doorHand: inputs[i].doorHand,
       espesorCajaMm: prepared?.calc.tablerosByCode[prepared.calc.preset.caja]?.espesor_mm,
@@ -531,31 +548,63 @@ export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
 
 // Edita una línea existente recalculando con el motor (mismos datos que al agregar).
 export async function editarLinea(lineaId: string, input: AgregarLineaInput) {
+  return (await editarLineaConDetalle(lineaId, input)).cotizacionId;
+}
+
+export async function editarLineaConDetalle(lineaId: string, input: AgregarLineaInput) {
   const sb = await createClient();
   let inputResuelto = await resolverTipologiaFondo(sb, input);
   const { data: linea, error: le } = await sb.from('cot_cotizacion_lineas').select('*').eq('id', lineaId).single();
   if (le || !linea) throw new Error('Línea no encontrada');
   const cotizacionId = (linea as { cotizacion_id: string }).cotizacion_id;
+  const grupoOriginalId = linea.grupo_id;
   inputResuelto = await resolverMaterialesDeInput(sb, inputResuelto, linea.cocina_id, cotizacionId);
 
-  if (linea.grupo_id) {
+  // Validar el resultado independiente antes de crear grupos o modificar filas.
+  const res = await cotizar(inputResuelto);
+  let separar = false;
+
+  if (grupoOriginalId) {
     const { data: groupRows, error: groupError } = await sb.from('cot_cotizacion_lineas').select('*')
-      .eq('grupo_id', linea.grupo_id).order('posicion_grupo');
+      .eq('grupo_id', grupoOriginalId).order('posicion_grupo');
     if (groupError) throw new Error(groupError.message);
     if ((groupRows ?? []).length > 1) {
-      if (Number(inputResuelto.cantidad) !== 1) throw new Error('Un módulo agrupado debe conservar cantidad 1.');
-      const prospective = ((groupRows ?? []) as LineaPersistida[]).map((row) => row.id === lineaId ? inputResuelto : inputDesdeLinea(row));
-      await cotizarGrupo(prospective);
+      const filas = groupRows as LineaPersistida[];
+      separar = requiereSepararModulo(inputDesdeLinea(linea), inputResuelto);
+      if (!separar) {
+        const prospective = filas.map(row => row.id === lineaId ? inputResuelto : inputDesdeLinea(row));
+        try { await cotizarGrupo(prospective); } catch (error) {
+          const mensaje = error instanceof Error ? error.message : '';
+          if (/^(Los módulos (de un grupo|agrupados)|Los frentes pueden|Uno de los tipos seleccionados|Los módulos configurados)/.test(mensaje)) separar = true;
+          else throw error;
+        }
+      }
+      if (separar) await cotizarGrupo(filas.filter(row => row.id !== lineaId).map(inputDesdeLinea));
     }
   }
 
-  const res = await cotizar(inputResuelto);
+  let nuevoGrupoId: string | undefined;
+  if (separar) {
+    const { data: nuevoGrupo, error } = await sb.from('cot_grupos_modulos').insert({
+      cotizacion_id: cotizacionId, cocina_id: linea.cocina_id,
+      orden: await ordenParaGrupoNuevo(sb, linea.cocina_id), etiqueta: `NUEVO-${crypto.randomUUID()}`,
+    }).select('id').single();
+    if (error || !nuevoGrupo) throw new Error(error?.message ?? 'No se pudo separar el módulo');
+    nuevoGrupoId = nuevoGrupo.id;
+  }
   const { error } = await sb.from('cot_cotizacion_lineas')
-    .update(construirFilaLinea(inputResuelto, res)).eq('id', lineaId);
-  if (error) throw new Error(error.message);
-  if (linea.grupo_id) await recalcularGrupo(linea.grupo_id);
+    .update({ ...construirFilaLinea(inputResuelto, res), ...(nuevoGrupoId ? { grupo_id: nuevoGrupoId, posicion_grupo: 1 } : {}) }).eq('id', lineaId);
+  if (error) {
+    if (nuevoGrupoId) await sb.from('cot_grupos_modulos').delete().eq('id', nuevoGrupoId);
+    throw new Error(error.message);
+  }
+  if (grupoOriginalId) await recalcularGrupo(grupoOriginalId);
+  if (nuevoGrupoId) {
+    await recalcularGrupo(nuevoGrupoId);
+    await normalizarGrupos(linea.cocina_id);
+  }
   await recomputarTotales(cotizacionId);
-  return cotizacionId;
+  return { cotizacionId, desagrupado: separar };
 }
 
 export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: string) {
@@ -905,7 +954,8 @@ async function resolverMaterialesDeInput(sb: Awaited<ReturnType<typeof createCli
     tablerosDeProyecto(),
   ]);
   for (const result of [area, proyecto, tipo]) if (result.error) throw new Error(result.error.message);
-  const resuelto = aplicarConfiguracionDbFe(aplicarMaterialesProyecto(input, proyecto.data?.config_default ?? {}, tipo.data?.pref, area.data?.nombre ?? ''), tipo.data?.pref);
+  const individual = personalizarMaterialesLinea(input, proyecto.data?.config_default ?? {}, tipo.data?.pref, area.data?.nombre ?? '');
+  const resuelto = aplicarConfiguracionDbFe(aplicarMaterialesProyecto(individual, proyecto.data?.config_default ?? {}, tipo.data?.pref, area.data?.nombre ?? ''), tipo.data?.pref);
   if (input.preset.gaveta) resuelto.preset.gaveta = input.preset.gaveta;
   return { ...resuelto, preset: Object.fromEntries(Object.entries(resuelto.preset).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, tableros)])) };
 }
