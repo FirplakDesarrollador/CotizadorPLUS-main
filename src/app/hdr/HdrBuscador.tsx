@@ -13,6 +13,7 @@ import { esPanel, etiquetaTipoModulo } from '@/lib/nombres-modulos';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
 import { consolidarModulosHdr, descripcionPiezaPlanaHdr } from './datosHdr';
+import { crearDestinoHdr, esCancelacionHdr } from './destinoExportacion';
 
 type Tipo = { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; nombre_es: string | null; categoria: string | null };
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
@@ -44,6 +45,8 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [exportandoTodas, setExportandoTodas] = useState<{ hecho: number; total: number } | null>(null);
   const [exportandoExcel, setExportandoExcel] = useState(false);
   const tablasRef = useRef(new Map<string, HdrTablaHandle>());
+  const referencias = useMemo(() => { const conteo = new Map<string, number>(); for (const m of modulos ?? []) conteo.set(m.codigoModulo, (conteo.get(m.codigoModulo) ?? 0) + 1); return conteo; }, [modulos]);
+  const totalMuebles = (modulos ?? []).reduce((n, m) => n + (m.origenes ?? []).reduce((s, o) => s + o.cantidad * o.repeticionesArea, 0), 0);
 
   const tipoOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
@@ -157,23 +160,27 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     const okModulos = (modulos ?? []).filter((m) => m.ok);
     if (okModulos.length === 0) return;
     setExportandoTodas({ hecho: 0, total: okModulos.length });
-    for (let i = 0; i < okModulos.length; i++) {
-      const handle = tablasRef.current.get(okModulos[i].lineaId);
-      if (handle) await handle.exportarPdf();
-      setExportandoTodas({ hecho: i + 1, total: okModulos.length });
-      if (i < okModulos.length - 1) await new Promise((r) => setTimeout(r, 300));
-    }
-    setExportandoTodas(null);
+    setModError(null);
+    try {
+      if (modulos?.some(m => !m.ok)) throw new Error('Hay muebles con errores. Corrígelos antes de exportar para no omitirlos.');
+      const handles = okModulos.map(m => { const handle = tablasRef.current.get(m.lineaId); if (!handle) throw new Error(`La HDR de ${m.codigoModulo} aún no está lista.`); return handle; });
+      const destino = await crearDestinoHdr(proyectoHdr);
+      for (let i = 0; i < handles.length; i++) { await handles[i].exportarPdf(destino.guardar); setExportandoTodas({ hecho: i + 1, total: handles.length }); }
+      await destino.finalizar();
+    } catch (e) { if (!esCancelacionHdr(e)) setModError(e instanceof Error ? e.message : 'No se pudo completar la exportación de todas las HDR.'); }
+    finally { setExportandoTodas(null); }
   }
 
   async function exportarExcel() {
     setExportandoExcel(true);
     setModError(null);
     try {
-      const datos = (modulos ?? []).flatMap(m => { const tabla = tablasRef.current.get(m.lineaId); return tabla ? [tabla.datosExcel()] : []; });
+      if (modulos?.some(m => !m.ok)) throw new Error('Hay muebles con errores. Corrígelos antes de exportar para no omitirlos.');
+      const datos = (modulos ?? []).map(m => { const tabla = tablasRef.current.get(m.lineaId); if (!tabla) throw new Error(`La HDR de ${m.codigoModulo} aún no está lista.`); return tabla.datosExcel(); });
+      const destino = await crearDestinoHdr(proyectoHdr);
       const { descargarExcelHdr } = await import('./excel');
-      await descargarExcelHdr(datos, cotizaciones.find(c => c.id === cotizacionId)?.nombre ?? 'muebles');
-    } catch (e) { setModError(e instanceof Error ? e.message : 'No se pudo exportar el Excel.'); }
+      await descargarExcelHdr(datos, proyectoHdr, destino);
+    } catch (e) { if (!esCancelacionHdr(e)) setModError(e instanceof Error ? e.message : 'No se pudo exportar el Excel.'); }
     finally { setExportandoExcel(false); }
   }
 
@@ -205,6 +212,8 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
       {modulos && modulos.length > 0 && (
         <div className="space-y-4">
+          <p className="text-sm text-slate-600">Al exportar, elige Descargas: se creará «{proyectoHdr.trim() || 'Proyecto'} - HDR». Si tu navegador no admite carpetas, se descargará un ZIP con esa carpeta.</p>
+          <p className="text-sm text-slate-600">Muebles contabilizados: {totalMuebles.toLocaleString('es-CO')} · HDR: {modulos.length}. Los grupos físicos se muestran completos, con sus piezas compartidas contadas una sola vez.</p>
           <div className="flex justify-end gap-3">
             <button type="button" onClick={exportarExcel} disabled={exportandoExcel || !modulos.some(m => m.ok)} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm disabled:opacity-50">{exportandoExcel ? 'Generando Excel…' : 'Exportar Excel'}</button>
             <button
@@ -230,6 +239,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
                   titulo={`${m.codigoModulo} ${m.nombreDescriptivo ?? descripcionModulo(m.result, m.pref)}`.trim()}
                   cantidadInicial={m.cantidad}
                   proyectoInicial={proyectoHdr}
+                  referenciaRepetida={(referencias.get(m.codigoModulo) ?? 0) > 1}
                   mostrarBotonExportar={false}
                 />
               ) : (

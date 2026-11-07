@@ -122,7 +122,11 @@
         "tests/gavetas-fe-medidas.test.ts",
         "db/migrations/0252_fondos_gaveta_fe_material_respaldo.sql",
         "db/migrations/0253_svfdh_smg_refuerzo_delantero_80.sql",
-        "tests/hdr-campos.test.ts"
+        "tests/hdr-campos.test.ts",
+        "src/app/hdr/destinoExportacion.ts",
+        "tests/hdr-destino.test.ts",
+        "tests/hdr-grupos-fisicos.test.ts",
+        "tests/hdr-acciones-grupos.test.ts"
       ],
       "tests": [
         "tests/margen-global.test.ts",
@@ -172,7 +176,10 @@
         "tests/ubicacion-cotizacion.test.ts",
         "tests/dashboard-cotizaciones-datos.test.ts",
         "tests/gavetas-fe-medidas.test.ts",
-        "tests/hdr-campos.test.ts"
+        "tests/hdr-campos.test.ts",
+        "tests/hdr-destino.test.ts",
+        "tests/hdr-grupos-fisicos.test.ts",
+        "tests/hdr-acciones-grupos.test.ts"
       ]
     },
     {
