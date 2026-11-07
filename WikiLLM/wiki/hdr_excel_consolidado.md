@@ -40,3 +40,13 @@ PDF de HDR generado con su botón real y renderizado: una puerta de 755 × 426,8
 `quality:gate`: 123 archivos, 748 pruebas aprobadas y exit 0; sin aumentar la deuda. `quality:learn -- --strict`: cero HIGH; avisos restantes de latencia del optimizador. Wiki/raw y baseline intactos. Migración y recálculos aplicados en Supabase; código local en LIz sin commit/publicación en esta tarea.
 
 Relacionados: [puertas y cantos](puertas_cantos_orientacion.md), [Tablero Gaveta](tablero_gaveta_db.md), [DB-FE](db_fe.md), [protocolo PDF](protocolo_pdf_cotizaciones.md).
+
+## Proyecto y color editables (2026-11-07)
+
+El campo común Nombre del proyecto se precarga del nombre de la cotización al seleccionarla y alimenta Proyecto de cada HDR (también en búsqueda manual). Cada mueble puede editar su proyecto independientemente; futuras ediciones del campo común solo actualizan los muebles sin edición propia. No renombra la cotización guardada.
+
+Color general precarga los colores de todas las piezas. Las ediciones individuales se conservan al cambiar el color general. Al salir de un color vacío se restaura el heredado o Por definir, que es un valor real. Excel aplica la misma resolución defensiva para evitar celdas de color vacías. Campos de edición locales de HDR; los materiales y precios de la cotización no se modifican.
+
+Regresiones: tests/hdr-campos.test.ts para normalización y Excel, además de las pruebas de interfaz de carga, herencia y edición.
+
+Verificación de campos: Chrome local con Casa A: nombre precargado, cambios comunes y particulares sin sobrescritura, herencia de color, conservación de edición individual, recuperación al borrar o escribir espacios y Excel reabierto con valores correctos. Dos cargas independientes de HDR manual produjeron PDF de una página con renders idénticos y legibles, con proyecto y colores editados. Browser plugin no disponible; se utilizó Playwright. Build de producción y quality:gate:full aprobados (127 suites / 768 pruebas); learn estricto sin HIGH. Auditoría de doce cotizaciones: cero errores/diferencias. Supabase permanece al día hasta 0253; no se requiere migración para estos campos locales.

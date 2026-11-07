@@ -3,17 +3,18 @@ import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState
 import Image from 'next/image';
 import type { CotizarResult } from '@/lib/cotizar';
 import { exportarNodoAPdf, nombreArchivoPdf } from './pdfExport';
-import { construirFilas, type FilaHDR } from './datosHdr';
+import { construirFilas, normalizarColorHdr, type FilaHDR } from './datosHdr';
 export { descripcionModulo } from './datosHdr';
 
 export type Tablero = { codigo: string; espesor_mm: number | null };
 export type DatosHdrExcel = { titulo: string; cantidad: string; color: string; proyecto: string; filas: (FilaHDR & { color: string })[] };
 export type HdrTablaHandle = { exportarPdf: () => Promise<void>; datosExcel: () => DatosHdrExcel };
 
-const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tablero[]; titulo: string; mostrarBotonExportar?: boolean; cantidadInicial?: number }>(
-  function HdrTabla({ res, tableros, titulo, mostrarBotonExportar = true, cantidadInicial }, ref) {
-  const [color, setColor] = useState('');
-  const [proyecto, setProyecto] = useState('');
+const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tablero[]; titulo: string; mostrarBotonExportar?: boolean; cantidadInicial?: number; proyectoInicial?: string }>(
+  function HdrTabla({ res, tableros, titulo, mostrarBotonExportar = true, cantidadInicial, proyectoInicial = '' }, ref) {
+  const [color, setColor] = useState('Por definir');
+  const [proyectoEditado, setProyecto] = useState<string>();
+  const proyecto = proyectoEditado ?? proyectoInicial;
   const [cantidad, setCantidad] = useState(cantidadInicial == null ? '' : String(cantidadInicial));
   const [colorPorLetra, setColorPorLetra] = useState<Record<string, string>>({});
   const [exportando, setExportando] = useState(false);
@@ -31,7 +32,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tabl
     }
   }, [titulo]);
 
-  const datosExcel = useCallback((): DatosHdrExcel => ({ titulo, cantidad, color, proyecto, filas: filas.map(f => ({ ...f, color: colorPorLetra[f.letra] ?? '' })) }), [titulo, cantidad, color, proyecto, filas, colorPorLetra]);
+  const datosExcel = useCallback((): DatosHdrExcel => ({ titulo, cantidad, color: normalizarColorHdr(color), proyecto, filas: filas.map(f => ({ ...f, color: normalizarColorHdr(colorPorLetra[f.letra], color) })) }), [titulo, cantidad, color, proyecto, filas, colorPorLetra]);
   const exportarExcel = async () => { const { descargarExcelHdr } = await import('./excel'); await descargarExcelHdr([datosExcel()], titulo); };
   useImperativeHandle(ref, () => ({ exportarPdf, datosExcel }), [exportarPdf, datosExcel]);
 
@@ -56,7 +57,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tabl
           <div className="font-bold text-slate-900">{titulo}</div>
           <div className="mt-2 grid grid-cols-3 gap-x-6 gap-y-1 text-sm text-slate-600">
             <label className="flex items-center gap-2">Color:
-              <input value={color} onChange={(e) => setColor(e.target.value)} placeholder="Por definir" className="inp-sm" />
+              <input aria-label="Color general" required value={color} onChange={(e) => setColor(e.target.value)} onBlur={() => setColor(normalizarColorHdr(color))} placeholder="Por definir" className="inp-sm" />
             </label>
             <label className="flex items-center gap-2">Proyecto:
               <input value={proyecto} onChange={(e) => setProyecto(e.target.value)} placeholder="Por definir" className="inp-sm" />
@@ -110,8 +111,16 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tabl
                 <td className="px-2 text-right">{f.espesorCanto}</td>
                 <td className="px-2">
                   <input
-                    value={colorPorLetra[f.letra] ?? ''}
+                    aria-label={`Color de ${f.letra} ${f.pieza}`}
+                    required
+                    value={colorPorLetra[f.letra] ?? normalizarColorHdr(color)}
                     onChange={(e) => setColorPorLetra((cs) => ({ ...cs, [f.letra]: e.target.value }))}
+                    onBlur={() => setColorPorLetra(cs => {
+                      const siguiente = { ...cs };
+                      if (siguiente[f.letra]?.trim()) siguiente[f.letra] = siguiente[f.letra].trim();
+                      else delete siguiente[f.letra];
+                      return siguiente;
+                    })}
                     placeholder="Por definir"
                     className="inp-sm"
                   />

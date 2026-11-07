@@ -37,6 +37,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [res, setRes] = useState<CotizarResult | null>(null);
 
   const [cotizacionId, setCotizacionId] = useState('');
+  const [proyectoHdr, setProyectoHdr] = useState('');
   const [modLoading, setModLoading] = useState(false);
   const [modError, setModError] = useState<string | null>(null);
   const [modulos, setModulos] = useState<ModuloHDR[] | null>(null);
@@ -133,6 +134,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
   async function handleCotizacionChange(id: string) {
     setCotizacionId(id);
+    setProyectoHdr(cotizaciones.find(c => c.id === id)?.nombre ?? '');
     setModulos(null);
     setModError(null);
     tablasRef.current.clear();
@@ -193,6 +195,9 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         <Campo label="Cotización">
           <Combobox value={cotizacionId} options={cotizacionOptions} onChange={handleCotizacionChange} placeholder="Buscar cotización por código, nombre o cliente…" />
         </Campo>
+        <Campo label="Nombre del proyecto">
+          <input value={proyectoHdr} onChange={e => setProyectoHdr(e.target.value)} placeholder="Nombre para las hojas de ruta" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </Campo>
         {modLoading && <p className="text-slate-400 text-sm">Cargando módulos…</p>}
         {modError && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{modError}</div>}
         {modulos && modulos.length === 0 && <p className="text-slate-400 text-sm">Esta cotización no tiene módulos.</p>}
@@ -224,6 +229,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
                   tableros={tableros}
                   titulo={`${m.codigoModulo} ${m.nombreDescriptivo ?? descripcionModulo(m.result, m.pref)}`.trim()}
                   cantidadInicial={m.cantidad}
+                  proyectoInicial={proyectoHdr}
                   mostrarBotonExportar={false}
                 />
               ) : (
@@ -321,7 +327,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
         {res && (
           <div className="mt-4">
-            <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} tableros={tableros} titulo={`${codigo} ${descripcionPiezaPlanaHdr(tipoSel?.pref, notaPanel) ?? descripcionModulo(res, tipoSel?.pref)}`} />
+            <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} tableros={tableros} proyectoInicial={proyectoHdr} titulo={`${codigo} ${descripcionPiezaPlanaHdr(tipoSel?.pref, notaPanel) ?? descripcionModulo(res, tipoSel?.pref)}`} />
           </div>
         )}
       </div>
