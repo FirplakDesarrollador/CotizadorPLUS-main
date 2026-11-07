@@ -2,19 +2,19 @@
 
 ## Presentación vigente
 
-Desde una cotización, HDR conserva el despiece real de cada grupo físico y consolida únicamente módulos equivalentes: mismo código, descripción/notas, piezas con medidas, cantidades y cantos, y referencias de material. Ignora el área para consolidar, pero no une muebles de distinta fabricación aunque compartan código. Mantiene la primera aparición y el orden de piezas; las gavetas conservan su orden relativo.
+Desde una cotización, HDR conserva el despiece real de cada grupo físico y consolida únicamente módulos equivalentes: mismo código y descripción/notas exactas; mismas piezas físicas (sin depender del orden del array), medidas, cantidades, cantos, referencias de tablero y herrajes con cantidad positiva. Ignora el área para consolidar, pero no une muebles de distinta fabricación aunque compartan código. Mantiene la primera aparición y el orden de piezas; las gavetas conservan su orden relativo.
 
-La cantidad inicial suma `cantidad de línea × repeticiones del área` de todas las apariciones equivalentes. Es editable y se puede vaciar. No se agrega área ni multiplicador al título. PN conserva `PN - Panel` y sus notas; F conserva sus notas. La consolidación se aplica a la vista HDR, no elimina líneas ni áreas de las cotizaciones ni cambia los grupos usados por el optimizador.
+Para muebles individuales, la cantidad inicial suma `cantidad de línea × repeticiones del área` de todas las apariciones equivalentes. Para conjuntos físicos, indica cantidad de grupos completos y conserva los identificadores y cantidades de todos sus módulos para conciliación. Es editable y se puede vaciar. No se agrega área ni multiplicador al título. PN conserva `PN - Panel` y sus notas; F conserva sus notas. La consolidación se aplica a la vista HDR, no elimina líneas ni áreas de las cotizaciones ni cambia los grupos usados por el optimizador.
 
 La búsqueda manual por tipo también admite notas en F. El caché del simulador pasa a v12: conserva entradas/notas/muebles y descarta resultados previos a las nuevas reglas. Las especificaciones impresas aclaran que las paredes DB-FE usan caja y sus fondos usan respaldo y omiten personalizaciones históricas de gaveta que no se utilizan en ese tipo.
 
 Se retiraron la nota de inferencia Color/Blanco y los sufijos de rol B/P/C/F de los nombres de pieza. Las letras A, B, C… de identificación de filas y las columnas de canto se conservan.
 
-Regla posterior del 2026-11-07: los tableros de 4,5/5,5/6/9 mm no muestran calibre ni contadores de canto y no generan su costo, incluido el BACKING de WLD. Se aplica en motor y presentación; véase [materiales delgados sin canto](cantos_por_espesor.md). El caché vigente del simulador es v13.
+Regla posterior del 2026-11-07: los tableros de 4,5/5,5/6/9 mm no muestran calibre ni contadores de canto y no generan su costo, incluido el BACKING de WLD. Se aplica en motor y presentación; véase [materiales delgados sin canto](cantos_por_espesor.md). El caché vigente del simulador es v17.
 
 ## Excel
 
-El botón **Exportar Excel** descarga un `.xlsx` con una sola hoja `HDR`, como tabla continua, sin bloques por cocina. Cada fila identifica el módulo y conserva letra, pieza, largo/ancho/espesor, los cuatro contadores de canto, espesor del canto, cantidad de módulos, color general, proyecto y color de pieza. Mantiene el orden de las tarjetas y sus filas; las piezas repetidas dentro de un mueble se representan igual que en pantalla.
+El botón **Exportar Excel** genera un `.xlsx` con una sola hoja `HDR`, como tabla continua, sin bloques por cocina. Cada fila identifica el módulo y conserva letra, pieza, largo/ancho/espesor, los cuatro contadores de canto, espesor del canto, cantidad de módulos, color general, proyecto y color de pieza. Mantiene el orden de las tarjetas y sus filas; las piezas repetidas dentro de un mueble se representan igual que en pantalla.
 
 La exportación usa los valores editados de la tabla, incluida cantidad vacía. Medidas y cantidades son valores numéricos, con formatos de Excel, encabezado congelado y autofiltro. ExcelJS se carga dinámicamente al exportar. La búsqueda por tipo también permite exportar su resultado individual.
 
@@ -50,3 +50,23 @@ Color general precarga los colores de todas las piezas. Las ediciones individual
 Regresiones: tests/hdr-campos.test.ts para normalización y Excel, además de las pruebas de interfaz de carga, herencia y edición.
 
 Verificación de campos: Chrome local con Casa A: nombre precargado, cambios comunes y particulares sin sobrescritura, herencia de color, conservación de edición individual, recuperación al borrar o escribir espacios y Excel reabierto con valores correctos. Dos cargas independientes de HDR manual produjeron PDF de una página con renders idénticos y legibles, con proyecto y colores editados. Browser plugin no disponible; se utilizó Playwright. Build de producción y quality:gate:full aprobados (127 suites / 768 pruebas); learn estricto sin HIGH. Auditoría de doce cotizaciones: cero errores/diferencias. Supabase permanece al día hasta 0253; no se requiere migración para estos campos locales.
+
+## Exportación por carpeta y consolidación física
+
+La exportación solicita elegir Descargas mediante showDirectoryPicker y crea <Proyecto> - HDR. Guarda Excel y PDF allí; en navegadores sin API descarga un ZIP con la misma carpeta raíz. Los nombres repetidos reciben un sufijo numérico para evitar sobrescrituras. La generación comprueba que todas las HDR estén disponibles y no exporta parcialmente una cotización que tenga módulos con error. La cancelación y los fallos de escritura se manejan sin indicar éxito. ZIP sin compresión para preservar los archivos originales, sin dependencias nuevas.
+
+La auditoría de solo lectura concilió los identificadores y cantidades de las doce cotizaciones. Detectó referencias compartidas por materiales distintos, notas distintas y 31 grupos con repartos fraccionados de piezas. El usuario confirmó una HDR completa por grupo físico y mantener separadas las notas distintas. La corrección suma las asignaciones fraccionarias antes de fabricar las filas; nunca redondea una pieza parcial por módulo. Browser plugin no disponible; se prueba con Playwright.
+
+## Decisiones y aplicación de datos
+
+En Condominio V el usuario autorizó unificar DB506844-2S-FE y DB606844-2S-FE a PRIST (caja/refuerzo/gaveta 15 mm, frente 18 mm, fondo 6 mm), y PN44106, PN44188, PN4472, F50188 y F5072 al frente PRIST conservando su espesor. Se guardan como selecciones individuales; los materiales globales no cambian. También se excluyen patas en todos los SVFDH9538.542-SMG-SF indicados. Dos transacciones con respaldo y control de updated_at actualizaron 37 registros; medidas, cantidades, notas, áreas, grupos y demás herrajes quedaron intactos, al igual que los 217 adicionales. MALECÓN conserva las dos configuraciones W637035-MO-HOOD-15MM de campana por decisión expresa.
+
+Una HDR por grupo conserva el orden de sus módulos y muestra el origen local o Compartida del grupo en cada pieza; el tablero se resuelve por pieza, incluso si dos módulos usan distintos colores en el mismo rol. Excel añade Origen de pieza y Referencia tablero, y distingue cantidad de módulos/grupos. La captura PDF expande la tabla en la copia de impresión para no cortar las columnas adicionales. Las referencias repetidas por diferencias reales de notas/fabricación muestran materiales y herrajes.
+
+consolidarModulosHdr conserva la trazabilidad de todas las líneas y es idempotente: las repeticiones del área se aplican una sola vez. Los errores retienen sus cantidades/repeticiones; no se permiten exportaciones que omitan una HDR con error o no montada. Las plantillas con cantidad cero no impiden consolidar una fabricación idéntica. Se precarga el catálogo una vez por cotización para recalcular sus grupos.
+
+Verificación completa: doce cotizaciones, 837 líneas y 75945 unidades de muebles/paneles, 231688 piezas físicas conciliadas por material, medida, canto y cantidad con un cálculo independiente del motor, cero errores. Chrome local confirmó la unificación en Condominio V y las notas separadas; Excel incluyó 303 filas de piezas de Condominio V y 105 de Entrevillas. Dos exportaciones completas de Entrevillas generaron nueve PDF por lote, todos íntegros y con renderizados idénticos por pares. El contrato de la API de carpetas se probó con un selector simulado, manteniendo la activación del clic; la alternativa ZIP se descargó y verificó realmente mediante un lector independiente. No se automatizó el permiso nativo de Windows.
+
+Pruebas adicionales: tests/hdr-grupos-fisicos.test.ts, tests/hdr-acciones-grupos.test.ts y tests/hdr-destino.test.ts.
+
+Cierre de publicación: npm run build y quality:gate:full aprobados (130 suites, 776 pruebas), quality:learn estricto sin HIGH. Auditoría contable posterior a todas las correcciones: cero diferencias y errores. Supabase actualizado en selecciones y recálculo; no hay cambios de esquema ni migraciones nuevas.

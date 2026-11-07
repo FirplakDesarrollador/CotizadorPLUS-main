@@ -2956,3 +2956,13 @@ Validación de publicación: compilación de producción y quality:gate:full apr
 Campo común de proyecto desde la cotización; edición individual por mueble y pieza, valores de color no vacíos y exportación coherente.
 
 Publicación solicitada LIz → DEV → main: compilación y gate completo aprobados con 768 pruebas; revisión de Excel/PDF e integridad de cotizaciones sin errores. Supabase verificado, sin cambios de esquema necesarios.
+
+## [2026-11-07] update | Exportación HDR a carpeta de proyecto y auditoría de referencias repetidas
+
+Carpeta nativa con autorización del navegador, ZIP alternativo y nombres únicos. Decisiones recibidas: conservar notas distintas, una HDR por grupo físico, correcciones PRIST y exclusión de patas autorizadas.
+
+## [2026-11-07] update | HDR por grupo físico, consolidación estricta y correcciones confirmadas
+
+Conservación de notas distintas, trazabilidad de 837 líneas, 231688 piezas conciliadas y 37 registros autorizados actualizados en Condominio V. Excel/PDF completos y sin columnas recortadas; se conserva la configuración de campanas de MALECÓN.
+
+Validación para publicación LIz → DEV → main: build y gate completo aprobados con 776 pruebas; learn sin HIGH. Exportaciones revisadas e integridad de datos comprobada. Supabase actualizado según las decisiones del usuario; sin migración de esquema necesaria.

@@ -5,7 +5,17 @@ import { ordenarPiezasHdr } from './ordenPiezas';
 import type { ModuloHDR } from './actions';
 import { esPanel, nombrePanel } from '@/lib/nombres-modulos';
 import { noLlevaCanto } from '@/lib/cantos';
+import { consolidarGrupo } from '@/lib/group-result';
+import type { GroupCalculation } from '@/lib/group-engine';
 export type TableroHdr = { codigo: string; espesor_mm: number | null };
+export type ResultadoHdr = Omit<CotizarResult, 'piezas'> & { piezas: (CotizarResult['piezas'][number] & { tableroCodigo?: string })[] };
+
+/** Suma las asignaciones de costo antes de convertirlas en piezas físicas enteras. */
+export function resultadoFisicoHdr(grupo: GroupCalculation, trm: number, margen: number): ResultadoHdr {
+  const lineas = grupo.lineas.map(linea => ({ ...linea, piezas: linea.piezas.map(p => ({ ...p, tableroCodigo: linea.maderaPorRol.find(m => m.rol === p.rol)?.codigo })) }));
+  const resultado = consolidarGrupo({ ...grupo, lineas }, { trm, margen });
+  return { ...resultado, vars: { ...resultado.vars, n_puertas: grupo.lineas.reduce((n, l) => n + (l.vars.n_puertas ?? 0), 0) } };
+}
 type Tablero = TableroHdr;
 
 /** La misma resolución para la tabla y sus exportaciones. */
@@ -63,6 +73,8 @@ function espesorCantoLabel(calibre: string | null): string {
 }
 
 export type FilaHDR = {
+  origen?: string;
+  tableroCodigo?: string;
   letra: string;
   pieza: string;
   largoMm: number;
@@ -75,7 +87,7 @@ export type FilaHDR = {
   espesorCanto: string;
 };
 
-export function construirFilas(res: CotizarResult, tableros: Tablero[]): FilaHDR[] {
+export function construirFilas(res: ResultadoHdr, tableros: Tablero[]): FilaHDR[] {
   const rolToEspesor: Record<string, number | null> = {};
   for (const m of res.maderaPorRol) {
     rolToEspesor[m.rol] = tableros.find((t) => t.codigo === m.codigo)?.espesor_mm ?? null;
@@ -91,9 +103,12 @@ export function construirFilas(res: CotizarResult, tableros: Tablero[]): FilaHDR
   for (const p of ordenarPiezasHdr(res.piezas.filter((p) => p.cant > 0), tienePuertas)) {
     const nombreBase = nombreProduccion(p.pieza, tienePuertas);
     const visible = esVisible(p.pieza);
-    const sinCanto = noLlevaCanto(rolToEspesor[p.rol]);
+    const tableroCodigo = p.tableroCodigo ?? res.maderaPorRol.find(m => m.rol === p.rol)?.codigo;
+    const espesor = p.tableroCodigo ? tableros.find(t => t.codigo === p.tableroCodigo)?.espesor_mm ?? null : rolToEspesor[p.rol] ?? null;
+    const sinCanto = noLlevaCanto(espesor);
     const espesorCanto = sinCanto ? '' : espesorCantoLabel(p.cantoCalibre);
     const n = Math.round(p.cant);
+    if (Math.abs(n - p.cant) > 0.000001) throw new Error(`La pieza ${p.pieza} tiene cantidad fraccionaria; debe generarse la HDR del grupo completo.`);
     for (let i = 0; i < n; i++) {
       const esLateralPar = p.pieza === 'lateral' && n === 2;
       const esBaseTapa = p.pieza === 'base_tapa' && n === 2;
@@ -111,11 +126,13 @@ export function construirFilas(res: CotizarResult, tableros: Tablero[]): FilaHDR
       // Orientación de presentación compartida con el despiece del Simulador.
       const orientada = orientarPieza(p);
       filas.push({
+        origen: p.compartida ? 'Compartida del grupo' : p.origen,
+        tableroCodigo,
         letra: siguienteLetra(),
         pieza: nombre,
         largoMm: orientada.largoIn * 25.4,
         anchoMm: orientada.anchoIn * 25.4,
-        espesorMm: rolToEspesor[p.rol] ?? null,
+        espesorMm: espesor,
         cantoLargoColor: !sinCanto && visible ? p.cantoLargos : 0,
         cantoAnchoColor: !sinCanto && visible ? p.cantoAnchos : 0,
         cantoLargoBlanco: !sinCanto && !visible ? p.cantoLargos : 0,
@@ -145,13 +162,15 @@ export function consolidarModulosHdr(modulos: readonly ModuloHDR[]): ModuloHDR[]
   const keys = new Map<string, number>();
   for (const m of modulos) {
     const cantidad = m.cantidad * (m.repeticionesArea ?? 1);
-    if (!m.ok) { result.push({ ...m, cantidad }); continue; }
+    const origenes = m.origenes ?? [{ lineaId: m.lineaId, codigoModulo: m.codigoModulo, cantidad: m.cantidad, repeticionesArea: m.repeticionesArea ?? 1 }];
+    if (!m.ok) { result.push({ ...m, cantidad, repeticionesArea: 1, origenes }); continue; }
     const key = JSON.stringify({ codigo: m.codigoModulo, descripcion: m.nombreDescriptivo ?? descripcionModulo(m.result, m.pref),
-      piezas: m.result.piezas.map(p => [p.pieza, p.rol, p.cant, p.largoIn, p.anchoIn, p.cantoLargos, p.cantoAnchos, p.cantoCalibre]),
-      materiales: m.result.maderaPorRol.map(p => [p.rol, p.codigo]).sort((a,b) => a[0].localeCompare(b[0])) });
+      piezas: m.result.piezas.filter(p => p.cant > 0).map(p => [p.pieza, p.rol, p.cant, p.largoIn, p.anchoIn, p.cantoLargos, p.cantoAnchos, p.cantoCalibre, p.tableroCodigo, p.origen]).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+      materiales: m.result.maderaPorRol.filter(p => p.cm2 == null || p.cm2 > 0).map(p => [p.rol, p.codigo]).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+      herrajes: (m.result.herrajes ?? []).filter(h => h.cant > 0).map(h => [h.rol, h.codigo, h.cant]).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b))) });
     const index = keys.get(key);
-    if (index === undefined) { keys.set(key, result.length); result.push({ ...m, cantidad }); }
-    else result[index] = { ...result[index], cantidad: result[index].cantidad + cantidad };
+    if (index === undefined) { keys.set(key, result.length); result.push({ ...m, cantidad, repeticionesArea: 1, origenes }); }
+    else result[index] = { ...result[index], cantidad: result[index].cantidad + cantidad, origenes: [...(result[index].origenes ?? []), ...origenes] };
   }
   return result;
 }

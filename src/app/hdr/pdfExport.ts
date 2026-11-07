@@ -2,6 +2,7 @@
 const CARTA_ANCHO_MM = 215.9;
 const CARTA_ALTO_MM = 279.4;
 const MARGEN_MM = 10;
+import type { GuardarArchivoHdr } from './destinoExportacion';
 
 // Exporta un nodo del DOM (la tarjeta de una hoja HDR) a un PDF independiente,
 // como una imagen del nodo tal cual se ve en pantalla -- mismo look, mismo logo,
@@ -13,12 +14,20 @@ const MARGEN_MM = 10;
 // HDR es ancha (11 columnas), así que se ajusta en orientación horizontal si el
 // contenido es más ancho que alto, o vertical si no, y se escala para llenar la
 // página respetando el margen y sin deformar la proporción original.
-export async function exportarNodoAPdf(el: HTMLElement, filename: string): Promise<void> {
+export async function exportarNodoAPdf(el: HTMLElement, filename: string, guardar?: GuardarArchivoHdr): Promise<void> {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
     import('html2canvas-pro'),
     import('jspdf'),
   ]);
-  const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' });
+  const ancho = Math.ceil(Math.max(el.getBoundingClientRect().width, ...Array.from(el.querySelectorAll<HTMLElement>('.overflow-x-auto')).map(n => n.scrollWidth + 2)));
+  const canvas = await html2canvas(el, {
+    scale: 2, backgroundColor: '#ffffff', width: ancho,
+    windowWidth: Math.max(document.documentElement.clientWidth, ancho + 40),
+    onclone: (_document, clon) => {
+      clon.style.width = `${ancho}px`; clon.style.maxWidth = 'none'; clon.style.overflow = 'visible';
+      clon.querySelectorAll<HTMLElement>('.overflow-x-auto').forEach(n => { n.style.overflow = 'visible'; });
+    },
+  });
   const imgData = canvas.toDataURL('image/png');
   // 96dpi (estandar CSS) -> mm, y /2 por el scale:2 usado arriba (mas nitidez sin agrandar la imagen).
   const pxToMm = (px: number) => (px / 2) * 0.264583;
@@ -43,7 +52,8 @@ export async function exportarNodoAPdf(el: HTMLElement, filename: string): Promi
     format: 'letter',
   });
   doc.addImage(imgData, 'PNG', x, y, finalAnchoMm, finalAltoMm);
-  doc.save(filename);
+  if (guardar) await guardar(filename, doc.output('blob'));
+  else doc.save(filename);
 }
 
 const REEMPLAZOS: Record<string, string> = {
