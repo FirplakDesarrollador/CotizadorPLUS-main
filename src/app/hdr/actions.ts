@@ -4,8 +4,8 @@ import {
   getCotizacion, listarCotizaciones, inputDesdeLinea,
   type CotizacionHeader, type LineaPersistida,
 } from '@/lib/cotizaciones';
-import { cotizar, cotizarGrupo, type CotizarResult } from '@/lib/cotizar';
-import { descripcionPiezaPlanaHdr } from './datosHdr';
+import { cotizar, cotizarGrupo, cargarCatalogoPrecompilado, type CotizarResult } from '@/lib/cotizar';
+import { descripcionPiezaPlanaHdr, descripcionModulo, resultadoFisicoHdr, type ResultadoHdr } from './datosHdr';
 import { esModuloLinea } from '@/lib/materiales-linea';
 
 async function assertAdmin() {
@@ -28,7 +28,8 @@ export type ModuloHDR = {
   cantidad: number;
   /** Grupo físico (laterales compartidos). Las líneas de un grupo no se separan. */
   grupoId: string | null;
-} & ({ ok: true; result: CotizarResult } | { ok: false; error: string });
+  origenes?: { lineaId: string; codigoModulo: string; cantidad: number; repeticionesArea: number }[];
+} & ({ ok: true; result: ResultadoHdr } | { ok: false; error: string });
 
 // Recalcula, con las fórmulas ACTUALES del motor (no la foto guardada en `breakdown`,
 // que puede venir de antes de un fix), el despiece de cada módulo de una cotización.
@@ -70,14 +71,23 @@ export async function modulosDeCotizacionAction(cotizacionId: string): Promise<M
       const result = await cotizar(inputDesdeLinea(linea));
       resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), nombreDescriptivo: descripcion(linea), pref: linea.pref ?? undefined, repeticionesArea, cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
     } catch (e) {
-      resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: false, error: e instanceof Error ? e.message : 'Error' });
+      resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), cocinaNombre, repeticionesArea, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: false, error: e instanceof Error ? e.message : 'Error' });
     }
   }
 
+  const catalogo = porGrupo.size ? await cargarCatalogoPrecompilado() : undefined;
   for (const grupo of porGrupo.values()) {
     try {
       const inputs = grupo.map(({ linea }) => inputDesdeLinea(linea));
-      const calculated = await cotizarGrupo(inputs);
+      const calculated = await cotizarGrupo(inputs, catalogo);
+      if (grupo.length > 1) {
+        if (grupo.some(m => Number(m.linea.cantidad) !== 1 || m.repeticionesArea !== grupo[0].repeticionesArea)) throw new Error('El grupo físico tiene cantidades o repeticiones incompatibles; revísalo antes de generar HDR.');
+        const origenes = grupo.map(({ linea, repeticionesArea }) => ({ lineaId: linea.id, codigoModulo: etiqueta(linea), cantidad: Number(linea.cantidad), repeticionesArea }));
+        const nombres = grupo.map(({ linea }, i) => `A${i + 1}: ${descripcion(linea) ?? descripcionModulo(calculated.lineas[i] as CotizarResult, linea.pref ?? undefined)}`.trim());
+        const result = resultadoFisicoHdr(calculated, Number(inputs[0].trm ?? 4200), Number(calculated.preparados[0]?.margen ?? 0));
+        resultados.push({ lineaId: grupo[0].linea.id, codigoModulo: `GRUPO ${grupo.map(({ linea }) => etiqueta(linea)).join(' + ')}`, nombreDescriptivo: nombres.join(' | '), cocinaNombre: grupo[0].cocinaNombre, repeticionesArea: grupo[0].repeticionesArea, cantidad: 1, grupoId: grupo[0].linea.grupo_id ?? null, origenes, ok: true, result });
+        continue;
+      }
       grupo.forEach(({ linea, cocinaNombre, repeticionesArea }, i) => {
         const base = calculated.lineas[i] as CotizarResult;
         const result: CotizarResult = {
@@ -89,8 +99,8 @@ export async function modulosDeCotizacionAction(cotizacionId: string): Promise<M
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error';
-      for (const { linea, cocinaNombre } of grupo) {
-        resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: false, error: msg });
+      for (const { linea, cocinaNombre, repeticionesArea } of grupo) {
+        resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), cocinaNombre, repeticionesArea, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: false, error: msg });
       }
     }
   }
