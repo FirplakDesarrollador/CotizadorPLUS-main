@@ -8,6 +8,11 @@ import { noLlevaCanto } from '@/lib/cantos';
 export type TableroHdr = { codigo: string; espesor_mm: number | null };
 type Tablero = TableroHdr;
 
+/** La misma resolución para la tabla y sus exportaciones. */
+export function normalizarColorHdr(valor?: string | null, heredado?: string | null): string {
+  return valor?.trim() || heredado?.trim() || 'Por definir';
+}
+
 export function descripcionPiezaPlanaHdr(pref?: string | null, anotaciones?: string | null): string | undefined {
   const nota = anotaciones?.trim().replace(/[.\s]+$/, '');
   return esPanel(pref) ? nombrePanel(nota) : /^F(?:-|$)/i.test(pref ?? '') ? `F - Filler${nota ? ` ${nota}` : ''}` : undefined;
