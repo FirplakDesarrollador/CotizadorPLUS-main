@@ -2950,3 +2950,9 @@ Migración 0253, normalización compartida y caché v17.
 ## [2026-11-07] update | Publicación de reglas de fabricación, HDR Excel y tipologías LIz a DEV y main
 
 Validación de publicación: compilación de producción y quality:gate:full aprobados (126 suites, 766 pruebas). Supabase confirma migraciones 0248–0253 aplicadas. Auditoría de doce cotizaciones: cero diferencias y errores. Se conserva la deuda del baseline.
+
+## [2026-11-07] update | Precarga editable del proyecto y colores heredados sin vacíos en HDR
+
+Campo común de proyecto desde la cotización; edición individual por mueble y pieza, valores de color no vacíos y exportación coherente.
+
+Publicación solicitada LIz → DEV → main: compilación y gate completo aprobados con 768 pruebas; revisión de Excel/PDF e integridad de cotizaciones sin errores. Supabase verificado, sin cambios de esquema necesarios.

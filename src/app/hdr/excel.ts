@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import type { DatosHdrExcel } from './HdrTabla';
+import { normalizarColorHdr } from './datosHdr';
 
 /** Una fila por pieza, sin bloques por área, en el mismo orden de las HDR visibles. */
 export function crearWorkbookHdr(modulos: readonly DatosHdrExcel[]): ExcelJS.Workbook {
@@ -8,7 +9,7 @@ export function crearWorkbookHdr(modulos: readonly DatosHdrExcel[]): ExcelJS.Wor
   ws.addRow(['Módulo', 'Letra', 'Pieza', 'Largo (mm)', 'Ancho (mm)', 'Espesor (mm)', 'Canto largo Color', 'Canto ancho Color', 'Canto largo Blanco', 'Canto ancho Blanco', 'Espesor canto (mm)', 'Cantidad módulos', 'Color general', 'Proyecto', 'Color pieza']);
   for (const m of modulos) for (const f of m.filas) {
     const espesor = f.espesorCanto === '' ? null : Number(f.espesorCanto.replace(',', '.'));
-    ws.addRow([m.titulo, f.letra, f.pieza, Number(f.largoMm.toFixed(1)), Number(f.anchoMm.toFixed(1)), f.espesorMm, f.cantoLargoColor, f.cantoAnchoColor, f.cantoLargoBlanco, f.cantoAnchoBlanco, espesor != null && Number.isFinite(espesor) ? espesor : null, m.cantidad.trim() === '' ? null : Number(m.cantidad), m.color, m.proyecto, f.color]);
+    ws.addRow([m.titulo, f.letra, f.pieza, Number(f.largoMm.toFixed(1)), Number(f.anchoMm.toFixed(1)), f.espesorMm, f.cantoLargoColor, f.cantoAnchoColor, f.cantoLargoBlanco, f.cantoAnchoBlanco, espesor != null && Number.isFinite(espesor) ? espesor : null, m.cantidad.trim() === '' ? null : Number(m.cantidad), normalizarColorHdr(m.color), m.proyecto, normalizarColorHdr(f.color, m.color)]);
   }
   ws.columns.forEach((c, i) => { c.width = i === 0 ? 65 : i === 2 ? 25 : i >= 12 ? 24 : 19; });
   for (const index of [4, 5, 6]) ws.getColumn(index).numFmt = '0.0';
