@@ -1,5 +1,7 @@
 # BOV24 desde hoja real
 
+**Regla vigente desde 2026-11-07:** el frente es interno, sin holguras adicionales, y la base descuenta el espesor real del refuerzo. BOV-SMG deja además 73 mm superiores. La tabla y fórmulas siguientes son la referencia histórica sustituida, no las medidas actuales; véase [BOV interno y BOV-SMG](bov_frente_interno_smg.md).
+
 La hoja `HRJ BOV24 SMG Expocamacol` confirma un mueble de 24×30×24 pulgadas
 con cinco renglones y siete piezas físicas: una base, dos laterales, dos rails
 traseros, un rail delantero y un frente de horno.

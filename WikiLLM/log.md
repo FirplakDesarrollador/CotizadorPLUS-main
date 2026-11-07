@@ -2914,3 +2914,39 @@ Regla confirmada: inferior=(alto−60)/2; superior y central=inferior/2−3,2. M
 ## [2026-11-06] update | Nombres coherentes por dimensiones, PN con notas y espesor del frente
 
 Se completaron dimensiones no estándar, se simplificó PN, se reconstruyen nombres históricos en lectura y se preservan códigos/grupos/exportaciones. Migración 0247 y reparación atómica con respaldo; comparación de 1.042 líneas sin cambios fuera de nombres y matriz de 756 combinaciones. El PDF explicita materiales individuales. Véase [nombres comerciales](wiki/nombres_comerciales_modulos.md).
+
+## [2026-11-06] update | Exclusión de artículos de "Agregar herrajes" en HDR y Optimizador
+
+Se implementó el filtro canónico `esModuloLinea()` en `src/lib/materiales-linea.ts` y se aplicó en `modulosDeCotizacionAction()` (`src/app/hdr/actions.ts`), fuente compartida para `/hdr` y `/optimizador` (`proyectoDesdeCotizacionAction()` en `src/app/optimizador/actions.ts`). Los artículos de material suelto agregados desde "+ Agregar herrajes/otros" (herrajes, cantos, tableros con `tipo_mueble_id: null` o `clasificacionPdf: 'herrajes_otros'`) quedan totalmente excluidos al seleccionar una cotización en ambas vistas. Se eliminan los falsos errores de tipología no encontrada en HDR y Optimizador, asegurando que solo se presenten y optimicen módulos reales. Pruebas unitarias en `tests/materiales-linea.test.ts` y `tests/hdr-optimizador-modulos-filtro.test.ts`. Gate y learn en verde. Véase [líneas de material suelto](wiki/lineas_material_suelto.md).
+
+## [2026-11-06] update | Continuación de Antigravity: puertas, ejes y cantos
+
+Migración 0248 idempotente, normalización compartida y recálculo atómico con respaldo de doce cotizaciones/793 grupos. Se preservaron las 1.045 líneas y 220 adicionales; única selección corregida: BFD de 43 cm con una puerta. PC de 84 cm conserva cuatro por confirmación del usuario. Comparación estricta de configuración y segunda corrida sin pendientes; navegador HDR/optimizador y dos PDF independientes verificados. Véase [puertas y cantos](wiki/puertas_cantos_orientacion.md).
+
+## [2026-11-07] update | HDR consolidada, Excel continuo y correcciones de puertas/DB-FE
+
+Se eliminan áreas/sufijos de rol de los títulos y piezas, se consolidan muebles equivalentes con cantidades totales editables y se exporta Excel continuo con valores editados. Migración 0249: cantidad física BFD/SBFD-SMG según regla, dos largos de canto en pieza cajón DB sin FE y tablero caja para gavetas DB-FE. Doce cotizaciones/805 grupos recalculados con respaldo y segunda corrida sin pendientes. Véase [HDR consolidada](wiki/hdr_excel_consolidado.md).
+
+## [2026-11-07] update | Materiales de 4,5/5,5/6/9 mm sin canto
+
+Regla por espesor real en el motor, prevalente sobre overrides, sin calibre/aristas/consumo/costo; defensa en HDR/Excel y sincronización de resultados restaurados. Caché v13 conserva entradas. Doce cotizaciones/805 grupos recalculados con respaldo: 1.054 líneas, geometría/materiales/herrajes intactos y segunda corrida sin pendientes. WLD verificado en navegador, Excel y PDF; véase [cantos por espesor](wiki/cantos_por_espesor.md).
+
+## [2026-11-07] update | BOV interno sin holguras y variante BOV-SMG
+
+Migración 0250 crea el clon, conserva herrajes/carcasa y deja 73 mm superiores exactos en el frente. BOV/BOV-SF reciben frente interno y base P-TR. Cuatro registros de Condominio V (24 unidades) convertidos a BOV-SMG, con respaldo y recálculo. Comparación estricta de selecciones/herrajes y auditoría de grupos BOV sin pendientes; HDR, Excel, selectores y dos PDF verificados. Véase [BOV interno y SMG](wiki/bov_frente_interno_smg.md).
+
+## [2026-11-07] update | Frentes 2S SM/SMG con luz 1,6 mm, gavetas FE por profundidad y material real, clones SVFDH y códigos PN/F según tablero
+
+Migración 0251; se conserva temporalmente RIELFE500 en todos los largos por decisión del usuario.
+
+## [2026-11-07] update | Fondos de gaveta DB-FE y variantes con el mismo tablero y espesor del respaldo
+
+Migración 0252 y normalización compartida, conservación del fondo de cajón en SF, consumo por rol fondo y caché del simulador v16.
+
+## [2026-11-07] update | Refuerzo delantero de 80 mm en SVFDH-SMG y SVFDH-SMG-SF
+
+Migración 0253, normalización compartida y caché v17.
+
+## [2026-11-07] update | Publicación de reglas de fabricación, HDR Excel y tipologías LIz a DEV y main
+
+Validación de publicación: compilación de producción y quality:gate:full aprobados (126 suites, 766 pruebas). Supabase confirma migraciones 0248–0253 aplicadas. Auditoría de doce cotizaciones: cero diferencias y errores. Se conserva la deuda del baseline.

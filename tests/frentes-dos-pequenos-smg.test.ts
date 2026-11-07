@@ -22,7 +22,7 @@ function input(pref: string, altoMm: number): CalcInput {
 
 test('SM/SMG 2S y sus variantes FE/SF cumplen el ejemplo y cierran altura, golas y luces', () => {
   for (const pref of ['DB-2S-SMG', 'DB-2S-SMG-FE', 'DB-2S-SMG-SF', 'DB-2S-SMG-FE-SF', 'DB-2S-SM', 'DB-2S-SM-FE', 'DB-2S-SM-SF', 'DB-2S-SM-FE-SF']) {
-    for (const [alto, grande, pequeno] of [[780, 360, 176.8], [785, 362.5, 178.05], [762, 351, 172.3]]) {
+    for (const [alto, grande, pequeno] of [[780, 360, 178.4], [785, 362.5, 179.65], [762, 351, 173.9]]) {
       const resultado = calcularMueble(input(pref, alto));
       const small = resultado.piezas.find(p => p.pieza === 'frente_gaveta_pequena')!;
       const big = resultado.piezas.find(p => p.pieza === 'frente_gaveta_grande')!;
@@ -30,7 +30,7 @@ test('SM/SMG 2S y sus variantes FE/SF cumplen el ejemplo y cierran altura, golas
       assert.ok(Math.abs(big.anchoIn * 25.4 - grande) < 0.001, pref);
       assert.ok(Math.abs(small.largoIn * 25.4 - 646.8) < 0.001);
       assert.equal(small.cant, 2); assert.equal(big.cant, 1);
-      assert.ok(Math.abs(2 * small.anchoIn * 25.4 + big.anchoIn * 25.4 + 60 + 2 * 3.2 - alto) < 0.001);
+      assert.ok(Math.abs(2 * small.anchoIn * 25.4 + big.anchoIn * 25.4 + 60 + 2 * 1.6 - alto) < 0.001);
       assert.equal(small.cantoCalibre, '22x1');
     }
   }
@@ -53,7 +53,7 @@ test('la visualización usa dos espacios de gola de 30 mm y conserva las alturas
   const escena = construirVisualizacion([miembro], grupo);
   const frentes = escena.paneles.filter(p => p.funcion === 'frente_gaveta').sort((a, b) => b.z - a.z);
   assert.equal(frentes.length, 3);
-  assert.ok(Math.abs(frentes[0].h - 176.8) < 0.001);
+  assert.ok(Math.abs(frentes[0].h - 178.4) < 0.001);
   assert.ok(Math.abs(frentes[2].h - 360) < 0.001);
   assert.ok(Math.abs(frentes[0].z + frentes[0].h - 750) < 0.001, 'la gola superior ocupa 30 mm');
   assert.ok(Math.abs(frentes[2].z) < 0.001, 'el frente inferior llega al borde inferior');
@@ -77,7 +77,7 @@ test('el preparador compartido corrige también un catálogo precargado con las 
     };
     const preparado = await preparar({ tipoId: 'tipo', largo: 650, alto: 780, prof: 610, unidad: 'mm', preset: calc.preset, conHerrajes: false, overrides: { gola: 1 } }, catalogo);
     const resultado = calcularMueble(preparado.calc);
-    assert.ok(Math.abs(resultado.piezas.find(p => p.pieza === 'frente_gaveta_pequena')!.anchoIn * 25.4 - 176.8) < 0.001, pref);
+    assert.ok(Math.abs(resultado.piezas.find(p => p.pieza === 'frente_gaveta_pequena')!.anchoIn * 25.4 - 178.4) < 0.001, pref);
     assert.ok(Math.abs(resultado.piezas.find(p => p.pieza === 'frente_gaveta_grande')!.anchoIn * 25.4 - 360) < 0.001, pref);
   }
 });

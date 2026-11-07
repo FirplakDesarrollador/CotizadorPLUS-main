@@ -109,3 +109,19 @@ export function grupoSeSaltaElMotor(
 ): boolean {
   return lineas.some((l) => !l.tipo_mueble_id);
 }
+
+/**
+ * Determina si una línea corresponde a un módulo de mueble real.
+ * Excluye los artículos agregados por "+ Agregar herrajes/otros" (material suelto:
+ * herrajes, cantos, tableros), que no son módulos, no tienen despiece ni deben
+ * incluirse en HDR u Optimizador.
+ */
+export function esModuloLinea(linea: {
+  tipo_mueble_id?: string | null;
+  config?: Record<string, unknown> | null;
+}): boolean {
+  if (!linea.tipo_mueble_id) return false;
+  const cfg = linea.config as { material?: unknown; clasificacionPdf?: unknown } | null | undefined;
+  if (cfg?.material || cfg?.clasificacionPdf === 'herrajes_otros') return false;
+  return true;
+}

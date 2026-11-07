@@ -249,7 +249,7 @@ export default function AddLineForm({
   const [error, setError] = useState<string | null>(null);
 
   // Mapeos y opciones
-  const rolesBase = Array.from(new Set([...(rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo']), ...(usaTableroGaveta(prefMaterial) ? ['gaveta'] : [])]));
+  const rolesBase = Array.from(new Set([...(rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo']).filter(rol => !esTipologiaDbFe(prefMaterial) || rol !== 'gaveta'), ...(usaTableroGaveta(prefMaterial) ? ['gaveta'] : [])]));
   const roles = usaCajaMaterialFrente(prefMaterial) ? Array.from(new Set([...rolesBase, 'frente'])) : rolesBase;
   const prefTipo = tipos.find((t) => t.id === tipoId)?.pref ?? '';
   const fuerzaConFondo = esMuebleSuperior(prefTipo) || esIndependienteDeFondo(prefTipo);

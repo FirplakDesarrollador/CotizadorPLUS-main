@@ -238,7 +238,12 @@ export const useSimuladorStore = create<SimuladorState>()(
       // y el Simulador pide recalcular en vez de renderizar campos ausentes.
       // v10: descarta resultados anteriores al material separado de gaveta.
       // v11: conserva entradas y notas; descarta resultados con nombres históricos.
-      version: 11,
+      // v12: recalcular puertas, cantos DB y material de gaveta DB-FE con las reglas vigentes.
+      // v13: ningún resultado anterior puede conservar canto en materiales de 4,5/5,5/6/9 mm.
+      // v14: descarta geometría BOV anterior al frente interno y a la variante SMG.
+      // v16: los fondos de gaveta FE usan el material del respaldo.
+      // v17: refuerzo delantero SVFDH-SMG/SF de 80 mm.
+      version: 17,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {

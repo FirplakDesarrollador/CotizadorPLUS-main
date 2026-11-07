@@ -1,5 +1,7 @@
 import { evalExpr, type Pieza } from './engine';
 import { usaHoodSm } from './hood-sm';
+import { usaFrentesDosPequenosGola } from './frentes-gaveta';
+import { herrajesFijosDbFe } from './gavetas';
 import { isUpperCabinetGroup, normalizeUpperCabinetBaseAndTop, type GroupCalculation, type PreparedGroupMember } from './group-engine';
 import { inferirMontaje, validarMontaje, type FuncionMontaje, type MontajeConfig } from './visualizacion-config';
 
@@ -166,7 +168,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const drawerSlots: {z:number;h:number;key:string;interior?:boolean}[]=[];
     const gola=vars.gola ? (vars.espacio_gola != null ? mm(2 * vars.espacio_gola) : 53.6) : 0;
     if(fronts.length) {
-      const sum=fronts.reduce((s,f)=>s+f.item.h,0), gap=3.2;
+      const sum=fronts.reduce((s,f)=>s+f.item.h,0), gap=usaFrentesDosPequenosGola(pref)?1.6:3.2;
       let z = doors.length > 0
         ? A - (gola ? gola : 0) - gap
         : A - Math.max(0, (innerH - sum - (fronts.length - 1) * gap - gola) / 2);
@@ -480,7 +482,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
             z=(slot?.z??foot)+30+Math.max(0,(lateralHeight??h)-h)+drawerBodyOffsetZ(drawerIndex);
             break;
           }
-          case 'lateral_gaveta': x=i%2===0?TC+12:L-TC-12-w; y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0); z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
+          case 'lateral_gaveta': { const luzRiel=herrajesFijosDbFe(pref)?13:12; x=i%2===0?TC+luzRiel:L-TC-luzRiel-w; y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0); z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break; }
           case 'frente_interior': x=(L-w)/2; y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0); z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
           case 'gola':
             if (esBBLFDSm && p.nombre === 'gola_madera') {

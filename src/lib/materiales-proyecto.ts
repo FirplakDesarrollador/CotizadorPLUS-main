@@ -1,5 +1,6 @@
 import { CLAVE_CONFIG_FAMILIA, familiaMaterialPorPrefijo, type FamiliaMaterial } from './muebles';
 import { usaTableroGaveta } from './gavetas';
+import { noLlevaCanto } from './cantos';
 
 export type MaterialesFamilia = { preset?: Record<string, string>; cantoCaja?: string; cantoFrentes?: string };
 export type PersonalizacionMateriales = MaterialesFamilia;
@@ -98,31 +99,38 @@ export function materialesDelDespieceCoinciden(breakdown: Record<string, unknown
 export type EspecificacionProyecto = { familia: FamiliaMaterial; titulo: string; filas: Array<[string, string]> };
 type LineaEspecificacion = { pref?: string | null; codigo_modulo?: string | null; config?: (MaterialesFamilia & { personalizacionMateriales?: PersonalizacionMateriales | null }) | null };
 export function especificacionesProyecto(config: ConfigMaterialesProyecto, catalogo: readonly TableroProyecto[], areas: readonly { nombre: string; lineas: readonly LineaEspecificacion[] }[] = []): EspecificacionProyecto[] {
+  const cantoEfectivo = (codigo: string | undefined, calibre?: string) => {
+    const tablero = catalogo.find(t => t.codigo === resolverCodigoTablero(codigo ?? '', catalogo));
+    return noLlevaCanto(tablero?.espesor_mm) ? `Sin canto (tablero de ${tablero?.espesor_mm} mm)` : calibre || 'No configurado';
+  };
   const familias: Array<[FamiliaMaterial, string]> = [['superior', 'Muebles superiores cocina'], ['inferior', 'Muebles inferiores cocina'], ['closet', 'Closet / Walk in closet'], ['banos', 'Baños / Auxiliares']];
   const generales = familias.flatMap(([familia, titulo]) => {
     const seleccion = config[CLAVE_CONFIG_FAMILIA[familia] as keyof ConfigMaterialesProyecto] as MaterialesFamilia | undefined;
     const materiales = seleccion ?? (familia === 'inferior' ? { preset: config.preset, cantoCaja: config.cantoCaja, cantoFrentes: config.cantoFrentes } : undefined);
     if (!materiales?.preset) return [];
     const tieneAbiertos = areas.some(area => area.lineas.some(linea => usaCajaMaterialFrente(linea.pref) && familiaMaterialDelArea(linea.pref, area.nombre) === familia));
+    const tieneDbFe = areas.some(area => area.lineas.some(linea => /^DB-FE(?:-SF)?$/i.test(linea.pref ?? '') && familiaMaterialDelArea(linea.pref, area.nombre) === familia));
+    const tieneFondosFe = areas.some(area => area.lineas.some(linea => /^DB(?:-.*)?-FE(?:-SF)?$/i.test(linea.pref ?? '') && familiaMaterialDelArea(linea.pref, area.nombre) === familia));
     return [{ familia, titulo, filas: [
       ['Caja / refuerzos', descripcionTableroProyecto(materiales.preset.caja, catalogo)],
       ['Refuerzo', descripcionTableroProyecto(materiales.preset.refuerzo ?? materiales.preset.caja, catalogo)],
-      ...(materiales.preset.gaveta ? [['Tablero Gaveta (15 mm)', descripcionTableroProyecto(materiales.preset.gaveta, catalogo)]] : []),
+      ...(materiales.preset.gaveta ? [[tieneDbFe ? 'Tablero Gaveta (15 mm; paredes DB-FE usan caja)' : 'Tablero Gaveta (15 mm)', descripcionTableroProyecto(materiales.preset.gaveta, catalogo)]] : []),
       ['Frentes / paneles / rellenos', descripcionTableroProyecto(materiales.preset.frente, catalogo)],
       ...(tieneAbiertos ? [['Caja / refuerzos de OBFD, OBFD-SM, OSBFD-SM, OW y OW-MO (incluidas variantes sin fondo)', descripcionTableroProyecto(materiales.preset.frente, catalogo)]] : []),
       ...(tieneAbiertos ? [['Fondo de abiertos OBFD, OBFD-SM, OSBFD-SM, OW y OW-MO (6 mm, color del frente; solo con fondo)', descripcionTableroProyecto(presetMaterialesTipologia(materiales.preset, 'OW').fondo, catalogo)]] : []),
       ['Fondo general (solo donde lleva espaldar; los abiertos usan el fondo indicado arriba)', descripcionTableroProyecto(materiales.preset.fondo, catalogo)],
-      ['Canto de caja', materiales.cantoCaja || 'No configurado'],
-      ['Canto de frentes', materiales.cantoFrentes || 'No configurado'],
+      ...(tieneFondosFe ? [['Fondo de gavetas DB-FE (todas las variantes; mismo tablero del espaldar)', descripcionTableroProyecto(materiales.preset.fondo, catalogo)]] : []),
+      ['Canto de caja', cantoEfectivo(materiales.preset.caja, materiales.cantoCaja)],
+      ['Canto de frentes', cantoEfectivo(materiales.preset.frente, materiales.cantoFrentes)],
     ] as Array<[string, string]> }];
   });
   const etiquetas: Record<string, string> = { caja: 'Caja', refuerzo: 'Refuerzos', frente: 'Frentes / paneles / rellenos', fondo: 'Fondo', gaveta: 'Tablero Gaveta' };
   const individuales: EspecificacionProyecto[] = areas.flatMap(area => area.lineas.flatMap(linea => {
     const seleccion = linea.config?.personalizacionMateriales;
     if (!seleccion) return [];
-    const filas: Array<[string, string]> = Object.entries(seleccion.preset ?? {}).map(([rol, codigo]) => [etiquetas[rol] ?? rol, descripcionTableroProyecto(linea.config?.preset?.[rol] ?? codigo, catalogo)]);
-    if (seleccion.cantoCaja) filas.push(['Canto de caja', seleccion.cantoCaja]);
-    if (seleccion.cantoFrentes) filas.push(['Canto de frentes', seleccion.cantoFrentes]);
+    const filas: Array<[string, string]> = Object.entries(seleccion.preset ?? {}).filter(([rol]) => rol !== 'gaveta' || usaTableroGaveta(linea.pref)).map(([rol, codigo]) => [etiquetas[rol] ?? rol, descripcionTableroProyecto(linea.config?.preset?.[rol] ?? codigo, catalogo)]);
+    if (seleccion.cantoCaja) filas.push(['Canto de caja', cantoEfectivo(linea.config?.preset?.caja, seleccion.cantoCaja)]);
+    if (seleccion.cantoFrentes) filas.push(['Canto de frentes', cantoEfectivo(linea.config?.preset?.frente, seleccion.cantoFrentes)]);
     return filas.length ? [{ familia: familiaMaterialDelArea(linea.pref, area.nombre), titulo: `Selección individual · ${linea.codigo_modulo ?? linea.pref ?? 'Mueble'} · ${area.nombre}`, filas }] : [];
   }));
   return [...generales, ...individuales];
