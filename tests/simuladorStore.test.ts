@@ -61,7 +61,23 @@ test('recupera medidas opcionales ausentes sin perder los módulos guardados', a
       assert.equal(store.getState().modulos[0].anotaciones,'lateral');
       assert.deepEqual(store.getState().preset,legacy.preset);
     });
-  } finally {
+      await t.test('descarta resultados v11 anteriores a las reglas de puertas y material DB-FE', async () => {
+        memory.setItem('simulador-storage', JSON.stringify({ version: 11, state: { ...legacy, anotaciones: 'conservar', modulos: [{ ...legacy, id: 'dbfe' }], result: { vars: { n_puertas: 1 }, piezas: [{ pieza: 'frente', cant: 2 }] } } }));
+        await store.persist.rehydrate();
+        assert.equal(store.getState().result, null);
+        assert.equal(store.getState().modulos[0].id, 'dbfe');
+        assert.equal(store.getState().anotaciones, 'conservar');
+        assert.deepEqual(store.getState().preset, legacy.preset);
+      });
+      await t.test('descarta resultados v12 con calibre en tablero delgado sin borrar entradas', async () => {
+        memory.setItem('simulador-storage', JSON.stringify({ version: 12, state: { ...legacy, modulos: [{ ...legacy, id: 'wld' }], result: { piezas: [{ pieza: 'fondo', cantoCalibre: '19x0,45' }] } } }));
+        await store.persist.rehydrate();
+        assert.equal(store.getState().result, null);
+        assert.equal(store.getState().modulos[0].id, 'wld');
+        assert.deepEqual(store.getState().preset, legacy.preset);
+        assert.equal(store.getState().alto, legacy.alto);
+      });
+    } finally {
     store.persist.clearStorage();
     if(previous)Object.defineProperty(globalThis,'localStorage',previous);
     else Reflect.deleteProperty(globalThis,'localStorage');

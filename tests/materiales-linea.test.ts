@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   calcularPrecioMaterial, descripcionMaterial, margenDeMaterial,
-  grupoSeSaltaElMotor, UNIDAD_MATERIAL, type MaterialLinea,
+  grupoSeSaltaElMotor, esModuloLinea, UNIDAD_MATERIAL, type MaterialLinea,
 } from '../src/lib/materiales-linea';
 
 // Lineas de material suelto anadidas a una cocina sin pasar por un modulo.
@@ -117,4 +117,40 @@ test('un grupo mezclado tambien se salta, para fallar del lado seguro', () => {
 
 test('un grupo vacio no se salta: lo gestiona la rama que lo elimina', () => {
   assert.equal(grupoSeSaltaElMotor([]), false);
+});
+
+// ---------------------------------------------------------------------------
+// esModuloLinea: identifica únicamente los módulos reales para HDR y Optimizador,
+// excluyendo los artículos agregados por "+ Agregar herrajes/otros".
+// ---------------------------------------------------------------------------
+
+test('esModuloLinea reconoce módulos con tipo_mueble_id y descarta materiales sueltos', () => {
+  // Módulo estándar
+  assert.equal(esModuloLinea({ tipo_mueble_id: 'tipo-b', config: { conHerrajes: true } }), true);
+  // Módulo sin herrajes
+  assert.equal(esModuloLinea({ tipo_mueble_id: 'tipo-w', config: { conHerrajes: false } }), true);
+  // Módulo con personalizaciones o grupo
+  assert.equal(esModuloLinea({ tipo_mueble_id: 'tipo-db', config: { dbTipo: '3' } }), true);
+
+  // Línea de material suelto sin tipo_mueble_id
+  assert.equal(esModuloLinea({ tipo_mueble_id: null, config: null }), false);
+  // Línea con config.material (herraje, tablero o canto suelto)
+  assert.equal(esModuloLinea({
+    tipo_mueble_id: null,
+    config: { material: { tipo: 'herraje', codigo: 'BISAGRAPAR', cantidad: 4, precioUnitarioCop: 5000 } },
+  }), false);
+  // Línea con clasificacionPdf = herrajes_otros
+  assert.equal(esModuloLinea({
+    tipo_mueble_id: null,
+    config: { clasificacionPdf: 'herrajes_otros' },
+  }), false);
+  // Línea anómala que tuviera tipo_mueble_id pero clasificacion herrajes_otros o material
+  assert.equal(esModuloLinea({
+    tipo_mueble_id: 'tipo-b',
+    config: { clasificacionPdf: 'herrajes_otros' },
+  }), false);
+  assert.equal(esModuloLinea({
+    tipo_mueble_id: 'tipo-b',
+    config: { material: { tipo: 'canto', codigo: '19x0,45', cantidad: 10, precioUnitarioCop: 400 } },
+  }), false);
 });

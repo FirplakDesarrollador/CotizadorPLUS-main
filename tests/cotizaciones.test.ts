@@ -162,6 +162,38 @@ test('reconstruir un módulo conserva activación y exclusiones de herrajes', ()
   assert.deepEqual(api.inputDesdeLinea({ ...linea, config: { conHerrajes: true, herrajesExcluidos: ['tornillo'] } }).herrajesExcluidos, ['tornillo']);
 });
 
+test('sincronizar un resultado histórico con fondo delgado recalcula aunque el material no cambie', async () => {
+  const previos = recalculos;
+  Object.assign(catalogo.tablerosByCode, { C6: { espesor_mm: 6 } });
+  tablas.cot_cotizaciones = [{ id: 'q', sistema_medida: 'metrico', config_default: {} }];
+  tablas.cot_cocinas = [{ id: 'a', cotizacion_id: 'q', nombre: 'Cocina', cantidad: 1 }];
+  tablas.cot_grupos_modulos = [{ id: 'g', cocina_id: 'a', cotizacion_id: 'q' }];
+  tablas.cot_tipos_mueble = [{ id: 'w', pref: 'W' }];
+  tablas.cot_tableros = [{ codigo: 'CLOSET', espesor_mm: 18 }, { codigo: 'C6', espesor_mm: 6 }];
+  tablas.cot_cotizacion_lineas = [{ id: 'l', cocina_id: 'a', cotizacion_id: 'q', grupo_id: 'g', tipo_mueble_id: 'w', pref: 'W', posicion_grupo: 1, cantidad: 1, largo: 60, alto: 80, prof: 30, unidad_dim: 'cm', config: { preset: { caja: 'CLOSET', fondo: 'C6' } }, breakdown: { maderaPorRol: [{ rol: 'caja', codigo: 'CLOSET' }, { rol: 'fondo', codigo: 'C6' }], piezas: [{ rol: 'fondo', cantoLargos: 0, cantoAnchos: 0, cantoCalibre: '19x0,45' }] } }];
+  assert.deepEqual(await api.sincronizarMaterialesCotizacion('q'), { corregidas: 1, grupos: 1 });
+  assert.equal(recalculos, previos + 1);
+  assert.deepEqual(await api.sincronizarMaterialesCotizacion('q'), { corregidas: 0, grupos: 0 });
+  assert.deepEqual((tablas.cot_cotizacion_lineas[0].config as Row).preset, { caja: 'CLOSET', fondo: 'C6' });
+  recalculos = previos;
+});
+
+test('recalcular conserva metadatos históricos y no agrega selecciones nulas ausentes', async () => {
+  const recalculosPrevios = recalculos;
+  tablas.cot_cotizaciones = [{ id: 'q', sistema_medida: 'metrico', config_default: {} }];
+  tablas.cot_cocinas = [{ id: 'a', cotizacion_id: 'q', nombre: 'Cocina', cantidad: 1 }];
+  tablas.cot_grupos_modulos = [{ id: 'g', cocina_id: 'a', cotizacion_id: 'q' }];
+  tablas.cot_cotizacion_lineas = [{ id: 'l', cocina_id: 'a', cotizacion_id: 'q', grupo_id: 'g', tipo_mueble_id: 'w', pref: 'W', posicion_grupo: 1, cantidad: 1, largo: 60, alto: 80, prof: 30, unidad_dim: 'cm', config: { preset: { caja: 'CLOSET' }, anotacionHistorica: 'conservar', cantoFrentes: null } }];
+  await api.recalcularGrupo('g');
+  const config = tablas.cot_cotizacion_lineas[0].config as Row;
+  assert.equal(config.anotacionHistorica, 'conservar');
+  assert.equal(Object.hasOwn(config, 'personalizacionMateriales'), false);
+  assert.equal(Object.hasOwn(config, 'barraCodigo'), false);
+  assert.equal(Object.hasOwn(config, 'cantoFrentes'), true);
+  assert.equal(config.cantoFrentes, null);
+  recalculos = recalculosPrevios;
+});
+
 test('copiar sección usa una sola RPC y conserva precios sin llamar al motor', async () => {
   const antes = recalculos;
   assert.equal(await api.duplicarCocina('origen', 'cotizacion'), 'nueva-seccion');

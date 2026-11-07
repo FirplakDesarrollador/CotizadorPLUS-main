@@ -1,5 +1,7 @@
 # DB-FE: cajonera paramétrica Full Extension
 
+Actualización 2026-11-07: DB-FE y su variante SF usan caja para paredes de gaveta, contraparche, laterales y traseros, sin selector independiente ni obligación de 15 mm. El piso de la gaveta usa el mismo tablero y espesor del respaldo en todas las variantes FE (migración 0252). HDR describe solo la cantidad de gavetas. Las otras tipologías FE conservan su selección; véase [migración 0249 y HDR](hdr_excel_consolidado.md).
+
 ## Catálogo y variantes
 
 `DB-FE` es una única tipología activa y agrupable. La migración `0236_db_fe.sql`, aplicada y registrada en Supabase, copia la DB vigente y sustituye únicamente la caja de gaveta Tandem por las piezas FE confirmadas de `DB-2S-SM-FE`. No crea una tipología independiente para cada variante y no incorpora Gola. Los prefijos imperial y métrico principales son DB-FE.
@@ -19,12 +21,14 @@ La opción manual conserva el comportamiento paramétrico de DB. La carcasa, fre
 
 ## Ajustes FE
 
-- Laterales de gaveta: 500 × 100 mm para pequeñas y 500 × 200 mm para grandes; dos por gaveta.
-- Traseros: largo `L-86 mm`; alturas 80 mm y 180 mm. Conservan cantos, tarugos y montaje del donante FE.
-- Contraparches: largo `L-86 mm`; alturas 100 mm y 200 mm. Uno por gaveta, con mecanizados FE.
-- Fondo de cada gaveta: una sola plantilla `fondo_gaveta`, largo 492 mm y ancho `L-72 mm`. Se elimina la `base_gaveta` Tandem para evitar duplicación de consumo.
+- Laterales de gaveta: largo 500 mm si P ≥ 609,6 mm; 450 mm si 533,4 ≤ P < 609,6 mm; 350 mm si P < 533,4 mm. Alturas 100 mm para pequeñas y 200 mm para grandes; dos por gaveta.
+- Traseros: largo `L − 2×espesor caja − 26 mm − 2×espesor lateral de gaveta`; alturas 80 mm y 180 mm. Conservan cantos, tarugos y montaje del donante FE.
+- Contraparches: largo `L − 2×espesor caja − 26 mm − 2×espesor lateral de gaveta`; alturas 100 mm y 200 mm. Uno por gaveta, con mecanizados FE.
+- Fondo de cada gaveta: una sola plantilla `fondo_gaveta`, largo del lateral menos 8 mm y ancho `L-72 mm`. Se elimina la `base_gaveta` Tandem para evitar duplicación de consumo.
 - Riel `RIELFE500`: un par por gaveta, con referencia y precio reales del catálogo; se conserva la manija de DB. No hay barras estabilizadoras Tandem ni Gola. El cambio no modifica el precio de RIELTANDEM en el catálogo precargado.
 - Para 2-1INT el visor adapta el orden de las cajas pequeña/grande/interior, usando el montaje FE ya existente.
+
+La migración 0251 aplica esas dimensiones a las variantes DB con FE y conserva sus roles de material. El refuerzo del mismo tablero que la caja respeta su canto seleccionado también en grupos mixtos; no se fuerza 1 mm. Las piezas de 4,5/5,5/6/9 mm siguen sin canto. Por autorización expresa, los largos 350/450 conservan temporalmente RIELFE500 y su precio vigente: solo cambian las piezas.
 
 ## Contrato entre pantallas y servidor
 
@@ -49,3 +53,19 @@ La implementación y las pruebas de interfaz se realizaron en LIz y entorno loca
 ## Verificación previa a publicación (2026-11-04)
 
 Por solicitud del usuario se prepara la integración LIz a DEV y DEV a main con todos los archivos. Migración 0236 confirmada en el historial de Supabase; tipo DB-FE activo y agrupable, 18 piezas y RIELFE500. Prueba SQL repetida con resultado correcto. `quality:gate:full`: 93 suites, exit 0. Nueva auditoría estricta de las 11 cotizaciones: cero diferencias y cero errores; el descuadre anterior de Condominio V ya no aparece en esta lectura, sin haber recalculado esa cotización dentro de esta publicación.
+
+## Verificación 2026-11-07 (0251)
+
+Recálculo atómico de 42 grupos afectados; auditoría de 12 cotizaciones y 1054 líneas: 35 módulos FE, 14 módulos 2S SM/SMG, 476 PN/F y 217 adicionales intactos. Dimensiones exteriores, cantidades, notas, áreas, grupos, configuración individual/global y herrajes comparados con respaldo: sin cambios. Auditoría estricta de propuestas: cero errores y cero diferencias. Códigos pendientes tras normalizar PN/F: cero.
+
+Chrome local: SVFDH/SVFDH-SMG, DB-FE a 440 mm y frentes 2S a 785 mm; cuatro Excel reabiertos con medidas numéricas, selector del simulador, cero errores de consola. Dos PDF de Casa A, seis páginas cada uno, texto idéntico y revisión de las doce páginas renderizadas. SVFDH clona las seis plantillas sin diferencias imprevistas; SMG solo cambia el alto de frente. Calidad: 126 archivos / 763 pruebas; gate exit 0; learn estricto sin HIGH.
+
+## Fondos de gaveta FE: actualización 0252
+
+`piezasConTableroGaveta` asigna `base_gaveta` y `fondo_gaveta` a `fondo` antes de las excepciones de caja o Tablero Gaveta. Aplica a DB-FE, SM/SMG con FE y sus variantes SF; se utiliza la referencia completa de `preset.fondo`, no solamente el espesor. No afecta las paredes, dimensiones ni cantidades de gaveta. El modo sin respaldo exterior conserva el piso del cajón. Las piezas de 4,5/5,5/6/9 mm siguen sin canto.
+
+Migración idempotente 0252 aplicada a plantillas. Caché del simulador v16 invalida resultados calculados con el material anterior sin borrar entradas. Las especificaciones impresas identifican el tablero del fondo de gavetas FE; los consumos y precios se recalculan por rol. Las selecciones individuales de fondo se conservan.
+
+Verificación de 0252: recálculo atómico de 35 grupos FE, 35 módulos y 125 fondos (cantidades de línea, antes de repeticiones de área). Referencia del rol fondo contrastada con preset.fondo y catálogo: cero diferencias. Auditoría estricta de las doce cotizaciones: cero errores y diferencias de totales. Integridad frente al respaldo: selecciones/globales, herrajes, dimensiones exteriores, cantidades y notas intactos. Chrome local verificó DB-FE, SMG-FE y SMG-FE-SF con fondos de 6 mm, control DB sin FE con 15 mm, cuatro Excel reabiertos con espesores numéricos y dos PDF de Casa A (seis páginas, texto idéntico y páginas renderizadas revisadas). Browser plugin no disponible; se utilizó Playwright.
+
+Las regresiones de material anterior se actualizaron con aserciones exactas del nuevo contrato: las paredes conservan caja; los pisos usan fondo. El fixture mínimo de cotizar incorpora ahora el tablero de respaldo requerido y comprueba su consumo; no se elimina ninguna aserción anterior.

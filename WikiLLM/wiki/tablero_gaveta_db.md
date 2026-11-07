@@ -2,12 +2,13 @@
 
 ## Alcance y cálculo
 
-Todas las tipologías cuyo prefijo sea DB o comience por DB-, incluidas SM,
-SM-SF, SMG y subtipologías, asignan `base_gaveta`,
+Las tipologías cuyo prefijo sea DB o comience por DB-, **excepto DB-FE y DB-FE-SF**, incluidas SM,
+SM-SF, SMG y subtipologías, asignan `base_gaveta` (salvo FE),
 `trasero_gaveta_pequena` y `trasero_gaveta_grande` al rol `gaveta`.
 La migración 0243 actualiza las plantillas y el preparador aplica la misma
 regla como defensa ante cachés antiguos. No modifica las fórmulas geométricas.
 El motor rechaza cualquier tablero de ese rol cuyo espesor real no sea 15 mm.
+Desde 2026-11-07, DB-FE/DB-FE-SF usan caja para paredes de gaveta, contraparche y laterales; no muestran selector independiente. Todos los fondos/bases de gaveta FE usan `preset.fondo`, igual que el backing, mediante 0252. Las otras FE conservan su asignación de paredes. Véase [HDR y migración 0249](hdr_excel_consolidado.md).
 Su área, desperdicio, cantos y costo se suman mediante el mismo recorrido de
 materiales; no se añaden otra vez como costo adicional.
 

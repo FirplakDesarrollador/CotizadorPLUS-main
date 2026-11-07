@@ -93,3 +93,58 @@ test('DB-FE agrupada comparte carcasa y conserva las cajas y rieles de cada mód
   assert.equal(escena.omitidas.length, 0);
   assert.ok(escena.paneles.some(p => p.nombre.includes('lateral_gaveta')));
 });
+
+test('DB-FE usa caja en las paredes de gaveta y el respaldo en los fondos, sin Tablero Gaveta histórico', async () => {
+  const p = await api.prepararCotizacion({ ...input('DB-2S'), preset: { caja: 'C18', refuerzo: 'C18', frente: 'F18', fondo: 'B6', gaveta: 'G15' } }, { ...catalogo, cantosByCalibre: { ...catalogo.cantosByCalibre, '22X0,45': { calibre: '22x0,45', precio: 100 } }, tablerosByCode: { ...catalogo.tablerosByCode, C18: { codigo: 'C18', espesor_mm: 18, precio_m2: 20 }, G15: { codigo: 'G15', espesor_mm: 15, precio_m2: 10 } } });
+  const result = calcularMueble(p.calc);
+  const gavetas = result.piezas.filter(p => /^(base_gaveta|fondo_gaveta|contraparche|lateral_gaveta|trasero_gaveta)(_|$)/.test(p.pieza));
+  assert.ok(gavetas.length > 0);
+  assert.ok(gavetas.every(p => p.rol === (/^(base_gaveta|fondo_gaveta)(_|$)/.test(p.pieza) ? 'fondo' : 'caja')));
+  const fondos = gavetas.filter(p => p.pieza === 'fondo_gaveta');
+  assert.equal(fondos.reduce((n,p)=>n+p.cant,0),3);
+  assert.ok(fondos.every(p=>!p.cantoCalibre));
+  assert.equal(result.maderaPorRol.find(m => m.rol === 'fondo')?.codigo, 'B6');
+  assert.equal(result.maderaPorRol.some(m => m.rol === 'gaveta'), false);
+  assert.equal(result.maderaPorRol.find(m => m.rol === 'caja')?.codigo, 'C18');
+});
+
+test('fondo FE respeta referencia y espesor del backing incluso cuando se omite el respaldo', async () => {
+  for(const espesor of [4.5,5.5,6,9]) for(const conFondo of [true,false]) {
+    const codigo=`BACK-${espesor}`;
+    const preparado=await api.prepararCotizacion({...input('DB-2S'),conFondo,preset:{caja:'C15',refuerzo:'C15',frente:'F18',fondo:codigo}},
+      {...catalogo,tablerosByCode:{...catalogo.tablerosByCode,[codigo]:{codigo,espesor_mm:espesor,precio_m2:4321}}});
+    const resultado=calcularMueble(preparado.calc);
+    const fondos=resultado.piezas.filter(p=>p.pieza==='fondo_gaveta');
+    assert.equal(fondos.reduce((n,p)=>n+p.cant,0),3);
+    assert.ok(fondos.every(p=>p.rol==='fondo'&&!p.cantoCalibre));
+    assert.equal(resultado.maderaPorRol.find(m=>m.rol==='fondo')?.codigo,codigo);
+    const grupo=await api.cotizarGrupo([{...input('DB-2S'),conFondo,preset:{caja:'C15',refuerzo:'C15',frente:'F18',fondo:codigo}}],
+      {...catalogo,tablerosByCode:{...catalogo.tablerosByCode,[codigo]:{codigo,espesor_mm:espesor,precio_m2:4321}}});
+    const escena=construirVisualizacion(grupo.preparados,grupo);
+    const paneles=escena.paneles.filter(p=>p.nombre==='fondo_gaveta');
+    assert.equal(paneles.length,3);
+    assert.ok(paneles.every(p=>p.material===codigo&&Math.abs(p.espesor-espesor)<0.001));
+  }
+});
+
+test('FE a 440 mm recalcula laterales, fondo, traseros y canto real sin cambiar RIELFE500', async () => {
+  for (const [prof,unidad] of [[440,'mm'],[44,'cm'],[440/25.4,'in']] as const) {
+    const factor=unidad==='mm'?1:unidad==='cm'?0.1:1/25.4;
+    for (const canto of ['22x1','22x0,45']) {
+      const p=await api.prepararCotizacion({...input('DB-2S'), largo:500*factor,alto:680*factor,prof,unidad,cantoCaja:canto,
+        preset:{caja:'C18',refuerzo:'C18',frente:'F18',fondo:'B6'}},
+        {...catalogo,cantosByCalibre:{...catalogo.cantosByCalibre,'22X0,45':{calibre:'22x0,45',precio:100}},tablerosByCode:{...catalogo.tablerosByCode,C18:{codigo:'C18',espesor_mm:18,precio_m2:10000}}});
+      const r=calcularMueble(p.calc);
+      for(const pieza of r.piezas) {
+        if(pieceName(pieza.pieza,'lateral_gaveta')) assert.ok(Math.abs(pieza.largoIn*25.4-350)<0.001);
+        if(pieza.pieza==='fondo_gaveta') assert.ok(Math.abs(pieza.largoIn*25.4-342)<0.001);
+        if(/^(trasero_gaveta|contraparche)(_|$)/.test(pieza.pieza)) assert.ok(Math.abs(pieza.largoIn*25.4-402)<0.001);
+        if(pieza.cantoCalibre) assert.equal(pieza.cantoCalibre,pieza.rol==='frente'?'22x1':canto);
+      }
+      assert.ok(r.herrajes.some(h=>h.codigo==='RIELFE500'));
+      assert.ok(!r.herrajes.some(h=>h.codigo==='RIELTANDEM'));
+      assert.ok(r.piezas.filter(p=>p.rol==='fondo').every(p=>!p.cantoCalibre));
+    }
+  }
+});
+function pieceName(nombre:string,base:string) { return nombre===base || nombre.startsWith(base+'_'); }
