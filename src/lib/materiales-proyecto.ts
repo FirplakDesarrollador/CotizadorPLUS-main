@@ -2,6 +2,8 @@ import { CLAVE_CONFIG_FAMILIA, familiaMaterialPorPrefijo, type FamiliaMaterial }
 import { usaTableroGaveta } from './gavetas';
 
 export type MaterialesFamilia = { preset?: Record<string, string>; cantoCaja?: string; cantoFrentes?: string };
+export type PersonalizacionMateriales = MaterialesFamilia;
+type SeleccionMateriales = { preset: Record<string, string>; cantoCaja?: string; cantoFrentes?: string; personalizacionMateriales?: PersonalizacionMateriales };
 export type ConfigMaterialesProyecto = {
   preset?: Record<string, string>;
   cantoCaja?: string;
@@ -42,17 +44,29 @@ export function materialesDelProyecto(config: ConfigMaterialesProyecto, pref: st
 }
 
 /** Solo cambia selecciones existentes: no inventa materiales ni modifica herrajes. */
-export function aplicarMaterialesProyecto<T extends { preset: Record<string, string>; cantoCaja?: string; cantoFrentes?: string }>(
+export function aplicarMaterialesProyecto<T extends SeleccionMateriales>(
   input: T, config: ConfigMaterialesProyecto, pref: string | null | undefined, nombreArea = '',
 ): T {
   const materiales = materialesDelProyecto(config, pref, nombreArea);
   const { gaveta, ...presetFamilia } = materiales.preset ?? {};
+  const individual = input.personalizacionMateriales;
   return {
     ...input,
-    preset: presetMaterialesTipologia({ ...input.preset, ...presetFamilia, ...(usaTableroGaveta(pref) && gaveta ? { gaveta } : {}) }, pref),
-    ...(materiales.cantoCaja ? { cantoCaja: materiales.cantoCaja } : {}),
-    ...(materiales.cantoFrentes ? { cantoFrentes: materiales.cantoFrentes } : {}),
+    preset: presetMaterialesTipologia({ ...input.preset, ...presetFamilia, ...(usaTableroGaveta(pref) && gaveta ? { gaveta } : {}), ...individual?.preset }, pref),
+    ...((individual?.cantoCaja ?? materiales.cantoCaja) ? { cantoCaja: individual?.cantoCaja ?? materiales.cantoCaja } : {}),
+    ...((individual?.cantoFrentes ?? materiales.cantoFrentes) ? { cantoFrentes: individual?.cantoFrentes ?? materiales.cantoFrentes } : {}),
   };
+}
+
+/** Guarda solo las diferencias elegidas en esta línea; los demás campos siguen al proyecto. */
+export function personalizarMaterialesLinea<T extends SeleccionMateriales>(input: T, config: ConfigMaterialesProyecto, pref: string | null | undefined, nombreArea = ''): T & { personalizacionMateriales: PersonalizacionMateriales } {
+  const global = aplicarMaterialesProyecto({ ...input, personalizacionMateriales: undefined }, config, pref, nombreArea);
+  const personalizacionMateriales: PersonalizacionMateriales = {
+    preset: Object.fromEntries(Object.entries(input.preset).filter(([rol, codigo]) => codigo !== global.preset[rol])),
+    ...(input.cantoCaja && input.cantoCaja !== global.cantoCaja ? { cantoCaja: input.cantoCaja } : {}),
+    ...(input.cantoFrentes && input.cantoFrentes !== global.cantoFrentes ? { cantoFrentes: input.cantoFrentes } : {}),
+  };
+  return { ...input, personalizacionMateriales };
 }
 
 export type TableroProyecto = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
@@ -82,9 +96,10 @@ export function materialesDelDespieceCoinciden(breakdown: Record<string, unknown
 }
 
 export type EspecificacionProyecto = { familia: FamiliaMaterial; titulo: string; filas: Array<[string, string]> };
-export function especificacionesProyecto(config: ConfigMaterialesProyecto, catalogo: readonly TableroProyecto[], areas: readonly { nombre: string; lineas: readonly { pref?: string | null }[] }[] = []): EspecificacionProyecto[] {
+type LineaEspecificacion = { pref?: string | null; codigo_modulo?: string | null; config?: (MaterialesFamilia & { personalizacionMateriales?: PersonalizacionMateriales | null }) | null };
+export function especificacionesProyecto(config: ConfigMaterialesProyecto, catalogo: readonly TableroProyecto[], areas: readonly { nombre: string; lineas: readonly LineaEspecificacion[] }[] = []): EspecificacionProyecto[] {
   const familias: Array<[FamiliaMaterial, string]> = [['superior', 'Muebles superiores cocina'], ['inferior', 'Muebles inferiores cocina'], ['closet', 'Closet / Walk in closet'], ['banos', 'Baños / Auxiliares']];
-  return familias.flatMap(([familia, titulo]) => {
+  const generales = familias.flatMap(([familia, titulo]) => {
     const seleccion = config[CLAVE_CONFIG_FAMILIA[familia] as keyof ConfigMaterialesProyecto] as MaterialesFamilia | undefined;
     const materiales = seleccion ?? (familia === 'inferior' ? { preset: config.preset, cantoCaja: config.cantoCaja, cantoFrentes: config.cantoFrentes } : undefined);
     if (!materiales?.preset) return [];
@@ -101,4 +116,14 @@ export function especificacionesProyecto(config: ConfigMaterialesProyecto, catal
       ['Canto de frentes', materiales.cantoFrentes || 'No configurado'],
     ] as Array<[string, string]> }];
   });
+  const etiquetas: Record<string, string> = { caja: 'Caja', refuerzo: 'Refuerzos', frente: 'Frentes / paneles / rellenos', fondo: 'Fondo', gaveta: 'Tablero Gaveta' };
+  const individuales: EspecificacionProyecto[] = areas.flatMap(area => area.lineas.flatMap(linea => {
+    const seleccion = linea.config?.personalizacionMateriales;
+    if (!seleccion) return [];
+    const filas: Array<[string, string]> = Object.entries(seleccion.preset ?? {}).map(([rol, codigo]) => [etiquetas[rol] ?? rol, descripcionTableroProyecto(linea.config?.preset?.[rol] ?? codigo, catalogo)]);
+    if (seleccion.cantoCaja) filas.push(['Canto de caja', seleccion.cantoCaja]);
+    if (seleccion.cantoFrentes) filas.push(['Canto de frentes', seleccion.cantoFrentes]);
+    return filas.length ? [{ familia: familiaMaterialDelArea(linea.pref, area.nombre), titulo: `Selección individual · ${linea.codigo_modulo ?? linea.pref ?? 'Mueble'} · ${area.nombre}`, filas }] : [];
+  }));
+  return [...generales, ...individuales];
 }

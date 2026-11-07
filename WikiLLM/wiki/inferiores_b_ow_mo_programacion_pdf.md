@@ -1,5 +1,7 @@
 # Inferiores B, material OW-MO y programación opcional
 
+Actualización 2026-11-06: [reglas unificadas de nombres comerciales y PN](nombres_comerciales_modulos.md). Las dimensiones no estándar se completan en todas las familias, conservando las convenciones existentes; PN usa nombre Panel con notas y sufijo -15MM exclusivamente según el frente.
+
 ## Código comercial de inferiores B
 
 `codigoComercial` (`src/lib/module-groups.ts`) añade después del largo las dimensiones no estándar de los prefijos que empiezan por B, antes de los sufijos de tipología, sistema o espesor. El alto estándar es 30 pulgadas / 76.2 cm. Las profundidades 24 pulgadas / 60.96 cm y 60.9 cm se consideran estándar. Cada dimensión se compara independientemente, convertida a cm; se tolera únicamente 0.001 cm de error numérico. El formato final conserva el sistema métrico o las fracciones imperiales.

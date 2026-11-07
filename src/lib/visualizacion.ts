@@ -164,7 +164,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const intFronts=items.filter(i=>i.funcion==='frente_interior' && /ocult|interior/i.test(i.p.nombre)).flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
     const bodyCount=Math.max(0,...items.filter(i=>i.funcion==='base_gaveta').map(i=>i.count),fronts.length+intFronts.length);
     const drawerSlots: {z:number;h:number;key:string;interior?:boolean}[]=[];
-    const gola=vars.gola?53.6:0;
+    const gola=vars.gola ? (vars.espacio_gola != null ? mm(2 * vars.espacio_gola) : 53.6) : 0;
     if(fronts.length) {
       const sum=fronts.reduce((s,f)=>s+f.item.h,0), gap=3.2;
       let z = doors.length > 0

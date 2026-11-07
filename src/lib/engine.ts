@@ -78,6 +78,7 @@ export type CalcInput = {
   descuento?: number;           // descuento final (ej. 0.10). Se aplica al precio.
   cantoFrentes?: string;        // override de calibre de canto para piezas de frente (por proyecto)
   cantoCaja?: string;           // override de calibre de canto para piezas de caja (por proyecto)
+  cantoFrentesEnTodasLasPiezas?: boolean; // abiertos: mismo canto de frente en cada arista existente
   rielCodigo?: string;          // código de riel ('RIELTANDEM', etc.)
   barraCodigo?: string;
 };
@@ -271,6 +272,10 @@ export function calcularMueble(inp: CalcInput): Breakdown {
         else if (esp === 15) cal = (pz.rol_tablero === 'frente') ? '19x1' : '19x0,45';
         if (pz.rol_tablero === 'frente' && inp.cantoFrentes) cal = inp.cantoFrentes;
         if (pz.rol_tablero === 'caja' && inp.cantoCaja) cal = inp.cantoCaja;
+      }
+      if (inp.cantoFrentesEnTodasLasPiezas) {
+        const espFrente = Number(inp.tablerosByCode[inp.preset.frente]?.espesor_mm);
+        cal = inp.cantoFrentes || (espFrente === 15 ? '19x1' : '22x1');
       }
       const largos = c.largos || 0, anchos = c.anchos || 0;
       cantoLargos = largos; cantoAnchos = anchos; cantoCalibreResuelto = cal;

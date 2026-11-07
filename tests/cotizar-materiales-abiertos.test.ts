@@ -33,6 +33,7 @@ test('el cálculo real usa el tablero y espesor de frente en caja y refuerzos de
     };
     const input = { tipoId: 'abierto', largo: 60, alto: 80, prof: 30, unidad: 'cm' as const, preset: { caja: 'C15', refuerzo: 'C15', frente: 'F18', fondo: 'B6' }, conHerrajes: false };
     const preparado = await prepararCotizacion(input, catalogo);
+    assert.equal(preparado.calc.cantoFrentesEnTodasLasPiezas, true, pref);
     assert.deepEqual(preparado.calc.preset, { caja: 'F18', refuerzo: 'F18', frente: 'F18', fondo: 'F6' });
     const resultado = calcularMueble(preparado.calc);
     for (const rol of ['caja', 'refuerzo']) {

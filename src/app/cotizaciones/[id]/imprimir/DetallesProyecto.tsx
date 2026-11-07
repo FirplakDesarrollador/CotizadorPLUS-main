@@ -2,7 +2,7 @@ import type { EspecificacionProyecto } from '@/lib/materiales-proyecto';
 import type { AdicionalPropuesta } from '@/lib/propuesta-cotizacion';
 
 export function MaterialesProyectoPdf({ bloques }: { bloques: EspecificacionProyecto[] }) {
-  return <><style>{`@media print { thead { display: table-header-group; break-after: avoid; } tfoot { display: table-row-group; } tr { break-inside: avoid; } h2, h3 { break-after: avoid; } }`}</style><div data-pdf="materiales-proyecto">{bloques.map(bloque => <div key={bloque.familia} className="mb-4 break-inside-avoid">
+  return <><style>{`@media print { thead { display: table-header-group; break-after: avoid; } tfoot { display: table-row-group; } tr { break-inside: avoid; } h2, h3 { break-after: avoid; } }`}</style><div data-pdf="materiales-proyecto">{bloques.map((bloque, indice) => <div key={`${bloque.familia}-${indice}`} className="mb-4 break-inside-avoid">
     <h2 className="mb-1 bg-[#253e50] p-2 text-sm font-bold text-white">{bloque.titulo}</h2>
     <table className="w-full text-[10px]"><tbody>{bloque.filas.map(([rol, material]) => <tr key={rol} className="border-b even:bg-[#e9f1f6]"><th className="w-1/3 p-2 text-left">{rol}</th><td className="p-2">{material}</td></tr>)}</tbody></table>
   </div>)}</div></>;

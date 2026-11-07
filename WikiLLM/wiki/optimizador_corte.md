@@ -366,3 +366,137 @@ Resultados (todo junto, `scripts/corte-benchmark.ts`): pequeño 31 → **30** l�
 **175**, igual que packingsolver; frente 18 mm 6 → **5** (25,2 % → 10,2 %). Plan por días
 (110 piezas/día, 5 s): grande 237 → **227** tableros. Pruebas: `optimizador-referencia`,
 `secuencia`, `reparto` (fixture `tests/fixtures/corte-referencia.json`).
+
+## Guardados y exportación Excel: 2026-11-06
+
+La migración idempotente 0244 crea `public.optimizador_guardados` con snapshot
+JSONB completo, configuración normalizada, texturas por material, proyecto y
+nombre desnormalizados. La BD pone `created_at` y conserva el correo real del
+autor mediante trigger de inserción. No hay policy ni permiso UPDATE.
+RLS permite consultar/insertar a autenticados y eliminar al autor o a un admin;
+INSERT exige que autor_id sea auth.uid(). La página sigue restringida a admin
+por decisión explícita del usuario, aunque las acciones y exportación admiten
+cualquier sesión autenticada.
+
+Las acciones guardan, listan metadatos ligeros con proyecciones JSONB de KPIs,
+obtienen el registro completo por id y eliminan comprobando la fila devuelta
+por RLS. Nunca toman autor ni fecha del cliente. El guardado exige un snapshot
+validado y una clave vigente de esquemas/configuración/texturas. Al cargar,
+se restauran proyecto, catálogo de la corrida, lista, plan diario y PlanCorte
+originales, y se consulta la configuración actual de planta. Se comparan campos
+simples y anidados, listando antes → ahora sin recalcular el resultado histórico.
+La fecha visible usa America/Bogota con segundos; se conserva el timestamp UTC
+original completo en el archivo y en la BD.
+
+`guardados.ts` contiene validación, comparación y generación pura del workbook
+(archivo adicional autorizado). `imagenes.ts` produce SVG autocontenido y PNG
+con canvas: escala máxima 2 px/mm, tope 2400 px por lado, 150 imágenes y 6 MB
+en total de data URLs. El límite se verifica antes del POST y en servidor.
+`POST /optimizador/export` solo acepta id + imágenes y vuelve a leer los datos
+desde la BD con la sesión; valida las claves día-material-patrón y las cabeceras
+PNG. No se implementa PDF ni se modifica el motor.
+
+El .xlsx incluye, en orden: Resumen general (proyecto/código/autor/fecha/
+parámetros/KPIs), Resumen por material, Lista de corte, Plan de corte por día,
+una hoja Día N con imágenes, colocaciones y sobrantes y Resumen consolidado.
+Si el ritmo no define días, se conserva la corrida sin inventar una jornada:
+se añade Proyecto completo con sus imágenes. Las repeticiones de un patrón
+se indican junto a su esquema. Los números mantienen su tipo y sus formatos;
+el nombre es Optimizacion_proyecto_AAAA-MM-DD_HHmm.xlsx, con fecha de Bogotá.
+
+### Estado de verificación
+
+Las pruebas se escribieron antes de implementar y fallaron inicialmente por
+ausencia de los módulos. Pasan los casos de integridad, comparación, SVG,
+límites de PNG, workbook, identidad, guardado pendiente y POST sin sesión
+a nivel del Route Handler. El fixture de dos días se abrió en Microsoft Excel
+en modo normal y de solo lectura: siete hojas, dos imágenes, celdas numéricas
+y sin cambios al abrir. La migración se aplicó y la segunda ejecución confirmó
+que ya estaba registrada, sin reaplicación.
+
+La verificación HTTP detectó la redirección del proxy a login antes del handler.
+Con autorización explícita se añadió una excepción solo para POST exacto a
+`/optimizador/export`: la ruta hace su propia autenticación y devuelve 403.
+Las demás rutas y métodos siguen pasando por la protección original, verificada
+por una prueba específica. Se autorizó registrar los archivos y pruebas en el
+mapa de calidad, sin modificar la línea base. La página se conserva solo admin.
+
+El usuario decidió conservar el límite de 1 MB de Server Actions. El envío
+serializado admite 900 KB UTF-8, reservando espacio para el envoltorio de React.
+Las corridas que exceden ese tamaño se comprimen con gzip y base64 antes del
+envío usando CompressionStream nativo, sin nuevas dependencias. El servidor
+autentica, verifica el tamaño del transporte, descomprime con tope de 15 MB,
+valida el snapshot y guarda el JSON completo habitual. Los guardados pequeños
+y clientes anteriores conservan el camino original. Solo se rechaza si aun
+comprimido excede el transporte permitido o supera el máximo estructural.
+No se cambió next.config.ts ni se recortan colocaciones, jornadas o materiales.
+
+La prueba Playwright (plugin Browser no disponible) guardó dos optimizaciones
+con el mismo autor sobre Milán Closet y Edificio Santa Barbara; comprobó correo,
+fecha con segundos, restauración idéntica de la sección de proyecto y comparación
+contra un cambio real de disco de 4,4 a 4,5 mm. Al comenzar otra carga se limpia
+el aviso anterior para no mostrar diferencias antiguas mientras responde la BD.
+Se descargó por el POST real un Excel con seis hojas y ocho imágenes. Se abrió
+normalmente en Microsoft Excel: ocho imágenes visibles, número 200 como valor
+numérico y timestamp original con microsegundos, sin cambios ni reparación al abrir.
+
+Dos cuentas temporales adicionales comprobaron RLS: un vendedor puede consultar
+los dos guardados y exportar (HTTP 200), no puede eliminar el de otro ni hacer
+UPDATE; un admin diferente sí elimina. El autor eliminó el suyo desde la UI con
+confirmación. El POST sin sesión devuelve 403. Se restauró el parámetro de planta
+original y se eliminaron únicamente guardados/cuentas identificados como QA.
+
+Cierre de calidad: 110 archivos de pruebas aprobados sin regresiones y learn
+estricto con cero HIGH. Las tablas por patrón de colocaciones y sobrantes tienen
+filtros propios de Excel (16 tablas en la descarga real). El enchape se exporta
+en dos columnas numéricas, largos y anchos, para poder trabajar los valores fuera
+de la app. No se modificaron pruebas previas, motor de corte ni baseline.
+
+### Corrección del guardado de corridas grandes
+
+El rechazo preventivo se aplicaba al JSON sin comprimir y bloqueaba corridas
+como Prueba Optimizador. La corrección separa el tamaño del resultado del tamaño
+del envío. La BD y el Excel siguen recibiendo toda la información original;
+el descriptor `gzip-base64-v1` existe únicamente durante el transporte.
+
+Las regresiones verifican una corrida mayor de 1 MB, igualdad completa al
+reconstruirla, compatibilidad con snapshots pequeños y rechazo de gzip corrupto
+o expansiones mayores de 15 MB. La prueba de navegador sobre Prueba Optimizador,
+con más jornadas para ejercitar más de 1 MB, guardó 1.102.022 bytes completos
+mediante una petición de 87.443 bytes. Se contrastó la fila con una descompresión
+independiente mediante zlib y se recargó con una sección de proyecto idéntica.
+No hubo errores de aplicación; se eliminó solo el guardado temporal de QA.
+
+### Prueba completa de botones y exportación grande
+
+El guardado original Prueba Optimizador contiene 3 días, 323 láminas y 129
+patrones. Se detectaron dos límites consecutivos: 120 imágenes y, al ampliarlo,
+el presupuesto PNG de 6 MB. El usuario autorizó subir a 150 imágenes conservando
+6 MB. Se actualizaron las pruebas de frontera al contrato 150/151, sin retirar
+la validación de tamaño.
+
+La rasterización ahora intenta 2400, 1800, 1400, 1000 y 800 px por lado máximo
+hasta que caben **todos** los esquemas. Mantiene proporción, PNG y coordenadas
+exactas en las tablas, sin omitir patrones. Libera el canvas tras cada imagen;
+si ni la última resolución cabe, aborta antes del POST sin resultado parcial.
+
+La prueba real pasó con el registro original y dos copias temporales:
+
+- Guardar: nombre vacío/espacios bloqueado, cambios pendientes bloqueados,
+  autor y fecha con segundos correctos, lista ordenada por fecha.
+- Cargar: restaura idénticamente la sección de proyecto y muestra el cambio
+  de disco al consultar los parámetros actuales de planta.
+- Exportar: funciona incluso con cambios locales sin guardar porque usa el
+  registro de BD. Descarga 8 hojas, 129 PNG y 258 tablas filtrables; mantiene
+  el timestamp original. El envío de imágenes mide 5.181.956 bytes y el .xlsx
+  3.473.882 bytes. Microsoft Excel lo abrió normalmente, con las 129 imágenes
+  visibles y sin reparaciones ni cambios al abrir.
+- Eliminar: cancelar conserva la copia; confirmar la elimina. Un vendedor
+  consulta/exporta pero no borra el guardado de otro; otro admin sí lo elimina.
+- HTTP: sin sesión 403, id inexistente 404, imágenes ausentes 400 y exceso
+  de 6 MB 413. La consola de la aplicación no registró errores.
+
+Se comparó el registro original completo antes/después sin diferencias. El
+disco regresó a 4,4 mm y no quedaron copias ni cuentas de QA. Las pruebas de
+presupuesto verifican reducción sin pérdida de claves, rechazo de 151 imágenes
+y aborto si ni la resolución mínima cabe.

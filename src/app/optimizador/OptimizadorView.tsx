@@ -12,7 +12,9 @@ import { planDiarioDeCorte, type PlanDiario } from '@/lib/corte/plan-diario';
 import { planDeCorte, type PlanCorte } from '@/lib/corte/plan-corte';
 import type { PedidoPlan, RespuestaPlan } from './plan.worker';
 import EsquemasCorte from './EsquemasCorte';
-import { guardarConfigOptimizadorAction, proyectoDesdeCotizacionAction, type ProyectoOptimizador } from './actions';
+import { guardarConfigOptimizadorAction, proyectoDesdeCotizacionAction, guardarOptimizacionAction, listarOptimizacionesAction, obtenerOptimizacionAction, eliminarOptimizacionAction, contextoGuardadosAction, type ProyectoOptimizador } from './actions';
+import { normalizarSnapshot, prepararGuardado, compararParametros, fechaExacta, nombreArchivo, type SnapshotOptimizador, type ResumenGuardado } from './guardados';
+import { imagenesSnapshot } from './imagenes';
 
 const fmt = (n: number | null | undefined, d = 0) =>
   n == null || !Number.isFinite(n) ? '—' : n.toLocaleString('es-CO', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -275,6 +277,15 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
   const [cargando, setCargando] = useState(false);
   const [errorProyecto, setErrorProyecto] = useState<string | null>(null);
   const [texturaPorMaterial, setTexturaPorMaterial] = useState<Record<string, string>>({});
+  const [guardados, setGuardados] = useState<ResumenGuardado[]>([]);
+  const [identidad, setIdentidad] = useState<{autorId:string;rol:string}|null>(null);
+  const [nombreGuardado, setNombreGuardado] = useState('');
+  const [ocupadoGuardado, setOcupadoGuardado] = useState(false);
+  const [mensajeGuardado, setMensajeGuardado] = useState('');
+  const [errorGuardado, setErrorGuardado] = useState('');
+  const [cargado, setCargado] = useState<SnapshotOptimizador|null>(null);
+  const [avisoParametros, setAvisoParametros] = useState<ReturnType<typeof compararParametros>>([]);
+  useEffect(()=>{let vivo=true;Promise.all([listarOptimizacionesAction(),contextoGuardadosAction()]).then(([lista,ctx])=>{if(vivo){setGuardados(lista);setIdentidad(ctx);}}).catch(e=>{if(vivo)setErrorGuardado(e instanceof Error?e.message:'No se pudieron consultar los guardados.');});return()=>{vivo=false;};},[]);
   const [esquemas, setEsquemas] = useState<{ plan: PlanCorte; clave: string } | null>(null);
   const [optimizando, setOptimizando] = useState(false);
   const [segundos, setSegundos] = useState(0);
@@ -297,13 +308,13 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
   // El cálculo se rehace en el cliente con la configuración en edición: cambiar el
   // disco, el refilado o las piezas por día actualiza los indicadores sin guardar.
   const lista = useMemo(
-    () => (proyecto ? construirListaCorte(proyecto.modulos, tableros, normalizarConfig(cfg)) : null),
-    [proyecto, tableros, cfg],
+    () => (cargado&&JSON.stringify([cotizacionId,cfg,texturaPorMaterial])===JSON.stringify([cargado.cotizacionId,cargado.cfg,cargado.texturaPorMaterial])?cargado.lista:proyecto ? construirListaCorte(proyecto.modulos, cargado?.tableros??tableros, normalizarConfig(cfg)) : null),
+    [proyecto, tableros, cfg,cargado,cotizacionId,texturaPorMaterial],
   );
   // Dias de corte y reparto de modulos: solo depende del ritmo, no de toda la config.
   const plan = useMemo(
-    () => (proyecto ? planDiarioDeCorte(proyecto.modulos, cfg.piezasPorDia) : null),
-    [proyecto, cfg.piezasPorDia],
+    () => (cargado&&JSON.stringify([cotizacionId,cfg,texturaPorMaterial])===JSON.stringify([cargado.cotizacionId,cargado.cfg,cargado.texturaPorMaterial])?cargado.planDiario:proyecto ? planDiarioDeCorte(proyecto.modulos, cfg.piezasPorDia) : null),
+    [proyecto, cfg,cargado,cotizacionId,texturaPorMaterial],
   );
   const formatosCatalogo = useMemo(
     () => [...new Set(tableros.map((t) => normalizarFormato(t.formato)).filter(Boolean))].sort(),
@@ -311,6 +322,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
   );
 
   async function cargarCotizacion(id: string) {
+    setCargado(null);setAvisoParametros([]);setMensajeGuardado('');setNombreGuardado(cotizaciones.find(c=>c.id===id)?.nombre??'');workerRef.current?.terminate();setOptimizando(false);
     setCotizacionId(id);
     setProyecto(null);
     setErrorProyecto(null);
@@ -326,8 +338,24 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
     }
   }
 
-  const claveEsquemas = JSON.stringify([cotizacionId, cfg, texturaPorMaterial]);
+  const claveEsquemas = JSON.stringify([cotizacionId, normalizarConfig(cfg), texturaPorMaterial]);
   const esquemasAlDia = esquemas?.clave === claveEsquemas;
+
+  async function refrescarGuardados(){setGuardados(await listarOptimizacionesAction());}
+  async function guardarCorrida(){
+    if(!esquemas||!esquemasAlDia||!proyecto||!lista||!plan)return;
+    setOcupadoGuardado(true);setErrorGuardado('');setMensajeGuardado('');
+    try{const cot=cotizaciones.find(c=>c.id===cotizacionId);const snapshot=normalizarSnapshot({version:1,cotizacionId:cotizacionId||null,cotizacionCodigo:cot?.codigo??null,proyectoNombre:cargado?.proyectoNombre??cot?.nombre??'Sin nombre',cfg,texturaPorMaterial,tableros:cargado?.tableros??tableros,proyecto,lista,planDiario:plan,planCorte:esquemas.plan});const datos={nombre:nombreGuardado,snapshot,esquemasAlDia:true,clave:esquemas.clave};const envio=await prepararGuardado(datos);const r=await guardarOptimizacionAction(envio);await refrescarGuardados();setMensajeGuardado(`Optimización guardada el ${fechaExacta(r.created_at)} (America/Bogota) por ${r.autor_email}.`);}catch(e){setErrorGuardado(e instanceof Error?e.message:'No se pudo guardar.');}finally{setOcupadoGuardado(false);}
+  }
+  async function cargarGuardado(id:string){
+    setOcupadoGuardado(true);setErrorGuardado('');setAvisoParametros([]);setMensajeGuardado('');
+    try{const [g,ctx]=await Promise.all([obtenerOptimizacionAction(id),contextoGuardadosAction()]);const s=g.resultado;workerRef.current?.terminate();setOptimizando(false);setCotizacionId(s.cotizacionId??'');setCfg(s.cfg);setGuardado(ctx.configActual);setTexturaPorMaterial(s.texturaPorMaterial);setProyecto(s.proyecto);setCargado(s);setEsquemas({plan:s.planCorte,clave:JSON.stringify([s.cotizacionId??'',s.cfg,s.texturaPorMaterial])});setNombreGuardado(g.nombre);setAvisoParametros(compararParametros(g.config,ctx.configActual));setErrorProyecto(null);setErrorPlan(null);setMensajeGuardado(`Cargada: ${g.nombre} · ${fechaExacta(g.created_at)} · ${g.autor_email}.`);}catch(e){setErrorGuardado(e instanceof Error?e.message:'No se pudo cargar.');}finally{setOcupadoGuardado(false);}
+  }
+  async function exportarGuardado(id:string){
+    setOcupadoGuardado(true);setErrorGuardado('');
+    try{const g=await obtenerOptimizacionAction(id);const imagenes=await imagenesSnapshot(g.resultado);const response=await fetch('/optimizador/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,imagenes})});if(!response.ok)throw new Error(await response.text());const url=URL.createObjectURL(await response.blob());const a=document.createElement('a');a.href=url;a.download=nombreArchivo(g);document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){setErrorGuardado(e instanceof Error?e.message:'No se pudo exportar.');}finally{setOcupadoGuardado(false);}
+  }
+  async function eliminarGuardado(id:string){if(!confirm('¿Eliminar esta optimización guardada? Esta acción no se puede deshacer.'))return;setOcupadoGuardado(true);setErrorGuardado('');try{await eliminarOptimizacionAction(id);await refrescarGuardados();setMensajeGuardado('Optimización eliminada.');}catch(e){setErrorGuardado(e instanceof Error?e.message:'No se pudo eliminar.');}finally{setOcupadoGuardado(false);}}
 
   // El plan corre en un Web Worker: la búsqueda del reparto por días usa todo el
   // presupuesto `repartoTiempoMs` y en el hilo de la pantalla la congelaba.
@@ -342,7 +370,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
     const terminar = () => { clearInterval(reloj); setOptimizando(false); workerRef.current?.terminate(); workerRef.current = null; };
 
     if (typeof Worker === 'undefined') {
-      const plan = planDeCorte(proyecto.modulos, tableros, config, (m) => texturaPorMaterial[m] ?? texturaDefault,
+      const plan = planDeCorte(proyecto.modulos, cargado?.tableros??tableros, config, (m) => texturaPorMaterial[m] ?? texturaDefault,
         { tiempoMaxMs: config.repartoTiempoMs });
       setEsquemas({ plan, clave });
       terminar();
@@ -358,7 +386,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
     };
     worker.onerror = (e) => { setErrorPlan(e.message || 'Error al calcular el plan'); terminar(); };
     worker.postMessage({
-      modulos: proyecto.modulos, tableros, cfg: config, texturas: texturaPorMaterial, texturaDefault,
+      modulos: proyecto.modulos, tableros:cargado?.tableros??tableros, cfg: config, texturas: texturaPorMaterial, texturaDefault,
     } satisfies PedidoPlan);
   }
 
@@ -391,6 +419,14 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
 
   return (
     <div className="space-y-5">
+      <Seccion titulo="Optimizaciones guardadas" nota="Fecha y hora en America/Bogota. Los guardados son compartidos con el equipo autenticado.">
+        {mensajeGuardado&&<p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{mensajeGuardado}</p>}
+        {errorGuardado&&<p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorGuardado}</p>}
+        {ocupadoGuardado&&<p role="status" className="text-sm text-slate-600">Procesando optimización…</p>}
+        {avisoParametros.length>0&&<div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><p className="font-semibold">Los parámetros actuales de planta cambiaron. El resultado guardado corresponde a los parámetros originales.</p><ul className="mt-2 list-disc pl-5">{avisoParametros.map(c=><li key={c.campo}>{c.campo}: {typeof c.antes==='object'?JSON.stringify(c.antes):String(c.antes)} → {typeof c.ahora==='object'?JSON.stringify(c.ahora):String(c.ahora)}</li>)}</ul></div>}
+        {esquemas&&esquemasAlDia&&<div className="flex flex-wrap items-end gap-3"><label className="text-sm">Nombre del guardado<input aria-label="Nombre del guardado" maxLength={160} value={nombreGuardado} onChange={e=>setNombreGuardado(e.target.value)} className="inp mt-1"/></label><button type="button" disabled={ocupadoGuardado||!nombreGuardado.trim()} onClick={guardarCorrida} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-40">Guardar optimización</button></div>}
+        <div className="overflow-x-auto"><table className="w-full"><thead><tr>{['Fecha/hora exacta','Proyecto','Nombre','Autor','Láminas','Desperdicio %','Piezas','Acciones'].map(t=><th key={t} className={th}>{t}</th>)}</tr></thead><tbody>{guardados.map(g=>{const puedeBorrar=identidad?.autorId===g.autor_id||identidad?.rol==='admin';return <tr key={g.id}><td className={td}><time dateTime={g.created_at} title={g.created_at}>{fechaExacta(g.created_at)}</time></td><td className={td}>{g.proyecto_nombre}</td><td className={td}>{g.nombre}</td><td className={td}>{g.autor_email}</td><td className={tdNum}>{fmt(g.laminas)}</td><td className={tdNum}>{fmt(g.desperdicioPct,3)}</td><td className={tdNum}>{fmt(g.piezas)}</td><td className={`${td} whitespace-nowrap`}><button type="button" disabled={ocupadoGuardado} onClick={()=>cargarGuardado(g.id)} className="mr-3 underline disabled:opacity-40">Cargar</button><button type="button" disabled={ocupadoGuardado} onClick={()=>exportarGuardado(g.id)} className="mr-3 underline disabled:opacity-40">Exportar</button><button type="button" disabled={ocupadoGuardado||!puedeBorrar} title={puedeBorrar?'Eliminar guardado':'Solo el autor o un administrador puede eliminarlo'} onClick={()=>eliminarGuardado(g.id)} className="text-red-700 underline disabled:opacity-40">Eliminar</button></td></tr>;})}</tbody></table>{!guardados.length&&<p className="py-3 text-sm text-slate-500">No hay optimizaciones guardadas.</p>}</div>
+      </Seccion>
       <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.35rem .5rem;font-size:.8rem;background:white}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}.inp-sm{width:6rem}`}</style>
 
       {/* ---------------- 1. Proyecto ---------------- */}
@@ -480,7 +516,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
                   </tbody>
                 </table>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">La textura por material todavía no se guarda: se elige aquí para la corrida. Pendiente decidir si vive en el tablero o en la cotización.</p>
+              <p className="text-[11px] text-slate-400 mt-1">Las texturas elegidas se conservan en cada optimización guardada.</p>
             </div>
 
             <details className="rounded-xl border border-slate-200">
