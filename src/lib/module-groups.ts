@@ -215,7 +215,8 @@ export function codigoComercial(input: CodigoComercialInput): string {
   const altoBVariable = (esInferiorB || esDb) && Number.isFinite(altoCm) && Math.abs(altoCm - 76.2) > 0.001;
   const profBVariable = (esInferiorB || esDb) && Number.isFinite(profCm)
     && Math.abs(profCm - 60.96) > 0.001 && (esDb || Math.abs(profCm - 60.9) > 0.001);
-  const altoSufijo = (altoBVariable || altoOtraFamilia || incluyeAltoEnCodigo(pref) || esTw || esTwSmPush || esTwSmHood || esTorreTk)
+  const esSvfdh = /^SVFDH(?:-|$)/.test(prefNormalizado);
+  const altoSufijo = (esSvfdh || altoBVariable || altoOtraFamilia || incluyeAltoEnCodigo(pref) || esTw || esTwSmPush || esTwSmHood || esTorreTk)
     ? anchoCodigo(alto, unidad, sistema)
     : '';
   if (altoSufijo) agregarMedida(altoSufijo);
@@ -228,14 +229,14 @@ export function codigoComercial(input: CodigoComercialInput): string {
     || profBVariable
     || profOtraFamilia
     || esTorreTk
-    || esDfe;
+    || esDfe || esSvfdh;
   const profSufijo = incluyeProfundidad && prof != null
     ? anchoCodigo(prof, unidad, sistema)
     : '';
   if (profSufijo) agregarMedida(profSufijo);
   // PN es una pieza plana: ni estados heredados de gola/cajonera ni la caja
   // deben introducir segmentos ajenos a sus medidas y al material del frente.
-  if (prefNormalizado === 'PN') return `${codigo}${Number(input.espesorFrenteMm) === 15 ? '-15MM' : ''}`;
+  if (planoSinProfundidad) return `${codigo}${Number(input.espesorFrenteMm) === 15 ? '-15MM' : ''}`;
   let dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
   const esDbFe = /^(DB|IC)-FE(?:-SF)?$/.test(prefNormalizado);
   if (esDbFe && input.dbTipo === 'DB2-1OP') dbSufijo = '-2-1INT';

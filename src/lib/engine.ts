@@ -7,6 +7,7 @@
 // ============================================================================
 
 import type { MontajeConfig } from './visualizacion-config';
+import { noLlevaCanto } from './cantos';
 
 export const IN2CM = 2.54;
 const norm = (s: unknown) => String(s ?? '').toUpperCase().replace(/\s+/g, '');
@@ -190,7 +191,7 @@ export function espesorRolIn(inp: Pick<CalcInput, 'preset' | 'tablerosByCode'>, 
 }
 
 // Constantes geométricas disponibles para toda fórmula de pieza y de regla.
-// TC/TF/TB salen del espesor real del tablero elegido para cada rol, así que el
+// TC/TR/TF/TB salen del espesor real del tablero elegido para cada rol, así que el
 // despiece sigue al material en vez de asumir 15 mm. Las hojas de ruta confirman
 // que el descuento interior es exactamente 2 × espesor del lateral (§3 de la wiki).
 // Debe usarse en TODO punto donde se evalúen fórmulas — también en group-engine —
@@ -199,6 +200,7 @@ export function geoVars(inp: Pick<CalcInput, 'preset' | 'tablerosByCode'>): Reco
   return {
     RV: REVEAL_IN,
     TC: espesorRolIn(inp, 'caja'),
+      TR: espesorRolIn(inp, inp.preset.refuerzo ? 'refuerzo' : 'caja'),
     TF: espesorRolIn(inp, 'frente'),
     TB: espesorRolIn(inp, 'fondo'),
   };
@@ -256,10 +258,10 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     if (pz.rol_tablero) areaPorRol[pz.rol_tablero] = (areaPorRol[pz.rol_tablero] || 0) + area;
     const c = pz.cantos || {};
     let cantoLargos = 0, cantoAnchos = 0, cantoCalibreResuelto: string | null = null;
-    if (c.calibre) {
+    const tabCode = inp.preset[pz.rol_tablero];
+    const tab = inp.tablerosByCode[tabCode || ''];
+    if (c.calibre && !noLlevaCanto(tab?.espesor_mm)) {
       let cal = c.calibre;
-      const tabCode = inp.preset[pz.rol_tablero];
-      const tab = inp.tablerosByCode[tabCode || ''];
       // Calibre del canto por espesor del tablero Y rol: el FRENTE (canto visible) usa 1mm;
       // la caja e interiores (refuerzo/fondo) usan 0.45mm. (Antes mapeaba TODO 18mm a 22x1,
       // sobre-cobrando el canto de la caja.)

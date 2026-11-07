@@ -7,6 +7,10 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
+- [BOV interno y BOV-SMG](wiki/bov_frente_interno_smg.md) - Frente interno sin holguras, base hasta el refuerzo, 73 mm superiores en SMG y conversión verificada de Condominio V.
+- [Materiales delgados sin canto](wiki/cantos_por_espesor.md) - Regla universal por espesor real de 4,5/5,5/6/9 mm, sin calibre ni costo; recálculo y protección de resultados históricos.
+- [HDR consolidada y Excel continuo](wiki/hdr_excel_consolidado.md) - Cantidades editables, módulos repetidos entre áreas, tabla Excel y excepciones DB/DB-FE de la migración 0249.
+- [Puertas, orientación y cantos de carcasa](wiki/puertas_cantos_orientacion.md) - Umbral en tres unidades, ejes de frentes, cantos solo en largos, migración 0248 y recálculo verificado.
 - [Tablero Gaveta de 15 mm en DB](wiki/tablero_gaveta_db.md) - Material separado en simulador y cotizaciones, referencias elegibles de rieles y barras, aplicación histórica y auditoría.
 - [Pipeline CEFI y cotizaciones](wiki/pipeline_cotizaciones.md) - Registro con opción Desconocido, referencias navegables de Cotizador PLUS, oportunidades con RLS, importación histórica y dashboard único.
 - [DB-FE paramétrica](wiki/db_fe.md) - Copia de la DB vigente con cajas de gaveta FE y riel RIELFE500; seis variantes internas, persistencia y pruebas.
@@ -20,7 +24,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Cálculos automáticos del catálogo de tableros](wiki/calculos_automaticos_catalogo_tableros.md) - Área derivada del formato y sincronización bidireccional entre precio y precio por m² en altas y ediciones de tableros.
 - [Mejora de UX en tabla de catálogos](wiki/ux_catalogo_materiales_parametros.md) - Barra de scroll horizontal visible, columna sticky, editor inline responsivo y adaptado sin scroll, y acciones de fila accesibles.
 - [Descripción de una línea contra el despiece](wiki/descripcion_linea_vs_despiece.md) - Por qué `n_entrepanos` no describe el mueble: 47 de 81 tipos no coincidían, y la deuda equivalente en puertas y gavetas.
-- [Líneas de material suelto](wiki/lineas_material_suelto.md) - Tablero, canto o herraje cobrados sin módulo: unidades, margen por tipo y clasificación en Herrajes / otros del PDF.
+- [Líneas de material suelto](wiki/lineas_material_suelto.md) - Tablero, canto o herraje cobrados sin módulo: unidades, margen por tipo, clasificación en Herrajes / otros del PDF y exclusión en HDR y Optimizador.
 - [Protocolo de cotizaciones y PDF](wiki/protocolo_pdf_cotizaciones.md) - Clasificación y agrupación de adicionales sin precios en el detalle, materiales por área closet, reparación histórica y doble verificación de impresión.
 - [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles, soportes por entrepaño, cálculo grupal y recálculo masivo por lotes con precarga de catálogo (`engine.ts` y `cotizar.ts`).
 - [Optimizador de corte](wiki/optimizador_corte.md) - Plan de corte de una cotización: condiciones de planta, lista de piezas, plan día por día, esquemas de corte con desperdicio, m², tableros y número de cortes, y fases pendientes. Incluye comparación con repositorios de GitHub (packingsolver, OpenCutList, gdrr-2bp).
@@ -57,7 +61,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [DB-SMG](wiki/db_smg.md) - Tres familias comerciales de cajoneras con gola metálica (base, FE y SF), doce tipologías y mecanizado lateral 27 × 73 mm.
 - [BMW-1 y BMW-1-FE](wiki/bmw_1_hoja_real.md) - Mueble inferior para microondas y su variante con caja de gaveta de madera y riel full extension.
 - [BOMH-1 y BOMH-1-FE](wiki/bomh_1_horno_parametrico.md) - Mueble inferior para medio horno con hueco paramétrico y variantes de gaveta Tandem o grande Full Extension.
-- [BOV24 desde hoja real](wiki/bov24_hoja_real.md) - Despiece paramétrico, montaje 3D y reglas de agrupación física con carcazas lineales.
+- [BOV24 desde hoja real](wiki/bov24_hoja_real.md) - Referencia histórica y agrupación; geometría de frente sustituida por la regla BOV interno/BOV-SMG del 2026-11-07.
 - [Consumo de materiales: unidades y merma](wiki/consumo_materiales.md) - Tablero en m² y canto en metros lineales; por qué sus mermas son distintas y cómo se reconstruye el consumo desde el despiece.
 - [Holgura de 1mm sobre la estructura](wiki/holgura_1mm_estructura.md) - Por qué entrepaños y fondos se cortan 1mm más pequeños, qué tipos ya la tenían y el alcance aplicado en `0049`.
 - [Ejes del fondo (backing)](wiki/ejes_fondo_backing.md) - `largo`/`ancho` son ejes geométricos atados a `intercambiar`, no "el mayor primero": el defecto que giraba 90° el backing de `W` con gola y la auditoría de los 44 tipos.
@@ -93,3 +97,5 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Dashboard de cotizaciones y ubicación](wiki/dashboard_cotizaciones.md) - País/ciudad, filtros compartibles, agregados SQL con RLS, gráficas SVG, tabla paginada y exportación CSV.
 - [TW/W-SM-HOOD](wiki/tw_w_sm_hood.md) - Superiores de una/dos puertas, carcasa Alto−HOOD y frente falso extendido a 30 mm bajo las puertas, según IGES y tabla.
 - [Copiar sección de cotización](wiki/copiar_seccion_cotizacion.md) - Copia inmediata con grupos, muebles, adicionales y precios, transacción y RLS.
+
+- [SVFDH y SVFDH-SMG](wiki/svfdh.md) - Clones SVFD con dimensiones visibles y frente SMG reducido 30 mm.

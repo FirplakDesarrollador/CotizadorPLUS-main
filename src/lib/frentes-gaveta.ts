@@ -3,7 +3,7 @@ import type { Pieza, Regla } from './engine';
 export const FORMULAS_FRENTES_DOS_PEQUENOS = {
   espacio_gola: '30/25.4',
   alto_frente_grande: '(A-2*espacio_gola)/2',
-  alto_frente_pequeno: 'alto_frente_grande/2-RV',
+  alto_frente_pequeno: 'alto_frente_grande/2-RV/2',
 } as const;
 
 export function usaFrentesDosPequenosGola(pref: string | null | undefined): boolean {

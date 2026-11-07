@@ -49,3 +49,7 @@ Relacionados: [reglas de fabricación y edición individual](reglas_fabricacion_
 ### Cierre de verificación
 
 Prueba autenticada completa aprobada en simulador, edición/recarga de cotización, HDR, Excel y dos generaciones independientes de PDF (cinco páginas cada una, texto idéntico y revisión renderizada). Se verificaron notas persistentes, sufijo según frente, bloque de selección individual y configuración global intacta; cero errores de consola. La cotización temporal de prueba se eliminó. Auditoría final de doce cotizaciones: cero nombres pendientes. `quality:gate` aprobó 120 suites con exit 0; `quality:learn -- --strict` reportó cero hallazgos HIGH. Evidencias locales en `.tmp/nombres-modulos-navegador.json`, `.tmp/nombres-modulos-gate-final.txt` y `.tmp/nombres-modulos-learn-final.txt`.
+
+## Actualización 2026-11-07: piezas planas y SVFDH
+
+PN y F muestran largo y alto; únicamente añaden `-15MM` si su tablero de frente/pieza es de 15 mm, independientemente del tablero de caja. No añaden `-18MM` ni estados heredados de gola/cajonera. Se normalizan códigos persistidos sin alterar selecciones. SVFDH y SVFDH-SMG siempre muestran alto y profundidad, incluso estándar. Véase [SVFDH](svfdh.md).

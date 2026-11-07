@@ -9,9 +9,10 @@ import { codigoComercial, parseMedida } from '@/lib/module-groups';
 import { presetMaterialesTipologia, resolverCodigoTablero } from '@/lib/materiales-proyecto';
 import type { CotizarResult } from '@/lib/cotizar';
 import { usaFrentesDosPequenosGola } from '@/lib/frentes-gaveta';
-import { esPanel, nombrePanel, etiquetaTipoModulo } from '@/lib/nombres-modulos';
+import { esPanel, etiquetaTipoModulo } from '@/lib/nombres-modulos';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
+import { consolidarModulosHdr, descripcionPiezaPlanaHdr } from './datosHdr';
 
 type Tipo = { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; nombre_es: string | null; categoria: string | null };
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
@@ -40,6 +41,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [modError, setModError] = useState<string | null>(null);
   const [modulos, setModulos] = useState<ModuloHDR[] | null>(null);
   const [exportandoTodas, setExportandoTodas] = useState<{ hecho: number; total: number } | null>(null);
+  const [exportandoExcel, setExportandoExcel] = useState(false);
   const tablasRef = useRef(new Map<string, HdrTablaHandle>());
 
   const tipoOptions = useMemo(() => {
@@ -138,7 +140,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     setModLoading(true);
     try {
       const r = await modulosDeCotizacionAction(id);
-      setModulos(r);
+      setModulos(consolidarModulosHdr(r));
     } catch (e) {
       setModError(e instanceof Error ? e.message : 'Error al cargar los módulos de la cotización.');
     } finally {
@@ -160,6 +162,17 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
       if (i < okModulos.length - 1) await new Promise((r) => setTimeout(r, 300));
     }
     setExportandoTodas(null);
+  }
+
+  async function exportarExcel() {
+    setExportandoExcel(true);
+    setModError(null);
+    try {
+      const datos = (modulos ?? []).flatMap(m => { const tabla = tablasRef.current.get(m.lineaId); return tabla ? [tabla.datosExcel()] : []; });
+      const { descargarExcelHdr } = await import('./excel');
+      await descargarExcelHdr(datos, cotizaciones.find(c => c.id === cotizacionId)?.nombre ?? 'muebles');
+    } catch (e) { setModError(e instanceof Error ? e.message : 'No se pudo exportar el Excel.'); }
+    finally { setExportandoExcel(false); }
   }
 
   const materialesCodigo = presetMaterialesTipologia(presetResuelto, tipoSel?.pref);
@@ -187,7 +200,8 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
       {modulos && modulos.length > 0 && (
         <div className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={exportarExcel} disabled={exportandoExcel || !modulos.some(m => m.ok)} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm disabled:opacity-50">{exportandoExcel ? 'Generando Excel…' : 'Exportar Excel'}</button>
             <button
               type="button"
               onClick={exportarTodasPdf}
@@ -208,12 +222,13 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
                   }}
                   res={m.result}
                   tableros={tableros}
-                  titulo={`${m.codigoModulo} ${m.nombreDescriptivo ?? descripcionModulo(m.result)} · ${m.cocinaNombre}${m.cantidad > 1 ? ` · ×${m.cantidad}` : ''}`}
+                  titulo={`${m.codigoModulo} ${m.nombreDescriptivo ?? descripcionModulo(m.result, m.pref)}`.trim()}
+                  cantidadInicial={m.cantidad}
                   mostrarBotonExportar={false}
                 />
               ) : (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {m.codigoModulo} ({m.cocinaNombre}): {m.error}
+                  {m.codigoModulo}: {m.error}
                 </div>
               )}
             </div>
@@ -295,7 +310,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
             </Campo>
           )}
 
-          {esPanel(tipoSel?.pref) && <Campo label="Notas del panel"><input value={notaPanel} onChange={e => setNotaPanel(e.target.value)} placeholder="Ej. lateral" className="inp" /></Campo>}
+          {(esPanel(tipoSel?.pref) || tipoSel?.pref === 'F') && <Campo label={esPanel(tipoSel?.pref) ? 'Notas del panel' : 'Notas del filler'}><input value={notaPanel} onChange={e => setNotaPanel(e.target.value)} placeholder="Ej. lateral" className="inp" /></Campo>}
           <button className="rounded-lg bg-slate-900 text-white px-5 py-2 text-sm font-medium hover:bg-slate-800">Buscar</button>
 
           <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.5rem .6rem;font-size:.875rem}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}.inp::-webkit-outer-spin-button,.inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.inp[type=number]{-moz-appearance:textfield}`}</style>
@@ -306,7 +321,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
         {res && (
           <div className="mt-4">
-            <HdrTabla res={res} tableros={tableros} titulo={`${codigo} ${esPanel(tipoSel?.pref) ? nombrePanel(notaPanel) : descripcionModulo(res)}`} />
+            <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} tableros={tableros} titulo={`${codigo} ${descripcionPiezaPlanaHdr(tipoSel?.pref, notaPanel) ?? descripcionModulo(res, tipoSel?.pref)}`} />
           </div>
         )}
       </div>

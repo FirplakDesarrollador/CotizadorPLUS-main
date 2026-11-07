@@ -268,7 +268,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   if (!isMounted) return null;
 
-  const rolesBase = Array.from(new Set([...(rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo']), ...(usaTableroGaveta(prefMaterial) ? ['gaveta'] : [])]));
+  const rolesBase = Array.from(new Set([...(rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo']).filter(rol => !esTipologiaDbFe(prefMaterial) || rol !== 'gaveta'), ...(usaTableroGaveta(prefMaterial) ? ['gaveta'] : [])]));
   const roles = usaCajaMaterialFrente(prefMaterial) ? Array.from(new Set([...rolesBase, 'frente'])) : rolesBase;
   const tipoActual = tipos.find((t) => t.id === tipoId);
   const tipoPref = tipoActual?.pref ?? '';

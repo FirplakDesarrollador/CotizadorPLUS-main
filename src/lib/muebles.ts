@@ -109,7 +109,7 @@ const PREFS_CLOSET: readonly string[] = ['CC', 'CLV', 'DFE', 'WCC'];
  * cotizaban con el tablero de inferiores; ahora tienen el suyo.
  */
 const PREFS_BANOS: readonly string[] = [
-  'DV', 'DVE', 'SV', 'SVFD', 'UDV', 'USVFD', 'UV', 'UVFD', 'V', 'V-FE', 'VDF', 'VFD', 'VPC',
+  'DV', 'DVE', 'SV', 'SVFD', 'SVFDH', 'SVFDH-SMG', 'UDV', 'USVFD', 'UV', 'UVFD', 'V', 'V-FE', 'VDF', 'VFD', 'VPC',
 ];
 
 // Los prefijos pueden contener ambas letras (por ejemplo WBL). La primera B o
@@ -219,6 +219,13 @@ export function contarEntrepanos(piezas: readonly { pieza: string; cant: number 
     .reduce((total, p) => total + Math.max(0, Math.round(p.cant)), 0);
 }
 
+/** BOV tiene un frente físico fijo; no lo describe la variable global de puertas por ancho. */
+export function puertasDescripcion(pref: string | null | undefined, piezas: readonly { pieza: string; cant: number }[], variable = 0): number {
+  return /^BOV(?:-|$)/i.test(pref ?? '')
+    ? piezas.filter(p => p.pieza === 'frente').reduce((n, p) => n + Math.max(0, Math.round(p.cant)), 0)
+    : Math.round(variable);
+}
+
 // Alto estándar de la línea U y de la pareja Sink Vanity: 28,75 pulgadas.
 export const ALTO_LINEA_U_IN = 28.75;
 
@@ -228,7 +235,7 @@ export const ALTO_LINEA_U_IN = 28.75;
 // que agregarla aquí.
 const PREFS_ALTO_LINEA_U = [
   'UB', 'UB-FE', 'UBFD', 'UDB', 'UDV', 'USVFD', 'UV', 'UVFD',
-  'SV', 'SVFD',
+  'SV', 'SVFD', 'SVFDH', 'SVFDH-SMG',
 ] as const;
 
 // Alto estándar del resto de los muebles inferiores.
@@ -283,6 +290,8 @@ export function ajustarPiezasSinFondo<T extends PiezaAjustable>(
     // `fondo_gaveta` pertenece al cajón; solo se elimina el respaldo `fondo`.
     if (pieza.nombre.toLowerCase() === 'fondo') return { ...pieza, formula_cantidad: '0' };
     if (pieza.nombre !== 'base') return pieza;
+      // Los BOV descuentan el refuerzo trasero, independientemente de la opción de espaldar.
+      if (/^BOV(?:-SMG)?(?:-SF)?$/i.test(String(pref ?? ''))) return pieza;
     // Se conserva el eje de largo propio de cada plantilla.
     if (/\bP\b/.test(pieza.formula_ancho ?? '')) return { ...pieza, formula_ancho: 'P-TC' };
     if (/\bP\b/.test(pieza.formula_largo ?? '')) return { ...pieza, formula_largo: 'P-TC' };

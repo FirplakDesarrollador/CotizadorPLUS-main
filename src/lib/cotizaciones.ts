@@ -1,4 +1,5 @@
 import 'server-only';
+import { cumpleReglaCantosDelgados } from './cantos';
 import { createClient } from '@/lib/supabase/server';
 import { cotizar, cotizarGrupo, cargarCatalogoPrecompilado, type CatalogoPrecompilado, type CotizarInput, type CotizarResult } from '@/lib/cotizar';
 import {
@@ -6,7 +7,7 @@ import {
   distribuirResiduoMoneda, redondearMoneda, precioUnitario,
   type SistemaMedida,
 } from '@/lib/module-groups';
-import { contarEntrepanos, esElementoPlano, etiquetaDescripcion, aplicarConfiguracionDbFe } from '@/lib/muebles';
+import { contarEntrepanos, puertasDescripcion, esElementoPlano, etiquetaDescripcion, aplicarConfiguracionDbFe } from '@/lib/muebles';
 import { calcularPrecioMaterial, descripcionMaterial, grupoSeSaltaElMotor, type TipoMaterial } from '@/lib/materiales-linea';
 import { normalizarPreciosTableros } from '@/lib/precios-tableros';
 import { siguienteOrdenGrupo as siguienteOrden } from '@/lib/grupos-orden';
@@ -238,8 +239,9 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
   // `contarEntrepanos`. Se omite el contador cuando es cero, igual que ya se
   // hacía con puertas y gavetas, en vez de anunciar "0 entrepaño(s)".
   const entrepanos = contarEntrepanos(res.piezas);
+  const puertas = puertasDescripcion(input.prefLabel, res.piezas, res.vars.n_puertas);
   const desc = esPanel(input.prefLabel) ? nombrePanel(input.anotaciones) : esElementoPlano(input.prefLabel) ? medidas : medidas
-    + (res.vars.n_puertas ? ` · ${res.vars.n_puertas} puerta(s)` : '')
+    + (puertas ? ` · ${puertas} puerta(s)` : '')
     + (res.vars.n_cajones ? ` · ${res.vars.n_cajones} gaveta(s)` : '')
     + (entrepanos ? ` · ${entrepanos} entrepaño(s)` : '');
   return {
@@ -490,7 +492,12 @@ export async function recalcularGrupo(
       precio_total_cop: copByLine[i],
       precio_total_usd: usdByLine[i],
     };
-    const { error: updateError } = await sb.from('cot_cotizacion_lineas').update({ ...finalRow, codigo_modulo: code }).eq('id', lineas[i].id);
+    const configAnterior = lineas[i].config ?? {};
+    const configFinal: Record<string, unknown> = { ...configAnterior, ...finalRow.config };
+    for (const [key, value] of Object.entries(configFinal)) {
+      if (value == null && !Object.hasOwn(configAnterior, key)) delete configFinal[key];
+    }
+    const { error: updateError } = await sb.from('cot_cotizacion_lineas').update({ ...finalRow, config: configFinal, codigo_modulo: code }).eq('id', lineas[i].id);
     if (updateError) throw new Error(updateError.message);
   }));
 
@@ -1007,7 +1014,7 @@ export async function sincronizarMaterialesCotizacion(cotizacionId: string, opci
     const siguiente = aplicarMaterialesProyecto(actual, cfg, prefijos.get(linea.tipo_mueble_id), nombres.get(linea.cocina_id) ?? '');
     if (!opciones?.aplicarGavetaGlobal && actual.preset.gaveta) siguiente.preset.gaveta = actual.preset.gaveta;
     siguiente.preset = normalizarPreset(siguiente.preset) ?? {};
-    if (JSON.stringify(actual.preset) === JSON.stringify(siguiente.preset) && actual.cantoCaja === siguiente.cantoCaja && actual.cantoFrentes === siguiente.cantoFrentes && materialesDelDespieceCoinciden(linea.breakdown, siguiente.preset)) continue;
+    if (JSON.stringify(actual.preset) === JSON.stringify(siguiente.preset) && actual.cantoCaja === siguiente.cantoCaja && actual.cantoFrentes === siguiente.cantoFrentes && materialesDelDespieceCoinciden(linea.breakdown, siguiente.preset) && cumpleReglaCantosDelgados(linea.breakdown, siguiente.preset, tableros)) continue;
     const config = { ...linea.config, preset: siguiente.preset, cantoCaja: siguiente.cantoCaja, cantoFrentes: siguiente.cantoFrentes };
     const { error } = await sb.from('cot_cotizacion_lineas').update({ config }).eq('id', linea.id);
     if (error) throw new Error(error.message);

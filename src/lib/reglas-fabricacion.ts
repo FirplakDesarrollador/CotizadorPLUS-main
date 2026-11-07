@@ -1,5 +1,43 @@
-import type { Pieza } from './engine';
+import type { Pieza, Regla } from './engine';
 import { toInches, type UnidadDim } from './engine';
+
+const FRENTES_HEREDADOS = new Set(['BLS', 'BLS-RS-SM', 'BOV', 'BOV-SF', 'CC', 'POD', 'UV', 'UDB', 'UVFD', 'USVFD', 'WLD', 'WER', 'WPC', 'BOMH-1', 'BOMH-1-FE', 'KF', 'SLOC', 'SB-SM', 'SBAS']);
+
+/** Geometría de fabricación BOV, separada de la normalización histórica de ejes. */
+export function ajustarGeometriaBov<T extends Pieza>(piezas: readonly T[], pref: string): T[] {
+  if (!/^BOV(?:-SMG)?(?:-SF)?$/.test(pref)) return [...piezas];
+  return piezas.map(original => {
+    let p = original;
+    if (p.nombre === 'base') p = { ...p, formula_ancho: 'P-TR' };
+    if (p.nombre === 'frente') p = { ...p, formula_largo: 'L-2*TC', formula_ancho: pref.includes('-SMG') ? 'A-TC-73/25.4' : 'A-TC', visualizacion: { ...p.visualizacion, version: 1, funcion: 'frente', plano: 'XZ', intercambiar: false, x: 'TC', y: '0', z: 'TC', confirmado: true } };
+    if (p.nombre === 'refuerzo_delantero') p = { ...p, visualizacion: { ...p.visualizacion, version: 1, funcion: 'travesano_frontal', plano: 'XZ', intercambiar: false, y: 'TF', confirmado: true } };
+    return p;
+  });
+}
+
+/** Normaliza ejes geométricos; orientarPieza muestra después el alto del frente primero. */
+export function normalizarPlantillasFabricacion<T extends Pieza>(piezas: readonly T[], pref: string): T[] {
+  return piezas.map(original => {
+    let p = original;
+    if (pref === 'SVFDH-SMG' && p.nombre === 'frente') p = { ...p, formula_ancho: 'A-30/25.4' };
+    if (/^SVFDH-SMG(?:-SF)?$/.test(pref) && p.nombre === 'refuerzo_delantero') p = { ...p, formula_ancho: '80/25.4' };
+    if (/^S?BFD-SMG(?:-SF)?$/.test(pref) && p.nombre === 'frente') p = { ...p, formula_cantidad: 'n_puertas', formula_largo: '(L-n_puertas*RV)/n_puertas' };
+    if (/^DB(?:-|$)/.test(pref) && !/-FE(?:-|$)/.test(pref) && p.nombre === 'base_gaveta') p = { ...p, cantos: { ...p.cantos, largos: 2, anchos: 0 } };
+    const largo = String(p.formula_largo ?? ''), ancho = String(p.formula_ancho ?? '');
+    const invertida = (/\bA\b/.test(largo) && !/\bA\b/.test(ancho)) || (!/\bL\b/.test(largo) && /\bL\b/.test(ancho));
+    if (FRENTES_HEREDADOS.has(pref) && p.rol_tablero === 'frente' && /^(frente|puerta)(_|$)/.test(p.nombre) && invertida) {
+      p = { ...p, formula_largo: p.formula_ancho, formula_ancho: p.formula_largo, ...(p.visualizacion ? { visualizacion: { ...p.visualizacion, intercambiar: false } } : {}) };
+    }
+    const carcasa = (/^base(?:_|$)/.test(p.nombre) && !/^base_gaveta(?:_|$)/.test(p.nombre)) || /^tapa(?:_|$)/.test(p.nombre) || /refuerzo|gola/.test(p.nombre);
+    if (carcasa && p.cantos) p = { ...p, cantos: { ...p.cantos, largos: Number(p.cantos.largos ?? 0) || Number(p.cantos.anchos ?? 0), anchos: 0 } };
+    return p;
+  });
+}
+
+/** El intervalo 21–24 pulgadas usa una puerta; las elecciones explícitas siguen siendo overrides. */
+export function normalizarReglasPuertas<T extends Regla>(reglas: readonly T[]): T[] {
+  return reglas.map(r => r.variable === 'n_puertas' && /^\s*L\s*<=\s*21\s*$/.test(r.condicion) ? { ...r, condicion: 'L < 24' } : r);
+}
 
 /** El segundo eje de los entrepaños es su profundidad de fabricación. */
 export function ajustarEntrepanos<T extends Pieza>(piezas: readonly T[], pref: string): T[] {

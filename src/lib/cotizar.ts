@@ -15,8 +15,8 @@ import { codigoComercial } from './module-groups';
 import { ajustarPiezasSinFondo, usaHuecoHornoParametrico, usaPuertaParametrica, esTipologiaDbFe, aplicarConfiguracionDbFe } from './muebles';
 import { aplicarPreciosTableros, type PreciosTablerosCotizacion } from './precios-tableros';
 import { presetMaterialesTipologia, usaFondoMaterialFrente, resolverCodigoTablero } from './materiales-proyecto';
-import { piezasConTableroGaveta, usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from './gavetas';
-import { ajustarEntrepanos } from './reglas-fabricacion';
+import { ajustarGavetasFe, piezasConTableroGaveta, usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from './gavetas';
+import { ajustarEntrepanos, ajustarGeometriaBov, normalizarPlantillasFabricacion, normalizarReglasPuertas } from './reglas-fabricacion';
 import { ajustarFrentesDosPequenosGola } from './frentes-gaveta';
 
 export type CotizarInput = {
@@ -289,8 +289,8 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
   // La regla vive en `muebles.ts`, que no importa `server-only` y por tanto sí
   // se puede ejercer desde una prueba. Allí se documenta por qué los muebles
   // superiores quedan fuera.
-  const piezasAjustadas = piezasConTableroGaveta(ajustarEntrepanos(ajustarPiezasSinFondo((piezas ?? []) as Pieza[], tipo.pref, inp.conFondo), tipo.pref), tipo.pref);
-  const frentesAjustados = ajustarFrentesDosPequenosGola(piezasAjustadas, (reglas ?? []) as Regla[], tipo.pref);
+  const piezasAjustadas = ajustarGeometriaBov(piezasConTableroGaveta(ajustarEntrepanos(ajustarPiezasSinFondo(normalizarPlantillasFabricacion((piezas ?? []) as Pieza[], tipo.pref), tipo.pref, inp.conFondo), tipo.pref), tipo.pref), tipo.pref);
+  const frentesAjustados = ajustarFrentesDosPequenosGola(ajustarGavetasFe(piezasAjustadas, tipo.pref, preset, inp.cantoCaja), normalizarReglasPuertas((reglas ?? []) as Regla[]), tipo.pref);
 
   const calc: CalcInput = {
     dims,

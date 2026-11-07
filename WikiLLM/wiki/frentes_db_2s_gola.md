@@ -1,22 +1,22 @@
 # Frentes de tres gavetas DB-2S con gola SM/SMG
 
-Regla confirmada por el usuario el 2026-11-06 para `DB-2S-SM`, `DB-2S-SMG` y sus variantes FE, SF y FE-SF. Sustituye en estas configuraciones el descuento histórico de 53,6 mm; no generaliza la distribución de tres frentes a DB-2, DB-3, DB-2-1INT ni DB tradicional.
+Regla actualizada por el usuario el 2026-11-07 para `DB-2S-SM`, `DB-2S-SMG` y sus variantes FE, SF y FE-SF. Sustituye en estas configuraciones el descuento histórico de 53,6 mm; no generaliza la distribución de tres frentes a DB-2, DB-3, DB-2-1INT ni DB tradicional.
 
 ## Fórmulas y ejemplo
 
 La gola consume dos espacios de **30 mm**. `A` es el alto exterior, y la luz `RV` es **3,2 mm**:
 
 - Frente inferior grande: `(A − 2 × 30) / 2`.
-- Cada frente pequeño (superior y central): `grande / 2 − RV`.
-- Comprobación: `2 × pequeño + grande + 2 × 30 + 2 × RV = A`.
+- Cada frente pequeño (superior y central): `grande / 2 − RV / 2`.
+- Comprobación: `2 × pequeño + grande + 2 × 30 + 2 × (RV / 2) = A`.
 
 | Alto exterior | Frente superior | Frente central | Frente inferior |
 | --- | --- | --- | --- |
-| 762 mm / 30 pulgadas | 172,3 mm | 172,3 mm | 351 mm |
-| 780 mm | 176,8 mm | 176,8 mm | 360 mm |
-| 785 mm, imagen suministrada | 178,05 mm | 178,05 mm | 362,5 mm |
+| 762 mm / 30 pulgadas | 173,9 mm | 173,9 mm | 351 mm |
+| 780 mm | 178,4 mm | 178,4 mm | 360 mm |
+| 785 mm, imagen suministrada | 179,65 mm | 179,65 mm | 362,5 mm |
 
-HDR presenta máximo un decimal: 178,05 mm se muestra como **178,1**. El cálculo y los consumos conservan la precisión interna del motor. El ancho del frente sigue siendo `L−RV`; para 650 mm es 646,8 mm. Cantidades, tablero de frente y cantos mantienen la selección del mueble.
+HDR presenta máximo un decimal: 179,65 mm se muestra como **178,1**. El cálculo y los consumos conservan la precisión interna del motor. El ancho del frente sigue siendo `L−RV`; para 650 mm es 646,8 mm. Cantidades, tablero de frente y cantos mantienen la selección del mueble.
 
 ## Origen de la diferencia
 
@@ -24,10 +24,14 @@ Las variantes SMG heredaban de SM la regla pequeña `A/4−RV−13,4 mm`. El fre
 
 ## Implementación compartida
 
-- Migración idempotente `0246_frentes_db_2s_gola.sql`: variables `espacio_gola=30/25.4`, `alto_frente_grande=(A−2×espacio_gola)/2`, `alto_frente_pequeno=alto_frente_grande/2−RV` y expresiones de las dos piezas de frente. No altera otras configuraciones DB ni datos de selección del proyecto.
+- Migración idempotente `0246_frentes_db_2s_gola.sql`: variables `espacio_gola=30/25.4`, `alto_frente_grande=(A−2×espacio_gola)/2`, `alto_frente_pequeno=alto_frente_grande/2−RV/2` y expresiones de las dos piezas de frente. No altera otras configuraciones DB ni datos de selección del proyecto.
 - `src/lib/frentes-gaveta.ts`: la misma normalización en `prepararCotizacion`, incluso con un catálogo precargado que aún tenga expresiones anteriores. El motor, grupos, simulador, cotizaciones, HDR y optimizador reciben las mismas piezas calculadas.
 - Visualización: usa los dos espacios de 30 mm cuando existe `espacio_gola`; las familias no incluidas conservan su tratamiento previo. El corte sigue siendo la fuente de las dimensiones dibujadas.
 - HDR: estas tipologías seleccionan gola de forma fija, evitando que el buscador inyecte accidentalmente `gola=0` por su estado inicial de manija.
+
+## Actualización 2026-11-07
+
+La migración 0251 reduce solo 1,6 mm después de dividir el frente grande. El visor usa luces de 1,6 mm entre esos frentes, sin cambiar RV para otras familias. La evidencia de aplicación y pruebas de 0246 que sigue es histórica, anterior a este ajuste.
 
 ## Aplicación y decisiones
 
