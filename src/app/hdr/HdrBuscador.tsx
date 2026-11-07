@@ -8,6 +8,8 @@ import Campo from '@/components/Campo';
 import { codigoComercial, parseMedida } from '@/lib/module-groups';
 import { presetMaterialesTipologia, resolverCodigoTablero } from '@/lib/materiales-proyecto';
 import type { CotizarResult } from '@/lib/cotizar';
+import { usaFrentesDosPequenosGola } from '@/lib/frentes-gaveta';
+import { esPanel, nombrePanel, etiquetaTipoModulo } from '@/lib/nombres-modulos';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
 
@@ -27,6 +29,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [sistemaFrente, setSistemaFrente] = useState<SistemaFrente>('manija');
   const [door, setDoor] = useState('');
   const [doorHand, setDoorHand] = useState<'L' | 'R'>('R');
+  const [notaPanel, setNotaPanel] = useState('');
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,7 +61,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         }
         continue;
       }
-      options.push({ value: t.id, label: ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM', 'BLS', 'BLS-RS-SM', 'BOMH-1', 'BOMH-1-FE'].includes(t.pref) ? (t.nombre_es ?? t.pref) : `${t.pref} — ${t.nombre_es ?? ''}` });
+      options.push({ value: t.id, label: etiquetaTipoModulo(t.pref, t.nombre_es) });
     }
     return options;
   }, [tipos]);
@@ -94,7 +97,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     if (pref === 'W') setProf(unidad === 'in' ? 12 : unidad === 'cm' ? 30.48 : 304.8);
     if (pref === 'WSM') setProf(unidad === 'in' ? 14 : unidad === 'cm' ? 35.56 : 355.6);
     if (pref === 'F' || (pref === 'DB' || esTipologiaDbFe(pref))) setSistemaFrente('manija');
-    if (esTipologiaDbSmFeSf(pref)) setSistemaFrente('gola');
+    if (esTipologiaDbSmFeSf(pref) || usaFrentesDosPequenosGola(pref)) setSistemaFrente('gola');
   }
 
   function aplicarDbSmFeTipo(pref: string) {
@@ -108,7 +111,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     if (usaDoor && !(parseMedida(door) > 0)) { setError('Escribe una medida válida para Puerta.'); return; }
     setError(null);
     setLoading(true);
-    const overrides: Record<string, number> = { gola: esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0 };
+    const overrides: Record<string, number> = { gola: usaFrentesDosPequenosGola(tipoSel?.pref) ? 1 : esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0 };
     if (esDB && dbTipo) {
       const t = tipologiasDbParaPrefijo(tipoSel?.pref).find((x) => x.key === dbTipo);
       if (t) {
@@ -162,7 +165,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const materialesCodigo = presetMaterialesTipologia(presetResuelto, tipoSel?.pref);
   const codigo = tipoSel
     ? codigoComercial({
-        pref: tipoSel.pref, largo, alto, prof, unidad, sistema: 'imperial', sistemaFrente, dbTipo: esDB ? dbTipo : null,
+        pref: tipoSel.pref, largo, alto, prof, unidad, sistema: unidad === 'in' ? 'imperial' : 'metrico', sistemaFrente, dbTipo: esDB ? dbTipo : null,
         door: usaDoor && door !== '' ? parseMedida(door) : null,
         doorHand: usaDoor ? doorHand : null,
         espesorCajaMm: tableros.find((tablero) => tablero.codigo === materialesCodigo.caja)?.espesor_mm,
@@ -205,7 +208,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
                   }}
                   res={m.result}
                   tableros={tableros}
-                  titulo={`${m.codigoModulo} ${descripcionModulo(m.result)} · ${m.cocinaNombre}${m.cantidad > 1 ? ` · ×${m.cantidad}` : ''}`}
+                  titulo={`${m.codigoModulo} ${m.nombreDescriptivo ?? descripcionModulo(m.result)} · ${m.cocinaNombre}${m.cantidad > 1 ? ` · ×${m.cantidad}` : ''}`}
                   mostrarBotonExportar={false}
                 />
               ) : (
@@ -286,12 +289,13 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
           {!esDbTradicional && (
             <Campo label="Sistema de frente">
-              <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
+              <select value={sistemaFrente} disabled={usaFrentesDosPequenosGola(tipoSel?.pref)} title={usaFrentesDosPequenosGola(tipoSel?.pref) ? 'Esta tipología usa dos espacios de gola de 30 mm' : undefined} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
                 {SISTEMAS_FRENTE.map((s) => <option key={s.key} value={s.key} title={s.desc}>{s.label}</option>)}
               </select>
             </Campo>
           )}
 
+          {esPanel(tipoSel?.pref) && <Campo label="Notas del panel"><input value={notaPanel} onChange={e => setNotaPanel(e.target.value)} placeholder="Ej. lateral" className="inp" /></Campo>}
           <button className="rounded-lg bg-slate-900 text-white px-5 py-2 text-sm font-medium hover:bg-slate-800">Buscar</button>
 
           <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.5rem .6rem;font-size:.875rem}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}.inp::-webkit-outer-spin-button,.inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.inp[type=number]{-moz-appearance:textfield}`}</style>
@@ -302,7 +306,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
         {res && (
           <div className="mt-4">
-            <HdrTabla res={res} tableros={tableros} titulo={`${codigo} ${descripcionModulo(res)}`} />
+            <HdrTabla res={res} tableros={tableros} titulo={`${codigo} ${esPanel(tipoSel?.pref) ? nombrePanel(notaPanel) : descripcionModulo(res)}`} />
           </div>
         )}
       </div>

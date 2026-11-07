@@ -1,5 +1,7 @@
 # La descripción de una línea contra el despiece real
 
+Actualización 2026-11-06: [reglas unificadas de nombres comerciales y PN](nombres_comerciales_modulos.md). Las dimensiones no estándar se completan en todas las familias, conservando las convenciones existentes; PN usa nombre Panel con notas y sufijo -15MM exclusivamente según el frente.
+
 ## El defecto
 
 `construirFilaLinea()` armaba la descripción de una línea con las **variables de

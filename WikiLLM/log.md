@@ -2883,3 +2883,34 @@ Migración 0243 aplicada; 12 cotizaciones configuradas y 39 módulos DB recalcul
 ## [2026-11-06] update | Publicación de Tablero Gaveta y selección de herrajes DB
 
 Promoción autorizada LIz → DEV → main con retorno a LIz. Migración 0243 verificada en Supabase sin reaplicación y auditoría de 12 cotizaciones, 39 módulos y 68 plantillas sin errores. Publicación sujeta a suite completa y learn estricto sin HIGH. [Detalle](wiki/tablero_gaveta_db.md).
+## [2026-11-06] update | Guardados y Excel del optimizador
+
+Implementación en feat/optimizador-guardar-exportar con migración 0244 aplicada, snapshot completo, autor/fecha de BD, RLS compartida y exportación Excel con PNG y coordenadas. Excepción de proxy y mapa de calidad autorizados; se conserva 1 MB con preflight UTF-8 de 900 KB. QA de dos guardados, restauración, cambios de parámetros, permisos con vendedor/admin y POST 403 completado. Excel real abierto normalmente con ocho imágenes visibles; parámetros restaurados y datos temporales eliminados. [Estado y arquitectura](wiki/optimizador_corte.md).
+## [2026-11-06] update | Guardado de optimizaciones grandes mediante compresión sin pérdida
+
+Se comprime únicamente el transporte de las corridas mayores de 900 KB, manteniendo el límite de Server Actions de 1 MB. La BD conserva el JSON completo. Se verificó Prueba Optimizador: 1.102.022 bytes enviados en 87.443 bytes, igualdad con la fila guardada y recarga idéntica. Regresiones de compatibilidad y expansión máxima; sin cambios en cotizaciones, motor, esquema ni dependencias. [Detalle](wiki/optimizador_corte.md).
+## [2026-11-06] update | Prueba integral de botones y exportación de 129 esquemas
+
+Guardado, carga, exportación, cancelar/confirmar borrado, estados inválidos, parámetros y permisos verificados con el original y copias temporales. Límite ampliado a 150 imágenes por autorización del usuario, conservando 6 MB mediante resolución PNG adaptativa. Excel real abierto con 8 hojas, 129 imágenes visibles y 258 tablas; original intacto, parámetros restaurados y QA limpio. [Evidencia y límites](wiki/optimizador_corte.md).
+
+## [2026-11-06] update | Entrepaños por profundidad, canto de frente en abiertos, persistencia individual y códigos DB
+
+Se aplicó la migración 0245, se protegieron diferencias por línea frente a los globales y se añadieron regresiones y verificación de guardado/recarga. Véase [reglas y evidencia](wiki/reglas_fabricacion_y_edicion_individual.md).
+
+El usuario confirmó separación automática del mueble editado cuando cambian características compartidas. Se implementó y probó la separación de A2, con persistencia tras recarga, globales y otros muebles intactos, validación previa a escrituras y conciliación de ambos grupos. Gate final: 116 archivos / 717 pruebas, exit 0; learn estricto sin HIGH. Auditoría estricta de 12 cotizaciones y conciliación de códigos sin pendientes; cuatro PDF y HDR verificados en navegador.
+
+## [2026-11-06] update | Identificadores únicos y colores independientes en HDR de más de 26 piezas
+
+Se sustituyó el reinicio A-Z por la secuencia A-Z/AA/AB compartida con indiceALetras. Regresión del componente real con 703 piezas; Chrome con 34 filas, colores A/AA independientes, consola limpia y PDF exportado y renderizado. Véase [reglas de HDR](wiki/reglas_fabricacion_y_edicion_individual.md).
+
+## [2026-11-06] update | Orden uniforme de piezas en todas las HDR y secuencia estable de gavetas
+
+La presentación sigue base, tapa, laterales, refuerzos, entrepaños, puertas y respaldo. Las piezas de gaveta mantienen su orden relativo original; no cambian geometría, cantidades, costos ni plantillas. Regresiones y pruebas de navegador en W-SM-PUSH, BFD y DB-FE; véase [reglas de HDR](wiki/reglas_fabricacion_y_edicion_individual.md).
+
+## [2026-11-06] update | Frentes DB-2S SM y SMG con dos espacios de gola de 30 mm
+
+Regla confirmada: inferior=(alto−60)/2; superior y central=inferior/2−3,2. Migración 0246, cálculo compartido y visualización actualizados; 13 módulos recalculados con respaldo, materiales/cantos/herrajes conservados y gola activada únicamente en el DB72 autorizado. Véase [frentes DB-2S](wiki/frentes_db_2s_gola.md).
+
+## [2026-11-06] update | Nombres coherentes por dimensiones, PN con notas y espesor del frente
+
+Se completaron dimensiones no estándar, se simplificó PN, se reconstruyen nombres históricos en lectura y se preservan códigos/grupos/exportaciones. Migración 0247 y reparación atómica con respaldo; comparación de 1.042 líneas sin cambios fuera de nombres y matriz de 756 combinaciones. El PDF explicita materiales individuales. Véase [nombres comerciales](wiki/nombres_comerciales_modulos.md).

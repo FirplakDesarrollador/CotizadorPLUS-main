@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import type { TipoMaterial } from '@/lib/materiales-linea';
 import { redirect } from 'next/navigation';
 import {
-  crearCotizacion, agregarLinea, editarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
+  crearCotizacion, agregarLinea, editarLineaConDetalle, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
   crearCocina, actualizarCocina, eliminarCocina, duplicarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
   reordenarGruposCocina, reordenarCocinas,
   guardarVersionCotizacion, restaurarVersionCotizacion,
@@ -221,11 +221,11 @@ export async function guardarPlantillaFirplakAction(id: string, plantillaFirplak
   }
 }
 
-export async function editarLineaAction(lineaId: string, input: AgregarLineaInput): Promise<{ ok: boolean; error?: string }> {
+export async function editarLineaAction(lineaId: string, input: AgregarLineaInput): Promise<{ ok: boolean; error?: string; desagrupado?: boolean }> {
   try {
-    const cotizacionId = await editarLinea(lineaId, input);
+    const { cotizacionId, desagrupado } = await editarLineaConDetalle(lineaId, input);
     revalidatePath(`/cotizaciones/${cotizacionId}`);
-    return { ok: true };
+    return { ok: true, desagrupado };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };
   }

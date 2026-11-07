@@ -5,6 +5,7 @@ import {
   type CotizacionHeader, type LineaPersistida,
 } from '@/lib/cotizaciones';
 import { cotizar, cotizarGrupo, type CotizarResult } from '@/lib/cotizar';
+import { esPanel, nombrePanel } from '@/lib/nombres-modulos';
 
 async function assertAdmin() {
   const { rol } = await getUserAndRole();
@@ -19,6 +20,7 @@ export async function listarCotizacionesAction(): Promise<CotizacionHeader[]> {
 export type ModuloHDR = {
   lineaId: string;
   codigoModulo: string;
+  nombreDescriptivo?: string;
   cocinaNombre: string;
   cantidad: number;
   /** Grupo físico (laterales compartidos). Las líneas de un grupo no se separan. */
@@ -53,12 +55,13 @@ export async function modulosDeCotizacionAction(cotizacionId: string): Promise<M
   }
 
   const etiqueta = (l: LineaPersistida) => l.codigo_modulo ?? l.pref ?? '?';
+  const descripcion = (l: LineaPersistida) => esPanel(l.pref) ? nombrePanel(l.anotaciones) : undefined;
   const resultados: ModuloHDR[] = [];
 
   for (const { linea, cocinaNombre } of sueltas) {
     try {
       const result = await cotizar(inputDesdeLinea(linea));
-      resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
+      resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), nombreDescriptivo: descripcion(linea), cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
     } catch (e) {
       resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: false, error: e instanceof Error ? e.message : 'Error' });
     }
@@ -75,7 +78,7 @@ export async function modulosDeCotizacionAction(cotizacionId: string): Promise<M
           trm: Number(base.trm ?? inputs[i].trm ?? 4200),
           margen: Number(base.margen ?? calculated.preparados[i]?.margen ?? 0),
         };
-        resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
+        resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), nombreDescriptivo: descripcion(linea), cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error';

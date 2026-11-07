@@ -16,6 +16,8 @@ import { ajustarPiezasSinFondo, usaHuecoHornoParametrico, usaPuertaParametrica, 
 import { aplicarPreciosTableros, type PreciosTablerosCotizacion } from './precios-tableros';
 import { presetMaterialesTipologia, usaFondoMaterialFrente, resolverCodigoTablero } from './materiales-proyecto';
 import { piezasConTableroGaveta, usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from './gavetas';
+import { ajustarEntrepanos } from './reglas-fabricacion';
+import { ajustarFrentesDosPequenosGola } from './frentes-gaveta';
 
 export type CotizarInput = {
   tipoId: string;
@@ -287,13 +289,14 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
   // La regla vive en `muebles.ts`, que no importa `server-only` y por tanto sí
   // se puede ejercer desde una prueba. Allí se documenta por qué los muebles
   // superiores quedan fuera.
-  const piezasAjustadas = piezasConTableroGaveta(ajustarPiezasSinFondo((piezas ?? []) as Pieza[], tipo.pref, inp.conFondo), tipo.pref);
+  const piezasAjustadas = piezasConTableroGaveta(ajustarEntrepanos(ajustarPiezasSinFondo((piezas ?? []) as Pieza[], tipo.pref, inp.conFondo), tipo.pref), tipo.pref);
+  const frentesAjustados = ajustarFrentesDosPequenosGola(piezasAjustadas, (reglas ?? []) as Regla[], tipo.pref);
 
   const calc: CalcInput = {
     dims,
-    piezas: piezasAjustadas,
+    piezas: frentesAjustados.piezas,
     herrajesPlantilla: inp.conHerrajes ? ((herrajesPlant ?? []) as HerrajePlantilla[]) : [],
-    reglas: (reglas ?? []) as Regla[],
+    reglas: frentesAjustados.reglas,
     preset,
     tablerosByCode,
     cantosByCalibre,
@@ -312,6 +315,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     descuento: inp.descuento,
     cantoFrentes: inp.cantoFrentes,
     cantoCaja: inp.cantoCaja,
+    cantoFrentesEnTodasLasPiezas: usaFondoMaterialFrente(tipo.pref),
     rielCodigo: inp.rielCodigo,
     barraCodigo: inp.barraCodigo,
   };
@@ -336,6 +340,8 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
       espesorFrenteMm: tablerosByCode[preset.frente]?.espesor_mm,
       conFondo: inp.conFondo,
       dbTipo: inp.dbTipo,
+      sistemaFrente: inp.overrides?.gola ? 'gola' : 'manija',
+      pcfdCajones: tipo.pref === 'PCFD' ? inp.overrides?.n_cajones : undefined,
     }),
     prefImperial: tipo.pref_imperial || tipo.pref,
     prefMetrico: tipo.pref_metrico || tipo.pref,

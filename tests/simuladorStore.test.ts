@@ -52,6 +52,15 @@ test('recupera medidas opcionales ausentes sin perder los módulos guardados', a
       store.getState().redo();assert.equal(store.getState().free,'10');
       assert.equal(getModuloValues({}).largo,'','una dimensión obligatoria ausente debe quedar incompleta');
     });
+    await t.test('descarta resultados v10 con nombres antiguos, conservando notas y selecciones',async()=>{
+      memory.setItem('simulador-storage',JSON.stringify({version:10,state:{...legacy,anotaciones:'lateral',
+        modulos:[{...legacy,id:'pn',anotaciones:'lateral'}],result:{anterior:true}}}));
+      await store.persist.rehydrate();
+      assert.equal(store.getState().result,null);
+      assert.equal(store.getState().anotaciones,'lateral');
+      assert.equal(store.getState().modulos[0].anotaciones,'lateral');
+      assert.deepEqual(store.getState().preset,legacy.preset);
+    });
   } finally {
     store.persist.clearStorage();
     if(previous)Object.defineProperty(globalThis,'localStorage',previous);

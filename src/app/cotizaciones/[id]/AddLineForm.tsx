@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
+import { etiquetaTipoModulo } from '@/lib/nombres-modulos';
 import { familiaMaterialDelArea, presetMaterialesTipologia, usaCajaMaterialFrente, usaFondoMaterialFrente } from '@/lib/materiales-proyecto';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
@@ -114,7 +115,7 @@ export default function AddLineForm({
   sistemaMedida: 'imperial' | 'metrico';
   projectDefaults?: ProjectDefaults;
   initial?: LineaInicial;
-  onDone?: () => void;
+  onDone?: (mensaje?: string) => void;
   // Se dispara al agregar un mueble (no al editar) con los materiales y cantos usados,
   // para que el próximo mueble de la cocina arranque con esos mismos valores por defecto.
   onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] }) => void;
@@ -340,7 +341,7 @@ export default function AddLineForm({
         }
         continue;
       }
-      options.push({ value: t.id, label: ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM', 'BLS', 'BLS-RS-SM', 'BOMH-1', 'BOMH-1-FE'].includes(t.pref) ? (t.nombre_es ?? prefProyecto(t)) : `${prefProyecto(t)} — ${t.nombre_es ?? ''}` });
+      options.push({ value: t.id, label: etiquetaTipoModulo(prefProyecto(t), t.nombre_es) });
     }
     return options;
   })();
@@ -617,7 +618,7 @@ export default function AddLineForm({
       });
     }
     router.refresh();
-    onDone?.();
+    onDone?.('desagrupado' in res && res.desagrupado ? 'El mueble se separó del grupo y sus cambios individuales quedaron guardados.' : undefined);
   }
 
   return (
@@ -628,7 +629,7 @@ export default function AddLineForm({
           <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
             {Object.entries(presetMaterialesTipologia(materialProyecto(prefMaterial ?? '')?.preset ?? {}, prefMaterial)).every(([rol, codigo]) => preset[rol] === codigo)
               ? '✓ Materiales globales aplicados'
-              : 'Materiales globales pendientes de aplicar'}
+              : 'Selección individual de materiales'}
           </span>
         )}
       </div>
@@ -937,7 +938,7 @@ export default function AddLineForm({
             </select>
           </L>
           <L label="Canto caja">
-            <select value={cantoCajaSel} onChange={(e) => setCantoCajaSel(e.target.value)} className="inp">
+            <select value={usaCajaMaterialFrente(prefMaterial) ? cantoFrentesSel : cantoCajaSel} disabled={usaCajaMaterialFrente(prefMaterial)} title={usaCajaMaterialFrente(prefMaterial) ? 'Todas las piezas usan el canto de frente' : undefined} onChange={(e) => setCantoCajaSel(e.target.value)} className="inp">
               <option value="">Por defecto</option>
               {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -998,7 +999,7 @@ export default function AddLineForm({
           {loading ? 'Guardando…' : esEdicion ? 'Guardar cambios' : '+ Agregar a la cotización'}
         </button>
         {esEdicion && (
-          <button type="button" onClick={onDone} className="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100">
+          <button type="button" onClick={() => onDone?.()} className="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100">
             Cancelar
           </button>
         )}

@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 import type { CotizarGrupoResult } from '@/lib/group-result';
 
 export type SimuladorModuloValues = {
+  anotaciones?: string;
   tipoId: string;
   largo: string;
   alto: string;
@@ -67,6 +68,7 @@ interface SimuladorState extends SimuladorSnapshot {
 }
 
 export const initialModuloValues: SimuladorModuloValues = {
+  anotaciones: '',
   tipoId: '',
   largo: '33',
   alto: '30',
@@ -118,6 +120,7 @@ const medidaGuardada = (value: unknown): string =>
   typeof value === 'string' || typeof value === 'number' ? String(value) : '';
 
 export const getModuloValues = (state: Partial<SimuladorModuloValues>): SimuladorModuloValues => ({
+  anotaciones: state.anotaciones ?? '',
   tipoId: state.tipoId ?? '',
   largo: medidaGuardada(state.largo),
   alto: medidaGuardada(state.alto),
@@ -234,7 +237,8 @@ export const useSimuladorStore = create<SimuladorState>()(
       // la forma anterior no los trae, así que `migrate` lo descarta (pone `result: null`)
       // y el Simulador pide recalcular en vez de renderizar campos ausentes.
       // v10: descarta resultados anteriores al material separado de gaveta.
-      version: 10,
+      // v11: conserva entradas y notas; descarta resultados con nombres históricos.
+      version: 11,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {

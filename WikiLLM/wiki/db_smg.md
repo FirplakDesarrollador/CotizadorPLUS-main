@@ -1,5 +1,7 @@
 # DB-SMG: cajoneras con gola metálica
 
+Actualización 2026-11-06: para DB-2S-SM/SMG y sus variantes FE/SF rige ahora [el reparto de frentes con dos golas de 30 mm](frentes_db_2s_gola.md), confirmado por el usuario. Las referencias de 53,6 mm y 173,9 mm de estas configuraciones en la investigación siguiente son históricas; no describen su regla vigente.
+
 Las cajoneras de gola metálica se presentan como tres familias comerciales,
 formadas en conjunto por doce tipologías físicas.
 Cada tipo deriva de su par `DB-SM`, conserva sus reglas de cajones, barras,

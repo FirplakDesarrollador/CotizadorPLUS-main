@@ -1,10 +1,11 @@
 import { UNIDAD_MATERIAL, type MaterialLinea } from './materiales-linea';
+import type { MaterialesFamilia, PersonalizacionMateriales } from './materiales-proyecto';
 
 export type LineaPropuesta = {
   id: string; cantidad: number; tipo_mueble_id?: string | null;
   pref?: string | null; codigo_modulo?: string | null; descripcion_es?: string | null;
   precio_total_cop?: number; precio_total_usd?: number; precio_unit_usd?: number;
-  config?: { material?: MaterialLinea; clasificacionPdf?: string } | null;
+  config?: (MaterialesFamilia & { material?: MaterialLinea; clasificacionPdf?: string; personalizacionMateriales?: PersonalizacionMateriales | null }) | null;
   breakdown?: Record<string, unknown> | null;
 };
 export type AreaPropuesta<T extends LineaPropuesta = LineaPropuesta> = { nombre: string; cantidad?: number; lineas: T[] };

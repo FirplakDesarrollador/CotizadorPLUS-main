@@ -1,5 +1,5 @@
 import type { UnidadDim } from '@/lib/engine';
-import { esIndependienteDeFondo, esMuebleSuperior } from '@/lib/muebles';
+import { esIndependienteDeFondo, esMuebleSuperior, altoPorDefectoIn } from '@/lib/muebles';
 
 export type SistemaMedida = 'imperial' | 'metrico';
 
@@ -201,12 +201,21 @@ export function codigoComercial(input: CodigoComercialInput): string {
   // Los inferiores B omiten únicamente sus dimensiones estándar. Se compara
   // en cm antes de formatear para no perder cambios por redondeo imperial.
   const esInferiorB = prefNormalizado.startsWith('B');
+  // Las llamadas históricas sin profundidad no representan geometría completa;
+  // conservan su etiqueta. Los formularios y líneas persistidas envían los tres ejes.
+  const esDb = /^DB(?:-|$)/.test(prefNormalizado) && prof != null;
   const altoCm = convertirExacto(alto, unidad, 'cm');
   const profCm = prof == null ? NaN : convertirExacto(prof, unidad, 'cm');
-  const altoBVariable = esInferiorB && Number.isFinite(altoCm) && Math.abs(altoCm - 76.2) > 0.001;
-  const profBVariable = esInferiorB && Number.isFinite(profCm)
-    && Math.abs(profCm - 60.96) > 0.001 && Math.abs(profCm - 60.9) > 0.001;
-  const altoSufijo = (altoBVariable || incluyeAltoEnCodigo(pref) || esTw || esTwSmPush || esTwSmHood || esTorreTk)
+  const planoSinProfundidad = prefNormalizado === 'PN' || prefNormalizado === 'F';
+  const altoEstandar = altoPorDefectoIn(prefNormalizado, 'inferior');
+  const altoOtraFamilia = prof != null && !planoSinProfundidad
+    && (altoEstandar == null || Math.abs(altoCm - altoEstandar * 2.54) > 0.001);
+  const profOtraFamilia = prof != null && !planoSinProfundidad && Number.isFinite(profCm) && Math.abs(profCm - 60.96) > 0.001
+    && (!esInferiorB || Math.abs(profCm - 60.9) > 0.001);
+  const altoBVariable = (esInferiorB || esDb) && Number.isFinite(altoCm) && Math.abs(altoCm - 76.2) > 0.001;
+  const profBVariable = (esInferiorB || esDb) && Number.isFinite(profCm)
+    && Math.abs(profCm - 60.96) > 0.001 && (esDb || Math.abs(profCm - 60.9) > 0.001);
+  const altoSufijo = (altoBVariable || altoOtraFamilia || incluyeAltoEnCodigo(pref) || esTw || esTwSmPush || esTwSmHood || esTorreTk)
     ? anchoCodigo(alto, unidad, sistema)
     : '';
   if (altoSufijo) agregarMedida(altoSufijo);
@@ -217,12 +226,16 @@ export function codigoComercial(input: CodigoComercialInput): string {
   const esDfe = prefNormalizado.split('-')[0] === 'DFE';
   const incluyeProfundidad = (esMuebleSuperior(prefNormalizado) && prefNormalizado !== 'WCC')
     || profBVariable
+    || profOtraFamilia
     || esTorreTk
     || esDfe;
   const profSufijo = incluyeProfundidad && prof != null
     ? anchoCodigo(prof, unidad, sistema)
     : '';
   if (profSufijo) agregarMedida(profSufijo);
+  // PN es una pieza plana: ni estados heredados de gola/cajonera ni la caja
+  // deben introducir segmentos ajenos a sus medidas y al material del frente.
+  if (prefNormalizado === 'PN') return `${codigo}${Number(input.espesorFrenteMm) === 15 ? '-15MM' : ''}`;
   let dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
   const esDbFe = /^(DB|IC)-FE(?:-SF)?$/.test(prefNormalizado);
   if (esDbFe && input.dbTipo === 'DB2-1OP') dbSufijo = '-2-1INT';

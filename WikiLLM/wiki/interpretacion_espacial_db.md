@@ -1,5 +1,7 @@
 # Interpretación espacial de cajoneras DB
 
+Actualización 2026-11-06: para DB-2S-SM/SMG y sus variantes FE/SF rige ahora [el reparto de frentes con dos golas de 30 mm](frentes_db_2s_gola.md), confirmado por el usuario. Las referencias de 53,6 mm y 173,9 mm de estas configuraciones en la investigación siguiente son históricas; no describen su regla vigente.
+
 ## Resultado y alcance (2026-09-10)
 
 Sí es posible reconstruir una interpretación coherente del armado DB en **frontal, lateral derecha y planta**. Las dimensiones de corte y los nombres permiten recuperar los planos principales, la estructura y el orden de las gavetas. No determinan todas las coordenadas de montaje, ranuras, perforaciones ni el sistema mecánico del cajón.

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { personalizarMaterialesLinea } from '../src/lib/materiales-proyecto';
 import test from 'node:test';
 import { resolverTipologiaFondo } from '../src/lib/sin-fondo';
 
@@ -58,6 +59,7 @@ class Consulta {
   select() { return this; }
   eq(key: string, value: unknown) { this.filtros.push([key, value]); return this; }
   order() { return this; }
+  range() { return this; }
   single() { this.unica = true; return this; }
   update(patch: Row) { this.patch = patch; return this; }
   then(resolve: (result: Result) => unknown) {
@@ -97,6 +99,56 @@ loader._load = function(id, ...args) {
 };
 const api = requireLocal('../src/lib/cotizaciones.ts') as typeof import('../src/lib/cotizaciones');
 loader._load = original;
+
+test('lectura de cotización reconstruye nombres y grupos históricos sin modificar datos ni precios', async () => {
+  tablas.cot_cotizaciones = [{ id: 'q', sistema_medida: 'metrico', total_cop: 6789 }];
+  tablas.cot_cocinas = [{ id: 'a', cotizacion_id: 'q', nombre: 'Cocina', cantidad: 1 }];
+  tablas.cot_grupos_modulos = [{ id: 'g', cotizacion_id: 'q', codigo_grupo: 'DB65-2S-SMG.PN60230-18MM', orden: 0 }];
+  tablas.cot_tipos_mueble = [{ id: 'db', pref: 'DB-2S-SMG' }, { id: 'pn', pref: 'PN' }];
+  tablas.cot_tableros = [{ codigo: 'C15', espesor_mm: 15 }, { codigo: 'F18', espesor_mm: 18 }];
+  const comun = { cotizacion_id: 'q', cocina_id: 'a', grupo_id: 'g', cantidad: 1, config: { preset: { caja: 'C15', frente: 'F18' } } };
+  tablas.cot_cotizacion_lineas = [
+    { ...comun, id: 'l1', tipo_mueble_id: 'db', pref: 'DB-2S-SMG', codigo_modulo: 'DB65-2S-SMG', posicion_grupo: 1, largo: 65, alto: 78.5, prof: 61, unidad_dim: 'cm', precio_total_cop: 1234 },
+    { ...comun, id: 'l2', tipo_mueble_id: 'pn', pref: 'PN', codigo_modulo: 'PN60230-18MM', descripcion_es: 'PANEL 600x2300x18 mm', anotaciones: 'lateral', posicion_grupo: 2, largo: 600, alto: 2300, prof: 18, unidad_dim: 'mm', precio_total_cop: 5555 },
+  ];
+  const antes = structuredClone(tablas);
+  const q = await api.getCotizacion('q');
+  const lineas = q.cocinas[0].lineas as Array<{ codigo_modulo: string; descripcion_es: string; grupo: { codigo_grupo: string }; precio_total_cop: number }>;
+  assert.equal(lineas[0].codigo_modulo, 'DB6578.561-2S-SMG');
+  assert.equal(lineas[1].codigo_modulo, 'PN60230');
+  assert.equal(lineas[1].descripcion_es, 'PN - Panel lateral');
+  assert.equal(lineas[0].grupo.codigo_grupo, 'DB6578.561-2S-SMG.PN60230');
+  assert.equal(lineas[0].precio_total_cop, 1234); assert.equal(lineas[1].precio_total_cop, 5555);
+  assert.deepEqual(tablas, antes);
+});
+
+test('persistencia: excepciones individuales sobreviven recálculo, sincronización y cambios globales', async () => {
+  const recalculosPrevios = recalculos;
+  catalogo.tiposById.w.pref = 'W';
+  cajaEsperada = 'INDIVIDUAL';
+  Object.assign(catalogo.tablerosByCode, { INDIVIDUAL: { espesor_mm: 18 }, GLOBAL: { espesor_mm: 15 } });
+  const global = { materialesSuperiores: { preset: { caja: 'GLOBAL', frente: 'GLOBAL' }, cantoCaja: '19x0,45', cantoFrentes: '22x1' } };
+  const input = personalizarMaterialesLinea({ preset: { caja: 'INDIVIDUAL', frente: 'GLOBAL' }, cantoCaja: '22x1', cantoFrentes: '22x1', conHerrajes: false, herrajesExcluidos: ['riel', 'barra'] }, global, 'W');
+  tablas.cot_cotizaciones = [{ id: 'q', sistema_medida: 'metrico', config_default: structuredClone(global) }];
+  tablas.cot_cocinas = [{ id: 'a', cotizacion_id: 'q', nombre: 'Cocina', cantidad: 1 }];
+  tablas.cot_tipos_mueble = [{ id: 'w', pref: 'W' }];
+  tablas.cot_tableros = [{ codigo: 'GLOBAL', espesor_mm: 15 }, { codigo: 'INDIVIDUAL', espesor_mm: 18 }];
+  tablas.cot_grupos_modulos = [{ id: 'g', cocina_id: 'a', cotizacion_id: 'q' }];
+  tablas.cot_cotizacion_lineas = [{ id: 'l', cocina_id: 'a', cotizacion_id: 'q', grupo_id: 'g', tipo_mueble_id: 'w', pref: 'W', posicion_grupo: 1, cantidad: 1, largo: 60, alto: 80, prof: 30, unidad_dim: 'cm', config: input }];
+  await api.recalcularGrupo('g');
+  for (let i = 0; i < 2; i++) {
+    await api.sincronizarMaterialesCotizacion('q');
+    const restored = api.inputDesdeLinea(tablas.cot_cotizacion_lineas[0] as unknown as import('../src/lib/cotizaciones').LineaPersistida);
+    assert.equal(restored.preset.caja, 'INDIVIDUAL');
+    assert.equal(restored.cantoCaja, '22x1');
+    assert.equal(restored.conHerrajes, false);
+    assert.deepEqual(restored.herrajesExcluidos, ['riel', 'barra']);
+    assert.deepEqual(restored.personalizacionMateriales, input.personalizacionMateriales);
+  }
+  assert.deepEqual(tablas.cot_cotizaciones[0].config_default, global);
+  cajaEsperada = 'CLOSET';
+  recalculos = recalculosPrevios;
+});
 
 test('reconstruir un módulo conserva activación y exclusiones de herrajes', () => {
   const linea = { id: 'l', cotizacion_id: 'q', cocina_id: 'a', grupo_id: 'g', posicion_grupo: 1,
