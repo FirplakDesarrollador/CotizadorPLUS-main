@@ -2966,3 +2966,40 @@ Carpeta nativa con autorización del navegador, ZIP alternativo y nombres único
 Conservación de notas distintas, trazabilidad de 837 líneas, 231688 piezas conciliadas y 37 registros autorizados actualizados en Condominio V. Excel/PDF completos y sin columnas recortadas; se conserva la configuración de campanas de MALECÓN.
 
 Validación para publicación LIz → DEV → main: build y gate completo aprobados con 776 pruebas; learn sin HIGH. Exportaciones revisadas e integridad de datos comprobada. Supabase actualizado según las decisiones del usuario; sin migración de esquema necesaria.
+
+## [2026-11-09] ingest | Sección Consumos en la página HDR
+
+Buscador de muebles dentro de la cotización cargada, campo de desperdicio aplicado solo al tablero sobre la medida neta (0–100%) y consumo por mueble en m² de tablero y metro lineal de canto con conteo de piezas. Lógica pura en `src/app/hdr/consumos.ts`, componente `HdrConsumos.tsx` montado en `HdrBuscador.tsx` y ocho pruebas en `tests/hdr-consumos.test.ts` (reconciliación del desglose del motor contra las filas de `construirFilas`), mapeadas a `lane:frontend` en `quality/manifest.json`. Compilación de producción y `quality:gate` aprobados (exit 0); sin cambios en motor, PDF, Excel ni optimizador.
+
+## [2026-11-09] update | Consumos por material y calibre con selector de cotización propio
+
+El consumo deja de ser una cifra única: `ConsumoMueble` expone `materiales[]` (una entrada por código de tablero, agrupando roles que comparten código) y `cantos[]` (una entrada por calibre), ambos ordenados y con su propia línea en la celda. La sección gana su propio `Combobox` de cotización, independiente del de «Generar desde una cotización guardada», con su estado, su carga y su vaciado, y muestra el recuento de `muebles · unidades · piezas` del subconjunto listado. `HdrBuscador` ahora solo pasa `cotizaciones`. Pruebas actualizadas a nueve (discriminación, ausencia de campos lumped, multiplicación por cantidad en cada entrada); `quality:gate` y build aprobados.
+
+## [2026-11-09] update | Cantidad de Consumos editable y con valor por defecto 1
+
+La columna Cantidad pasa a ser un input por fila claveado por `lineaId` que **arranca siempre en 1**, nunca en la cantidad de la cotización; esa cifra queda solo en `ConsumoMueble.cantidadCotizacion` (cantidad × repeticiones) como `title` del input. `parseCantidad()` (nueva, pura) vuelve a 1 ante vacío, texto o negativo y acepta coma decimal, y `calcularConsumos()` recibe el mapa de cantidades con `?? 1` como respaldo. El input es `type="text" inputMode="decimal"` para que la coma local no lo vacíe, y `onBlur` normaliza el texto visible. El recuento de unidades suma las cantidades editadas. Once pruebas en total: `quality:gate` y build aprobados.
+## [2026-11-09] update | Validación de entrepaños guardados frente a reglas en HDR
+
+Se diagnosticó W96.27867-SM-PUSH: un override persistido de 1 prevalece sobre las reglas actuales de 2. Se añadió validación por módulo/grupo, avisos y confirmación antes de exportar PDF/Excel, preservando excepciones manuales. El encabezado cuenta piezas reales. Auditoría de solo lectura: 837 módulos, 14 discrepancias en cuatro proyectos y cero errores de cálculo. Ver [validación HDR](wiki/hdr_validacion_entrepanos.md) para alcance, evidencia y límites; no se alteraron cotizaciones, precios ni fuentes raw.
+
+## [2026-11-09] update | Consumos reconciliado con la tabla Materiales del Simulador
+
+Se contrasto Consumos contra la tabla «Materiales» del Simulador sobre el modulo real `W96.27867-SM-PUSH` (Condominio V) corriendo el motor contra la base. Ambos calculos eran aritmeticamente correctos; la diferencia era de criterio en dos puntos. (1) **Agrupacion**: Consumos fusionaba por codigo y mostraba `PRIRH15CONSTRUCTOR 4,135` en una sola linea, mientras el Simulador lista Caja (2,638) y Refuerzo (1,497) por separado; ahora `ConsumoMueble.materiales[]` lleva `rol` + `codigo` y replica fila a fila el orden del motor. (2) **Consumibles**: se agrego `consumibles[]` desde `cantidadesConsumibles` (tarugos, soportes, carton, etiquetas) en unidades, con `fmtUnidad`. El campo de desperdicio conserva **0% por defecto** (medida neta); con 15% reproduce exactamente el `m2` con merma del Simulador. La prueba «Consumos cuadra fila a fila con la tabla Materiales del Simulador» fija el reconciliado. Trece pruebas: `quality:gate` y build aprobados.
+
+## [2026-11-09] update | Excel de consumos e instrucciones de producción en HDR
+
+Se añadió exportación Excel de consumos con fecha de Bogotá, orden alfabético y columnas numéricas por partida. Las HDR incorporan R17L/R20L/R16L/R19L en las piezas de carcasa solicitadas con fondo y los cuatro nombres R15L de FE, sin cambiar medidas ni otras columnas. Ver [instrucciones HDR](wiki/hdr_instrucciones_ranura.md) y [consumos](wiki/hdr_consumos.md).
+
+## [2026-11-09] update | Apertura L/R obligatoria en W-SM, WLD y WSM de una puerta
+
+Selección sin valor predeterminado en simulador y edición/creación de cotizaciones; validación del servidor, sufijo al final de la referencia, conservación al reabrir y bloqueo de HDR si falta. Se marcaron con respaldo 26 muebles existentes en ocho cotizaciones sin alterar precios, medidas ni cantidades. Auditoría posterior idempotente: cero cambios por aplicar. Ver [apertura de superiores](wiki/apertura_superiores_una_puerta.md).
+
+Verificación final de apertura L/R: quality:gate exit 0 con 132 suites, TypeScript y ESLint sin regresiones; quality:learn -- --strict con cero HIGH. La prueba HTTP autenticada de los avisos no se ejecutó: la revisión automática rechazó crear una sesión administrativa sin autorización explícita. Se solicitó esa autorización; revisión visual y doble generación de PDF pendientes.
+
+## [2026-11-09] update | Verificados los avisos L/R en las ocho cotizaciones afectadas
+
+El usuario autorizó explícitamente la sesión administrativa temporal sin envío de correo. La comprobación HTTP autenticada final verificó ocho respuestas 200 con el aviso L/R presente y sin indicadores de error de Next; 26 pendientes distribuidos en 2, 1, 8, 7, 4, 1, 2 y 1. Se cerraron ambas sesiones QA, incluida la primera tras corregir una lectura UTF-16 fuera del bloque de limpieza; consulta posterior: cero sesiones QA abiertas. No se modificaron cotizaciones ni precios durante la prueba. Evidencia en `.tmp/mano-puerta-http.json` y [documentación de apertura](wiki/apertura_superiores_una_puerta.md). Revisión visual e impresión PDF siguen fuera de esta evidencia HTTP.
+
+## [2026-11-09] update | Preparación de publicación de consumos, HDR y apertura L/R
+
+Publicación LIz → DEV → main solicitada por el usuario. Gate exhaustivo aprobado con 132 suites, build de producción aprobado y auditoría consultiva sin HIGH. Supabase verificado hasta migración 0253; sincronizador L/R ejecutado sobre 1066 líneas con cero cambios pendientes de aplicar y sin modificar precios, medidas ni cantidades. Se conservan documentados los límites de revisión visual y doble PDF. Ver [apertura L/R](wiki/apertura_superiores_una_puerta.md).

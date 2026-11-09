@@ -12,8 +12,10 @@ import { usaFrentesDosPequenosGola } from '@/lib/frentes-gaveta';
 import { esPanel, etiquetaTipoModulo } from '@/lib/nombres-modulos';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
+import HdrConsumos from './HdrConsumos';
 import { consolidarModulosHdr, descripcionPiezaPlanaHdr } from './datosHdr';
 import { crearDestinoHdr, esCancelacionHdr } from './destinoExportacion';
+import { exigirRevisionHdr } from './validacion';
 
 type Tipo = { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; nombre_es: string | null; categoria: string | null };
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
@@ -21,6 +23,7 @@ const DB_SM_FE_SF_GROUP_VALUE = '__DB_SM_FE_SF__';
 
 export default function HdrBuscador({ tipos, presetDefault, tableros, cotizaciones }:
   { tipos: Tipo[]; presetDefault: Record<string, string>; tableros: Tablero[]; cotizaciones: CotizacionHeader[] }) {
+  const [revisionConfirmada, setRevisionConfirmada] = useState(false);
   const presetResuelto = Object.fromEntries(Object.entries(presetDefault).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, tableros)]));
   const [tipoId, setTipoId] = useState('');
   const [largo, setLargo] = useState(30);
@@ -136,6 +139,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   }
 
   async function handleCotizacionChange(id: string) {
+    setRevisionConfirmada(false);
     setCotizacionId(id);
     setProyectoHdr(cotizaciones.find(c => c.id === id)?.nombre ?? '');
     setModulos(null);
@@ -162,6 +166,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     setExportandoTodas({ hecho: 0, total: okModulos.length });
     setModError(null);
     try {
+      exigirRevisionHdr(modulos ?? [], revisionConfirmada);
       if (modulos?.some(m => !m.ok)) throw new Error('Hay muebles con errores. Corrígelos antes de exportar para no omitirlos.');
       const handles = okModulos.map(m => { const handle = tablasRef.current.get(m.lineaId); if (!handle) throw new Error(`La HDR de ${m.codigoModulo} aún no está lista.`); return handle; });
       const destino = await crearDestinoHdr(proyectoHdr);
@@ -175,6 +180,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     setExportandoExcel(true);
     setModError(null);
     try {
+      exigirRevisionHdr(modulos ?? [], revisionConfirmada);
       if (modulos?.some(m => !m.ok)) throw new Error('Hay muebles con errores. Corrígelos antes de exportar para no omitirlos.');
       const datos = (modulos ?? []).map(m => { const tabla = tablasRef.current.get(m.lineaId); if (!tabla) throw new Error(`La HDR de ${m.codigoModulo} aún no está lista.`); return tabla.datosExcel(); });
       const destino = await crearDestinoHdr(proyectoHdr);
@@ -212,6 +218,15 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
       {modulos && modulos.length > 0 && (
         <div className="space-y-4">
+          {modulos.some(m => m.avisosValidacion?.length) && (
+            <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 space-y-2">
+              <p className="font-semibold">Revisión de hojas de ruta pendiente</p>
+              <ul className="list-disc pl-5">{modulos.flatMap(m => (m.avisosValidacion ?? []).map((aviso, i) => <li key={`${m.lineaId}-${i}`}>{m.codigoModulo}: {aviso}</li>))}</ul>
+              <a href={`/cotizaciones/${cotizacionId}`} className="underline">Abrir cotización para corregir las cantidades</a>
+              <p>Después de guardar la corrección, vuelve a seleccionar la cotización para validar las HDR.</p>
+              {modulos.some(m => m.aperturaPendiente) ? <p>La apertura L/R es obligatoria. Complétala en la cotización para poder exportar.</p> : <label className="flex items-start gap-2"><input type="checkbox" checked={revisionConfirmada} onChange={e => setRevisionConfirmada(e.target.checked)} />He revisado todos los avisos y confirmo que las cantidades guardadas son intencionales.</label>}
+            </div>
+          )}
           <p className="text-sm text-slate-600">Al exportar, elige Descargas: se creará «{proyectoHdr.trim() || 'Proyecto'} - HDR». Si tu navegador no admite carpetas, se descargará un ZIP con esa carpeta.</p>
           <p className="text-sm text-slate-600">Muebles contabilizados: {totalMuebles.toLocaleString('es-CO')} · HDR: {modulos.length}. Los grupos físicos se muestran completos, con sus piezas compartidas contadas una sola vez.</p>
           <div className="flex justify-end gap-3">
@@ -235,6 +250,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
                     else tablasRef.current.delete(m.lineaId);
                   }}
                   res={m.result}
+                  pref={m.pref}
                   tableros={tableros}
                   titulo={`${m.codigoModulo} ${m.nombreDescriptivo ?? descripcionModulo(m.result, m.pref)}`.trim()}
                   cantidadInicial={m.cantidad}
@@ -337,10 +353,12 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
         {res && (
           <div className="mt-4">
-            <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} tableros={tableros} proyectoInicial={proyectoHdr} titulo={`${codigo} ${descripcionPiezaPlanaHdr(tipoSel?.pref, notaPanel) ?? descripcionModulo(res, tipoSel?.pref)}`} />
+            <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} pref={tipoSel?.pref} tableros={tableros} proyectoInicial={proyectoHdr} titulo={`${codigo} ${descripcionPiezaPlanaHdr(tipoSel?.pref, notaPanel) ?? descripcionModulo(res, tipoSel?.pref)}`} />
           </div>
         )}
       </div>
+
+      <HdrConsumos cotizaciones={cotizaciones} />
     </div>
   );
 }

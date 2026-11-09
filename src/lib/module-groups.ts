@@ -1,5 +1,6 @@
 import type { UnidadDim } from '@/lib/engine';
 import { esIndependienteDeFondo, esMuebleSuperior, altoPorDefectoIn } from '@/lib/muebles';
+import { codigoConMano, type ManoPuerta } from './mano-puerta';
 
 export type SistemaMedida = 'imperial' | 'metrico';
 
@@ -158,6 +159,8 @@ export function incluyeAltoEnCodigo(pref: string | null | undefined): boolean {
 }
 
 export type CodigoComercialInput = {
+  manoPuerta?: ManoPuerta | null;
+  nPuertas?: number;
   pref: string;
   largo: number;
   alto: number;
@@ -282,7 +285,7 @@ export function codigoComercial(input: CodigoComercialInput): string {
   const tkMedida = esTorreTk && input.zocaloIn != null
     ? anchoCodigo(input.zocaloIn, 'in', sistema)
     : '';
-  const finalizar = (valor: string) => tkMedida ? `${valor} TK${tkMedida}` : valor;
+  const finalizar = (valor: string) => codigoConMano(tkMedida ? `${valor} TK${tkMedida}` : valor, prefNormalizado, input.nPuertas, input.manoPuerta);
   // SMG integra el espesor común en su segmento, igual que SM: SMG15/SMG18.
   if (esSmg) return finalizar(espesorComun != null
     ? codigoBase.replace('-SMG', `-SMG${espesorComun}`)

@@ -31,6 +31,7 @@ export type SimuladorModuloValues = {
   removible: boolean;
   door: string;
   doorHand: 'L' | 'R';
+  manoPuerta?: '' | 'L' | 'R';
   hornoLargo: string;
   hornoAlto: string;
   mo: string;
@@ -94,6 +95,7 @@ export const initialModuloValues: SimuladorModuloValues = {
   removible: false,
   door: '',
   doorHand: 'R',
+  manoPuerta: '',
   hornoLargo: '',
   hornoAlto: '',
   mo: '',
@@ -146,6 +148,7 @@ export const getModuloValues = (state: Partial<SimuladorModuloValues>): Simulado
   removible: state.removible ?? false,
   door: medidaGuardada(state.door),
   doorHand: state.doorHand ?? 'R',
+  manoPuerta: state.manoPuerta === 'L' || state.manoPuerta === 'R' ? state.manoPuerta : '',
   hornoLargo: medidaGuardada(state.hornoLargo),
   hornoAlto: medidaGuardada(state.hornoAlto),
   mo: medidaGuardada(state.mo),

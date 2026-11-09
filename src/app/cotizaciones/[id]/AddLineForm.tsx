@@ -1,4 +1,6 @@
 'use client';
+import { puertasSegunReglas, requiereManoPuerta, type ManoPuerta } from '@/lib/mano-puerta';
+import type { Regla } from '@/lib/engine';
 import { usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from '@/lib/gavetas';
 import HerrajesGaveta from '@/components/HerrajesGaveta';
 import { usaHoodSm, validarHoodSm } from '@/lib/hood-sm';
@@ -14,7 +16,7 @@ import { TIPS_COTIZADOR } from '@/lib/tooltips';
 import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
-type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
+type Tipo = { id: string; pref: string; reglasPuertas?: Regla[]; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
@@ -53,6 +55,7 @@ export type ProjectDefaults = {
 };
 
 export type LineaInicial = {
+  manoPuerta?: ManoPuerta;
   lineaId: string;
   tipoId: string;
   largo: string | number;
@@ -224,6 +227,7 @@ export default function AddLineForm({
   const [removible, setRemovible] = useState<boolean>(initial?.removible ?? false);
   const [door, setDoor] = useState(initial?.door != null ? String(initial.door) : '');
   const [doorHand, setDoorHand] = useState<'L' | 'R'>(initial?.doorHand ?? 'R');
+  const [manoPuerta, setManoPuerta] = useState<ManoPuerta | ''>(initial?.manoPuerta ?? '');
   const [hornoLargo, setHornoLargo] = useState(
     ov?.horno_largo != null
       ? String(convertir(ov.horno_largo, 'in', unidad))
@@ -269,6 +273,8 @@ export default function AddLineForm({
   const tipologiasDbSmgSf = obtenerTipologiasDbSmGSf(tiposDisponibles);
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
   const usaDoor = usaPuertaParametrica(prefTipo);
+  const puertasActuales = puertasSegunReglas(tipo?.reglasPuertas, { largo: parseMedida(largo), alto: parseMedida(alto), prof: parseMedida(prof), unidad }, npuertas === '' ? undefined : Number(npuertas));
+  const pideMano = requiereManoPuerta(prefTipo, puertasActuales);
   const usaHuecoHorno = usaHuecoHornoParametrico(prefTipo);
   const usaMoHood = [tipo?.pref, tipo?.pref_imperial, tipo?.pref_metrico].some(usaMedidasMoHood);
   const usaHood = usaHoodSm(tipo?.pref);
@@ -566,6 +572,8 @@ export default function AddLineForm({
       cantidad,
       prefLabel: prefProyecto(tipo)
         ? codigoComercial({
+            manoPuerta: pideMano ? (manoPuerta || undefined) : undefined,
+            nPuertas: puertasActuales,
             pref: prefProyecto(tipo),
             largo: parseMedida(largo),
             alto: parseMedida(alto),
@@ -597,6 +605,7 @@ export default function AddLineForm({
       dbTipo: esDB && dbTipo ? dbTipo : undefined,
       door: usaDoor ? parseMedida(door) : undefined,
       doorHand: usaDoor ? doorHand : undefined,
+      manoPuerta: pideMano ? (manoPuerta || undefined) : undefined,
       conFondo: fuerzaConFondo ? true : conFondo,
       preciosTableros: projectDefaults?.preciosTableros,
       anotaciones,
@@ -762,6 +771,7 @@ export default function AddLineForm({
           <L label="Nº puertas">
             <input type="number" placeholder="auto" disabled={usaHood} value={usaHood ? (tipo?.pref === 'TW-SM-HOOD' ? '1' : '2') : npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" />
           </L>
+          {pideMano && <L label="Apertura de la puerta (obligatoria)"><select required value={manoPuerta} onChange={e => setManoPuerta(e.target.value as ManoPuerta | '')} className="inp"><option value="">Elige L o R</option><option value="L">L</option><option value="R">R</option></select></L>}
           <L label="Nº cajones">
             <input type="number" min={0} step={1} placeholder="auto" value={ncajones} onChange={(e) => { setNcajones(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" />
           </L>
