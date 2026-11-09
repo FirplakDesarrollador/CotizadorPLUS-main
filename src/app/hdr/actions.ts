@@ -1,10 +1,12 @@
 'use server';
+import { codigoConMano, manoValida, requiereManoPuerta } from '@/lib/mano-puerta';
 import { getUserAndRole } from '@/lib/auth';
 import {
   getCotizacion, listarCotizaciones, inputDesdeLinea,
   type CotizacionHeader, type LineaPersistida,
 } from '@/lib/cotizaciones';
-import { cotizar, cotizarGrupo, cargarCatalogoPrecompilado, type CotizarResult } from '@/lib/cotizar';
+import { cotizar, cotizarGrupo, prepararCotizacion, cargarCatalogoPrecompilado, type CotizarResult } from '@/lib/cotizar';
+import { validarEntrepanosHdr } from './validacion';
 import { descripcionPiezaPlanaHdr, descripcionModulo, resultadoFisicoHdr, type ResultadoHdr } from './datosHdr';
 import { esModuloLinea } from '@/lib/materiales-linea';
 
@@ -22,6 +24,8 @@ export type ModuloHDR = {
   lineaId: string;
   codigoModulo: string;
   nombreDescriptivo?: string;
+  avisosValidacion?: string[];
+  aperturaPendiente?: boolean;
   pref?: string;
   repeticionesArea?: number;
   cocinaNombre: string;
@@ -62,30 +66,44 @@ export async function modulosDeCotizacionAction(cotizacionId: string): Promise<M
     }
   }
 
-  const etiqueta = (l: LineaPersistida) => l.codigo_modulo ?? l.pref ?? '?';
+  const puertasActuales = new Map<string, number | undefined>();
+  const etiqueta = (l: LineaPersistida) => codigoConMano(l.codigo_modulo ?? l.pref ?? '?', l.pref, puertasActuales.get(l.id), l.config?.manoPuerta);
+  const avisoMano = (l: LineaPersistida) => requiereManoPuerta(l.pref, puertasActuales.get(l.id)) && !manoValida(l.config?.manoPuerta)
+    ? ['Falta completar la apertura L/R de este mueble de una puerta en la cotización.'] : [];
   const descripcion = (l: LineaPersistida) => descripcionPiezaPlanaHdr(l.pref, l.anotaciones);
   const resultados: ModuloHDR[] = [];
+  // Un catálogo compartido para el contraste; no repetir consultas por mueble.
+  const necesitaValidacion = items.some(({ linea }) => inputDesdeLinea(linea).overrides?.n_entrepanos != null);
+  const catalogo = porGrupo.size || necesitaValidacion ? await cargarCatalogoPrecompilado() : undefined;
 
   for (const { linea, cocinaNombre, repeticionesArea } of sueltas) {
     try {
       const result = await cotizar(inputDesdeLinea(linea));
-      resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), nombreDescriptivo: descripcion(linea), pref: linea.pref ?? undefined, repeticionesArea, cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
+      puertasActuales.set(linea.id, result.vars?.n_puertas);
+      const input = inputDesdeLinea(linea);
+      const avisosValidacion = input.overrides?.n_entrepanos != null
+        ? validarEntrepanosHdr((await prepararCotizacion(input, catalogo)).calc) : [];
+      avisosValidacion.push(...avisoMano(linea));
+      resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), nombreDescriptivo: descripcion(linea), avisosValidacion, aperturaPendiente: avisoMano(linea).length > 0, pref: linea.pref ?? undefined, repeticionesArea, cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
     } catch (e) {
       resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), cocinaNombre, repeticionesArea, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: false, error: e instanceof Error ? e.message : 'Error' });
     }
   }
 
-  const catalogo = porGrupo.size ? await cargarCatalogoPrecompilado() : undefined;
   for (const grupo of porGrupo.values()) {
     try {
       const inputs = grupo.map(({ linea }) => inputDesdeLinea(linea));
       const calculated = await cotizarGrupo(inputs, catalogo);
+      grupo.forEach(({ linea }, i) => puertasActuales.set(linea.id, calculated.lineas[i].vars?.n_puertas));
+      const avisosValidacion = grupo.flatMap(({ linea }, i) => inputs[i].overrides?.n_entrepanos != null
+        ? validarEntrepanosHdr(calculated.preparados[i].calc).map(aviso => `${etiqueta(linea)}: ${aviso}`) : []);
+      avisosValidacion.push(...grupo.flatMap(({ linea }) => avisoMano(linea).map(aviso => `${etiqueta(linea)}: ${aviso}`)));
       if (grupo.length > 1) {
         if (grupo.some(m => Number(m.linea.cantidad) !== 1 || m.repeticionesArea !== grupo[0].repeticionesArea)) throw new Error('El grupo físico tiene cantidades o repeticiones incompatibles; revísalo antes de generar HDR.');
         const origenes = grupo.map(({ linea, repeticionesArea }) => ({ lineaId: linea.id, codigoModulo: etiqueta(linea), cantidad: Number(linea.cantidad), repeticionesArea }));
         const nombres = grupo.map(({ linea }, i) => `A${i + 1}: ${descripcion(linea) ?? descripcionModulo(calculated.lineas[i] as CotizarResult, linea.pref ?? undefined)}`.trim());
-        const result = resultadoFisicoHdr(calculated, Number(inputs[0].trm ?? 4200), Number(calculated.preparados[0]?.margen ?? 0));
-        resultados.push({ lineaId: grupo[0].linea.id, codigoModulo: `GRUPO ${grupo.map(({ linea }) => etiqueta(linea)).join(' + ')}`, nombreDescriptivo: nombres.join(' | '), cocinaNombre: grupo[0].cocinaNombre, repeticionesArea: grupo[0].repeticionesArea, cantidad: 1, grupoId: grupo[0].linea.grupo_id ?? null, origenes, ok: true, result });
+        const result = resultadoFisicoHdr(calculated, Number(inputs[0].trm ?? 4200), Number(calculated.preparados[0]?.margen ?? 0), grupo.map(({ linea }) => linea.pref ?? ''));
+        resultados.push({ lineaId: grupo[0].linea.id, codigoModulo: `GRUPO ${grupo.map(({ linea }) => etiqueta(linea)).join(' + ')}`, nombreDescriptivo: nombres.join(' | '), avisosValidacion, aperturaPendiente: grupo.some(({ linea }) => avisoMano(linea).length > 0), cocinaNombre: grupo[0].cocinaNombre, repeticionesArea: grupo[0].repeticionesArea, cantidad: 1, grupoId: grupo[0].linea.grupo_id ?? null, origenes, ok: true, result });
         continue;
       }
       grupo.forEach(({ linea, cocinaNombre, repeticionesArea }, i) => {
@@ -95,7 +113,7 @@ export async function modulosDeCotizacionAction(cotizacionId: string): Promise<M
           trm: Number(base.trm ?? inputs[i].trm ?? 4200),
           margen: Number(base.margen ?? calculated.preparados[i]?.margen ?? 0),
         };
-        resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), nombreDescriptivo: descripcion(linea), pref: linea.pref ?? undefined, repeticionesArea, cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
+        resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), nombreDescriptivo: descripcion(linea), avisosValidacion, aperturaPendiente: avisoMano(linea).length > 0, pref: linea.pref ?? undefined, repeticionesArea, cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error';

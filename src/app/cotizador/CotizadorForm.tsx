@@ -1,4 +1,6 @@
 'use client';
+import { puertasSegunReglas, requiereManoPuerta, type ManoPuerta } from '@/lib/mano-puerta';
+import type { Regla } from '@/lib/engine';
 import { usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from '@/lib/gavetas';
 import HerrajesGaveta from '@/components/HerrajesGaveta';
 import { usaHoodSm, validarHoodSm } from '@/lib/hood-sm';
@@ -30,7 +32,7 @@ const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
 const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
   Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
 
-type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria: string | null; margen_key: string | null };
+type Tipo = { id: string; pref: string; reglasPuertas?: Regla[]; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria: string | null; margen_key: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null; precio_m2: number | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
@@ -144,6 +146,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const setTrm = (v: number) => setStore({ trm: v });
   
   const npuertas = store.npuertas;
+  const manoPuerta = store.manoPuerta ?? '';
   const setNpuertas = (v: string) => setStore({ npuertas: v });
   
   const ncajones = store.ncajones;
@@ -301,6 +304,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const usaPuertaSup = usaPuertaSupTorre(tipoPref);
   const usaMoPcfd = usaMoTorre(tipoPref);
   const usaDoor = usaPuertaParametrica(tipoPref);
+  const puertasActuales = puertasSegunReglas(tipoActual?.reglasPuertas, { largo: parseMedida(largo), alto: parseMedida(alto), prof: parseMedida(prof), unidad }, npuertas === '' ? undefined : Number(npuertas));
+  const pideMano = requiereManoPuerta(tipoPref, puertasActuales);
   const usaHuecoHorno = usaHuecoHornoParametrico(tipoPref);
   const usaMoHood = [tipoActual?.pref, tipoActual?.pref_imperial, tipoActual?.pref_metrico].some(usaMedidasMoHood);
   const usaHood = usaHoodSm(tipoActual?.pref);
@@ -426,6 +431,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     });
 
   function validarDimensionesActivas() {
+    if (pideMano && !manoPuerta) { setError('Selecciona L o R para la apertura del mueble de una puerta.'); return false; }
     if (usaTableroGaveta(prefMaterial) && conHerrajes && !herrajesFijosDbFe(prefMaterial) && ((!herrajesExcl.includes("riel") && !rielCodigo) || (!herrajesExcl.includes("barra") && Number(nbarras) > 0 && !barraCodigo))) { setError("Selecciona el tipo de riel y de barra que deseas incluir."); return false; }
     if (usaHood) {
       try { validarHoodSm(parseMedida(alto), hood.trim() === '' ? undefined : parseMedida(hood), free.trim() === '' ? undefined : parseMedida(free)); }
@@ -513,6 +519,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       rielCodigo: (usaTableroGaveta(pref) || permiteTipologiaDb(pref) || esTipologiaDbSmFeSf(pref) || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref) || pref === 'PCFD') && modulo.rielCodigo ? (esTipologiaDbFe(pref) ? 'RIELFE500' : modulo.rielCodigo) : undefined,
       door: usaPuertaParametrica(pref) && modulo.door !== '' ? parseMedida(modulo.door) : undefined,
       doorHand: usaPuertaParametrica(pref) ? modulo.doorHand : undefined,
+      manoPuerta: modulo.manoPuerta || undefined,
     };
   }
 
@@ -701,11 +708,13 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   // el código sigue la unidad con la que se está simulando.
   const sistemaCodigo: SistemaMedida = unidad === 'in' ? 'imperial' : 'metrico';
 
-  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'zocalo' | 'sistemaFrente' | 'dbTipo' | 'ncajones' | 'door' | 'doorHand'> & { preset?: Record<string, string> }) => {
+  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'zocalo' | 'sistemaFrente' | 'dbTipo' | 'ncajones' | 'door' | 'doorHand' | 'manoPuerta' | 'npuertas'> & { preset?: Record<string, string> }) => {
     const pref = tipos.find((item) => item.id === valores.tipoId)?.pref ?? '';
     if (!pref) return '';
     const materiales = presetMaterialesTipologia(valores.preset ?? preset, pref);
     return codigoComercial({
+      manoPuerta: valores.manoPuerta || undefined,
+      nPuertas: puertasSegunReglas(tipos.find(t => t.id === valores.tipoId)?.reglasPuertas, { largo: parseMedida(valores.largo), alto: parseMedida(valores.alto), prof: parseMedida(valores.prof), unidad }, valores.npuertas === '' ? undefined : Number(valores.npuertas)),
       pref,
       largo: parseMedida(valores.largo),
       alto: parseMedida(valores.alto),
@@ -727,7 +736,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   const codigoResultado = store.modulos.length > 0
     ? codigoGrupo(store.modulos.map(codigoDeValores).filter(Boolean))
-    : codigoDeValores({ tipoId, largo, alto, prof, zocalo, sistemaFrente, dbTipo, ncajones, door, doorHand });
+    : codigoDeValores({ tipoId, largo, alto, prof, zocalo, sistemaFrente, dbTipo, ncajones, door, doorHand, manoPuerta, npuertas });
 
   const editingPosition = store.editingId
     ? store.modulos.findIndex((modulo) => modulo.id === store.editingId) + 1
@@ -956,6 +965,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
         <div data-tour="opciones" className="grid grid-cols-2 gap-2 items-end">
           <Field label="Nº puertas (override)"><input type="number" placeholder="auto" disabled={usaHood} value={usaHood ? (tipoActual?.pref === 'TW-SM-HOOD' ? '1' : '2') : npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
+          {pideMano && <Field label="Apertura de la puerta (obligatoria)"><select required value={manoPuerta} onChange={e => setStore({ manoPuerta: e.target.value as ManoPuerta | '' })} className="inp"><option value="">Elige L o R</option><option value="L">L</option><option value="R">R</option></select></Field>}
           <Field label="Nº cajones (override)"><input type="number" min={0} step={1} placeholder="auto" value={ncajones} onChange={(e) => { setNcajones(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" /></Field>
           <Field label="Nº entrepaños (override)"><input type="number" min={0} step={1} placeholder="auto" value={nentrepanos} onChange={(e) => { setNentrepanos(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" /></Field>
           {esPCFD && (

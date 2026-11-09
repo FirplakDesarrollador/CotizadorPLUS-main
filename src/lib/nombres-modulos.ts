@@ -1,5 +1,6 @@
 import { codigoComercial, type SistemaMedida } from './module-groups';
 import type { UnidadDim } from './engine';
+import { manoValida } from './mano-puerta';
 
 export const esPanel = (pref: string | null | undefined) => /^PN(?:$|[-\d\s])/i.test(String(pref ?? '').trim());
 export function nombrePanel(nota?: string | null): string {
@@ -15,7 +16,7 @@ export function descripcionConNotas(linea: { pref?: string | null; descripcion_e
   return esPanel(linea.pref) ? nombrePanel(linea.anotaciones) : [linea.descripcion_es, linea.anotaciones].filter(Boolean).join(' · ');
 }
 
-export type LineaParaNombre = { tipo_mueble_id: string | null; pref?: string | null; codigo_modulo?: string | null; descripcion_es?: string | null; anotaciones?: string | null; largo: number; alto: number; prof: number; unidad_dim: UnidadDim; config?: Record<string, unknown> | null };
+export type LineaParaNombre = { tipo_mueble_id: string | null; pref?: string | null; codigo_modulo?: string | null; descripcion_es?: string | null; anotaciones?: string | null; largo: number; alto: number; prof: number; unidad_dim: UnidadDim; config?: Record<string, unknown> | null; breakdown?: { vars?: Record<string, number> } | null };
 export type TipoParaNombre = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null };
 export type TableroParaNombre = { codigo: string; espesor_mm?: number | null };
 
@@ -37,6 +38,8 @@ export function normalizarNombresLineas<T extends LineaParaNombre>(lineas: reado
       door: cfg.door == null ? undefined : Number(cfg.door), doorHand: cfg.doorHand as 'L' | 'R' | undefined,
       conFondo: cfg.conFondo !== false, zocaloIn: overrides.zocalo,
       pcfdCajones: pref === 'PCFD' ? overrides.n_cajones : undefined,
+      manoPuerta: manoValida(cfg.manoPuerta) ? cfg.manoPuerta : undefined,
+      nPuertas: overrides.n_puertas ?? linea.breakdown?.vars?.n_puertas,
     });
     return { ...linea, pref: linea.pref?.trim() ? linea.pref : tipo.pref, codigo_modulo, ...(esPanel(tipo.pref) ? { descripcion_es: nombrePanel(linea.anotaciones) } : {}) };
   });

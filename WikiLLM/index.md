@@ -7,9 +7,12 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
+- [Apertura L/R de superiores de una puerta](wiki/apertura_superiores_una_puerta.md) - Selección obligatoria en W-SM/WLD/WSM, sufijo comercial y alerta para 26 muebles existentes sin apertura.
+- [Instrucciones R…L en HDR](wiki/hdr_instrucciones_ranura.md) - Indicaciones de carcasa con fondo por familia/espesor y cuatro nombres de gavetas FE, sin cambios geométricos.
 - [BOV interno y BOV-SMG](wiki/bov_frente_interno_smg.md) - Frente interno sin holguras, base hasta el refuerzo, 73 mm superiores en SMG y conversión verificada de Condominio V.
 - [Materiales delgados sin canto](wiki/cantos_por_espesor.md) - Regla universal por espesor real de 4,5/5,5/6/9 mm, sin calibre ni costo; recálculo y protección de resultados históricos.
 - [HDR consolidada y Excel continuo](wiki/hdr_excel_consolidado.md) - Cantidades editables, módulos repetidos entre áreas, tabla Excel y excepciones DB/DB-FE de la migración 0249.
+- [Consumos en la página HDR](wiki/hdr_consumos.md) - Selector de cotización propio, buscador de muebles, desperdicio de tablero sobre la medida neta, cantidad editable por mueble (por defecto 1) y consumo discriminado por rol y código de tablero (m²), calibre de canto (m lineal) y consumible (unidades), reconciliado fila a fila con la tabla Materiales del Simulador, con conteo de muebles, unidades y piezas.
 - [Puertas, orientación y cantos de carcasa](wiki/puertas_cantos_orientacion.md) - Umbral en tres unidades, ejes de frentes, cantos solo en largos, migración 0248 y recálculo verificado.
 - [Tablero Gaveta de 15 mm en DB](wiki/tablero_gaveta_db.md) - Material separado en simulador y cotizaciones, referencias elegibles de rieles y barras, aplicación histórica y auditoría.
 - [Pipeline CEFI y cotizaciones](wiki/pipeline_cotizaciones.md) - Registro con opción Desconocido, referencias navegables de Cotizador PLUS, oportunidades con RLS, importación histórica y dashboard único.
@@ -99,3 +102,4 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Copiar sección de cotización](wiki/copiar_seccion_cotizacion.md) - Copia inmediata con grupos, muebles, adicionales y precios, transacción y RLS.
 
 - [SVFDH y SVFDH-SMG](wiki/svfdh.md) - Clones SVFD con dimensiones visibles y frente SMG reducido 30 mm.
+- [Validación de entrepaños en HDR](wiki/hdr_validacion_entrepanos.md) - Contraste de configuraciones guardadas con reglas actuales, revisión previa a exportar y auditoría de 837 módulos.

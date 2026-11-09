@@ -1,4 +1,5 @@
 import 'server-only';
+import { validarManoPuerta, manoValida, requiereManoPuerta } from './mano-puerta';
 import { cumpleReglaCantosDelgados } from './cantos';
 import { createClient } from '@/lib/supabase/server';
 import { cotizar, cotizarGrupo, cargarCatalogoPrecompilado, type CatalogoPrecompilado, type CotizarInput, type CotizarResult } from '@/lib/cotizar';
@@ -267,6 +268,10 @@ function construirFilaLinea(input: AgregarLineaInput, res: CotizarResult) {
       barraCodigo: input.barraCodigo ?? null,
       door: input.door ?? null,
       doorHand: input.doorHand ?? null,
+      ...(['W-SM', 'WLD', 'WSM'].includes(res.prefMueble ?? '') ? {
+        manoPuerta: requiereManoPuerta(res.prefMueble, res.vars.n_puertas) && manoValida(input.manoPuerta) ? input.manoPuerta : null,
+        manoPuertaPendiente: requiereManoPuerta(res.prefMueble, res.vars.n_puertas) && !manoValida(input.manoPuerta),
+      } : {}),
       conFondo: input.conFondo !== false,
       preciosTableros: normalizarPreciosTableros(input.preciosTableros),
     },
@@ -351,6 +356,7 @@ export function inputDesdeLinea(linea: LineaPersistida): AgregarLineaInput {
     removible: c.removible === true,
     door: c.door == null ? undefined : Number(c.door),
     doorHand: c.doorHand === 'L' || c.doorHand === 'R' ? c.doorHand : undefined,
+    manoPuerta: manoValida(c.manoPuerta) ? c.manoPuerta : undefined,
     conFondo: c.conFondo !== false,
     preciosTableros: normalizarPreciosTableros(c.preciosTableros),
   };
@@ -465,6 +471,8 @@ export async function recalcularGrupo(
       pcfdCajones: pref === 'PCFD' ? inputs[i].overrides?.n_cajones : undefined,
       door: inputs[i].door,
       doorHand: inputs[i].doorHand,
+      manoPuerta: inputs[i].manoPuerta,
+      nPuertas: calculated.lineas[i].vars.n_puertas,
       espesorCajaMm: prepared?.calc.tablerosByCode[prepared.calc.preset.caja]?.espesor_mm,
       espesorFrenteMm: prepared?.calc.tablerosByCode[prepared.calc.preset.frente]?.espesor_mm,
       conFondo: inputs[i].conFondo,
@@ -472,6 +480,7 @@ export async function recalcularGrupo(
     const baseResult = calculated.lineas[i] as CotizarResult;
     const result = {
       ...baseResult,
+      prefMueble: pref,
       trm: Number(baseResult.trm ?? inputs[i].trm ?? 4200),
       margen: Number(baseResult.margen ?? calculated.preparados[i]?.margen ?? 0),
     } as CotizarResult;
@@ -524,6 +533,7 @@ export async function agregarLinea(cocinaId: string, input: AgregarLineaInput) {
   inputResuelto = await resolverMaterialesDeInput(sb, inputResuelto, cocinaId, cotizacionId);
 
   const res = await cotizar(inputResuelto);
+  validarManoPuerta(res.prefMueble, res.vars.n_puertas, inputResuelto.manoPuerta);
   const { count } = await sb.from('cot_cotizacion_lineas')
     .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
 
@@ -569,6 +579,7 @@ export async function editarLineaConDetalle(lineaId: string, input: AgregarLinea
 
   // Validar el resultado independiente antes de crear grupos o modificar filas.
   const res = await cotizar(inputResuelto);
+  validarManoPuerta(res.prefMueble, res.vars.n_puertas, inputResuelto.manoPuerta);
   let separar = false;
 
   if (grupoOriginalId) {
