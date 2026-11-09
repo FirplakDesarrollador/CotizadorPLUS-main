@@ -28,6 +28,7 @@ type LineaConfig = {
   barraCodigo?: string;
   door?: number;
   doorHand?: 'L' | 'R';
+  manoPuerta?: 'L' | 'R';
   conFondo?: boolean;
 };
 
@@ -168,6 +169,7 @@ export default function CocinaCard({
     barraCodigo: l.config?.barraCodigo ?? undefined,
     door: l.config?.door ?? undefined,
     doorHand: l.config?.doorHand ?? undefined,
+    manoPuerta: l.config?.manoPuerta ?? undefined,
     conFondo: l.config?.conFondo ?? projectDefaults?.conFondo ?? true,
   });
 

@@ -1,9 +1,10 @@
 import 'server-only';
+import { validarManoPuerta, type ManoPuerta } from './mano-puerta';
 import { usaHoodSm, validarHoodSm } from './hood-sm';
 import { leerCatalogoPaginado } from './catalogo-paginado';
 import { createClient } from '@/lib/supabase/server';
 import {
-  calcularMueble, toInches, normCalibre,
+  calcularMueble, toInches, normCalibre, derivarVars, geoVars,
   type Dims, type UnidadDim, type Regla, type Pieza, type HerrajePlantilla,
   type Breakdown, type CalcInput,
   type Tablero, type Canto, type Herraje,
@@ -20,6 +21,7 @@ import { ajustarEntrepanos, ajustarGeometriaBov, normalizarPlantillasFabricacion
 import { ajustarFrentesDosPequenosGola } from './frentes-gaveta';
 
 export type CotizarInput = {
+  manoPuerta?: ManoPuerta;
   tipoId: string;
   largo: number; alto: number; prof: number;
   unidad: UnidadDim;
@@ -49,7 +51,7 @@ export type CotizarInput = {
   preciosTableros?: PreciosTablerosCotizacion;
 };
 
-export type CotizarResult = Breakdown & { trm: number; margen: number };
+export type CotizarResult = Breakdown & { trm: number; margen: number; prefMueble?: string };
 
 export type CotizacionPreparada = PreparedGroupMember & {
   trm: number;
@@ -327,6 +329,8 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
       && tipo.pref.toUpperCase().includes('B')
       && /(^|-)(SM|SMG)($|-)/i.test(tipo.pref),
     codigoModulo: codigoComercial({
+      manoPuerta: inp.manoPuerta,
+      nPuertas: derivarVars(calc.reglas, dims, calc.overrides, geoVars(calc)).n_puertas,
       pref: tipo.pref,
       largo: inp.largo,
       alto: inp.alto,
@@ -353,7 +357,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
 
 export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
   const prepared = await prepararCotizacion(inp);
-  return { ...calcularMueble(prepared.calc), trm: prepared.trm, margen: prepared.margen };
+  return { ...calcularMueble(prepared.calc), trm: prepared.trm, margen: prepared.margen, prefMueble: prepared.pref };
 }
 
 export async function cotizarGrupo(
@@ -377,9 +381,10 @@ export async function cotizarGrupo(
   return { ...calcularGrupoFisico(preparados), preparados };
 }
 
-export async function cotizarGrupoConsolidado(inputs: CotizarInput[]): Promise<CotizarGrupoResult> {
+export async function cotizarGrupoConsolidado(inputs: CotizarInput[], exigirMano = false): Promise<CotizarGrupoResult> {
   if (inputs.length === 0) throw new Error('Agrega al menos un módulo para calcular.');
   const group = await cotizarGrupo(inputs);
+  if (exigirMano) group.preparados.forEach((p, i) => validarManoPuerta(p.pref, group.lineas[i].vars.n_puertas, inputs[i].manoPuerta));
   const first = group.preparados[0];
   const result = consolidarGrupo(group, { trm: first.trm, margen: first.margen });
   return { ...result, visualizacion: construirVisualizacion(group.preparados, group) };
@@ -401,6 +406,8 @@ function esTipologiaNoCotizable(tipo: { pref: string; pref_imperial?: string | n
 
 export async function getCotizadorData() {
   const sb = await createClient();
+  const { data: reglasPuertas, error: reglasPuertasError } = await sb.from('cot_reglas_config').select('*').eq('activo', true).eq('variable', 'n_puertas');
+  if (reglasPuertasError) throw new Error('No se pudieron cargar las reglas de puertas.');
   const [{ data: tipos }, /* { data: recargos }, */ { data: tableros }, { data: params }, { data: piezasRoles }, { data: perfiles }, { data: cantos }] = await Promise.all([
     sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,nombre_es,categoria,margen_key').eq('activo', true).order('pref'),
     // sb.from('cot_recargos_cliente').select('id,cliente_nombre,recargo_pct,incluye_herrajes').eq('activo', true).order('cliente_nombre'),
@@ -440,7 +447,7 @@ export async function getCotizadorData() {
   return {
     // Defensa adicional a `activo = true`: evita exponer tipologías retiradas
     // si un entorno todavía no ha aplicado la migración que las desactiva.
-    tipos: (tipos ?? []).filter((tipo: { pref: string; pref_imperial?: string | null; pref_metrico?: string | null }) => !esTipologiaNoCotizable(tipo)),
+    tipos: (tipos ?? []).filter((tipo: { pref: string; pref_imperial?: string | null; pref_metrico?: string | null }) => !esTipologiaNoCotizable(tipo)).map((tipo: { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; nombre_es: string | null; categoria: string | null; margen_key: string | null }) => ({ ...tipo, reglasPuertas: (reglasPuertas ?? []).filter((r: Regla) => r.tipo_mueble_id == null || r.tipo_mueble_id === tipo.id) as Regla[] })),
     // recargos: recargos ?? [],
     tableros: tableros ?? [],
     cantos: ((cantos ?? []) as Array<{ calibre: string }>).map((c: any) => c.calibre as string),

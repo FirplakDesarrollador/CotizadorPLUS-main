@@ -1,9 +1,8 @@
 'use client';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import type { CotizarResult } from '@/lib/cotizar';
 import { exportarNodoAPdf, nombreArchivoPdf } from './pdfExport';
-import { construirFilas, normalizarColorHdr, type FilaHDR } from './datosHdr';
+import { construirFilas, normalizarColorHdr, type FilaHDR, type ResultadoHdr } from './datosHdr';
 import { crearDestinoHdr, esCancelacionHdr, type GuardarArchivoHdr } from './destinoExportacion';
 export { descripcionModulo } from './datosHdr';
 
@@ -11,8 +10,8 @@ export type Tablero = { codigo: string; espesor_mm: number | null };
 export type DatosHdrExcel = { titulo: string; cantidad: string; color: string; proyecto: string; filas: (FilaHDR & { color: string })[] };
 export type HdrTablaHandle = { exportarPdf: (guardar?: GuardarArchivoHdr) => Promise<void>; datosExcel: () => DatosHdrExcel };
 
-const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tablero[]; titulo: string; mostrarBotonExportar?: boolean; cantidadInicial?: number; proyectoInicial?: string; referenciaRepetida?: boolean }>(
-  function HdrTabla({ res, tableros, titulo, mostrarBotonExportar = true, cantidadInicial, proyectoInicial = '', referenciaRepetida }, ref) {
+const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; tableros: Tablero[]; titulo: string; mostrarBotonExportar?: boolean; cantidadInicial?: number; proyectoInicial?: string; referenciaRepetida?: boolean }>(
+  function HdrTabla({ res, pref, tableros, titulo, mostrarBotonExportar = true, cantidadInicial, proyectoInicial = '', referenciaRepetida }, ref) {
   const [color, setColor] = useState('Por definir');
   const [proyectoEditado, setProyecto] = useState<string>();
   const proyecto = proyectoEditado ?? proyectoInicial;
@@ -22,7 +21,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tabl
   const [errorExportacion, setErrorExportacion] = useState<string | null>(null);
   const contenedorRef = useRef<HTMLDivElement>(null);
 
-  const filas = useMemo(() => construirFilas(res, tableros), [res, tableros]);
+  const filas = useMemo(() => construirFilas(res, tableros, pref), [res, tableros, pref]);
 
   const exportarPdf = useCallback(async (guardar?: GuardarArchivoHdr) => {
     if (!contenedorRef.current) return;

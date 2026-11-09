@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation';
+import { puertasSegunReglas, requiereManoPuerta, manoValida } from '@/lib/mano-puerta';
+import type { Regla } from '@/lib/engine';
 import { getUserAndRole } from '@/lib/auth';
 import { getCotizacion, listarVersionesCotizacion } from '@/lib/cotizaciones';
 import { getCotizadorData } from '@/lib/cotizar';
@@ -66,13 +68,19 @@ export default async function CotizacionDetallePage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const [{ user, rol, nombre }, { cabecera, cocinas }, data, versiones] = await Promise.all([
+  const [{ user, rol, nombre }, { cabecera, cocinas, lineasSinCocina }, data, versiones] = await Promise.all([
     getUserAndRole(),
     getCotizacion(id),
     getCotizadorData(),
     listarVersionesCotizacion(id),
   ]);
   if (!cabecera) notFound();
+  const aperturasPendientes = [...cocinas.flatMap(c => c.lineas), ...lineasSinCocina].filter(l => {
+    const tipo = data.tipos.find((t: { id: string; pref: string; reglasPuertas?: Regla[] }) => t.id === l.tipo_mueble_id);
+    const config = l.config as { manoPuerta?: unknown; overrides?: { n_puertas?: number } } | null;
+    const puertas = puertasSegunReglas(tipo?.reglasPuertas, { largo: Number(l.largo), alto: Number(l.alto), prof: Number(l.prof), unidad: l.unidad_dim as 'in' | 'cm' | 'mm' }, config?.overrides?.n_puertas);
+    return requiereManoPuerta(tipo?.pref, puertas) && !manoValida(config?.manoPuerta);
+  });
 
   // La config de materiales globales queda guardada en el proyecto (config_default);
   // ?cfg=<base64> es solo el fallback del primer render justo tras crear el proyecto.
@@ -83,6 +91,7 @@ export default async function CotizacionDetallePage({
     <div className="min-h-screen bg-slate-50">
       <AppHeader nombre={nombre} email={user?.email} rol={rol} active="cotizaciones" />
       <main className="mx-auto w-full max-w-[1600px] px-4 py-6 space-y-5">
+        {aperturasPendientes.length > 0 && <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-semibold">Debes completar la apertura L/R de {aperturasPendientes.length} mueble(s) de una puerta.</p><p>Edita los siguientes muebles y selecciona L o R antes de generar las hojas de ruta:</p><ul className="list-disc pl-5">{aperturasPendientes.map(l => <li key={l.id}>{l.codigo_modulo ?? l.pref} · {cocinas.find(c => c.id === l.cocina_id)?.nombre ?? 'Sin sección'}</li>)}</ul></div>}
         <CotizacionDetalleClient
           cabecera={cabecera as Parameters<typeof CotizacionDetalleClient>[0]['cabecera']}
           cocinas={cocinas as Cocina[]}

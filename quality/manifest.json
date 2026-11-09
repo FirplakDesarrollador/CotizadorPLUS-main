@@ -76,6 +76,10 @@
         "src/lib/gavetas.ts",
         "scripts/sincronizar-tablero-gaveta.ts",
         "scripts/auditar-tablero-gaveta.ts",
+        "scripts/auditar-hdr.ts",
+        "scripts/sincronizar-mano-puerta.ts",
+        "src/lib/mano-puerta.ts",
+        "tests/mano-puerta.test.ts",
         "db/migrations/0243_tablero_gaveta_db.sql",
         "src/lib/hood-sm.ts",
         "src/lib/catalogo-paginado.ts",
@@ -141,6 +145,7 @@
         "tests/edicion-desagrupar.test.ts",
         "tests/hdr-identificadores.test.ts",
         "tests/hdr-orden.test.ts",
+        "tests/mano-puerta.test.ts",
         "tests/frentes-dos-pequenos-smg.test.ts",
         "tests/nombres-modulos.test.ts",
         "tests/cotizar-materiales-abiertos.test.ts",
@@ -266,7 +271,8 @@
       "patterns": [
         "src/app/**",
         "src/store/simuladorStore.ts",
-        "src/components/**"
+        "src/components/**",
+        "tests/hdr-consumos.test.ts"
       ],
       "tests": [
         "tests/margen-global.test.ts",
@@ -294,6 +300,7 @@
         "tests/propuesta-cotizacion.test.ts",
         "tests/materiales-proyecto.test.ts",
         "tests/cotizaciones.test.ts",
+        "tests/hdr-consumos.test.ts",
         "tests/hdr-optimizador-modulos-filtro.test.ts",
         "tests/guardado-secuencial.test.ts",
         "tests/dashboard-cotizaciones.test.ts",

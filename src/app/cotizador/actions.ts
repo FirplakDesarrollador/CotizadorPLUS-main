@@ -20,7 +20,7 @@ export async function cotizarAction(input: CotizarInput): Promise<{ ok: true; re
 
 export async function cotizarGrupoAction(inputs: CotizarInput[]): Promise<{ ok: true; result: CotizarGrupoResult } | { ok: false; error: string }> {
   try {
-    const result = await cotizarGrupoConsolidado(inputs);
+    const result = await cotizarGrupoConsolidado(inputs, true);
     return { ok: true, result };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error desconocido' };

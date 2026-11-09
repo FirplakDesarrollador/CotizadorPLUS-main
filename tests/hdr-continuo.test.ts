@@ -26,6 +26,8 @@ test('HDR consolida solo muebles equivalentes entre áreas y multiplica cantidad
 test('filas HDR no llevan sufijos de material y DB-FE describe solo sus gavetas', () => {
   const res = resultado();
   res.vars = { n_cajones: 3, n_entrepanos: 2, n_puertas: 1 };
+  // La descripción debe corresponder a piezas físicas, además de las variables.
+  res.piezas.push({ ...res.piezas[0], pieza: 'entrepano', cant: 2 });
   assert.equal(descripcionModulo(res, 'DB-FE'), '3 GAVETAS');
   assert.match(descripcionModulo(res, 'W'), /2 ENTREPAÑOS/);
   assert.equal(construirFilas(res, [{ codigo: 'C18', espesor_mm: 18 }])[0].pieza, 'BASE');
