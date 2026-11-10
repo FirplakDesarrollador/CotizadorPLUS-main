@@ -7,6 +7,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
+- [HDR: Buscar/Crear y Seguimiento](wiki/hdr_buscar_seguimiento.md) - Búsqueda por nombre en cotizaciones, secciones reorganizadas y plantilla Excel manual de Seguimiento/Códigos sin cantidades.
 - [Apertura L/R de superiores de una puerta](wiki/apertura_superiores_una_puerta.md) - Selección obligatoria en W-SM/WLD/WSM, sufijo comercial y alerta para 26 muebles existentes sin apertura.
 - [Instrucciones R…L en HDR](wiki/hdr_instrucciones_ranura.md) - Indicaciones de carcasa con fondo por familia/espesor y cuatro nombres de gavetas FE, sin cambios geométricos.
 - [BOV interno y BOV-SMG](wiki/bov_frente_interno_smg.md) - Frente interno sin holguras, base hasta el refuerzo, 73 mm superiores en SMG y conversión verificada de Condominio V.

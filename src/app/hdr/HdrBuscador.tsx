@@ -13,7 +13,9 @@ import { esPanel, etiquetaTipoModulo } from '@/lib/nombres-modulos';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
 import HdrConsumos from './HdrConsumos';
-import { consolidarModulosHdr, descripcionPiezaPlanaHdr } from './datosHdr';
+import HdrSeguimiento from './HdrSeguimiento';
+import HdrBuscarGuardados from './HdrBuscarGuardados';
+import { consolidarModulosHdr, descripcionPiezaPlanaHdr, tituloModuloHdr } from './datosHdr';
 import { crearDestinoHdr, esCancelacionHdr } from './destinoExportacion';
 import { exigirRevisionHdr } from './validacion';
 
@@ -252,7 +254,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
                   res={m.result}
                   pref={m.pref}
                   tableros={tableros}
-                  titulo={`${m.codigoModulo} ${m.nombreDescriptivo ?? descripcionModulo(m.result, m.pref)}`.trim()}
+                  titulo={tituloModuloHdr(m)}
                   cantidadInicial={m.cantidad}
                   proyectoInicial={proyectoHdr}
                   referenciaRepetida={(referencias.get(m.codigoModulo) ?? 0) > 1}
@@ -268,8 +270,12 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         </div>
       )}
 
+      <HdrConsumos cotizaciones={cotizaciones} />
+      <HdrSeguimiento cotizaciones={cotizaciones} tipos={tipos} />
+
       <div className="border-t border-slate-200 pt-6">
-        <h2 className="font-semibold text-slate-900 mb-3">Buscar por tipo y medidas</h2>
+        <h2 className="font-semibold text-slate-900 mb-3">Buscar/Crear</h2>
+        <HdrBuscarGuardados tableros={tableros} />
         <form onSubmit={buscar} className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
           <div className="grid grid-cols-12 gap-2 items-end">
             <Campo label="Tipo De Mueble" className="col-span-12 sm:col-span-5">
@@ -343,7 +349,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
           )}
 
           {(esPanel(tipoSel?.pref) || tipoSel?.pref === 'F') && <Campo label={esPanel(tipoSel?.pref) ? 'Notas del panel' : 'Notas del filler'}><input value={notaPanel} onChange={e => setNotaPanel(e.target.value)} placeholder="Ej. lateral" className="inp" /></Campo>}
-          <button className="rounded-lg bg-slate-900 text-white px-5 py-2 text-sm font-medium hover:bg-slate-800">Buscar</button>
+          <button disabled={loading} className="rounded-lg bg-slate-900 text-white px-5 py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">Crear</button>
 
           <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.5rem .6rem;font-size:.875rem}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}.inp::-webkit-outer-spin-button,.inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.inp[type=number]{-moz-appearance:textfield}`}</style>
         </form>
@@ -358,7 +364,6 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         )}
       </div>
 
-      <HdrConsumos cotizaciones={cotizaciones} />
     </div>
   );
 }

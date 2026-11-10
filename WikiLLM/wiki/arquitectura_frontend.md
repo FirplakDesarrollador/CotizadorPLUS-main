@@ -195,7 +195,9 @@ comercial, por ejemplo `UDB18-2S` o `UDV24-3`. Desde `0058`, UDV también usa
 esos overrides en su plantilla física: para `-2S` genera dos gavetas pequeñas
 de 5,5″ y una grande, en lugar de tres gavetas iguales.
 
-## 5. Buscador HDR por código (`src/app/hdr/`)
+## 5. HDR, Buscar/Crear y Seguimiento (`src/app/hdr/`)
+
+La organización actual es HDR desde cotización guardada, Consumos, Seguimiento y Buscar/Crear. Buscar/Crear reúne la búsqueda por nombre completo/parcial entre cotizaciones y el formulario manual cuyo botón ahora es Crear. Seguimiento descarga una plantilla Excel manual con hojas Seguimiento y Códigos, nombres exactos únicos por familia y sin cantidades. Ver [reglas, formato y verificación](hdr_buscar_seguimiento.md).
 
 `HdrBuscador.tsx` genera el despiece de un mueble sin necesidad de abrir un módulo en Cotizaciones/Simulador. El formulario reproduce el mismo bloque "Tipo De Mueble / Largo / Alto / Prof / Unidad" de `AddLineForm.tsx`/`CotizadorForm.tsx` (mismo `Combobox` buscable para el tipo, mismos componentes `Campo`), en vez de interpretar un código como texto libre — más confiable que parsear el código, porque el usuario elige el tipo directamente de la lista real de `cot_tipos_mueble`. Si el tipo elegido empieza con `DB`, aparece además el selector "Tipología DB" (mismas opciones que en Cotizaciones/Simulador, `DB_TIPOLOGIAS` de `src/lib/muebles.ts`), que arma los overrides `n_cajones`/`n_cajones_pequenos`. A diferencia de `AddLineForm`/`CotizadorForm` (donde Tipo va en su propia fila y Largo/Alto/Prof/Unidad debajo en un grid de 4), en HDR ese bloque quedó **integrado en una sola fila** (`grid-cols-12`, Tipo con `col-span-5`, cada medida `col-span-2`, Unidad `col-span-1`, apilando a una columna en pantallas angostas) — pedido explícito para eliminar el espacio vacío que dejaba el Combobox de Tipo solo en su fila.
 
