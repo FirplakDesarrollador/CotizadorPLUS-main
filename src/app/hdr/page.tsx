@@ -22,8 +22,8 @@ export default async function HdrPage() {
       <main className="mx-auto max-w-6xl px-4 py-6">
         <h1 className="text-2xl font-bold text-slate-900 mb-1">HDR — Hoja de ruta</h1>
         <p className="text-sm text-slate-500 mb-4">
-          Elige el tipo de mueble (ej. <code>SBFD30</code> = tipo <code>SBFD</code>, Largo 30) y sus medidas, y
-          genera el despiece en milímetros con las fórmulas actuales del motor.
+          Genera hojas de ruta, consulta consumos y descarga el seguimiento de tus cotizaciones.
+          En Buscar/Crear puedes encontrar un mueble guardado o generar su despiece por tipo y medidas.
         </p>
         <HdrBuscador tipos={tipos} presetDefault={presetDefault} tableros={tableros ?? []} cotizaciones={cotizaciones} />
       </main>

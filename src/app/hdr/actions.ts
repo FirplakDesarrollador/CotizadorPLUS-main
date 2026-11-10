@@ -9,6 +9,9 @@ import { cotizar, cotizarGrupo, prepararCotizacion, cargarCatalogoPrecompilado, 
 import { validarEntrepanosHdr } from './validacion';
 import { descripcionPiezaPlanaHdr, descripcionModulo, resultadoFisicoHdr, type ResultadoHdr } from './datosHdr';
 import { esModuloLinea } from '@/lib/materiales-linea';
+import { calcularMueble } from '@/lib/engine';
+import { coincideNombreHdr } from './seguimiento';
+import type { CatalogoPrecompilado } from '@/lib/cotizar';
 
 async function assertAdmin() {
   const { rol } = await getUserAndRole();
@@ -41,6 +44,10 @@ export type ModuloHDR = {
 // igual que hace recalcularGrupo() al guardar — si no, se pierde la geometría del grupo.
 export async function modulosDeCotizacionAction(cotizacionId: string): Promise<ModuloHDR[]> {
   await assertAdmin();
+  return calcularModulosDeCotizacion(cotizacionId);
+}
+
+async function calcularModulosDeCotizacion(cotizacionId: string, catalogoPrefetch?: CatalogoPrecompilado): Promise<ModuloHDR[]> {
   const { cocinas, lineasSinCocina } = await getCotizacion(cotizacionId);
 
   const items: { linea: LineaPersistida; cocinaNombre: string; repeticionesArea: number }[] = [];
@@ -74,15 +81,16 @@ export async function modulosDeCotizacionAction(cotizacionId: string): Promise<M
   const resultados: ModuloHDR[] = [];
   // Un catálogo compartido para el contraste; no repetir consultas por mueble.
   const necesitaValidacion = items.some(({ linea }) => inputDesdeLinea(linea).overrides?.n_entrepanos != null);
-  const catalogo = porGrupo.size || necesitaValidacion ? await cargarCatalogoPrecompilado() : undefined;
+  const catalogo = catalogoPrefetch ?? (porGrupo.size || necesitaValidacion ? await cargarCatalogoPrecompilado() : undefined);
 
   for (const { linea, cocinaNombre, repeticionesArea } of sueltas) {
     try {
-      const result = await cotizar(inputDesdeLinea(linea));
-      puertasActuales.set(linea.id, result.vars?.n_puertas);
       const input = inputDesdeLinea(linea);
+      const preparado = catalogoPrefetch ? await prepararCotizacion(input, catalogoPrefetch) : undefined;
+      const result = preparado ? { ...calcularMueble(preparado.calc), trm: preparado.trm, margen: preparado.margen } : await cotizar(input);
+      puertasActuales.set(linea.id, result.vars?.n_puertas);
       const avisosValidacion = input.overrides?.n_entrepanos != null
-        ? validarEntrepanosHdr((await prepararCotizacion(input, catalogo)).calc) : [];
+        ? validarEntrepanosHdr((preparado ?? await prepararCotizacion(input, catalogo)).calc) : [];
       avisosValidacion.push(...avisoMano(linea));
       resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), nombreDescriptivo: descripcion(linea), avisosValidacion, aperturaPendiente: avisoMano(linea).length > 0, pref: linea.pref ?? undefined, repeticionesArea, cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
     } catch (e) {
@@ -124,4 +132,29 @@ export async function modulosDeCotizacionAction(cotizacionId: string): Promise<M
   }
 
   return resultados;
+}
+
+export type MuebleEncontradoHdr = { cotizacionId: string; proyecto: string; modulo: ModuloHDR };
+
+/** Busca nombres HDR completos o parciales en las cotizaciones accesibles; no guarda cambios. */
+export async function buscarMueblesHdrAction(texto: string): Promise<{ muebles: MuebleEncontradoHdr[]; errores: string[] }> {
+  await assertAdmin();
+  if (typeof texto !== 'string' || !texto.trim()) return { muebles: [], errores: [] };
+  if (texto.length > 200) throw new Error('Escribe un nombre de hasta 200 caracteres.');
+  const [cotizaciones, catalogo] = await Promise.all([listarCotizaciones(), cargarCatalogoPrecompilado()]);
+  const muebles: MuebleEncontradoHdr[] = [], errores: string[] = [];
+  // Catálogo compartido y tres cotizaciones simultáneas para acotar la carga de consultas.
+  for (let i = 0; i < cotizaciones.length; i += 3) {
+    const bloque = cotizaciones.slice(i, i + 3);
+    const resultados = await Promise.allSettled(bloque.map(c => calcularModulosDeCotizacion(c.id, catalogo)));
+    resultados.forEach((r, j) => {
+      const c = bloque[j], proyecto = c.nombre || c.codigo || 'Sin nombre';
+      if (r.status === 'rejected') { errores.push(`No se pudo revisar la cotización ${proyecto}.`); return; }
+      for (const modulo of r.value) {
+        if (coincideNombreHdr(modulo, texto)) muebles.push({ cotizacionId: c.id, proyecto, modulo });
+        if (!modulo.ok) errores.push(`${proyecto} · ${modulo.codigoModulo}: ${modulo.error}`);
+      }
+    });
+  }
+  return { muebles, errores };
 }

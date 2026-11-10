@@ -185,6 +185,11 @@ export function descripcionModulo(res: CotizarResult, pref?: string): string {
   return partes.join(' ');
 }
 
+/** Nombre único compartido por la HDR, el buscador y las hojas de seguimiento. */
+export function tituloModuloHdr(m: ModuloHDR): string {
+  return `${m.codigoModulo} ${m.nombreDescriptivo ?? (m.ok ? descripcionModulo(m.result, m.pref) : '')}`.trim();
+}
+
 
 /** Solo se consolidan despieces equivalentes; el optimizador conserva sus líneas y grupos originales. */
 export function consolidarModulosHdr(modulos: readonly ModuloHDR[]): ModuloHDR[] {

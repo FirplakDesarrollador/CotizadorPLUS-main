@@ -3003,3 +3003,21 @@ El usuario autorizó explícitamente la sesión administrativa temporal sin env�
 ## [2026-11-09] update | Preparación de publicación de consumos, HDR y apertura L/R
 
 Publicación LIz → DEV → main solicitada por el usuario. Gate exhaustivo aprobado con 132 suites, build de producción aprobado y auditoría consultiva sin HIGH. Supabase verificado hasta migración 0253; sincronizador L/R ejecutado sobre 1066 líneas con cero cambios pendientes de aplicar y sin modificar precios, medidas ni cantidades. Se conservan documentados los límites de revisión visual y doble PDF. Ver [apertura L/R](wiki/apertura_superiores_una_puerta.md).
+
+## [2026-11-09] update | HDR reorganizada con Buscar/Crear y Seguimiento Excel
+
+Orden HDR, Consumos, Seguimiento y Buscar/Crear. Nuevo buscador de nombres completos/parciales en cotizaciones con selección de HDR y preservación de grupos físicos; el formulario existente usa Crear. Seguimiento descarga dos hojas, Seguimiento y Códigos, con nombres exactos únicos, sin cantidades, separados en inferiores, superiores, baños, clósets, fillers y paneles. Campos manuales vacíos según aclaración del usuario; no se copian los datos de las imágenes. Ver [Buscar/Crear y Seguimiento](wiki/hdr_buscar_seguimiento.md) para reglas, pruebas y límites.
+
+Verificación de Buscar/Crear y Seguimiento: quality:gate exit 0 con 133 suites, TypeScript y ESLint sin regresiones; build de producción exit 0 y quality:learn -- --strict sin HIGH. Las pruebas reabren el XLSX y renderizan el HTML de la pantalla. Sin cambios en datos de cotizaciones o Supabase; los límites de prueba visual permanecen documentados.
+
+## [2026-11-09] update | Responsables y casillas verdes nativas en Seguimiento
+
+Asignados los bloques de responsables B:G Angie/Lizeth, H:K Elias, L:R Mariana/Liz/Angie/Elias y S Angie/Liz según la referencia del usuario. Las actividades de cada mueble incorporan casillas nativas MS-XLSX en verde, centradas y desmarcadas; se sustituyó la selección de símbolos por controles de celda sin macros. La hoja Códigos conserva sus campos manuales vacíos y no recibe casillas. Pruebas del archivo final validan estilos, controles, responsables y conservación exacta del XML de Códigos. Ver [Seguimiento](wiki/hdr_buscar_seguimiento.md).
+
+## [2026-11-10] update | Seguimiento con actividades vacias para marcado manual
+
+Se retiran las casillas que Excel mostraba como FALSO; se conservan responsables, nombres y formato. La prueba del archivo descargado exige celdas vacias sin booleanos ni controles.
+
+## [2026-11-10] update | Publicacion de Buscar/Crear y Seguimiento
+
+Preparada la promocion LIz a DEV y main de la busqueda HDR y el Excel de Seguimiento con responsables y actividades vacias. Supabase consultado: migracion 0253 registrada, sin cambios de esquema ni migraciones nuevas en esta entrega. Build de produccion aprobado; validacion completa y recibos en `.tmp/publicar-seguimiento-*`.
