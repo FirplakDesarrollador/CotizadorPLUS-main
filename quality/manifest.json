@@ -272,7 +272,8 @@
         "src/app/**",
         "src/store/simuladorStore.ts",
         "src/components/**",
-        "tests/hdr-consumos.test.ts"
+        "tests/hdr-consumos.test.ts",
+        "tests/hdr-buscar-seguimiento.test.ts"
       ],
       "tests": [
         "tests/margen-global.test.ts",
@@ -301,6 +302,7 @@
         "tests/materiales-proyecto.test.ts",
         "tests/cotizaciones.test.ts",
         "tests/hdr-consumos.test.ts",
+        "tests/hdr-buscar-seguimiento.test.ts",
         "tests/hdr-optimizador-modulos-filtro.test.ts",
         "tests/guardado-secuencial.test.ts",
         "tests/dashboard-cotizaciones.test.ts",
