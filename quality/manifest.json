@@ -60,6 +60,7 @@
         "db/migrations/0258_bov_smg_refuerzo_largo_l.sql",
         "db/migrations/0259_bov_smg_quitar_rail_delantero.sql",
         "src/app/hdr/datosHdr.ts",
+        "src/app/hdr/ordenPiezas.ts",
         "src/store/simuladorStore.ts",
         "src/lib/data/bov-smg-step.json",
         "scripts/extraer-bov-step.py",

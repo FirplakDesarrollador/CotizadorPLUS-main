@@ -52,6 +52,34 @@ test('HDR usa el orden de la referencia independientemente del orden de plantill
   assert.deepEqual(piezas, antes);
 });
 
+test('DB-FE presenta el orden de producción solicitado, junta traseros y prioriza la pieza menor', () => {
+  const nombres = [
+    ['fondo', '8', '5'], ['fondo_gaveta', '8', '4'],
+    ['frente_gaveta_grande', '9', '2'], ['frente_gaveta_pequena', '5', '2'],
+    ['contraparche_grande', '9', '2'], ['contraparche_pequeno', '7', '1'],
+    ['trasero_gaveta_grande', '10', '7'], ['trasero_gaveta_pequena', '10', '3'],
+    ['lateral_gaveta_grande', '10', '8'], ['lateral_gaveta_pequena', '10', '4'],
+    ['refuerzo_trasero', '20', '3'], ['refuerzo_delantero', '20', '3'],
+    ['lateral', '20', '15'], ['base', '20', '16'],
+  ] as const;
+  const piezas = nombres.map(([nombre, largo, ancho]) => ({
+    nombre, rol_tablero: 'caja', formula_cantidad: nombre === 'lateral' ? '2' : '1',
+    formula_largo: largo, formula_ancho: ancho,
+  }));
+  const resultado = { ...calcularMueble({ ...calc, overrides: {}, piezas }), trm: 4000, margen: 0 };
+  const filas = construirFilas(resultado, [{ codigo: 'C15', espesor_mm: 15 }], 'DB-FE');
+  assert.deepEqual(filas.map(f => f.pieza), [
+    'BASE R17L', 'SIDE R R17L', 'SIDE L R17L', 'RAIL DELANTERO', 'RAIL TRASERO',
+    'LAT GAV PEQ R13L', 'LAT GAV GRANDE R13L',
+    'TRASERO GAV', 'TRASERO GAV',
+    'CONTRAPARCHE PEQ R13L', 'CONTRAPARCHE GRANDE R13L',
+    'FRENTE GAVETA', 'FRENTE GAVETA', 'FONDO GAV', 'BACKING',
+  ]);
+  assert.deepEqual(filas.slice(7, 9).map(f => Number(f.anchoMm.toFixed(1))), [76.2, 177.8]);
+  assert.deepEqual(filas.slice(11, 13).map(f => Number(f.largoMm.toFixed(1))), [127, 228.6]);
+  assert.deepEqual(filas.map(f => f.letra), filas.map((_, i) => ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'][i]));
+});
+
 test('las gavetas conservan su secuencia original incluyendo sus frentes y fondos', () => {
   const nombres = ['lateral', 'base', 'refuerzo_trasero', 'lateral_gaveta_pequena', 'frente', 'trasero_gaveta_grande', 'contraparche_pequeno', 'fondo', 'fondo_gaveta'];
   const resultado = ordenarPiezasHdr(nombres.map((pieza, id) => ({ pieza, id })), false);
@@ -96,9 +124,10 @@ test('FE renombra únicamente los cuatro nombres exactos de gaveta, también sin
   const esperados = ['LAT GAV PEQ R13L', 'LAT GAV GRANDE R13L', 'CONTRAPARCHE PEQ R13L', 'CONTRAPARCHE GRANDE R13L'];
   for (const pref of ['DB-FE', 'DB-2-1INT-SM-FE', 'DB-SM-FE-SF', 'B-FE', 'BMW-1-FE']) {
     const filas = construirFilas(res, [], pref);
-    assert.deepEqual(filas.slice(0, 4).map(f => f.pieza), esperados);
-    assert.deepEqual(filas.slice(4), base.slice(4));
-    assert.deepEqual(filas.map(({ pieza: _pieza, ...datos }) => datos), base.map(({ pieza: _pieza, ...datos }) => datos));
+    assert.deepEqual(filas.filter(f => esperados.includes(f.pieza)).map(f => f.pieza), esperados);
+    const sinNombreNiLetra = (rows: typeof filas) => rows.map(({ pieza: _pieza, letra: _letra, ...datos }) => JSON.stringify(datos)).sort();
+    assert.deepEqual(sinNombreNiLetra(filas), sinNombreNiLetra(base));
+    if (pref === 'DB-FE') assert.equal(filas.filter(f => f.pieza === 'TRASERO GAV').length, 1);
   }
   for (const pref of ['DB', 'DB-SMG', 'B', 'FEST']) assert.deepEqual(construirFilas(res, [], pref), base);
 });

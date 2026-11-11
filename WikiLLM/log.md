@@ -3054,3 +3054,6 @@ Al retirar el punto 15, los campos siguientes se renumeran consecutivamente: Tar
 ## [2026-11-11] update | Retirar rail delantero de BOV-SMG y BOV-SMG-SF
 
 La regla de fabricación excluye `refuerzo_delantero` en ambas tipologías, por lo que desaparece del simulador, despiece, HDR y consumos, junto con sus cuatro tarugos asociados. Se conservan los seis paneles del STEP y los refuerzos traseros. La migración 0259 retira la fila del catálogo y corrige la descripción de BOV-SMG-SF.
+## [2026-11-11] update | Orden de piezas HDR para DB-FE
+
+DB-FE presenta cada pieza por separado en secuencia de producción; agrupa visualmente traseros de gaveta como `TRASERO GAV`, prioriza la pieza menor cuando coincide el nombre y conserva letras individuales. La exportación Excel comparte el mismo orden que la HDR.
