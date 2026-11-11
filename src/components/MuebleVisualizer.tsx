@@ -9,7 +9,6 @@ const mm=(n:number)=>n.toLocaleString('es-CO',{maximumFractionDigits:1});
 const input='rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 min-w-0 w-full';
 function color(p:PanelVisual) {
   if(p.funcion==='tarugo') return '#a16207';
-  if((p.pref==='BOV-SMG'||p.pref==='BOV-SMG-SF')&&p.nombre==='refuerzo_delantero') return '#0284c7';
   if(/frente|panel/.test(p.funcion)) return '#b87935';
   if(/gaveta/.test(p.funcion)) return '#367a95';
   if(p.funcion==='gola') return '#8771ad';
@@ -75,10 +74,9 @@ function Drawing({scene,view,selected,onSelect,solid,opening,drawer}:{scene:Esce
     const {p,points}=shape;
     const polygon=points.map(([x,y])=>`${ox+x*scale},${oy+y*scale}`).join(' ');
     const faded=selected&&selected!==p.id;
-    const refuerzoBovAzul=(p.pref==='BOV-SMG'||p.pref==='BOV-SMG-SF')&&p.nombre==='refuerzo_delantero';
     return <g key={`${p.id}:${highlight}`} onClick={()=>onSelect(p.id)} className="cursor-pointer">
       <title>{p.nombre} · {p.pref} · {mm(p.largo)} × {mm(p.ancho)} × {mm(p.espesor)} mm</title>
-      {solid&&!highlight&&!refuerzoBovAzul&&<polygon points={polygon} fill="white"/>}
+      {solid&&!highlight&&<polygon points={polygon} fill="white"/>}
       <polygon points={polygon} fill={color(p)} fillOpacity={highlight?.48:solid?.3:faded?.02:.1} stroke={color(p)} strokeOpacity={faded&&!highlight?.15:.85} strokeWidth={highlight?2:1}/>
     </g>;
   };
@@ -107,7 +105,7 @@ export default function MuebleVisualizer({scene}:{scene?:EscenaMueble}) {
       <label className="text-xs text-slate-600 space-y-1"><span>Pieza resaltada</span><select className={input} value={selectedId} onChange={e=>setSelected(e.target.value)}><option value="">Todas las piezas</option>{scene.paneles.map((p,i)=><option key={p.id} value={p.id}>{i+1}. {p.pref} · {p.nombre}</option>)}</select></label>
     </div>
     {scene.paneles.length>0?<div className="grid grid-cols-1 xl:grid-cols-3 gap-4">{(['front','side','top'] as View[]).map(view=><Drawing key={view} scene={scene} view={view} selected={selectedId} onSelect={setSelected} solid={solid} opening={opening} drawer={activeDrawer}/>)}</div>:<p className="text-sm text-slate-600">El resultado no contiene piezas con volumen representable.</p>}
-    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600"><span>□ Carcasa</span><span className="text-amber-700">□ Frentes</span><span className="text-cyan-700">□ Gavetas</span><span className="text-sky-700">□ Refuerzo delantero BOV-SMG</span><span className="text-lime-700">□ Travesaños</span><span className="text-violet-700">□ Gola</span><span className="text-yellow-700">□ Tarugos</span></div>
+    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600"><span>□ Carcasa</span><span className="text-amber-700">□ Frentes</span><span className="text-cyan-700">□ Gavetas</span><span className="text-lime-700">□ Travesaños</span><span className="text-violet-700">□ Gola</span><span className="text-yellow-700">□ Tarugos</span></div>
     {drawers.length>0&&<div className="grid sm:grid-cols-2 gap-3"><label className="text-xs text-slate-600 space-y-1"><span>Gaveta</span><select className={input} value={activeDrawer} onChange={e=>{setDrawer(e.target.value);setOpening(0);}}>{drawers.map((d,i)=><option key={d} value={d}>{scene.modulos[Number(d.split(':')[0])]?.pref} · {d.includes('int') ? 'gaveta interior (oculta)' : `gaveta ${i+1}`}</option>)}</select></label><label className="text-xs text-slate-600 space-y-2"><span>Apertura ilustrativa · {opening} mm</span><input aria-label="Apertura ilustrativa" className="block w-full accent-slate-800" type="range" min={0} max={Math.min(350,...scene.modulos.map(m=>m.profundo*.65))} step={10} value={opening} onChange={e=>setOpening(Number(e.target.value))}/></label></div>}
     <p className="text-xs text-slate-600 break-words" aria-live="polite">{active?`${active.nombre} · ${active.material} · corte ${mm(active.largo)} × ${mm(active.ancho)} × ${mm(active.espesor)} mm · posición ${mm(active.x)}, ${mm(active.y)}, ${mm(active.z)} mm. ${active.nota}`:'Selecciona una pieza para identificarla en las tres vistas. Las posiciones inferidas se pueden ajustar en Diseño de muebles.'}</p>
     {(scene.avisos.length>0||scene.omitidas.length>0)&&<details className="text-xs text-slate-600"><summary className="cursor-pointer">Alcance del montaje{scene.omitidas.length?` · ${scene.omitidas.length} filas sin volumen`:''}</summary><ul className="list-disc pl-5 space-y-1 mt-2">{scene.avisos.map((s,i)=><li key={`a${i}`}>{s}</li>)}{scene.omitidas.map((s,i)=><li key={`o${i}`}>{s}</li>)}</ul></details>}
