@@ -6,6 +6,8 @@ Desde una cotización, HDR conserva el despiece real de cada grupo físico y con
 
 Para muebles individuales, la cantidad inicial suma `cantidad de línea × repeticiones del área` de todas las apariciones equivalentes. Para conjuntos físicos, indica cantidad de grupos completos y conserva los identificadores y cantidades de todos sus módulos para conciliación. Es editable y se puede vaciar. No se agrega área ni multiplicador al título. PN conserva `PN - Panel` y sus notas; F conserva sus notas. La consolidación se aplica a la vista HDR, no elimina líneas ni áreas de las cotizaciones ni cambia los grupos usados por el optimizador.
 
+En `DB-FE`, HDR presenta cada pieza en una fila independiente, en este orden: base, sides, rails delantero, rails trasero, laterales de gaveta pequeños/grandes, traseros de gaveta, contraparche pequeño/grande, frentes de gaveta, fondos de gaveta y backing. Los traseros de gaveta se muestran como `TRASERO GAV` y permanecen juntos. Cuando varias piezas comparten nombre, se ordenan por tamaño ascendente; no se agrupan ni se pierden sus letras individuales.
+
 La búsqueda manual por tipo también admite notas en F. El caché del simulador pasa a v12: conserva entradas/notas/muebles y descarta resultados previos a las nuevas reglas. Las especificaciones impresas aclaran que las paredes DB-FE usan caja y sus fondos usan respaldo y omiten personalizaciones históricas de gaveta que no se utilizan en ese tipo.
 
 Se retiraron la nota de inferencia Color/Blanco y los sufijos de rol B/P/C/F de los nombres de pieza. Las letras A, B, C… de identificación de filas y las columnas de canto se conservan.

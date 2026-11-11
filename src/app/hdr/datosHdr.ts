@@ -128,8 +128,10 @@ export function construirFilas(res: ResultadoHdr, tableros: Tablero[], pref?: st
   // como su color editable. Repetirla mezclaba los datos de piezas distintas.
   const siguienteLetra = () => indiceALetras(letraIdx++);
 
-  for (const p of ordenarPiezasHdr(res.piezas.filter((p) => p.cant > 0), tienePuertas)) {
-    const nombreBase = nombreProduccion(p.pieza, tienePuertas);
+  for (const p of ordenarPiezasHdr(res.piezas.filter((p) => p.cant > 0), tienePuertas, pref)) {
+    const nombreBase = pref === 'DB-FE' && /^trasero_gaveta/.test(p.pieza)
+      ? 'TRASERO GAV'
+      : nombreProduccion(p.pieza, tienePuertas);
     const visible = esVisible(p.pieza);
     const tableroCodigo = p.tableroCodigo ?? res.maderaPorRol.find(m => m.rol === p.rol)?.codigo;
     const espesor = p.tableroCodigo ? tableros.find(t => t.codigo === p.tableroCodigo)?.espesor_mm ?? null : rolToEspesor[p.rol] ?? null;
