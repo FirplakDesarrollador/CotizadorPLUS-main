@@ -77,6 +77,14 @@ test('recupera medidas opcionales ausentes sin perder los módulos guardados', a
         assert.deepEqual(store.getState().preset, legacy.preset);
         assert.equal(store.getState().alto, legacy.alto);
       });
+      await t.test('descarta BOV-SMG v18 anterior al refuerzo vertical sin perder módulos ni materiales', async () => {
+        memory.setItem('simulador-storage', JSON.stringify({ version: 18, state: { ...legacy, modulos: [{ ...legacy, id: 'bov-step' }], result: { piezas: [{ pieza: 'refuerzo_delantero', cant: 1 }] } } }));
+        await store.persist.rehydrate();
+        assert.equal(store.getState().result, null);
+        assert.equal(store.getState().modulos[0].id, 'bov-step');
+        assert.deepEqual(store.getState().preset, legacy.preset);
+        assert.equal(store.getState().alto, legacy.alto);
+      });
     } finally {
     store.persist.clearStorage();
     if(previous)Object.defineProperty(globalThis,'localStorage',previous);

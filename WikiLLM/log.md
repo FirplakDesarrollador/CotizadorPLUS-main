@@ -3021,3 +3021,33 @@ Se retiran las casillas que Excel mostraba como FALSO; se conservan responsables
 ## [2026-11-10] update | Publicacion de Buscar/Crear y Seguimiento
 
 Preparada la promocion LIz a DEV y main de la busqueda HDR y el Excel de Seguimiento con responsables y actividades vacias. Supabase consultado: migracion 0253 registrada, sin cambios de esquema ni migraciones nuevas en esta entrega. Build de produccion aprobado; validacion completa y recibos en `.tmp/publicar-seguimiento-*`.
+
+## [2026-11-10] update | Instruccion R13L en cajones FE
+
+Se sustituye R15L por R13L solo en los cuatro nombres exactos de laterales y contraparche de gavetas FE. Se conservan las instrucciones de carcasa y todas las columnas de medidas, cantidades y cantos. Se actualiza la regresion existente para comprobar los textos solicitados y las exclusiones.
+
+## [2026-11-10] update | BOV-SMG incluye los 24 tarugos del STEP
+
+Se revalida la fuente STEP: seis paneles y 24 instancias de Tarugo 8x30mm. El simulador dibuja sus posiciones y la HDR los lista individualmente, adem?s de los seis paneles. Se registran la fuente de coordenadas y los casos de regresi?n.
+
+## [2026-11-10] update | BOV-SMG HDR excluye tarugos e incluye refuerzo delantero
+La HDR deja de listar tarugos como piezas de corte y conserva el refuerzo delantero de BOV-SMG con nombre RAIL DELANTERO. Las posiciones de tarugos permanecen en el simulador para reflejar el ensamble STEP.
+
+## [2026-11-10] update | BOV-SMG(SF) refuerzo vertical sin tarugos visibles
+Se excluyen los tarugos de la visualización BOV-SMG y BOV-SMG-SF. El refuerzo delantero queda como pieza vertical de tablero de refuerzo, con alto A-2*TC, ancho 80 mm, centrado entre laterales y a 27 mm del frente; se conserva en HDR.
+
+## [2026-11-11] update | BOV-SMG suma tarugos, cantos y consumo del refuerzo delantero
+En BOV-SMG y BOV-SMG-SF el refuerzo delantero conserva tablero de caja, suma cuatro tarugos (dos por lado), lleva dos cantos largos de color y queda visible en azul. Se verifica su despiece, área de material, consumibles y HDR.
+
+## [2026-11-11] update | Crear BOV-SMG-SF y alinear canto con el eje largo
+Se crea BOV-SMG-SF desde BOV-SF con frente interno de 73 mm, plantilla, reglas y herrajes heredados. El refuerzo se guarda con `formula_largo=A-2*TC`, para que los dos cantos largos de color y las medidas de HDR usen su dimensión mayor.
+
+## [2026-11-11] update | Corregir largo del rail delantero BOV-SMG
+El rail delantero ahora calcula su largo con `L-2*TC` (Largo del módulo menos dos calibres de caja) en BOV-SMG y BOV-SMG-SF. El ancho se mantiene en 80 mm.
+## [2026-11-11] update | Registro CEFI con tablero por producto y campos opcionales
+
+El punto 7 captura tipo de tablero por cada producto seleccionado; el punto 14 limita zócalo a madera o PVC; se retira margen adicional. Tarifa se activa solo para USA/Estados Unidos y es opcional. Los campos permiten vacío y el envío incompleto requiere confirmación del usuario. Se actualiza la validación de servidor y sus regresiones.
+
+## [2026-11-11] update | Renumerar puntos del formulario CEFI
+
+Al retirar el punto 15, los campos siguientes se renumeran consecutivamente: Tarifa pasa a punto 15 y Estimador termina en punto 25. Las claves de persistencia no cambian.

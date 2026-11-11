@@ -19,10 +19,10 @@ Solo en tipologías que incluyen el segmento exacto `FE`, independientemente de 
 
 | Nombre interno | Texto en HDR |
 | --- | --- |
-| lateral_gaveta_pequena | LAT GAV PEQ R15L |
-| lateral_gaveta_grande | LAT GAV GRANDE R15L |
-| contraparche_pequeno | CONTRAPARCHE PEQ R15L |
-| contraparche_grande | CONTRAPARCHE GRANDE R15L |
+| lateral_gaveta_pequena | LAT GAV PEQ R13L |
+| lateral_gaveta_grande | LAT GAV GRANDE R13L |
+| contraparche_pequeno | CONTRAPARCHE PEQ R13L |
+| contraparche_grande | CONTRAPARCHE GRANDE R13L |
 
 Laterales de gaveta con otros nombres, contraparche sin tamaño y demás piezas conservan su texto anterior.
 

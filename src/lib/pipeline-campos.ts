@@ -8,27 +8,26 @@ const DEFINICION_CAMPOS: CampoPipeline[] = [
   { key: 'moneda', label: '4. Moneda', opciones: ['USD', 'COP'], obligatorio: true },
   { key: 'productos', label: '5. Productos', obligatorio: true },
   { key: 'asunto_correo', label: '6. Asunto de correo', obligatorio: true },
-  { key: 'tipo_tablero', label: '7. Tipo tablero', opciones: ['CARB2', 'RH', 'Estandar'], obligatorio: true },
+  { key: 'tipo_tablero', label: '7. Tipo tablero', opciones: ['CARB2', 'RH', 'Estandar'] },
   { key: 'formato_color', label: '8. Formato de color', opciones: ['Color/Color', 'Balance', 'Caja blanca con paneles'], obligatorio: true },
   { key: 'espesor_caja', label: '9. Espesor de caja', opciones: ['18mm', '15mm'], obligatorio: true },
   { key: 'espesor_puerta', label: '10. Espesor de puerta', opciones: ['18mm', '15mm'], obligatorio: true },
   { key: 'tipo_puerta', label: '11. Tipo de puerta', opciones: ['Plana', 'Shaker'], obligatorio: true },
   { key: 'tipo_gabinete', label: '12. Tipo de gabinete', opciones: ['Con manijas', 'Sin manijas gola madera', 'Sin manijas gola metálica'], obligatorio: true },
   { key: 'tipo_rieles', label: '13. Tipo de rieles', opciones: ['Tandem Box', 'Full Extension', 'Metal box', 'Otras'], obligatorio: true },
-  { key: 'tipo_zocalo', label: '14. Tipo de zócalo', opciones: ['Madera 4 1/2"', 'Madera 5 1/4"', 'Madera 12cm', 'PVC Aluminizado 12cm', 'Aluminio 12cm'], obligatorio: true },
-  { key: 'margen_adicional', label: '15. Margen adicional', obligatorio: true },
-  { key: 'tarifa', label: '16. Tarifa', tipo: 'number', obligatorio: true },
-  { key: 'instalado', label: '17. Instalado', opciones: ['No', 'Sí'], obligatorio: true },
-  { key: 'incoterm', label: '18. Incoterm', opciones: ['FOB', 'DAP', 'CIF', 'Instalado'], obligatorio: true },
-  { key: 'especificaciones', label: '19. Especificaciones', tipo: 'textarea', obligatorio: true },
-  { key: 'fecha_limite_envio', label: '20. Fecha límite de envío', tipo: 'date', obligatorio: true },
-  { key: 'link_documentos', label: '21. Link de documentos', tipo: 'url', obligatorio: true },
-  { key: 'notas', label: '22. Notas del proyecto', tipo: 'textarea', obligatorio: true },
-  { key: 'tipo_cotizacion', label: '23. Tipo de cotización', opciones: ['FIRPLAK', 'CEMA'], obligatorio: true },
-  { key: 'adjunto_url', label: '24. Adjunto (URL)', tipo: 'url' },
-  { key: 'asesor', label: '25. Asesor' }, { key: 'estimador', label: '26. Estimador' },
+  { key: 'tipo_zocalo', label: '14. Tipo de zócalo', opciones: ['Zócalo de madera', 'Zócalo de PVC'] },
+  { key: 'tarifa', label: '15. Tarifa', tipo: 'number', obligatorio: true },
+  { key: 'instalado', label: '16. Instalado', opciones: ['No', 'Sí'], obligatorio: true },
+  { key: 'incoterm', label: '17. Incoterm', opciones: ['FOB', 'DAP', 'CIF', 'Instalado'], obligatorio: true },
+  { key: 'especificaciones', label: '18. Especificaciones', tipo: 'textarea', obligatorio: true },
+  { key: 'fecha_limite_envio', label: '19. Fecha límite de envío', tipo: 'date', obligatorio: true },
+  { key: 'link_documentos', label: '20. Link de documentos', tipo: 'url', obligatorio: true },
+  { key: 'notas', label: '21. Notas del proyecto', tipo: 'textarea', obligatorio: true },
+  { key: 'tipo_cotizacion', label: '22. Tipo de cotización', opciones: ['FIRPLAK', 'CEMA'], obligatorio: true },
+  { key: 'adjunto_url', label: '23. Adjunto (URL)', tipo: 'url' },
+  { key: 'asesor', label: '24. Asesor' }, { key: 'estimador', label: '25. Estimador' },
 ];
-export const CAMPOS_PIPELINE: CampoPipeline[]=DEFINICION_CAMPOS.map(c=>({...c,obligatorio:true,permiteDesconocido:!['nombre_proyecto','cliente','pais','moneda'].includes(c.key)}));
+export const CAMPOS_PIPELINE: CampoPipeline[]=DEFINICION_CAMPOS.map(c=>({...c,obligatorio:false,permiteDesconocido:!['nombre_proyecto','cliente','pais','moneda'].includes(c.key)}));
 export function validarUrlPipeline(value: string) {
   if (!value) return null;
   try { const url = new URL(value); if (['http:', 'https:'].includes(url.protocol)) return value; } catch { /* error de validación */ }
@@ -40,23 +39,34 @@ export function validarFechaPipeline(value: string) {
   return value;
 }
 export function validarRegistroPipeline(form: FormData): Record<string, string | number | boolean | string[] | null> & { tarifa: number|null; instalado: boolean|null; estado: 'borrador';campos_desconocidos:string[] } {
-  const datos: Record<string, string | number | boolean | null> = {};
+  const datos: Record<string, string | number | boolean | string[] | null> = {};
   const desconocidos:string[]=[];
   for (const campo of CAMPOS_PIPELINE) {
-    const values = form.getAll(campo.key).map(v => String(v).trim());
-    const desconocido=form.get(`desconocido_${campo.key}`)==='si'||values.includes(DESCONOCIDO_PIPELINE);
-    if(desconocido){
-      if(!campo.permiteDesconocido)throw new Error(`Completa ${campo.label}.`);
-      if(values.some(v=>v&&v!==DESCONOCIDO_PIPELINE))throw new Error('Desconocido no puede combinarse con un valor conocido.');
-      desconocidos.push(campo.key);datos[campo.key]=null;continue;
+    const values = form.getAll(campo.key).map(v => String(v).trim()).filter(Boolean);
+    if(campo.key==='productos'){
+      const products=[...new Set(values)];
+      if(products.some(v=>!PRODUCTOS_PIPELINE.includes(v)))throw new Error('Selecciona productos válidos.');
+      datos.productos=products.length?products.join(' | '):null;
+      continue;
     }
-    const value = campo.key === 'productos' ? values.filter(Boolean).join(' | ') : values[0] ?? '';
+    if(campo.key==='tipo_tablero'){
+      const products=[...new Set(form.getAll('productos').map(v=>String(v).trim()).filter(v=>PRODUCTOS_PIPELINE.includes(v)))];
+      const boardByProduct:Record<string,string>={};
+      for(const product of products){
+        const board=String(form.get(`tipo_tablero_${PRODUCTOS_PIPELINE.indexOf(product)}`)??'').trim();
+        if(board&&!campo.opciones?.includes(board))throw new Error(`Selección inválida: tipo de tablero para ${product}.`);
+        if(board)boardByProduct[product]=board;
+      }
+      datos.tipo_tablero=Object.keys(boardByProduct).length?JSON.stringify(boardByProduct):null;
+      continue;
+    }
+    const value = values[0] ?? '';
     if (campo.obligatorio && !value) throw new Error(`Completa ${campo.label.replace(/^\d+\. /, '')}.`);
     if (value.length > 10000) throw new Error('Un campo supera el límite de 10.000 caracteres.');
-    if (campo.opciones && !campo.opciones.includes(value)) throw new Error(`Selección inválida: ${campo.label}.`);
-    if (campo.key === 'productos' && (!values.length || values.some(v => !PRODUCTOS_PIPELINE.includes(v)))) throw new Error('Selecciona al menos un producto válido.');
+    if (campo.opciones && value && !campo.opciones.includes(value)) throw new Error(`Selección inválida: ${campo.label}.`);
     datos[campo.key] = campo.tipo === 'url' ? validarUrlPipeline(value) : campo.tipo === 'date' ? validarFechaPipeline(value) : value || null;
   }
+  if(!/^\s*(usa|united states|estados unidos)\s*$/i.test(String(datos.pais??'')))datos.tarifa=null;
   if (String(datos.pais).length > 100 || String(datos.ciudad ?? '').length > 160) throw new Error('Ubicación demasiado larga.');
   const tarifa = datos.tarifa==null?null:Number(datos.tarifa);
   if (tarifa!==null&&(!Number.isFinite(tarifa) || tarifa < 0)) throw new Error('Tarifa inválida.');

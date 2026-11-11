@@ -37,7 +37,8 @@
       "description": "Cálculo de posiciones 3D, IGES y despiece visual de piezas",
       "patterns": [
         "src/lib/visualizacion.ts",
-        "src/lib/visualizacion-config.ts"
+        "src/lib/visualizacion-config.ts",
+        "src/components/MuebleVisualizer.tsx"
       ],
       "tests": [
         "tests/visualizacion.test.ts",
@@ -52,6 +53,15 @@
       "patterns": [
         "src/lib/cotizar.ts",
         "db/migrations/0250_bov_frente_interno_smg.sql",
+        "db/migrations/0254_bov_smg_step.sql",
+        "db/migrations/0255_bov_smg_refuerzo_hdr.sql",
+        "db/migrations/0256_bov_smg_sf.sql",
+        "db/migrations/0257_bov_smg_refuerzo_cantos_largos.sql",
+        "db/migrations/0258_bov_smg_refuerzo_largo_l.sql",
+        "src/app/hdr/datosHdr.ts",
+        "src/store/simuladorStore.ts",
+        "src/lib/data/bov-smg-step.json",
+        "scripts/extraer-bov-step.py",
         "tests/bov-smg.test.ts",
         "src/lib/cantos.ts",
         "tests/cantos-espesores-delgados.test.ts",
