@@ -20,7 +20,7 @@ const mm = (v: number) => v / 25.4;
 function entrada(pref: string, caja = 15, refuerzo = 15): CalcInput {
   const plantilla=piezas.map(p=>{
     const esSmg=pref==='BOV-SMG'||pref==='BOV-SMG-SF';
-    const tarugos=!esSmg?undefined:p.nombre==='base'?8:p.nombre==='refuerzo_trasero'?4:p.nombre==='frente'&&pref==='BOV-SMG'?8:p.nombre==='refuerzo_delantero'?4:0;
+    const tarugos=!esSmg?undefined:p.nombre==='base'?8:p.nombre==='refuerzo_trasero'?4:p.nombre==='frente'&&pref==='BOV-SMG'?8:0;
     return {...p,tarugos};
   });
   return { dims: { L: mm(800), A: mm(785), P: mm(610) }, piezas: ajustarGeometriaBov(normalizarPlantillasFabricacion(plantilla, pref), pref), reglas: [], preset: { caja: 'C', refuerzo: 'R', frente: 'F' }, tablerosByCode: { C: { codigo: 'C', espesor_mm: caja, precio_m2: 10 }, R: { codigo: 'R', espesor_mm: refuerzo, precio_m2: 10 }, F: { codigo: 'F', espesor_mm: 18, precio_m2: 20 } }, cantosByCalibre: new Proxy({}, { get: (_, key) => ({ calibre: String(key), precio: 1 }) }) as CalcInput['cantosByCalibre'], herrajesPlantilla: [], herrajesByCode: {}, consumiblesBySelector: {}, etiquetasUnd: 0, usaCarton: false, margen: 0, trm: 3100, desperdicio: 0 };
@@ -39,19 +39,19 @@ test('BOV y BOV-SMG sin holguras, con frente interno y base hasta el refuerzo re
   }
 });
 
-test('BOV-SMG reproduce los seis paneles y sus coordenadas extraídas del STEP; HDR comparte los cortes', () => {
+test('BOV-SMG reproduce los paneles del STEP y excluye el rail delantero del corte y HDR', () => {
   const bov = entrada('BOV'), smg = entrada('BOV-SMG');
   const a = calcularMueble(bov), b = calcularMueble(smg);
   assert.equal(a.piezas.reduce((n, p) => n + p.cant, 0), 7, 'BOV conserva sus siete paneles');
-  assert.equal(b.piezas.reduce((n, p) => n + p.cant, 0), 7);
+  assert.equal(b.piezas.reduce((n, p) => n + p.cant, 0), 6);
   const members: PreparedGroupMember[] = [{ pref: 'BOV-SMG', permiteAgrupacion: true, calc: smg }];
   const escena = construirVisualizacion(members, calcularGrupoFisico(members));
   const frente = escena.paneles.find(p => p.nombre === 'frente')!;
   cerca(frente.x, 15); cerca(frente.y, 0); cerca(frente.z, 0);
   cerca(800 - frente.x - frente.w, 15); cerca(785 - frente.z - frente.h, 73);
   const estructurales=escena.paneles.filter(p=>p.funcion!=='tarugo');
-  assert.equal(estructurales.length, step.panels.length + 1, 'incluye el refuerzo delantero');
-  assert.equal(estructurales.filter(p=>p.nombre==='refuerzo_delantero').length,1);
+  assert.equal(estructurales.length, step.panels.length, 'no agrega un rail delantero fuera del STEP');
+  assert.equal(estructurales.some(p=>p.nombre==='refuerzo_delantero'),false);
   const ordenados = (nombre: string) => estructurales.filter(p => p.nombre === nombre).sort((a,b) => a.x-b.x || a.z-b.z);
   const mapeo = { Base: ordenados('base')[0], Frente: frente, LatDer: ordenados('lateral')[1], 'LatIzq (1)': ordenados('lateral')[0], RefTraInf: ordenados('refuerzo_trasero')[0], RefTraSup: ordenados('refuerzo_trasero')[1] };
   for (const panel of step.panels) {
@@ -61,25 +61,12 @@ test('BOV-SMG reproduce los seis paneles y sus coordenadas extraídas del STEP; 
     [actual.w, actual.d, actual.h].forEach((v,i) => cerca(v, panel.size[i]));
   }
   assert.equal(escena.paneles.some(p=>p.funcion==='tarugo'),false,'no dibuja tarugos en BOV-SMG');
-  const refuerzo=escena.paneles.find(p=>p.nombre==='refuerzo_delantero')!;
-  cerca(refuerzo.x,360); cerca(refuerzo.y,27); cerca(refuerzo.z,15);
-  cerca(refuerzo.w,80); cerca(refuerzo.h,770);
   const filas = construirFilas({ ...b, vars: { ...b.vars, n_puertas: 1 }, trm: 3100, margen: 0 }, [{ codigo: 'C', espesor_mm: 15 }, { codigo: 'R', espesor_mm: 15 }, { codigo: 'F', espesor_mm: 18 }], 'BOV-SMG');
-  assert.equal(filas.length, 7);
-  assert.equal(filas.some(f => f.pieza === 'RAIL DELANTERO'), true);
+  assert.equal(filas.length, 6);
+  assert.equal(filas.some(f => f.pieza === 'RAIL DELANTERO'), false);
   assert.equal(filas.some(f=>f.pieza==='TARUGO 8X30MM'),false);
-  const railCorte=b.piezas.find(p=>p.pieza==='refuerzo_delantero')!;
-  assert.equal(railCorte.cant,1);
-  assert.equal(railCorte.rol,'caja');
-  cerca(railCorte.areaCm2,616);
   const largoDistinto=calcularMueble({...smg,dims:{...smg.dims,L:mm(807.8),A:mm(763)}});
-  cerca(largoDistinto.piezas.find(p=>p.pieza==='refuerzo_delantero')!.largoIn*25.4,777.8);
-  const railHdr=filas.find(f=>f.pieza==='RAIL DELANTERO')!;
-  cerca(railHdr.largoMm,770); cerca(railHdr.anchoMm,80);
-  assert.equal(railHdr.cantoLargoColor,2);
-  assert.equal(railHdr.cantoAnchoColor,0);
-  assert.equal(railHdr.cantoLargoBlanco,0);
-  assert.equal(railHdr.cantoAnchoBlanco,0);
+  assert.equal(largoDistinto.piezas.some(p=>p.pieza==='refuerzo_delantero'),false);
   const base = filas.find(f => f.pieza === 'BASE')!;
   cerca(base.largoMm, 770); cerca(base.anchoMm, 592);
   const puerta = filas.find(f => f.pieza === 'DOOR')!;
@@ -93,14 +80,14 @@ test('STEP: tarugos del frente y base detrás del espesor real, sin mutar la fue
   const cfg = entrada('BOV-SMG');
   const ajustadas = ajustarGeometriaBov(originales, 'BOV-SMG');
   const result = calcularMueble({ ...cfg, piezas: ajustadas });
-  assert.equal(result.cantidadesConsumibles.tarugos, step.tarugos.length + 4);
+  assert.equal(result.cantidadesConsumibles.tarugos, step.tarugos.length);
   assert.deepEqual(originales, copia);
   assert.deepEqual(ajustarGeometriaBov(originales, 'DB-FE'), originales);
   const frente15 = { ...cfg, tablerosByCode: { ...cfg.tablerosByCode, F: { ...cfg.tablerosByCode.F, espesor_mm: 15 } } };
   cerca(calcularMueble(frente15).piezas.find(p => p.pieza === 'base')!.anchoIn * 25.4, 595);
 });
 
-test('BOV-SMG-SF no muestra tarugos y conserva refuerzo vertical en HDR', () => {
+test('BOV-SMG-SF no muestra tarugos ni rail delantero en visualización, consumo o HDR', () => {
   const cfg = entrada('BOV-SMG-SF');
   const result = calcularMueble(cfg);
   const frente=orientarPieza(result.piezas.find(p=>p.pieza==='frente')!);
@@ -109,16 +96,11 @@ test('BOV-SMG-SF no muestra tarugos y conserva refuerzo vertical en HDR', () => 
   const members: PreparedGroupMember[] = [{ pref: 'BOV-SMG-SF', permiteAgrupacion: true, calc: cfg }];
   const escena = construirVisualizacion(members, calcularGrupoFisico(members));
   assert.equal(escena.paneles.some(p => p.funcion === 'tarugo'), false);
-  const refuerzo = escena.paneles.find(p => p.nombre === 'refuerzo_delantero')!;
-  cerca(refuerzo.y, 27); cerca(refuerzo.z, 15); cerca(refuerzo.h, 770);
+  assert.equal(escena.paneles.some(p => p.nombre === 'refuerzo_delantero'), false);
   const filas = construirFilas({ ...result, trm: 3100, margen: 0 }, [{ codigo: 'C', espesor_mm: 15 }, { codigo: 'R', espesor_mm: 15 }, { codigo: 'F', espesor_mm: 18 }], 'BOV-SMG-SF');
-  const railHdr=filas.find(f=>f.pieza==='RAIL DELANTERO')!;
-  cerca(railHdr.largoMm,770); cerca(railHdr.anchoMm,80);
-  assert.equal(railHdr.cantoLargoColor,2);
-  assert.equal(railHdr.cantoAnchoColor,0);
-  assert.equal(railHdr.cantoLargoBlanco,0);
-  assert.equal(railHdr.cantoAnchoBlanco,0);
-  assert.equal(result.cantidadesConsumibles.tarugos,20);
+  assert.equal(filas.some(f=>f.pieza==='RAIL DELANTERO'),false);
+  assert.equal(result.piezas.some(p=>p.pieza==='refuerzo_delantero'),false);
+  assert.equal(result.cantidadesConsumibles.tarugos,16);
 });
 
 test('BOV-SMG conserva la agrupación de carcasa y los códigos comerciales en las tres unidades', () => {
