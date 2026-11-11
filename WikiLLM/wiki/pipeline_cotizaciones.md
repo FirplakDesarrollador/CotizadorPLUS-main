@@ -12,11 +12,16 @@ encima de la tarjeta del listado y separada de Guía/Tips. Cada botón aumenta
 su tamaño visual un 0,5 % mediante `scale(1.005)`. En las vistas de ancho
 completo la barra acompaña a Volver en su propia fila.
 
-Registro reúne los 24 campos de Form CEFI más Asesor y Estimador. Ubicación se
-divide en país y ciudad. Productos admite selección múltiple. El adjunto es
-solo una URL: no hay subida de archivos. La acción de registro valida los
-campos obligatorios, opciones, fechas reales, tarifa y enlaces HTTP(S) en
-servidor, e inserta únicamente `cot_pipeline` con el creador de sesión.
+Registro reúne los campos de Form CEFI más Asesor y Estimador. Ubicación se
+divide en país y ciudad. Productos admite selección múltiple y el punto 7
+captura el tipo de tablero por cada producto elegido, guardado como objeto JSON
+en `tipo_tablero`. Todos los campos son opcionales; antes de guardar, el
+formulario pide confirmar cuando detecta datos vacíos. La tarifa (punto 15)
+solo se habilita para USA/Estados Unidos y no es obligatoria. El punto 14 solo
+ofrece zócalo de madera y PVC; el punto 15 (margen adicional) ya no se captura.
+El adjunto es solo una URL: no hay subida de archivos. La acción valida las
+opciones, fechas, tarifa, URLs y normaliza la tarifa fuera de Estados Unidos,
+e inserta únicamente `cot_pipeline` con el creador de sesión.
 
 Pipeline tiene búsqueda literal, filtros por estado/país/asesor/estimador,
 orden por fecha, páginas de 25 y monitor de estados. El drawer muestra todos

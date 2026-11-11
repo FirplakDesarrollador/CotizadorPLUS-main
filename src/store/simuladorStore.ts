@@ -246,7 +246,9 @@ export const useSimuladorStore = create<SimuladorState>()(
       // v14: descarta geometría BOV anterior al frente interno y a la variante SMG.
       // v16: los fondos de gaveta FE usan el material del respaldo.
       // v17: refuerzo delantero SVFDH-SMG/SF de 80 mm.
-      version: 17,
+      // v18: BOV-SMG segun STEP, seis paneles y frente al ras inferior.
+      // v19: refuerzo delantero vertical a 27 mm, sin tarugos graficos.
+      version: 19,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {

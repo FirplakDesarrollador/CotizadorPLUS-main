@@ -3,7 +3,7 @@ export const FUNCIONES_MONTAJE = [
   'automatico', 'lateral', 'base', 'tapa', 'base_tapa', 'estante', 'division',
   'respaldo', 'travesano_frontal', 'travesano_posterior', 'travesano_lateral',
   'frente', 'frente_gaveta', 'frente_falso', 'base_gaveta', 'trasero_gaveta',
-  'lateral_gaveta', 'frente_interior', 'gola', 'zocalo', 'panel', 'suelto', 'omitir',
+  'lateral_gaveta', 'frente_interior', 'gola', 'zocalo', 'panel', 'tarugo', 'suelto', 'omitir',
 ] as const;
 export type FuncionMontaje = typeof FUNCIONES_MONTAJE[number];
 export type PlanoMontaje = 'XY' | 'XZ' | 'YZ';
