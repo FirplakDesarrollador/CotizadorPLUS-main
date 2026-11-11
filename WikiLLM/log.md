@@ -3057,3 +3057,6 @@ La regla de fabricación excluye `refuerzo_delantero` en ambas tipologías, por 
 ## [2026-11-11] update | Orden de piezas HDR para DB-FE
 
 DB-FE presenta cada pieza por separado en secuencia de producción; agrupa visualmente traseros de gaveta como `TRASERO GAV`, prioriza la pieza menor cuando coincide el nombre y conserva letras individuales. La exportación Excel comparte el mismo orden que la HDR.
+## [2026-11-11] update | Orden HDR para todas las variantes DB con FE
+
+La regla de presentación HDR y el nombre `TRASERO GAV` ahora cubren tipologías DB terminadas en `-FE` y `-FE-SF`, incluidas las cajoneras DB-SM-FE-SF. Se agregaron regresiones para las variantes principales y se mantiene el orden de dimensiones, medidas y demás piezas.

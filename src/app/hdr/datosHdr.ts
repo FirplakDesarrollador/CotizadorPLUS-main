@@ -1,7 +1,7 @@
 import type { CotizarResult } from '@/lib/cotizar';
 import { orientarPieza, esTipologiaDbFe, puertasDescripcion, contarEntrepanos, familiaMaterialPorPrefijo } from '@/lib/muebles';
 import { indiceALetras } from '@/lib/module-groups';
-import { ordenarPiezasHdr } from './ordenPiezas';
+import { esTipologiaDbFeHdr, ordenarPiezasHdr } from './ordenPiezas';
 import type { ModuloHDR } from './actions';
 import { esPanel, nombrePanel } from '@/lib/nombres-modulos';
 import { noLlevaCanto } from '@/lib/cantos';
@@ -129,7 +129,7 @@ export function construirFilas(res: ResultadoHdr, tableros: Tablero[], pref?: st
   const siguienteLetra = () => indiceALetras(letraIdx++);
 
   for (const p of ordenarPiezasHdr(res.piezas.filter((p) => p.cant > 0), tienePuertas, pref)) {
-    const nombreBase = pref === 'DB-FE' && /^trasero_gaveta/.test(p.pieza)
+    const nombreBase = esTipologiaDbFeHdr(pref) && /^trasero_gaveta/.test(p.pieza)
       ? 'TRASERO GAV'
       : nombreProduccion(p.pieza, tienePuertas);
     const visible = esVisible(p.pieza);

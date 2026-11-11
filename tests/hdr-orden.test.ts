@@ -52,7 +52,7 @@ test('HDR usa el orden de la referencia independientemente del orden de plantill
   assert.deepEqual(piezas, antes);
 });
 
-test('DB-FE presenta el orden de producción solicitado, junta traseros y prioriza la pieza menor', () => {
+test('las variantes DB-FE presentan el orden de producción, juntan traseros y priorizan la pieza menor', () => {
   const nombres = [
     ['fondo', '8', '5'], ['fondo_gaveta', '8', '4'],
     ['frente_gaveta_grande', '9', '2'], ['frente_gaveta_pequena', '5', '2'],
@@ -67,17 +67,20 @@ test('DB-FE presenta el orden de producción solicitado, junta traseros y priori
     formula_largo: largo, formula_ancho: ancho,
   }));
   const resultado = { ...calcularMueble({ ...calc, overrides: {}, piezas }), trm: 4000, margen: 0 };
-  const filas = construirFilas(resultado, [{ codigo: 'C15', espesor_mm: 15 }], 'DB-FE');
-  assert.deepEqual(filas.map(f => f.pieza), [
+  const esperado = [
     'BASE R17L', 'SIDE R R17L', 'SIDE L R17L', 'RAIL DELANTERO', 'RAIL TRASERO',
     'LAT GAV PEQ R13L', 'LAT GAV GRANDE R13L',
     'TRASERO GAV', 'TRASERO GAV',
     'CONTRAPARCHE PEQ R13L', 'CONTRAPARCHE GRANDE R13L',
     'FRENTE GAVETA', 'FRENTE GAVETA', 'FONDO GAV', 'BACKING',
-  ]);
-  assert.deepEqual(filas.slice(7, 9).map(f => Number(f.anchoMm.toFixed(1))), [76.2, 177.8]);
-  assert.deepEqual(filas.slice(11, 13).map(f => Number(f.largoMm.toFixed(1))), [127, 228.6]);
-  assert.deepEqual(filas.map(f => f.letra), filas.map((_, i) => ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'][i]));
+  ];
+  for (const pref of ['DB-FE', 'DB-FE-SF', 'DB-2S-SM-FE', 'DB-2S-SM-FE-SF']) {
+    const filas = construirFilas(resultado, [{ codigo: 'C15', espesor_mm: 15 }], pref);
+    assert.deepEqual(filas.map(f => f.pieza), esperado, pref);
+    assert.deepEqual(filas.slice(7, 9).map(f => Number(f.anchoMm.toFixed(1))), [76.2, 177.8], pref);
+    assert.deepEqual(filas.slice(11, 13).map(f => Number(f.largoMm.toFixed(1))), [127, 228.6], pref);
+    assert.deepEqual(filas.map(f => f.letra), filas.map((_, i) => ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'][i]), pref);
+  }
 });
 
 test('las gavetas conservan su secuencia original incluyendo sus frentes y fondos', () => {

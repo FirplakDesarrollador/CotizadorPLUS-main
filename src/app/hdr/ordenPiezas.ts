@@ -1,6 +1,10 @@
 /** Orden de presentación HDR; no altera plantillas, geometría ni consumos. */
+export function esTipologiaDbFeHdr(pref?: string): boolean {
+  return /^DB(?:-.+)?-FE(?:-SF)?$/i.test(String(pref ?? '').trim());
+}
+
 export function ordenarPiezasHdr<T extends { pieza: string; largoIn?: number; anchoIn?: number }>(piezas: readonly T[], tienePuertas: boolean, pref?: string): T[] {
-  if (pref === 'DB-FE') {
+  if (esTipologiaDbFeHdr(pref)) {
     const ordenDbFe = (nombre: string): number => {
       if (nombre === 'base') return 10;
       if (nombre === 'lateral') return 20;
