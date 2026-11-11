@@ -9,10 +9,10 @@ export function ajustarGeometriaBov<T extends Pieza>(piezas: readonly T[], pref:
   // STEP HRJ BOV8078.561-SMG: seis paneles; el frente baja a z=0 y la
   // base comienza detrás de su espesor, sin descontar el refuerzo posterior.
   if (pref === 'BOV-SMG' || pref === 'BOV-SMG-SF') return piezas
+    .filter(p => p.nombre !== 'refuerzo_delantero')
     .map(p => {
       if (p.nombre === 'base') return { ...p, formula_ancho: 'P-TF', visualizacion: { ...p.visualizacion, version: 1, funcion: 'base', plano: 'XY', intercambiar: false, x: 'TC', y: 'TF', z: '0', confirmado: true } };
       if (p.nombre === 'frente') return { ...p, formula_largo: 'L-2*TC', formula_ancho: 'A-73/25.4', ...(pref === 'BOV-SMG' ? { tarugos: 8 } : {}), visualizacion: { ...p.visualizacion, version: 1, funcion: 'frente', plano: 'XZ', intercambiar: false, x: 'TC', y: '0', z: '0', confirmado: true } };
-      if (p.nombre === 'refuerzo_delantero') return { ...p, formula_largo: 'L-2*TC', formula_ancho: '80/25.4', tarugos: 4, cantos: { ...p.cantos, calibre: p.cantos?.calibre ?? '19x0,45', largos: 2, anchos: 0 }, visualizacion: { ...p.visualizacion, version: 1, funcion: 'travesano_frontal', plano: 'XZ', intercambiar: true, x: '(L-80/25.4)/2', y: '27', z: 'TC', confirmado: true, nota: 'Refuerzo vertical a 27 mm del borde delantero del lateral.' } };
       if (pref === 'BOV-SMG' && p.nombre === 'refuerzo_trasero') return { ...p, visualizacion: { ...p.visualizacion, version: 1, funcion: 'travesano_posterior', plano: 'XZ', intercambiar: false, y: 'P-EP-(I===0 ? 0.2 : 0)', z: 'I===0 ? TC : A-H', confirmado: true } };
       return p;
     });

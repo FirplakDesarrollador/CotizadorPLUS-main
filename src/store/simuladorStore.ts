@@ -248,7 +248,8 @@ export const useSimuladorStore = create<SimuladorState>()(
       // v17: refuerzo delantero SVFDH-SMG/SF de 80 mm.
       // v18: BOV-SMG segun STEP, seis paneles y frente al ras inferior.
       // v19: refuerzo delantero vertical a 27 mm, sin tarugos graficos.
-      version: 19,
+      // v20: elimina el rail delantero de BOV-SMG/BOV-SMG-SF y recalcula el despiece.
+      version: 20,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {
