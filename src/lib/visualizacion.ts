@@ -54,6 +54,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE',
     ].includes(pref);
     const esDbSmg = /^DB-.+-SMG(-FE|-SF)?$/.test(pref);
+    const esBovSmg = pref === 'BOV-SMG' || pref === 'BOV-SMG-SF';
     const esDbSmEspecial = esDbSmMaderaEspecial || esDbSmg;
     const esDb21IntSmFe = pref === 'DB-2-1INT-SM-FE' || pref === 'DB-2-1INT-SMG-FE'
       || (/^DB-FE(?:-SF)?$/.test(pref) && Number(result.vars.n_cajones_ocultos ?? 0) > 0);
@@ -89,6 +90,14 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           y: '20', z: 'I===0 ? A-H : A-2*alto_frente_pequeno-RV-28.4-H',
           confirmado: true,
           nota: 'Refuerzo vertical: superior y entre los niveles de gavetas.',
+        };
+      }
+      if (esBovSmg && p.nombre === 'refuerzo_delantero') {
+        config = {
+          ...config,
+          funcion: 'travesano_frontal', plano: 'XZ', intercambiar: true,
+          x: '(L-W)/2', y: '27', z: 'TC',
+          confirmado: true, nota: 'Refuerzo vertical a 27 mm del borde delantero del lateral.',
         };
       }
       if (esDbSmg && p.nombre === 'refuerzo_delantero') {

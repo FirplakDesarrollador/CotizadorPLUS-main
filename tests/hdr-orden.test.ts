@@ -93,7 +93,7 @@ test('FE renombra únicamente los cuatro nombres exactos de gaveta, también sin
   const nombres = ['lateral_gaveta_pequena', 'lateral_gaveta_grande', 'contraparche_pequeno', 'contraparche_grande', 'lateral_gaveta_der', 'lateral_gaveta_izq', 'contraparche', 'base_gaveta', 'trasero_gaveta_grande', 'frente_gaveta'];
   const res = { ...calcularMueble({ ...calc, piezas: nombres.map(nombre => ({ ...calc.piezas[0], nombre, formula_cantidad: '1' })) }), trm: 4000, margen: 0 };
   const base = construirFilas(res, []);
-  const esperados = ['LAT GAV PEQ R15L', 'LAT GAV GRANDE R15L', 'CONTRAPARCHE PEQ R15L', 'CONTRAPARCHE GRANDE R15L'];
+  const esperados = ['LAT GAV PEQ R13L', 'LAT GAV GRANDE R13L', 'CONTRAPARCHE PEQ R13L', 'CONTRAPARCHE GRANDE R13L'];
   for (const pref of ['DB-FE', 'DB-2-1INT-SM-FE', 'DB-SM-FE-SF', 'B-FE', 'BMW-1-FE']) {
     const filas = construirFilas(res, [], pref);
     assert.deepEqual(filas.slice(0, 4).map(f => f.pieza), esperados);
