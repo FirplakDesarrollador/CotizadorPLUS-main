@@ -3149,3 +3149,15 @@ como `pipeline_en_desarrollo`, versión `20261112183818`. No se cambiaron
 estados de cotizaciones ni registros de Pipeline y no se enviaron correos.
 Este esquema acompaña la publicación solicitada de todos los cambios locales
 de ayuda, valores, agrupación, HDR y tipologías mediante LIz → DEV → main.
+
+## [2026-11-12] update | Publicación de cambios por LIz, DEV y main
+
+Se validó `quality:plan` (lane transversal, 135 suites) y `quality:gate`
+terminó con exit 0 sin regresiones. Se confirmó en Supabase el historial de
+migraciones `pc_bmw_bomh_sm_smg`, `nombres_copias_pc_bmw_bomh`,
+`corregir_fijos_gavetas_bomh` y `pipeline_en_desarrollo` (0260–0263), sin
+reaplicar ninguna.
+
+Los 53 archivos locales se publicaron en el commit `fb6ae21` de LIz y se
+promovieron por avance rápido a DEV y main. Las tres ramas locales y sus
+remotos quedaron en `fb6ae21`, con árbol de trabajo limpio y sin conflictos.
