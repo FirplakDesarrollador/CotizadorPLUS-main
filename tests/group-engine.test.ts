@@ -128,7 +128,19 @@ test('permite materiales de frente distintos cuando conservan el espesor', () =>
   ]));
 });
 
-test('bloquea incompatibilidades antes de transformar el despiece', () => {
+test('permite tableros de caja distintos y conserva piezas incompatibles por módulo', () => {
+  const left = member({ pref: 'B', width: 12 });
+  const right = member({ pref: 'DB', width: 10 });
+  right.calc.preset.caja = 'R2';
+  right.calc.cantoCaja = '19x1';
+  const grouped = calcularGrupoFisico([left, right]);
+  assert.equal(grouped.lineas.length, 2);
+  assert.ok(!grouped.piezasContinuas.includes('base'));
+  assert.equal(pieceTotal(grouped, 'base'), 2);
+  assert.equal(pieceTotal(grouped, 'lateral'), 4);
+});
+
+test('mantiene incompatibilidades no solicitadas antes de transformar el despiece', () => {
   assert.throws(() => calcularGrupoFisico([
     member({ pref: 'B', width: 12, frontBoard: 'FRONT_A' }),
     member({ pref: 'DB', width: 10, frontBoard: 'FRONT_THIN' }),

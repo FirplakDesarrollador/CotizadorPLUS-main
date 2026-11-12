@@ -130,6 +130,30 @@ function piezasHomologables(refs: Pieza[], members: PreparedGroupMember[]) {
   });
 }
 
+function piezasContinuasCompatibles(refs: Pieza[], members: PreparedGroupMember[]) {
+  const base = evaluated(refs[0], members[0].calc);
+  const rotated = !/\bL\b/.test(refs[0].formula_largo ?? '') && /\bL\b/.test(refs[0].formula_ancho ?? '');
+  const section = rotated ? base.largo : base.ancho;
+  const board = members[0].calc.preset[refs[0].rol_tablero] ?? '';
+  return refs.slice(1).every((piece, i) => {
+    const calc = members[i + 1].calc;
+    const dims = evaluated(piece, calc);
+    const isRotated = !/\bL\b/.test(piece.formula_largo ?? '') && /\bL\b/.test(piece.formula_ancho ?? '');
+    return near(isRotated ? dims.largo : dims.ancho, section)
+      && (calc.preset[piece.rol_tablero] ?? '') === board
+      && JSON.stringify(piece.cantos ?? {}) === JSON.stringify(refs[0].cantos ?? {})
+      && montajeFisico(piece) === montajeFisico(refs[0]);
+  });
+}
+
+function mismosLaterales(a: CalcInput, b: CalcInput, piece: Pieza) {
+  const other = b.piezas.find((candidate) => candidate.modo_agrupacion === 'lateral_compartido');
+  return Boolean(other)
+    && (a.preset[piece.rol_tablero] ?? '') === (b.preset[other!.rol_tablero] ?? '')
+    && (a.cantoCaja ?? '') === (b.cantoCaja ?? '')
+    && JSON.stringify(piece.cantos ?? {}) === JSON.stringify(other!.cantos ?? {});
+}
+
 function assertCompatible(members: PreparedGroupMember[]) {
   if (members.length < 2) return;
   if (members.some((m) => !m.permiteAgrupacion)) {
@@ -143,20 +167,6 @@ function assertCompatible(members: PreparedGroupMember[]) {
   for (const { calc } of members.slice(1)) {
     if (Math.abs(mm(calc.dims.P - first.dims.P)) > 0.5) {
       throw new Error('Los módulos de un grupo deben tener la misma profundidad física (tolerancia 0,5 mm).');
-    }
-    for (const rol of ['caja', 'refuerzo', 'fondo']) {
-      const rolEstructural = [first, calc].some((input) => input.piezas.some((piece) =>
-        piece.rol_tablero === rol
-        && (piece.modo_agrupacion === 'continua'
-          || piece.modo_agrupacion === 'continua_opcional'
-          || piece.modo_agrupacion === 'lateral_compartido')));
-      if (!rolEstructural) continue;
-      if ((calc.preset[rol] ?? '') !== (first.preset[rol] ?? '')) {
-        throw new Error(`Los módulos agrupados deben usar el mismo tablero de ${rol}.`);
-      }
-    }
-    if ((calc.cantoCaja ?? '') !== (first.cantoCaja ?? '')) {
-      throw new Error('Los módulos agrupados deben usar el mismo canto de caja.');
     }
     if (!near(calc.margen, first.margen)) {
       throw new Error('Los módulos agrupados deben usar la misma política de margen.');
@@ -227,6 +237,11 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
   const continuousKeys = new Set(
     [...mandatorySets[0]].filter((key) => mandatorySets.slice(1).every((keys) => keys.has(key))),
   );
+  for (const key of continuousKeys) {
+    const refs = members.map(({ calc }) => calc.piezas.find((piece) => piece.modo_agrupacion === 'continua'
+      && (piece.clave_fusion || piece.nombre) === key));
+    if (refs.some((piece) => !piece) || !piezasContinuasCompatibles(refs as Pieza[], members)) continuousKeys.delete(key);
+  }
 
   const optionalKeys = new Set(members.flatMap(({ calc }) => calc.piezas
     .filter((p) => p.modo_agrupacion === 'continua_opcional')
@@ -304,7 +319,7 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
         const currentHeight = calc.dims.A;
 
         // Descuento en la unión izquierda (con index - 1)
-        if (index > 0) {
+        if (index > 0 && mismosLaterales(calc, members[index - 1].calc, piece)) {
           const leftHeight = members[index - 1].calc.dims.A;
           if (Math.abs(currentHeight - leftHeight) <= 0.0001) {
             discount += 0.5;
@@ -314,7 +329,7 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
         }
 
         // Descuento en la unión derecha (con index + 1)
-        if (index < n - 1) {
+        if (index < n - 1 && mismosLaterales(calc, members[index + 1].calc, piece)) {
           const rightHeight = members[index + 1].calc.dims.A;
           if (Math.abs(currentHeight - rightHeight) <= 0.0001) {
             discount += 0.5;
@@ -340,9 +355,11 @@ export function calcularGrupoFisico(members: PreparedGroupMember[]): GroupCalcul
         // compartimento vecino: extremos +TC/2, interiores +TC.
         const contacts = index === 0 || index === n - 1 ? 1 : 2;
         const original = evaluated(piece, calc);
+        const cajaLocal = calc.tablerosByCode[calc.preset.caja ?? ''];
+        const tcLocal = Number(cajaLocal?.espesor_mm ?? 0) / 25.4;
         return isRotatedLocalWidth
-          ? { ...piece, formula_ancho: String(original.ancho + contacts * tc / 2), resta_ancho: 0 }
-          : { ...piece, formula_largo: String(original.largo + contacts * tc / 2), resta_largo: 0 };
+          ? { ...piece, formula_ancho: String(original.ancho + contacts * tcLocal / 2), resta_ancho: 0 }
+          : { ...piece, formula_largo: String(original.largo + contacts * tcLocal / 2), resta_largo: 0 };
       }
 
       const representative = first.piezas.find((p) => (p.modo_agrupacion === 'continua' || p.modo_agrupacion === 'continua_opcional') && (p.clave_fusion || p.nombre) === key)!;

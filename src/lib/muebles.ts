@@ -129,9 +129,9 @@ export function usaMedidasMoHood(pref: string | null | undefined): boolean {
   return String(pref ?? '').trim().toUpperCase() === 'W-MO-HOOD';
 }
 
-const PREFS_TK_TORRE = ['PC', 'PCFD', 'VPC', 'OVPC', 'PCFD-MO'] as const;
+const PREFS_TK_TORRE = ['PC', 'PCFD', 'VPC', 'OVPC', 'PCFD-MO', 'PC-MO', 'PC-SM', 'PC-SMG', 'PC-MO-SM', 'PC-MO-SMG'] as const;
 export function usaTkTorre(pref: string | null | undefined): boolean {
-  return (PREFS_TK_TORRE as readonly string[]).includes(String(pref ?? '').trim().toUpperCase());
+  return (PREFS_TK_TORRE as readonly string[]).includes(String(pref ?? '').trim().toUpperCase().replace(/-SF$/, ''));
 }
 
 // Solo VPC conserva TK0 como valor inicial. En PC, PCFD, PCFD-MO y OVPC el TK
@@ -141,11 +141,11 @@ export function tkPredeterminadoTorre(pref: string | null | undefined): number |
 }
 
 export function usaPuertaSupTorre(pref: string | null | undefined): boolean {
-  return ['PC', 'VPC', 'PCFD-MO'].includes(String(pref ?? '').trim().toUpperCase());
+  return ['PC', 'VPC', 'PCFD-MO', 'PC-MO', 'PC-SM', 'PC-SMG', 'PC-MO-SM', 'PC-MO-SMG'].includes(String(pref ?? '').trim().toUpperCase().replace(/-SF$/, ''));
 }
 
 export function usaMoTorre(pref: string | null | undefined): boolean {
-  return String(pref ?? '').trim().toUpperCase() === 'PCFD-MO';
+  return /^(PCFD-MO|PC-MO(?:-SMG?)?)(?:-SF)?$/.test(String(pref ?? '').trim().toUpperCase());
 }
 
 /**
@@ -259,7 +259,7 @@ export function altoPorDefectoIn(
 ): number | null {
   const value = String(pref ?? '').toUpperCase();
   if ((PREFS_ALTO_LINEA_U as readonly string[]).includes(value)) return ALTO_LINEA_U_IN;
-  if ((PREFS_TORRE as readonly string[]).includes(value)) return null;
+  if ((PREFS_TORRE as readonly string[]).includes(value) || usaTkTorre(value)) return null;
   return categoria === 'inferior' ? ALTO_INFERIOR_IN : null;
 }
 
@@ -302,12 +302,12 @@ export function ajustarPiezasSinFondo<T extends PiezaAjustable>(
 export const PREFS_CON_PUERTA_PARAMETRICA = ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM'] as const;
 
 export function usaPuertaParametrica(pref: string | null | undefined): boolean {
-  const value = String(pref ?? '').toUpperCase();
+  const value = String(pref ?? '').toUpperCase().replace(/-SF$/, '');
   return (PREFS_CON_PUERTA_PARAMETRICA as readonly string[]).includes(value);
 }
 
 export function usaHuecoHornoParametrico(pref: string | null | undefined): boolean {
-  return ['BOMH-1', 'BOMH-1-FE'].includes(String(pref ?? '').toUpperCase());
+  return /^BOMH-1(?:-FE)?(?:-SMG?)?(?:-SF)?$/.test(String(pref ?? '').toUpperCase());
 }
 
 // Familias con pares base/removible verificados en las hojas de ruta. Fuera de

@@ -16,6 +16,8 @@ import type { FirplakTemplate } from '@/lib/firplak-template';
 import { normalizarUbicacion } from '@/lib/ubicacion-cotizacion';
 import { actualizarUbicacionCotizacion } from '@/lib/cotizaciones';
 import { getUserAndRole } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/server';
+import { notificarAdminsEnDesarrollo } from '@/lib/notificar-en-desarrollo';
 
 export async function actualizarUbicacionCotizacionAction(id: string, pais: string, ciudad: string) {
   try {
@@ -178,14 +180,25 @@ export async function duplicarCocinaAction(cotizacionId: string, cocinaId: strin
   }
 }
 
-export async function actualizarCotizacionAction(id: string, patch: { nombre?: string; cliente_nombre?: string; comprador_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }): Promise<{ ok: boolean; error?: string }> {
+export async function actualizarCotizacionAction(id: string, patch: { nombre?: string; cliente_nombre?: string; comprador_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }): Promise<{ ok: boolean; error?: string; warning?: string }> {
   try {
+    let estadoAnterior: string | undefined;
+    let nombreCotizacion = 'Cotización';
+    if (patch.estado === 'en_desarrollo') {
+      const sb = await createClient();
+      const { data } = await sb.from('cot_cotizaciones').select('estado,nombre').eq('id', id).maybeSingle();
+      estadoAnterior = data?.estado;
+      nombreCotizacion = patch.nombre ?? data?.nombre ?? nombreCotizacion;
+    }
     // El trigger de BD propaga estado a Pipeline de forma atómica y bajo RLS.
     await actualizarCotizacion(id, patch);
     revalidatePath('/cotizaciones');
     revalidatePath(`/cotizaciones/${id}`);
     revalidatePath(`/cotizaciones/${id}/imprimir`);
-    return { ok: true };
+    const warning = estadoAnterior && estadoAnterior !== 'en_desarrollo'
+      ? await notificarAdminsEnDesarrollo({ cotizacionId: id, nombre: nombreCotizacion, estadoAnterior })
+      : undefined;
+    return { ok: true, warning };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };
   }

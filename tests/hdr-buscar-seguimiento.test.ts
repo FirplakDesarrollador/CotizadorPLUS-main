@@ -37,6 +37,17 @@ test('clóset por sección y panel/filler conservan su clasificación propia; el
   assert.throws(() => entradasSeguimiento([modulo('ERROR', 'B', { ok: false, error: 'Falta tablero' })], []), /muebles con error/);
 });
 
+test('el prefijo HRJ se agrega una sola vez al nombre de la HDR cuando se solicita', () => {
+  const m = modulo('BOV8078.561-SMG', 'B');
+  assert.equal(tituloModuloHdr(m), 'BOV8078.561-SMG Descripción exacta');
+  assert.equal(tituloModuloHdr(m, true), 'HRJ BOV8078.561-SMG Descripción exacta');
+  assert.equal(tituloModuloHdr({ ...m, codigoModulo: 'HRJ BOV8078.561-SMG' }, true), 'HRJ BOV8078.561-SMG Descripción exacta');
+  for (const [codigo, pref] of [['PN23 3/496', 'PN'], ['F634 1/2', 'F'], ['TK61451.8', 'TK']]) {
+    const excluido = modulo(codigo, pref);
+    assert.equal(tituloModuloHdr(excluido, true), `${codigo} Descripción exacta`);
+  }
+});
+
 test('dos nombres que difieren en una tilde o en un espacio interno no se fusionan', () => {
   const base = modulo('B20', 'B');
   const entradas = entradasSeguimiento([base, { ...base, lineaId: 'b', nombreDescriptivo: 'Descripcion exacta' }, { ...base, lineaId: 'c', nombreDescriptivo: 'Descripción  exacta' }], []);

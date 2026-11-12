@@ -39,7 +39,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; 
   const informarError = (e: unknown) => { if (!esCancelacionHdr(e)) setErrorExportacion(e instanceof Error ? e.message : 'No se pudo completar la exportación.'); };
   const exportarExcel = async () => {
     setErrorExportacion(null);
-    try { const destino = await crearDestinoHdr(proyecto); const { descargarExcelHdr } = await import('./excel'); await descargarExcelHdr([datosExcel()], proyecto || titulo, destino); }
+    try { const destino = await crearDestinoHdr(proyecto); const { descargarExcelHdr } = await import('./excel'); await descargarExcelHdr([datosExcel()], titulo, destino); }
     catch (e) { informarError(e); }
   };
   useImperativeHandle(ref, () => ({ exportarPdf, datosExcel }), [exportarPdf, datosExcel]);

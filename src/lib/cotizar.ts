@@ -364,20 +364,9 @@ export async function cotizarGrupo(
   inputs: CotizarInput[],
   catalogo?: CatalogoPrecompilado
 ): Promise<GroupCalculation & { preparados: CotizacionPreparada[] }> {
-  // Una estructura físicamente agrupada comparte caja, refuerzos y canto. A1
-  // es la fuente de verdad para evitar estados persistidos o cambios de perfil
-  // que dejen códigos estructurales distintos entre módulos del mismo grupo.
-  const first = inputs[0];
-  const normalizados = inputs.length > 1 && first ? inputs.map((input) => ({
-    ...input,
-    preset: {
-      ...input.preset,
-      caja: first.preset.caja,
-      refuerzo: first.preset.refuerzo ?? first.preset.caja,
-    },
-    cantoCaja: first.cantoCaja,
-  })) : inputs;
-  const preparados = await Promise.all(normalizados.map((i) => prepararCotizacion(i, catalogo)));
+  // Cada integrante conserva sus materiales y cantos. El motor solo comparte
+  // las piezas compatibles y mantiene locales las que difieren.
+  const preparados = await Promise.all(inputs.map((i) => prepararCotizacion(i, catalogo)));
   return { ...calcularGrupoFisico(preparados), preparados };
 }
 
@@ -396,6 +385,7 @@ export type { CotizarGrupoResult } from '@/lib/group-result';
 const TIPOLOGIAS_NO_COTIZABLES = new Set([
   'OILVP', 'S', 'SA', 'SLOC', 'SMO', 'ICP', 'ILVP',
   'ALP', 'AL', 'ALH',
+  'BBL', 'BBL-SF', 'BBLFD-D-L/R-SM-SF',
 ]);
 
 function esTipologiaNoCotizable(tipo: { pref: string; pref_imperial?: string | null; pref_metrico?: string | null }) {

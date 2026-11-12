@@ -15,8 +15,6 @@ import {
   type SimuladorModuloValues,
 } from '@/store/simuladorStore';
 import type { CotizarGrupoResult, CotizarInput } from '@/lib/cotizar';
-import GuideButton from '@/components/GuideButton';
-import TooltipToggle from '@/components/TooltipToggle';
 import UndoRedoButtons from '@/components/UndoRedoButtons';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
@@ -57,16 +55,6 @@ const getCantoMatch = (cantos: string[], target: string) =>
 const subscribeHydration = () => () => {};
 const clientHydrationSnapshot = () => true;
 const serverHydrationSnapshot = () => false;
-
-const GUIA_SIMULADOR = [
-  { title: 'Simulador de muebles', description: 'Calcula un módulo individual o varios módulos fabricados como un solo mueble combinado.' },
-  { selector: '[data-tour="tipo"]', title: '1. Tipo de mueble', description: 'Elige el tipo (base, superior, vanity, torre…). Cada tipo tiene su despiece propio validado.' },
-  { selector: '[data-tour="dims"]', title: '2. Dimensiones', description: 'Ingresa Largo, Alto y Profundidad, y elige la unidad (pulgadas, cm o mm).' },
-  { selector: '[data-tour="tableros"]', title: '3. Tableros', description: 'Elige el material por rol: caja, refuerzos, frente y fondo. Define el costo de la madera.' },
-  { selector: '[data-tour="opciones"]', title: '4. Opciones', description: 'Ajusta puertas, cajones, modo de frentes y herrajes para este módulo.' },
-  { selector: '[data-tour="calcular"]', title: '5. Calcular o combinar', description: 'Calcula el conjunto actual o usa “+ Agregar módulo” para confirmar este y abrir el siguiente con la configuración heredada.' },
-  { selector: '[data-tour="resultado"]', title: '6. Resultado', description: 'Verás un solo precio y desglose consolidado para todo el mueble combinado.' },
-];
 
 export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, cantos }:
   { tipos: Tipo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]>; cantos: string[] }) {
@@ -837,8 +825,6 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
           </h2>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <UndoRedoButtons compact />
-            <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
-            <TooltipToggle />
           </div>
         </div>
 

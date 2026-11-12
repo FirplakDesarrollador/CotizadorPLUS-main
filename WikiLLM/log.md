@@ -3060,3 +3060,92 @@ DB-FE presenta cada pieza por separado en secuencia de producción; agrupa visua
 ## [2026-11-11] update | Orden HDR para todas las variantes DB con FE
 
 La regla de presentación HDR y el nombre `TRASERO GAV` ahora cubren tipologías DB terminadas en `-FE` y `-FE-SF`, incluidas las cajoneras DB-SM-FE-SF. Se agregaron regresiones para las variantes principales y se mantiene el orden de dimensiones, medidas y demás piezas.
+## [2026-11-11] update | Prefijo HRJ y nombres de exportación de HDR
+
+La generación desde cotización añade un switch para prefijar `HRJ` a los nombres de mueble. PDF y Excel se guardan sin anteponer `HDR_`; las exportaciones individuales Excel toman el nombre del mueble. Se conservan carpetas de proyecto y se evita duplicar HRJ.
+## [2026-11-11] update | Excluir PN, F y TK del prefijo HRJ
+
+El switch HRJ omite el prefijo para los muebles de tipología PN, F y TK, aunque esté activado. Se agregaron casos de regresión para las tres familias.
+
+## [2026-11-11] update | Guías, valores privados y estado En desarrollo
+
+Se centraliza Guía/Tips en el encabezado con contenido contextual, se agrega el resumen de costos, precios, utilidad y margen oculto en impresión, se incorpora En desarrollo al Pipeline con envío Resend a administradores y se permite agrupar módulos con materiales/cantos distintos conservando locales las piezas incompatibles.
+
+## [2026-11-12] update | PC: fijo en junta de puertas y distribución interna
+
+Se corrige el montaje PC para seguir PUERTA_SUP y contar el fijo en la regla superior. Regresiones para 15, 24, 36 y 40 pulgadas. Variantes SM/SMG y catálogo pendientes de aclaración de cotas; no se aplicaron migraciones ni cambios a cotizaciones existentes.
+
+## [2026-11-12] update | Copias PC, BMW y BOMH SM/SMG y catálogo
+
+Aplicadas y registradas migraciones 0261/0262 tras ensayo revertido y respaldo del catálogo. Doce copias SM/SMG, renombre PC-MO/PC-MO-SF y retiro de BBL y selector BBLFD-SM-SF. Reglas y piezas originales contrastadas contra catálogo aplicado, golas 80 mm, referencias de 25/21 mm a cara inferior y mecanizados 27 x 73 mm. Documentado límite BMW-1-FE-SM en 18 mm y los dos errores de datos anteriores de la auditoría; cero diferencias de materiales. Calidad: 135 suites aprobadas y quality:learn sin HIGH.
+
+## [2026-11-12] update | Verificación de tipologías SM/SMG y PDF
+
+Doce variantes calculadas y guardadas desde UI; BBLFD-SF conserva Door y mano L/R en el código. Se verificaron seis PDF en dos pasadas independientes: temporal con doce variantes (4 páginas), KUNDARA (10) y Casa A/Closet (6), con textos idénticos y páginas renderizadas revisadas. Total de prueba conciliado contra líneas guardadas; sesiones y cotizaciones temporales eliminadas. Chrome local sin errores, escritorio y móvil. Quality gate exit 0 (135 suites); learn sin HIGH.
+
+## [2026-11-12] update | Correcciones de fijos, gavetas FE/Tandem y laterales SMG
+
+Aplicada y registrada la migración 0263 tras respaldo y ensayo revertido:
+54 piezas corregidas, sin cambios de tipos, reglas ni herrajes. Los fijos
+copian largo, profundidad y descuentos de sus bases; se exceptúan de la regla
+de entrepaños móviles. Refuerzos delanteros con largo de base por 80 mm.
+BMW/BOMH FE con caja pequeña y profundidad DB-FE por tramos 500/450/350 mm;
+BOMH Tandem con trasero de 68 mm. Frentes superiores BOMH entre la cara
+superior del fijo y la cara inferior del refuerzo superior. Corregida la
+esquina superior del contorno SMG conservando el mecanizado 27×73 mm.
+
+Verificadas las doce variantes en cálculo y persistencia real. Los dos
+polígonos SVG de cada variante SMG tienen todas las aristas rectas. Seis PDF
+en dos generaciones independientes (prueba 4 páginas, KUNDARA 10 y Casa A 6),
+textos coincidentes y total de prueba COP 8.102.117,13 conciliado contra líneas.
+Sesiones y cotización temporal eliminadas. Calidad: 135 suites aprobadas;
+learn con cero HIGH. Las auditorías antes/después conservan cero diferencias
+de materiales y los dos errores anteriores de Satori/Bosketo.
+
+Tras la verificación se descargó origin/main y se avanzó LIz por fast-forward
+de ba070f9 a d20048d. Los 53 commits nuevos tenían idéntico árbol de archivos;
+se conservaron los cambios locales sin stash, conflictos ni sobrescritura.
+
+## [2026-11-12] update | Previsualización del recálculo de dos líneas PC-MO
+
+La lectura final encontró un PC-MO-SF en Bosketo y un PC-MO en KUNDARA con el
+despiece anterior. Se preparó una simulación de solo lectura: profundidad del
+fijo 511,9→526 mm y 411,9→426 mm, respectivamente. Precio de línea propuesto
+COP 713.691,89 y COP 877.597,98; cambios de total antes de IVA de +30.650,20 y
++68.948,94 COP al incluir repeticiones de área. La revisión automática rechazó
+la escritura de estos grupos y totales por requerir autorización financiera
+expresa. Las dos cotizaciones permanecen sin cambios; el recálculo está
+pendiente de aprobación del usuario. La corrección del catálogo, la revisión
+de geometría y la actualización local desde main sí quedaron completadas.
+
+## [2026-11-12] update | Recálculo autorizado de PC-MO en Bosketo y KUNDARA
+
+Tras la autorización expresa del usuario se respaldaron las cabeceras, áreas,
+grupos y líneas de ambos proyectos en el directorio temporal del sistema
+(`cotizador-fijos-pc-mo-0263-1794508359183.json`). Se recalcularon únicamente los
+dos grupos de una línea cada uno y se actualizaron los totales de sus áreas y
+cabeceras. Las cotas de los fijos igualan sus bases; cantidades, materiales y
+todas las demás líneas se verificaron idénticos al respaldo.
+
+Los precios coinciden con la previsualización aprobada: Bosketo
+712.159,38→713.691,89 COP por línea, total de proyecto +30.650,20 COP;
+KUNDARA 875.570,07→877.597,98 COP por línea, total de proyecto +68.948,94 COP.
+Totales actuales antes de IVA: Bosketo 156.717.077,37 COP y KUNDARA
+1.585.637.028,82 COP. Informe en `.tmp/pc-correcciones-sincronizacion.json`.
+
+Verificadas las vistas recargadas y dos PDF independientes por proyecto
+(Bosketo 6 páginas, KUNDARA 10), con textos idénticos por par, códigos nuevos,
+totales conciliados y revisión de páginas renderizadas. Chrome local sin
+errores; sesión temporal cerrada. Quality gate aprobado con 135 suites. La
+auditoría mantiene cero diferencias de materiales y los dos errores de datos
+anteriores de Satori y del hueco de horno de Bosketo, fuera de los dos grupos.
+
+## [2026-11-12] update | Sincronización de Supabase para publicación
+
+Se verificó el historial de las cuatro migraciones locales 0260–0263.
+Las tres migraciones de PC/BMW/BOMH ya estaban registradas. La 0260 estaba
+pendiente y sus checks todavía excluían En desarrollo; se aplicó y registró
+como `pipeline_en_desarrollo`, versión `20261112183818`. No se cambiaron
+estados de cotizaciones ni registros de Pipeline y no se enviaron correos.
+Este esquema acompaña la publicación solicitada de todos los cambios locales
+de ayuda, valores, agrupación, HDR y tipologías mediante LIz → DEV → main.

@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { signOutAction } from '@/app/cotizador/session-actions';
+import AppHeaderAyuda from '@/components/AppHeaderAyuda';
+import type { HelpContext } from '@/lib/guias';
 
-export default function AppHeader({ nombre, email, rol, active }: { nombre?: string | null; email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'hdr' | 'optimizador' | 'manual' }) {
+export default function AppHeader({ nombre, email, rol, active, helpContext }: { nombre?: string | null; email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'hdr' | 'optimizador' | 'manual'; helpContext?: HelpContext }) {
   const link = (href: string, label: string, key: string) => (
     <Link href={href} className={`px-3 py-1.5 rounded-lg text-sm ${active === key ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>{label}</Link>
   );
@@ -9,7 +11,7 @@ export default function AppHeader({ nombre, email, rol, active }: { nombre?: str
     <header className="border-b border-slate-200 bg-white sticky top-0 z-40">
       <div
         className="mx-auto grid w-full max-w-[1500px] items-start gap-4 px-4 py-1.5"
-        style={{ gridTemplateColumns: '180px minmax(0, 1fr) 180px' }}
+        style={{ gridTemplateColumns: '180px minmax(0, 1fr) auto' }}
       >
         <div className="flex flex-col justify-self-start leading-none">
           <span className="whitespace-nowrap font-semibold text-slate-900" style={{ fontSize: 18 }}>Cotizador PLUS</span>
@@ -26,6 +28,8 @@ export default function AppHeader({ nombre, email, rol, active }: { nombre?: str
           {link('/manual', 'Manual', 'manual')}
           </nav>
         </div>
+        <div className="flex items-center justify-self-end gap-2">
+        <AppHeaderAyuda context={helpContext ?? (active === 'cotizador' ? 'simulador' : active === 'cotizaciones' ? 'cotizaciones' : active === 'admin' ? 'materiales' : active === 'diseno' ? 'diseno' : active === 'hdr' ? 'hdr' : active === 'optimizador' ? 'optimizador' : 'manual')} />
         <details
           className="relative text-sm text-slate-500"
           style={{ justifySelf: 'end' }}
@@ -51,6 +55,7 @@ export default function AppHeader({ nombre, email, rol, active }: { nombre?: str
             </div>
           </div>
         </details>
+        </div>
       </div>
     </header>
   );

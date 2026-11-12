@@ -8,6 +8,7 @@
       "description": "Lógica física de módulos agrupados, continuidad de caja/golas y márgenes globales",
       "patterns": [
         "src/lib/group-engine.ts",
+        "tests/group-engine.test.ts",
         "src/lib/group-result.ts",
         "src/lib/module-groups.ts",
         "db/migrations/0230_agrupacion_smg.sql",
@@ -38,11 +39,19 @@
       "patterns": [
         "src/lib/visualizacion.ts",
         "src/lib/visualizacion-config.ts",
+        "src/lib/visualizacion-contorno.ts",
+        "tests/pc-bmw-bomh-gola.test.ts",
+        "tests/bblfd-sm.test.ts",
+        "tests/fixtures/catalogo-pc-bmw-bomh.json",
+        "tests/pc-entrepanos-visualizacion.test.ts",
         "src/components/MuebleVisualizer.tsx"
       ],
       "tests": [
         "tests/visualizacion.test.ts",
         "tests/visualizacion-b-fe.test.ts",
+        "tests/pc-entrepanos-visualizacion.test.ts",
+        "tests/pc-bmw-bomh-gola.test.ts",
+        "tests/bblfd-sm.test.ts",
         "tests/hood-sm.test.ts"
       ]
     },
@@ -52,6 +61,9 @@
       "description": "Preparación de cotizaciones, tarifas, overrides, consultas a Supabase y catálogo precompilado",
       "patterns": [
         "src/lib/cotizar.ts",
+        "db/migrations/0261_pc_bmw_bomh_sm_smg.sql",
+        "db/migrations/0262_nombres_copias_pc_bmw_bomh.sql",
+        "db/migrations/0263_corregir_fijos_gavetas_bomh.sql",
         "db/migrations/0250_bov_frente_interno_smg.sql",
         "db/migrations/0254_bov_smg_step.sql",
         "db/migrations/0255_bov_smg_refuerzo_hdr.sql",
@@ -96,6 +108,9 @@
         "src/lib/hood-sm.ts",
         "src/lib/catalogo-paginado.ts",
         "src/lib/cotizaciones.ts",
+        "src/lib/valores-cotizacion.ts",
+        "src/lib/notificar-en-desarrollo.ts",
+        "tests/valores-cotizacion.test.ts",
         "src/lib/comentarios-cotizacion.ts",
         "src/lib/pipeline*.ts",
         "src/lib/referencia-cotizacion.ts",
@@ -284,6 +299,7 @@
         "src/app/**",
         "src/store/simuladorStore.ts",
         "src/components/**",
+        "src/lib/guias.ts",
         "tests/hdr-consumos.test.ts",
         "tests/hdr-buscar-seguimiento.test.ts"
       ],

@@ -77,19 +77,19 @@ function preparar() {
   return { input: api.inputDesdeLinea(db.cot_cotizacion_lineas[1] as unknown as import('../src/lib/cotizaciones').LineaPersistida), globales: structuredClone(db.cot_cotizaciones[0].config_default) };
 }
 
-test('guardar una caja individual en A2 separa solo A2, persiste la elección y concilia totales', async () => {
+test('guardar un tablero diferente en A2 conserva el grupo y la elección individual', async () => {
   const { input, globales } = preparar();
-  assert.deepEqual(await api.editarLineaConDetalle('l2', { ...input, preset: { ...input.preset, caja: 'B', refuerzo: 'B' } }), { cotizacionId: 'q', desagrupado: true });
+  assert.deepEqual(await api.editarLineaConDetalle('l2', { ...input, preset: { ...input.preset, caja: 'B', refuerzo: 'B' } }), { cotizacionId: 'q', desagrupado: false });
   assert.equal(db.cot_cotizacion_lineas[0].grupo_id, 'g');
-  assert.equal(db.cot_cotizacion_lineas[1].grupo_id, 'grupo-nuevo');
+  assert.equal(db.cot_cotizacion_lineas[1].grupo_id, 'g');
   const uno = api.inputDesdeLinea(db.cot_cotizacion_lineas[0] as unknown as import('../src/lib/cotizaciones').LineaPersistida);
   const dos = api.inputDesdeLinea(db.cot_cotizacion_lineas[1] as unknown as import('../src/lib/cotizaciones').LineaPersistida);
   assert.equal(uno.preset.caja, 'A'); assert.equal(dos.preset.caja, 'B');
   assert.deepEqual(dos.herrajesExcluidos, ['barra']);
-  assert.equal(db.cot_grupos_modulos.length, 2);
+  assert.equal(db.cot_grupos_modulos.length, 1);
   assert.equal(db.cot_cotizaciones[0].total_cop, 300);
   assert.deepEqual(db.cot_cotizaciones[0].config_default, globales);
-  await api.recalcularGrupo('grupo-nuevo');
+  await api.recalcularGrupo('g');
   assert.equal(api.inputDesdeLinea(db.cot_cotizacion_lineas[1] as unknown as import('../src/lib/cotizaciones').LineaPersistida).preset.caja, 'B');
 });
 

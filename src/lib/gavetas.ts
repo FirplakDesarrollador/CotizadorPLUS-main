@@ -1,20 +1,34 @@
 import type { Pieza } from './engine';
 
 export const LARGO_LATERAL_FE = '(P >= 24-0.000000001 ? 500 : P >= 21-0.000000001 ? 450 : 350)/25.4';
+export function usaGavetaFeBmwBomh(pref: string): boolean {
+  return /^(BMW|BOMH)-1-FE-SMG?(?:-SF)?$/i.test(pref);
+}
 
 /** Dimensiones FE en pulgadas; conserva alturas, aristas y materiales de cada variante. */
 export function ajustarGavetasFe(piezas: readonly Pieza[], pref: string, preset: Record<string, string>, cantoCaja?: string): Pieza[] {
   // El refuerzo compartido debe resolver el mismo canto también en grupos mixtos.
   const conCanto = piezas.map(p => p.rol_tablero === 'refuerzo' && cantoCaja && (preset.refuerzo ?? preset.caja) === preset.caja && p.cantos?.calibre && !p.cantos.forceCalibre
     ? { ...p, cantos: { ...p.cantos, calibre: cantoCaja, forceCalibre: true } } : p);
-  if (!herrajesFijosDbFe(pref)) return conCanto;
+  const feBmwBomh = usaGavetaFeBmwBomh(pref);
+  if (!herrajesFijosDbFe(pref) && !feBmwBomh) return conCanto;
   const rolLateral = piezas.find(p => /^lateral_gaveta(?:_|$)/.test(p.nombre))?.rol_tablero;
   const espesorLateral = rolLateral === 'refuerzo' ? 'TR' : 'TC';
   return conCanto.map(original => {
     let p = original;
     if (/^lateral_gaveta(?:_|$)/.test(p.nombre)) p = { ...p, formula_largo: LARGO_LATERAL_FE };
-    if (/^(trasero_gaveta|contraparche)(_|$)/.test(p.nombre)) p = { ...p, formula_largo: `L-2*TC-26/25.4-2*${espesorLateral}` };
+    if (/^(trasero_gaveta|contraparche)(_|$)/.test(p.nombre) && (!feBmwBomh || pref.startsWith('BOMH'))) p = { ...p, formula_largo: `L-2*TC-26/25.4-2*${espesorLateral}` };
     if (p.nombre === 'fondo_gaveta' || p.nombre === 'base_gaveta') p = { ...p, formula_largo: `(${LARGO_LATERAL_FE})-8/25.4` };
+    if (feBmwBomh && /^lateral_gaveta(?:_|$)/.test(p.nombre)) p = {
+      ...p, formula_ancho: '100/25.4', resta_largo: 0, resta_ancho: 0,
+      visualizacion: { ...p.visualizacion, plano: 'YZ', intercambiar: true },
+    };
+    if (feBmwBomh && /^(trasero_gaveta|contraparche)(_|$)/.test(p.nombre)) p = {
+      ...p, formula_ancho: p.nombre.startsWith('trasero') ? '80/25.4' : '100/25.4', resta_ancho: 0,
+    };
+    if (feBmwBomh && /^(fondo_gaveta|base_gaveta)$/.test(p.nombre)) p = {
+      ...p, visualizacion: { ...p.visualizacion, plano: 'XY', intercambiar: true },
+    };
     return p;
   });
 }

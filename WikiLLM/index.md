@@ -17,6 +17,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Puertas, orientación y cantos de carcasa](wiki/puertas_cantos_orientacion.md) - Umbral en tres unidades, ejes de frentes, cantos solo en largos, migración 0248 y recálculo verificado.
 - [Tablero Gaveta de 15 mm en DB](wiki/tablero_gaveta_db.md) - Material separado en simulador y cotizaciones, referencias elegibles de rieles y barras, aplicación histórica y auditoría.
 - [Pipeline CEFI y cotizaciones](wiki/pipeline_cotizaciones.md) - Registro con opción Desconocido, referencias navegables de Cotizador PLUS, oportunidades con RLS, importación histórica y dashboard único.
+- [Ayuda, valores y desarrollo](wiki/ayuda_valores_y_desarrollo.md) - Guías contextuales en el encabezado, resumen financiero privado, estado En desarrollo con avisos Resend y compatibilidad de materiales al agrupar módulos.
 - [DB-FE paramétrica](wiki/db_fe.md) - Copia de la DB vigente con cajas de gaveta FE y riel RIELFE500; seis variantes internas, persistencia y pruebas.
 - [Ordenar secciones de una cotización](wiki/orden_secciones_cotizacion.md) - Arrastre y flechas para cocinas, closets y baños; persistencia atómica, permisos, manejo de errores y orden en el resumen PDF/Excel.
 - [Fondos del color del frente en abiertos](wiki/fondos_color_abiertos.md) - Alcance OW y otros abiertos, fondo real de 6 mm, validación de catálogo, consumo/costo y evidencia del OW de ELEVEN.
@@ -49,7 +50,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Muebles esquineros ciegos BBL](wiki/muebles_bbl.md) - Análisis del Excel CEMA y plantillas paramétricas `BBLFD`/`BBL` disponibles en Supabase.
 - [BBLFD-D-L/R-SM](wiki/bblfd_d_lr_sm.md) - Variante Blind Door inferior con montante A−TC, refuerzos delanteros divididos y Gola de madera.
 - [Torres PCFD con gavetas ocultas](wiki/muebles_pcfd_gavetas_ocultas.md) - Variantes `STANDARD`/`2OP`/`4OP`, fórmulas CEMA y uso paramétrico de cajones y entrepaños.
-- [Torres TK, puertas divididas y PCFD-MO](wiki/torres_tk_puertas_pcfd_mo.md) - TK obligatorio, PUERTA SUP en PC/VPC y PCFD-MO con vano central y entrepaños fijos.
+- [Torres TK, puertas divididas y PC-MO](wiki/torres_tk_puertas_pcfd_mo.md) - TK obligatorio, PUERTA SUP en PC/VPC y PC-MO con vano central y entrepaños fijos. Distribución PC: fijo centrado en la junta y regla superior contando el fijo.
 - [Variantes de frente Gola SM](wiki/variantes_frente_gola_sm.md) - Investigación de códigos `SM`/`SMG`, refuerzos por familia y modelo recomendado como opción transversal de frentes.
 - [W2936-SM desde hoja real](wiki/w_sm_hoja_real.md) - Integracion verificada de `W` con sistema de frente `SM`: formulas condicionales, ausencia de manijas, HDR y carga en Supabase.
 - [W-MO-HOOD](wiki/w_mo_hood.md) - Tipología superior derivada de UW con medidas MO/HOOD, base profunda de OW-MO, vano inferior abierto y puertas limitadas por el entrepaño fijo.
@@ -104,3 +105,5 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 
 - [SVFDH y SVFDH-SMG](wiki/svfdh.md) - Clones SVFD con dimensiones visibles y frente SMG reducido 30 mm.
 - [Validación de entrepaños en HDR](wiki/hdr_validacion_entrepanos.md) - Contraste de configuraciones guardadas con reglas actuales, revisión previa a exportar y auditoría de 837 módulos.
+
+- [PC, BMW y BOMH SM/SMG](wiki/pc_bmw_bomh_sm_smg.md) - Doce copias; fijos iguales a bases, gavetas pequeñas FE/Tandem, profundidad FE, frentes BOMH y contornos SMG corregidos; catálogo BBL/BBLFD y recálculo autorizado de dos líneas históricas PC-MO.

@@ -44,6 +44,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
   const [cotizacionId, setCotizacionId] = useState('');
   const [proyectoHdr, setProyectoHdr] = useState('');
+  const [prefijoHrj, setPrefijoHrj] = useState(false);
   const [modLoading, setModLoading] = useState(false);
   const [modError, setModError] = useState<string | null>(null);
   const [modulos, setModulos] = useState<ModuloHDR[] | null>(null);
@@ -213,6 +214,12 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         <Campo label="Nombre del proyecto">
           <input value={proyectoHdr} onChange={e => setProyectoHdr(e.target.value)} placeholder="Nombre para las hojas de ruta" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
         </Campo>
+        <label className="flex w-fit cursor-pointer items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-slate-700">
+          <span>Prefijo HRJ</span>
+          <input type="checkbox" role="switch" aria-label="Agregar prefijo HRJ al nombre del mueble" checked={prefijoHrj} onChange={e => setPrefijoHrj(e.target.checked)} className="peer sr-only" />
+          <span aria-hidden="true" className="relative h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-emerald-600 peer-checked:after:translate-x-5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-emerald-700" />
+          <span>Agregar HRJ al nombre del mueble</span>
+        </label>
         {modLoading && <p className="text-slate-400 text-sm">Cargando módulos…</p>}
         {modError && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{modError}</div>}
         {modulos && modulos.length === 0 && <p className="text-slate-400 text-sm">Esta cotización no tiene módulos.</p>}
@@ -254,7 +261,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
                   res={m.result}
                   pref={m.pref}
                   tableros={tableros}
-                  titulo={tituloModuloHdr(m)}
+                  titulo={tituloModuloHdr(m, prefijoHrj)}
                   cantidadInicial={m.cantidad}
                   proyectoInicial={proyectoHdr}
                   referenciaRepetida={(referencias.get(m.codigoModulo) ?? 0) > 1}
