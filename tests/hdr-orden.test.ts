@@ -68,7 +68,7 @@ test('las variantes DB-FE presentan el orden de producción, juntan traseros y p
   }));
   const resultado = { ...calcularMueble({ ...calc, overrides: {}, piezas }), trm: 4000, margen: 0 };
   const esperado = [
-    'BASE R17L', 'SIDE R R17L', 'SIDE L R17L', 'RAIL DELANTERO', 'RAIL TRASERO',
+    'BASE', 'SIDE R', 'SIDE L', 'RAIL DELANTERO', 'RAIL TRASERO',
     'LAT GAV PEQ R13L', 'LAT GAV GRANDE R13L',
     'TRASERO GAV', 'TRASERO GAV',
     'CONTRAPARCHE PEQ R13L', 'CONTRAPARCHE GRANDE R13L',
@@ -100,23 +100,30 @@ test('base/tapa combinada, refuerzos delanteros y golas respetan el orden estruc
   assert.deepEqual(ordenarPiezasHdr(nombres.map(pieza => ({ pieza })), false).map(p => p.pieza), ['base_tapa', 'lateral', 'refuerzo_delantero', 'refuerzo_trasero', 'gola_madera', 'entrepano_fijo', 'fondo']);
 });
 
-test('las instrucciones de carcasa dependen del fondo, familia y espesor sin cambiar ninguna medida', () => {
+test('la instrucción de ranura solo se imprime en W/OW, con fondo y espesor 15/18', () => {
   const nombres = ['base', 'tapa', 'lateral', 'base_gaveta', 'entrepano', 'refuerzo_trasero', 'fondo', 'fondo_gaveta', 'base_tapa_division'];
   const resultado = { ...calcularMueble({ ...calc, overrides: {}, piezas: nombres.map(nombre => ({ nombre, rol_tablero: nombre === 'fondo' ? 'fondo' : 'caja', formula_cantidad: nombre === 'lateral' ? '2' : '1', formula_largo: 'L', formula_ancho: 'P', cantos: { largos: 1, anchos: 2, calibre: '19x0,45' } })), preset: { caja: 'C', fondo: 'F6' }, tablerosByCode: { C: { codigo: 'C', espesor_mm: 15, precio_m2: 100 }, F6: { codigo: 'F6', espesor_mm: 6, precio_m2: 100 } }, cantosByCalibre: { '19X0,45': { calibre: '19x0,45', precio: 100 } } }), trm: 4000, margen: 0 };
   const antes = structuredClone(resultado);
-  for (const [pref, espesor, codigo] of [['B', 15, 'R17L'], ['B-FE', 18, 'R20L'], ['W-SM-PUSH', 15, 'R16L'], ['TW', 18, 'R19L']] as const) {
+  for (const [pref, espesor, codigo] of [['W', 15, 'R16L'], ['W-SM-PUSH', 15, 'R16L'], ['OW', 15, 'R16L'], ['WPC', 18, 'R19L'], ['WBL', 18, 'R19L']] as const) {
     const tableros = [{ codigo: 'C', espesor_mm: espesor }, { codigo: 'F6', espesor_mm: 6 }];
     const base = construirFilas(resultado, tableros);
     const filas = construirFilas(resultado, tableros, pref);
-    assert.deepEqual(filas.filter(f => / R\d+L$/.test(f.pieza)).map(f => f.pieza), [`BASE ${codigo}`, `TAPA ${codigo}`, `SIDE R ${codigo}`, `SIDE L ${codigo}`]);
+    assert.deepEqual(filas.filter(f => / R\d+L$/.test(f.pieza)).map(f => f.pieza), [`BASE ${codigo}`, `TAPA ${codigo}`, `SIDE R ${codigo}`, `SIDE L ${codigo}`], pref);
     assert.deepEqual(filas.map(({ pieza: _pieza, ...datos }) => datos), base.map(({ pieza: _pieza, ...datos }) => datos));
     assert.deepEqual(filas.filter(f => !/ R\d+L$/.test(f.pieza)), base.filter(f => !['BASE', 'TAPA', 'SIDE R', 'SIDE L'].includes(f.pieza)));
     const sinFondo = { ...resultado, piezas: resultado.piezas.filter(p => p.pieza !== 'fondo') };
     assert.deepEqual(construirFilas(sinFondo, tableros, pref), construirFilas(sinFondo, tableros));
     assert.deepEqual(construirFilas({ ...resultado, piezas: resultado.piezas.map(p => p.pieza === 'fondo' ? { ...p, cant: 0 } : p) }, tableros, pref), construirFilas(sinFondo, tableros));
   }
-  for (const pref of ['WCC', 'SVFD']) assert.deepEqual(construirFilas(resultado, [{ codigo: 'C', espesor_mm: 15 }], pref), construirFilas(resultado, [{ codigo: 'C', espesor_mm: 15 }]));
-  assert.deepEqual(construirFilas(resultado, [{ codigo: 'C', espesor_mm: 16 }], 'B'), construirFilas(resultado, [{ codigo: 'C', espesor_mm: 16 }]));
+  // Inferiores y superiores que no son W/OW no llevan instrucción de ranura.
+  for (const [pref, espesor] of [['B', 15], ['B-FE', 18], ['DB-FE', 15], ['TW', 18], ['UW', 15], ['WCC', 15], ['SVFD', 15]] as const) {
+    const tableros = [{ codigo: 'C', espesor_mm: espesor }, { codigo: 'F6', espesor_mm: 6 }];
+    const filas = construirFilas(resultado, tableros, pref);
+    assert.equal(filas.filter(f => / R\d+L$/.test(f.pieza)).length, 0, pref);
+    const sinNombreNiLetra = (rows: typeof filas) => rows.map(({ pieza: _pieza, letra: _letra, ...datos }) => JSON.stringify(datos)).sort();
+    assert.deepEqual(sinNombreNiLetra(filas), sinNombreNiLetra(construirFilas(resultado, tableros)), pref);
+  }
+  assert.deepEqual(construirFilas(resultado, [{ codigo: 'C', espesor_mm: 16 }], 'W'), construirFilas(resultado, [{ codigo: 'C', espesor_mm: 16 }]));
   assert.deepEqual(resultado, antes);
 });
 

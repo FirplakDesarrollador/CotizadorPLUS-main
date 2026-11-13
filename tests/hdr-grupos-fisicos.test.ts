@@ -5,8 +5,8 @@ import { construirFilas, resultadoFisicoHdr, consolidarModulosHdr } from '../src
 import type { ModuloHDR } from '../src/app/hdr/actions';
 
 const tableros=[{codigo:'C15',espesor_mm:15},{codigo:'F18',espesor_mm:18},{codigo:'F18OTRO',espesor_mm:18},{codigo:'F15',espesor_mm:15}];
-function member(largo:number,frente='F18'):PreparedGroupMember {
-  return {pref:'BFD',codigoModulo:`BFD${largo/10}`,permiteAgrupacion:true,calc:{dims:{L:largo/25.4,A:770/25.4,P:600/25.4},preset:{caja:'C15',refuerzo:'C15',frente},tablerosByCode:Object.fromEntries(tableros.map(t=>[t.codigo,{...t,precio_m2:100}])),piezas:[
+function member(largo:number,frente='F18',pref='BFD'):PreparedGroupMember {
+  return {pref,codigoModulo:`${pref}${largo/10}`,permiteAgrupacion:true,calc:{dims:{L:largo/25.4,A:770/25.4,P:600/25.4},preset:{caja:'C15',refuerzo:'C15',frente},tablerosByCode:Object.fromEntries(tableros.map(t=>[t.codigo,{...t,precio_m2:100}])),piezas:[
     {nombre:'base',rol_tablero:'caja',formula_cantidad:'1',formula_largo:'L-2*TC',formula_ancho:'P-TC',modo_agrupacion:'continua',clave_fusion:'base',formula_largo_grupo:'LG-2*TC'},
     {nombre:'lateral',rol_tablero:'caja',formula_cantidad:'2',formula_largo:'A',formula_ancho:'P',modo_agrupacion:'lateral_compartido'},
     {nombre:'refuerzo_trasero',rol_tablero:'refuerzo',formula_cantidad:'2',formula_largo:'L-2*TC',formula_ancho:'80/25.4',modo_agrupacion:'continua',clave_fusion:'refuerzo_trasero',formula_largo_grupo:'LG-2*TC'},
@@ -37,16 +37,16 @@ test('tres módulos con fracciones menores a media pieza conservan la base y el 
 });
 
 test('las instrucciones de un grupo conservan el fondo y la tipología de cada integrante', () => {
-  const a = member(700), b = member(400);
+  const a = member(700, 'F18', 'WPC'), b = member(400, 'F18', 'WPC');
   a.calc.piezas.push({ nombre: 'fondo', rol_tablero: 'caja', formula_cantidad: '1', formula_largo: 'L', formula_ancho: 'A', modo_agrupacion: 'local' });
   const grupo = calcularGrupoFisico([a, b]);
   const original = construirFilas(resultadoFisicoHdr(grupo, 4000, 0), tableros);
-  const filas = construirFilas(resultadoFisicoHdr(grupo, 4000, 0, ['BFD', 'BFD']), tableros);
-  assert.ok(filas.some(f => f.pieza === 'BASE R17L'));
-  assert.equal(filas.filter(f => f.pieza === 'SIDE R17L').length, 2);
+  const filas = construirFilas(resultadoFisicoHdr(grupo, 4000, 0, ['WPC', 'WPC']), tableros);
+  assert.ok(filas.some(f => f.pieza === 'BASE R16L'));
+  assert.equal(filas.filter(f => f.pieza === 'SIDE R16L').length, 2);
   assert.equal(filas.filter(f => f.pieza === 'SIDE').length, 1);
   assert.deepEqual(filas.map(({ pieza: _pieza, ...datos }) => datos), original.map(({ pieza: _pieza, ...datos }) => datos));
-  assert.equal(filas.filter(f => f.pieza.endsWith('R17L')).length, 3);
+  assert.equal(filas.filter(f => f.pieza.endsWith('R16L')).length, 3);
 });
 
 test('consolidación es estable, suma repeticiones una vez y conserva todos los orígenes', () => {

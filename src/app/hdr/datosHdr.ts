@@ -77,9 +77,10 @@ function nombreConInstruccion(nombre: string, pieza: string, espesor: number | n
   // Lista exacta: excluye base_gaveta, divisiones, entrepaños y refuerzos.
   if (!contexto.conFondo || !['base', 'tapa', 'base_tapa', 'lateral', 'lateral_der', 'lateral_izq'].includes(pieza)) return nombre;
   const familia = familiaMaterialPorPrefijo(contexto.pref);
-  if (familia !== 'superior' && familia !== 'inferior') return nombre;
-  const superior = familia === 'superior';
-  const codigo = espesor === 15 ? (superior ? 'R16L' : 'R17L') : espesor === 18 ? (superior ? 'R19L' : 'R20L') : '';
+  // La instrucción de ranura solo se imprime en los muebles de pared W y OW.
+  // Los inferiores (antes R17L/R20L) y el resto de superiores (TW, UW…) no la llevan.
+  if (familia !== 'superior' || !/^(?:OW|W)/i.test(contexto.pref.trim())) return nombre;
+  const codigo = espesor === 15 ? 'R16L' : espesor === 18 ? 'R19L' : '';
   return codigo ? `${nombre} ${codigo}` : nombre;
 }
 

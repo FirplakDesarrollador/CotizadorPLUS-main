@@ -3220,3 +3220,7 @@ El pie del resumen comercial de la plantilla FIRPLAK ya no imprime “Herrajes /
 ## [2026-11-13] ingest | Botón Print / PDF (English) y propuesta en inglés
 
 Nuevo botón junto a Imprimir / PDF que abre la impresión con `lang=en`. `src/lib/propuesta-ingles.ts` reúne el glosario de ebanistería, la traducción de descripciones, anotaciones, herrajes y especificaciones, y los números en palabras. FIRPLAK traduce todos sus textos y guarda textos editables en inglés (`*En`) en `plantilla_firplak` sin migración; la plantilla general y los bloques compartidos de CEMA también se traducen. Pruebas en `tests/propuesta-ingles.test.ts`. Ver [propuesta_ingles](wiki/propuesta_ingles.md).
+
+## [2026-11-13] update | HDR: la instrucción de ranura se limita a W y OW
+
+`nombreConInstruccion` en `src/app/hdr/datosHdr.ts` ya no añade `R17L`/`R20L` a las piezas de carcasa de los muebles inferiores. El sufijo `R16L` (15 mm) o `R19L` (18 mm) se imprime solo cuando la tipología empieza por `W` u `OW`, además de exigir fondo real y espesor 15/18 mm. Los superiores `TW`/`UW` tampoco reciben la instrucción. Se actualizan `tests/hdr-orden.test.ts` y `tests/hdr-grupos-fisicos.test.ts`, y la página [instrucciones HDR](wiki/hdr_instrucciones_ranura.md). El cambio queda primero en la rama `LIz`, sin promover a DEV ni main.
