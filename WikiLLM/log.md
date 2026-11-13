@@ -3173,3 +3173,43 @@ Migración 0265 (aplicada; creada como 0261): grupo `zocalo` para TK. Tarjetas c
 ## [2026-11-13] update | Renumeración de migraciones del optimizador a 0264/0265
 
 Al integrar DEV, `0260_tipos_grupo_optimizador` y `0261_tipos_grupo_optimizador_zocalo` chocaban con `0260_pipeline_en_desarrollo` y `0261_pc_bmw_bomh_sm_smg`. Se renombraron a `0264` y `0265`. Ya estaban aplicadas en Supabase; el cambio solo afecta el nombre del archivo. Ver [optimizador_corte](wiki/optimizador_corte.md).
+
+## [2026-11-13] update | SBFD se reactiva como copia sin gola de SBFD-SM
+
+`SBFD` existía en el catálogo pero estaba inactiva desde la migración `0194`,
+que retiró `F`, `OILVP` e `ILVP` (los alias métricos de `OSBFD` y `SBFD`).
+La migración `0266_sbfd_sin_gola_refuerzo_128.sql`, registrada como
+`sbfd_sin_gola_refuerzo_128` (versión `20261113161935`), reactiva esa misma
+fila conservando `id`, `pref = SBFD` y `pref_metrico = ILVP` para no romper
+referencias históricas, y reemplaza su configuración por una copia curada de
+`SBFD-SM`. `SBFD-SM` queda intacta.
+
+**Diferencias de la copia:** se retira la pieza `gola_madera` (seis piezas en
+total); el refuerzo delantero pasa de 80 mm a `128/25.4` y se monta en
+`y = 0`, es decir, inmediatamente detrás de la cara posterior de los frentes
+en vez de a 20 mm; la puerta pasa de `A-30/25.4` a `A-RV` (reveal de 3,2 mm
+desde arriba). Sin gola, la puerta vuelve a llevar manija `MANIJA415`
+(`n_puertas + n_cajones`). Se conservan las reglas copiadas: `gola = 0`,
+`n_cajones = 0`, `n_entrepanos = 0`, `n_puertas` (1 si `L < 24`, 2 si
+`L >= 24`) y `n_patas` (4, 5 si `L > 36`). El motor solo normaliza los
+`refuerzo*` cuando miden ~80 mm (±0,05), así que los 128 mm no se alteran.
+
+**Despiece de referencia `SBFD 30 × 30 × 24`** (caja 15 mm, frente 18 mm):
+base 732,0 × 585,6; laterales 762,0 × 609,6; refuerzo delantero 732,0 × 128,0;
+refuerzos traseros 732,0 × 80,0; puertas 377,8 × 758,8; fondo 760,0 × 746,0.
+
+**Catálogo cotizable:** `SBFD` también se filtraba por su alias métrico
+`ILVP` en `TIPOLOGIAS_NO_COTIZABLES` (`src/lib/cotizar.ts`). Se retiró
+`ILVP` de esa lista defensiva para que la fila reactivada aparezca en
+Simulador y Cotizaciones; `OILVP` (alias de `OSBFD`) sigue excluido.
+
+**Verificación:** respaldo previo en `.tmp/backup-sbfd-0264.json`, ensayo
+completo en transacción revertida y guardas en la migración (seis piezas, sin
+`gola_madera`, refuerzo de 128 mm con `y = 0`, puerta `A-RV`, manija y
+`n_entrepanos = 0`). `tests/sbfd.test.ts` cubre el despiece, las manijas, la
+ausencia de gola y la posición del refuerzo contra la cara posterior de la
+puerta; `tests/tipologias-inactivas.test.ts` refleja que `ILVP` deja de estar
+excluido. El archivo se renumeró de `0264` a `0266` para no colisionar con las
+migraciones del optimizador que llegaron a DEV como `0264`/`0265`; la versión
+registrada en Supabase (`20261113161935`) no cambia. El cambio se publicó desde
+`LIz` a `DEV` y luego a `main`.
