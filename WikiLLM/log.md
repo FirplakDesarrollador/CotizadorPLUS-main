@@ -3213,3 +3213,10 @@ excluido. El archivo se renumeró de `0264` a `0266` para no colisionar con las
 migraciones del optimizador que llegaron a DEV como `0264`/`0265`; la versión
 registrada en Supabase (`20261113161935`) no cambia. El cambio se publicó desde
 `LIz` a `DEV` y luego a `main`.
+## [2026-11-13] update | PDF FIRPLAK: se quita la fila de herrajes adicionales del resumen
+
+El pie del resumen comercial de la plantilla FIRPLAK ya no imprime “Herrajes / otros adicionales (ver detalle)”; queda el subtotal de muebles y el total. La sección de herrajes/otros y el cálculo del total no cambian. Ver [plantilla_propuesta_firplak](wiki/plantilla_propuesta_firplak.md).
+
+## [2026-11-13] ingest | Botón Print / PDF (English) y propuesta en inglés
+
+Nuevo botón junto a Imprimir / PDF que abre la impresión con `lang=en`. `src/lib/propuesta-ingles.ts` reúne el glosario de ebanistería, la traducción de descripciones, anotaciones, herrajes y especificaciones, y los números en palabras. FIRPLAK traduce todos sus textos y guarda textos editables en inglés (`*En`) en `plantilla_firplak` sin migración; la plantilla general y los bloques compartidos de CEMA también se traducen. Pruebas en `tests/propuesta-ingles.test.ts`. Ver [propuesta_ingles](wiki/propuesta_ingles.md).
