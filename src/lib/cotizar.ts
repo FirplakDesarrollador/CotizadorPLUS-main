@@ -383,7 +383,7 @@ export type { CotizarGrupoResult } from '@/lib/group-result';
 
 // Datos para poblar la UI del cotizador.
 const TIPOLOGIAS_NO_COTIZABLES = new Set([
-  'OILVP', 'S', 'SA', 'SLOC', 'SMO', 'ICP', 'ILVP',
+  'OILVP', 'S', 'SA', 'SLOC', 'SMO', 'ICP',
   'ALP', 'AL', 'ALH',
   'BBL', 'BBL-SF', 'BBLFD-D-L/R-SM-SF',
 ]);
