@@ -75,12 +75,18 @@ function nombreConInstruccion(nombre: string, pieza: string, espesor: number | n
     if (nombresFe[pieza]) return nombresFe[pieza];
   }
   // Lista exacta: excluye base_gaveta, divisiones, entrepaños y refuerzos.
-  if (!contexto.conFondo || !['base', 'tapa', 'base_tapa', 'lateral', 'lateral_der', 'lateral_izq'].includes(pieza)) return nombre;
+  const piezasCarcasa = ['base', 'tapa', 'base_tapa', 'lateral', 'lateral_der', 'lateral_izq'];
+  const laterales = ['lateral', 'lateral_der', 'lateral_izq'];
+  if (!contexto.conFondo || !piezasCarcasa.includes(pieza)) return nombre;
   const familia = familiaMaterialPorPrefijo(contexto.pref);
-  // La instrucción de ranura solo se imprime en los muebles de pared W y OW.
-  // Los inferiores (antes R17L/R20L) y el resto de superiores (TW, UW…) no la llevan.
-  if (familia !== 'superior' || !/^(?:OW|W)/i.test(contexto.pref.trim())) return nombre;
-  const codigo = espesor === 15 ? 'R16L' : espesor === 18 ? 'R19L' : '';
+  // W y OW (muebles de pared) llevan la instrucción en base, tapa y laterales.
+  const esW = familia === 'superior' && /^(?:OW|W)/i.test(contexto.pref.trim());
+  // Los muebles inferiores solo llevan R17L/R20L en los laterales, no en base ni tapa.
+  const esLateralInferior = familia === 'inferior' && laterales.includes(pieza);
+  if (!esW && !esLateralInferior) return nombre;
+  const codigo = esW
+    ? (espesor === 15 ? 'R16L' : espesor === 18 ? 'R19L' : '')
+    : (espesor === 15 ? 'R17L' : espesor === 18 ? 'R20L' : '');
   return codigo ? `${nombre} ${codigo}` : nombre;
 }
 

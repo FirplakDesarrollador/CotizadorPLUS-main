@@ -3224,3 +3224,7 @@ Nuevo botón junto a Imprimir / PDF que abre la impresión con `lang=en`. `src/l
 ## [2026-11-13] update | HDR: la instrucción de ranura se limita a W y OW
 
 `nombreConInstruccion` en `src/app/hdr/datosHdr.ts` ya no añade `R17L`/`R20L` a las piezas de carcasa de los muebles inferiores. El sufijo `R16L` (15 mm) o `R19L` (18 mm) se imprime solo cuando la tipología empieza por `W` u `OW`, además de exigir fondo real y espesor 15/18 mm. Los superiores `TW`/`UW` tampoco reciben la instrucción. Se actualizan `tests/hdr-orden.test.ts` y `tests/hdr-grupos-fisicos.test.ts`, y la página [instrucciones HDR](wiki/hdr_instrucciones_ranura.md). El cambio queda primero en la rama `LIz`, sin promover a DEV ni main.
+
+## [2026-11-13] update | HDR: R17L/R20L se conserva solo en los laterales inferiores
+
+Se ajusta la regla anterior: los muebles inferiores vuelven a mostrar `R17L` (15 mm) o `R20L` (18 mm) en los laterales, pero no en BASE ni TAPA. Los muebles `W`/`OW` conservan `R16L`/`R19L` en base, tapa y laterales; `TW`, `UW`, closet y baños siguen sin instrucción. Se actualizan `tests/hdr-orden.test.ts` y `tests/hdr-grupos-fisicos.test.ts`, y la página [instrucciones HDR](wiki/hdr_instrucciones_ranura.md). El cambio sigue primero en `LIz`.

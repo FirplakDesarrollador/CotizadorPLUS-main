@@ -49,6 +49,17 @@ test('las instrucciones de un grupo conservan el fondo y la tipología de cada i
   assert.equal(filas.filter(f => f.pieza.endsWith('R16L')).length, 3);
 });
 
+test('en muebles inferiores la instrucción R17L queda solo en los laterales del grupo', () => {
+  const a = member(700, 'F18', 'BFD'), b = member(400, 'F18', 'BFD');
+  a.calc.piezas.push({ nombre: 'fondo', rol_tablero: 'caja', formula_cantidad: '1', formula_largo: 'L', formula_ancho: 'A', modo_agrupacion: 'local' });
+  const grupo = calcularGrupoFisico([a, b]);
+  const filas = construirFilas(resultadoFisicoHdr(grupo, 4000, 0, ['BFD', 'BFD']), tableros);
+  assert.ok(filas.some(f => f.pieza === 'BASE'));
+  assert.equal(filas.filter(f => f.pieza === 'SIDE R17L').length, 2);
+  assert.equal(filas.filter(f => f.pieza === 'SIDE').length, 1);
+  assert.equal(filas.filter(f => f.pieza.endsWith('R17L')).length, 2);
+});
+
 test('consolidación es estable, suma repeticiones una vez y conserva todos los orígenes', () => {
   const result=resultadoFisicoHdr(calcularGrupoFisico([member(700),member(400)]),4000,0);
   const a:ModuloHDR={lineaId:'a',codigoModulo:'GRUPO BFD70 + BFD40',nombreDescriptivo:'A1 y A2',cantidad:1,repeticionesArea:2,cocinaNombre:'A',grupoId:'g1',ok:true,result,origenes:[{lineaId:'a',codigoModulo:'BFD70',cantidad:1,repeticionesArea:2},{lineaId:'b',codigoModulo:'BFD40',cantidad:1,repeticionesArea:2}]};
