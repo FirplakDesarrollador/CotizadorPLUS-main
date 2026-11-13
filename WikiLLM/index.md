@@ -34,6 +34,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles, soportes por entrepaño, cálculo grupal y recálculo masivo por lotes con precarga de catálogo (`engine.ts` y `cotizar.ts`).
 - [Optimizador de corte](wiki/optimizador_corte.md) - Plan de corte de una cotización: condiciones de planta, lista de piezas, plan día por día, esquemas de corte con desperdicio, m², tableros y número de cortes, y fases pendientes. Incluye comparación con repositorios de GitHub (packingsolver, OpenCutList, gdrr-2bp).
 - [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, encabezado y menú de usuario, Zustand, cotizaciones con constructora/comprador, materiales, herrajes, unidades, dimensiones y búsqueda por color.
+- [Aviso de nueva versión](wiki/aviso_actualizacion.md) - Barra superior que informa de una versión nueva, pide actualizar, recarga la página y recuerda el cierre en localStorage.
 - [Sistema de Undo/Redo](wiki/sistema_undo_redo.md) - Historial temporal de estados, captura de atajos de teclado y notificaciones.
 - [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes manuales, inmutables, nombre obligatorio, orden cronológico y restauración transaccional limpia sin respaldos automáticos.
 - [Plantilla de propuesta CEMA](wiki/plantilla_propuesta_cema.md) - Selección automática, campos precargados/editables, persistencia y composición imprimible basada en la propuesta comercial CEMA.

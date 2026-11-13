@@ -3228,3 +3228,7 @@ Nuevo botón junto a Imprimir / PDF que abre la impresión con `lang=en`. `src/l
 ## [2026-11-13] update | HDR: R17L/R20L se conserva solo en los laterales inferiores
 
 Se ajusta la regla anterior: los muebles inferiores vuelven a mostrar `R17L` (15 mm) o `R20L` (18 mm) en los laterales, pero no en BASE ni TAPA. Los muebles `W`/`OW` conservan `R16L`/`R19L` en base, tapa y laterales; `TW`, `UW`, closet y baños siguen sin instrucción. Se actualizan `tests/hdr-orden.test.ts` y `tests/hdr-grupos-fisicos.test.ts`, y la página [instrucciones HDR](wiki/hdr_instrucciones_ranura.md). El cambio sigue primero en `LIz`.
+
+## [2026-11-13] update | Aviso de nueva versión para quienes usan la aplicación
+
+Se agrega `src/components/AvisoActualizacion.tsx`, montado en `src/app/layout.tsx`, con la barra «Hola, existe una nueva versión, por favor actualiza». Incluye un botón para recargar la página y un cierre que recuerda la decisión en `localStorage`; el aviso no toca datos ni sesiones. Ver [aviso de nueva versión](wiki/aviso_actualizacion.md).
