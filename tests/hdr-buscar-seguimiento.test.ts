@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { calcularMueble } from '../src/lib/engine';
 import { entradasSeguimiento, coincideNombreHdr, GRUPOS_SEGUIMIENTO } from '../src/app/hdr/seguimiento';
 import { crearWorkbookSeguimiento, generarArchivoSeguimiento, descargarSeguimiento, ACTIVIDADES_SEGUIMIENTO, ENCABEZADOS_CODIGOS } from '../src/app/hdr/seguimientoExcel';
-import { tituloModuloHdr } from '../src/app/hdr/datosHdr';
+import { prefijarHrj, tituloModuloHdr } from '../src/app/hdr/datosHdr';
 import type { ModuloHDR } from '../src/app/hdr/actions';
 
 const calc = { dims: { L: 20, A: 30, P: 24 }, piezas: [{ nombre: 'base', rol_tablero: 'caja', formula_cantidad: '1', formula_largo: 'L', formula_ancho: 'P' }], reglas: [], preset: { caja: 'C15' }, tablerosByCode: { C15: { codigo: 'C15', espesor_mm: 15, precio_m2: 100 } }, herrajesPlantilla: [], herrajesByCode: {}, cantosByCalibre: {}, consumiblesBySelector: {}, etiquetasUnd: 0, margen: 0, trm: 4000, desperdicio: 0 };
@@ -45,6 +45,14 @@ test('el prefijo HRJ se agrega una sola vez al nombre de la HDR cuando se solici
   for (const [codigo, pref] of [['PN23 3/496', 'PN'], ['F634 1/2', 'F'], ['TK61451.8', 'TK']]) {
     const excluido = modulo(codigo, pref);
     assert.equal(tituloModuloHdr(excluido, true), `${codigo} Descripción exacta`);
+  }
+});
+
+test('el prefijo HRJ del buscador se aplica una sola vez y respeta las exclusiones', () => {
+  assert.equal(prefijarHrj('BOV8078.561-SMG Descripción exacta', 'B', 'BOV8078.561-SMG'), 'HRJ BOV8078.561-SMG Descripción exacta');
+  assert.equal(prefijarHrj('HRJ BOV8078.561-SMG Descripción exacta', 'B', 'HRJ BOV8078.561-SMG'), 'HRJ BOV8078.561-SMG Descripción exacta');
+  for (const [nombre, pref] of [['PN23 3/496 Descripción exacta', 'PN'], ['F634 1/2 Descripción exacta', 'F'], ['TK61451.8 Descripción exacta', 'TK']]) {
+    assert.equal(prefijarHrj(nombre, pref, nombre.split(' ')[0]), nombre);
   }
 });
 
@@ -140,6 +148,8 @@ test('la pantalla presenta HDR, Consumos, Seguimiento y Buscar/Crear en el orden
   let anterior = -1;
   for (const texto of etiquetas) { const actual = html.indexOf(texto); assert.ok(actual > anterior, `Orden o contenido incorrecto: ${texto}`); anterior = actual; }
   assert.equal(html.includes('Buscar por tipo y medidas'), false);
+  assert.equal(html.split('Agregar HRJ al nombre del mueble').length - 1, 2);
+  assert.ok(html.includes('aria-label="Agregar prefijo HRJ al nombre del mueble buscado o creado"'));
 });
 
 test('buscar en cotizaciones reutiliza catálogo, conserva el grupo físico y expone errores sin escribir', async () => {

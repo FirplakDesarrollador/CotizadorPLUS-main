@@ -3232,3 +3232,7 @@ Se ajusta la regla anterior: los muebles inferiores vuelven a mostrar `R17L` (15
 ## [2026-11-13] update | Aviso de nueva versión para quienes usan la aplicación
 
 Se agrega `src/components/AvisoActualizacion.tsx`, montado en `src/app/layout.tsx`, con la barra «Hola, existe una nueva versión, por favor actualiza». Incluye un botón para recargar la página y un cierre que recuerda la decisión en `localStorage`; el aviso no toca datos ni sesiones. Ver [aviso de nueva versión](wiki/aviso_actualizacion.md).
+
+## [2026-11-13] update | HDR: interruptor HRJ en Buscar/Crear
+
+La sección Buscar/Crear incorpora un switch **Prefijo HRJ** independiente del de la generación desde cotización. Antepone `HRJ ` al nombre mostrado y exportado (PDF y Excel) del mueble buscado y del creado manualmente, excepto PN/F/TK y sin duplicar el prefijo. Se extrae `prefijarHrj` en `datosHdr.ts` y se actualizan `HdrBuscarGuardados`, `HdrBuscador` y `tests/hdr-buscar-seguimiento.test.ts`. Ver [HDR Buscar/Crear](wiki/hdr_buscar_seguimiento.md) y [HDR y Excel](wiki/hdr_excel_consolidado.md). El cambio queda primero en `LIz`.

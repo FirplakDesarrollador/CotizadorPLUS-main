@@ -15,7 +15,7 @@ import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from '
 import HdrConsumos from './HdrConsumos';
 import HdrSeguimiento from './HdrSeguimiento';
 import HdrBuscarGuardados from './HdrBuscarGuardados';
-import { consolidarModulosHdr, descripcionPiezaPlanaHdr, tituloModuloHdr } from './datosHdr';
+import { consolidarModulosHdr, descripcionPiezaPlanaHdr, prefijarHrj, tituloModuloHdr } from './datosHdr';
 import { crearDestinoHdr, esCancelacionHdr } from './destinoExportacion';
 import { exigirRevisionHdr } from './validacion';
 
@@ -45,6 +45,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [cotizacionId, setCotizacionId] = useState('');
   const [proyectoHdr, setProyectoHdr] = useState('');
   const [prefijoHrj, setPrefijoHrj] = useState(false);
+  const [prefijoHrjBuscar, setPrefijoHrjBuscar] = useState(false);
   const [modLoading, setModLoading] = useState(false);
   const [modError, setModError] = useState<string | null>(null);
   const [modulos, setModulos] = useState<ModuloHDR[] | null>(null);
@@ -203,6 +204,12 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         espesorFrenteMm: tableros.find((tablero) => tablero.codigo === materialesCodigo.frente)?.espesor_mm,
       })
     : '';
+  const tituloCreado = res
+    ? (() => {
+        const nombre = `${codigo} ${descripcionPiezaPlanaHdr(tipoSel?.pref, notaPanel) ?? descripcionModulo(res, tipoSel?.pref)}`;
+        return prefijoHrjBuscar ? prefijarHrj(nombre, tipoSel?.pref, codigo) : nombre;
+      })()
+    : '';
 
   return (
     <div className="space-y-6">
@@ -282,7 +289,13 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
       <div className="border-t border-slate-200 pt-6">
         <h2 className="font-semibold text-slate-900 mb-3">Buscar/Crear</h2>
-        <HdrBuscarGuardados tableros={tableros} />
+        <label className="mb-3 flex w-fit cursor-pointer items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-slate-700">
+          <span>Prefijo HRJ</span>
+          <input type="checkbox" role="switch" aria-label="Agregar prefijo HRJ al nombre del mueble buscado o creado" checked={prefijoHrjBuscar} onChange={e => setPrefijoHrjBuscar(e.target.checked)} className="peer sr-only" />
+          <span aria-hidden="true" className="relative h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-emerald-600 peer-checked:after:translate-x-5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-emerald-700" />
+          <span>Agregar HRJ al nombre del mueble</span>
+        </label>
+        <HdrBuscarGuardados tableros={tableros} prefijoHrj={prefijoHrjBuscar} />
         <form onSubmit={buscar} className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
           <div className="grid grid-cols-12 gap-2 items-end">
             <Campo label="Tipo De Mueble" className="col-span-12 sm:col-span-5">
@@ -366,7 +379,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
         {res && (
           <div className="mt-4">
-            <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} pref={tipoSel?.pref} tableros={tableros} proyectoInicial={proyectoHdr} titulo={`${codigo} ${descripcionPiezaPlanaHdr(tipoSel?.pref, notaPanel) ?? descripcionModulo(res, tipoSel?.pref)}`} />
+            <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} pref={tipoSel?.pref} tableros={tableros} proyectoInicial={proyectoHdr} titulo={tituloCreado} />
           </div>
         )}
       </div>
