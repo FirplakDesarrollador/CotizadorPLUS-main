@@ -3060,3 +3060,11 @@ DB-FE presenta cada pieza por separado en secuencia de producción; agrupa visua
 ## [2026-11-11] update | Orden HDR para todas las variantes DB con FE
 
 La regla de presentación HDR y el nombre `TRASERO GAV` ahora cubren tipologías DB terminadas en `-FE` y `-FE-SF`, incluidas las cajoneras DB-SM-FE-SF. Se agregaron regresiones para las variantes principales y se mantiene el orden de dimensiones, medidas y demás piezas.
+
+## [2026-11-12] update | Optimizador separa Muebles, Paneles y Fillers y cuenta repeticiones de área
+
+Migración 0260 (aplicada): `cot_tipos_mueble.grupo_optimizador` desde `margen_key`, con trigger para tipos nuevos. `proyectoDesdeCotizacionAction` multiplica por la cantidad del área (antes Condominio V daba 476 unidades; ahora 444 muebles, 2.058 paneles y 366 fillers), deja visibles las líneas que no calculan y separa por grupo y medidas. Ver [optimizador_corte](wiki/optimizador_corte.md).
+
+## [2026-11-12] update | Optimizador discrimina Zócalos (TK) y suma piezas por grupo
+
+Migración 0261 (aplicada): grupo `zocalo` para TK. Tarjetas con piezas de Muebles, Paneles, Fillers y Zócalos y total de piezas; Excel con unidades y piezas por grupo. Ver [optimizador_corte](wiki/optimizador_corte.md).

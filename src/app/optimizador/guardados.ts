@@ -3,6 +3,7 @@ import type { ListaCorte, TableroInfo } from '@/lib/corte/lista';
 import type { PlanDiario } from '@/lib/corte/plan-diario';
 import type { CorteDia, PlanCorte } from '@/lib/corte/plan-corte';
 import type { ProyectoOptimizador } from './actions';
+import { ETIQUETA_GRUPO, resumenPorGrupo } from '@/lib/corte/clasificacion';
 // ExcelJS devuelve ext en las imágenes ancladas con dimensiones, pero omite
 // ese campo de ImageRange en sus declaraciones públicas.
 declare module 'exceljs' { interface ImageRange { ext: { width:number; height:number }; } }
@@ -111,7 +112,7 @@ export async function crearWorkbook(g:GuardadoOptimizador,rawImagenes:unknown){
   encabezado(general,['Formato','Largo (mm)','Ancho (mm)','Activo']);filas(general,s.cfg.formatos.map(f=>[f.codigo,f.largoMm,f.anchoMm,f.activo?'Sí':'No']),{2:mm,3:mm});
   encabezado(general,['Textura','Rota veta']);filas(general,s.cfg.texturas.map(t=>[t.nombre,t.rotaVeta?'Sí':'No']));
   encabezado(general,['Material','Textura elegida','Rota veta']);filas(general,s.lista.materiales.map(m=>{const t=s.texturaPorMaterial[m.material]??s.cfg.texturas[0]?.nombre??'';return [m.material,t,s.cfg.texturas.find(x=>x.nombre===t)?.rotaVeta?'Sí':'No'];}));
-  encabezado(general,['Indicador general','Valor']);filas(general,[['Módulos',s.proyecto.modulos.length],['Unidades',s.proyecto.modulos.reduce((n,m)=>n+m.cantidad,0)],['Materiales',s.lista.materiales.length],['Piezas a cortar',s.lista.totalPiezas],['Días de corte',s.planCorte.dias.length]]);totales(general,totalesSnapshot(s));
+  encabezado(general,['Indicador general','Valor']);filas(general,[['Módulos',s.proyecto.modulos.length],['Unidades',s.proyecto.modulos.reduce((n,m)=>n+m.cantidad,0)],...resumenPorGrupo(s.proyecto.modulos,s.proyecto.errores).flatMap(r=>[[`${ETIQUETA_GRUPO[r.grupo]} (unidades)`,r.unidades],[`${ETIQUETA_GRUPO[r.grupo]} (piezas)`,r.piezas]]),['Total piezas (suma de grupos)',resumenPorGrupo(s.proyecto.modulos).reduce((n,r)=>n+r.piezas,0)],['Materiales',s.lista.materiales.length],['Piezas a cortar',s.lista.totalPiezas],['Días de corte',s.planCorte.dias.length]]);totales(general,totalesSnapshot(s));
   const materiales=hoja('Resumen por material');encabezado(materiales,['Material','Proveedor','Espesor (mm)','Lámina','Láminas por pila','Textura','Rota veta','Piezas','m² netos','Láminas mín','Máx ≤ desperdicio','Desperdicio mínimo (%)','Alertas','Roles'],true);
   filas(materiales,s.lista.materiales.map(m=>{const t=s.texturaPorMaterial[m.material]??s.cfg.texturas[0]?.nombre??'';return [m.material,m.proveedor,m.espesorMm,m.formatoCodigo,m.laminasPorPila,t,s.cfg.texturas.find(x=>x.nombre===t)?.rotaVeta?'Sí':'No',m.piezas,m.areaNetaM2,m.laminasMinimas,m.laminasMaxDesperdicio,m.desperdicioMinimoPct,m.alertas.join('; '),m.roles.join(', ')];}),{3:mm,9:m2,12:pct});
   const lista=hoja('Lista de corte');encabezado(lista,['Material','Pieza','Largo (mm)','Ancho (mm)','Cantidad','Enchape largos','Enchape anchos','Canto','Módulos'],true);filas(lista,s.lista.filas.map(f=>[f.material,f.pieza,f.largoMm,f.anchoMm,f.cantidad,f.cantoLargos,f.cantoAnchos,f.calibre,f.modulos.join(', ')]),{3:mm,4:mm});lista.addRow(['Total piezas','','','',s.lista.totalPiezas]);

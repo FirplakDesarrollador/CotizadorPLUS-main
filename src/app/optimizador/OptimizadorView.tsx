@@ -8,6 +8,7 @@ import {
   type ConfigOptimizador, type CriterioOptimizacion,
 } from '@/lib/corte/config';
 import { construirListaCorte, type TableroInfo } from '@/lib/corte/lista';
+import { ETIQUETA_GRUPO, GRUPOS_OPTIMIZADOR, resumenPorGrupo, type GrupoOptimizador } from '@/lib/corte/clasificacion';
 import { planDiarioDeCorte, type PlanDiario } from '@/lib/corte/plan-diario';
 import { planDeCorte, type PlanCorte } from '@/lib/corte/plan-corte';
 import type { PedidoPlan, RespuestaPlan } from './plan.worker';
@@ -51,34 +52,49 @@ const tdNum = `${td} text-right tabular-nums`;
 // Qué se corta cada día: módulos y unidades, agrupados por tablero para cambiar de
 // material lo menos posible en la seccionadora. El día se reparte en cuanto deja de
 // caber una unidad más, así que ninguna jornada pasa del ritmo.
-type ModuloProyectoFila = { lineaId: string; codigo: string; cocina: string; cantidad: number; piezasPorModulo: number };
+type ModuloProyectoFila = {
+  lineaId: string; codigo: string; cocina: string; cantidad: number; piezasPorModulo: number;
+  grupo?: GrupoOptimizador; medidas?: string; cantidadLinea?: number; repeticionesArea?: number; firma?: string;
+};
+type FiltroGrupo = GrupoOptimizador | 'todos';
 
 /**
- * Los muebles de la cotización, agrupados por cocina y por referencia.
+ * Los módulos de la cotización, separados en Muebles, Paneles y Fillers y
+ * agrupados por área (cocina) y por referencia.
  *
  * Una cotización repite la misma referencia en varias líneas —dos W3642, dos
- * TK4— y la lista plana obligaba a sumarlas a ojo. Se juntan las que tienen el
- * mismo código **y el mismo despiece**: si dos líneas con el mismo código dan
- * distintas piezas por módulo es que su configuración difiere, y mezclarlas
- * escondería esa diferencia.
+ * PN— y la lista plana obligaba a sumarlas a ojo. Se juntan solo las que tienen
+ * el mismo código **y el mismo despiece** (mismas medidas y piezas): un PN de
+ * otra medida es otra fila. La cantidad ya incluye las repeticiones del área.
  */
 function ModulosProyecto({ modulos }: { modulos: ModuloProyectoFila[] }) {
   const [abierto, setAbierto] = useState(false);
+  const [filtro, setFiltro] = useState<FiltroGrupo>('todos');
   const [cocinasAbiertas, setCocinasAbiertas] = useState<Set<string>>(new Set());
 
+  const visibles = useMemo(() => (filtro === 'todos' ? modulos : modulos.filter((m) => (m.grupo ?? 'mueble') === filtro)), [modulos, filtro]);
+
   const porCocina = useMemo(() => {
-    const cocinas = new Map<string, Map<string, { codigo: string; piezasPorModulo: number; cantidad: number; lineas: number }>>();
-    for (const m of modulos) {
-      const refs = cocinas.get(m.cocina) ?? new Map();
-      const clave = `${m.codigo}|${m.piezasPorModulo}`;
+    type Fila = { codigo: string; grupo: GrupoOptimizador; medidas: string[]; piezasPorModulo: number; cantidad: number; lineas: number; repeticiones: Set<number> };
+    const cocinas = new Map<string, Map<string, Fila>>();
+    for (const m of visibles) {
+      const refs = cocinas.get(m.cocina) ?? new Map<string, Fila>();
+      const grupo = m.grupo ?? 'mueble';
+      const clave = `${grupo}|${m.codigo}|${m.firma ?? m.piezasPorModulo}`;
       const ya = refs.get(clave);
-      if (ya) { ya.cantidad += m.cantidad; ya.lineas += 1; }
-      else refs.set(clave, { codigo: m.codigo, piezasPorModulo: m.piezasPorModulo, cantidad: m.cantidad, lineas: 1 });
+      if (ya) {
+        ya.cantidad += m.cantidad; ya.lineas += 1; ya.repeticiones.add(m.repeticionesArea ?? 1);
+        if (m.medidas && !ya.medidas.includes(m.medidas)) ya.medidas.push(m.medidas);
+      } else {
+        refs.set(clave, { codigo: m.codigo, grupo, medidas: m.medidas ? [m.medidas] : [], piezasPorModulo: m.piezasPorModulo, cantidad: m.cantidad, lineas: 1, repeticiones: new Set([m.repeticionesArea ?? 1]) });
+      }
       cocinas.set(m.cocina, refs);
     }
     return [...cocinas.entries()]
       .map(([cocina, refs]) => {
-        const filas = [...refs.values()].sort((a, b) => b.cantidad * b.piezasPorModulo - a.cantidad * a.piezasPorModulo || a.codigo.localeCompare(b.codigo));
+        const filas = [...refs.values()].sort((a, b) =>
+          GRUPOS_OPTIMIZADOR.indexOf(a.grupo) - GRUPOS_OPTIMIZADOR.indexOf(b.grupo)
+          || b.cantidad * b.piezasPorModulo - a.cantidad * a.piezasPorModulo || a.codigo.localeCompare(b.codigo));
         return {
           cocina,
           filas,
@@ -87,8 +103,9 @@ function ModulosProyecto({ modulos }: { modulos: ModuloProyectoFila[] }) {
         };
       })
       .sort((a, b) => b.piezas - a.piezas || a.cocina.localeCompare(b.cocina));
-  }, [modulos]);
+  }, [visibles]);
 
+  const resumen = useMemo(() => resumenPorGrupo(modulos), [modulos]);
   const unidades = porCocina.reduce((n, c) => n + c.unidades, 0);
   const piezas = porCocina.reduce((n, c) => n + c.piezas, 0);
   const referencias = porCocina.reduce((n, c) => n + c.filas.length, 0);
@@ -97,6 +114,12 @@ function ModulosProyecto({ modulos }: { modulos: ModuloProyectoFila[] }) {
     if (!n.delete(cocina)) n.add(cocina);
     return n;
   });
+  const chip = (valor: FiltroGrupo, texto: string) => (
+    <button key={valor} type="button" onClick={() => setFiltro(valor)} aria-pressed={filtro === valor}
+      className={`rounded-full px-2.5 py-0.5 text-xs ${filtro === valor ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+      {texto}
+    </button>
+  );
 
   return (
     <div className="rounded-xl border border-slate-200">
@@ -105,13 +128,18 @@ function ModulosProyecto({ modulos }: { modulos: ModuloProyectoFila[] }) {
         <span className="w-4 text-slate-400">{abierto ? '▾' : '▸'}</span>
         <h3 className="text-sm font-semibold text-slate-800">Módulos del proyecto</h3>
         <span className="text-xs text-slate-500">
-          {fmt(porCocina.length)} cocina(s) · {fmt(referencias)} referencia(s) · {fmt(modulos.length)} línea(s) ·{' '}
+          {fmt(porCocina.length)} área(s) · {fmt(referencias)} referencia(s) · {fmt(visibles.length)} línea(s) ·{' '}
           {fmt(unidades)} unidades · {fmt(piezas)} piezas
         </span>
       </button>
 
       {abierto && (
         <div className="divide-y divide-slate-100 border-t border-slate-200">
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2">
+            {chip('todos', `Todos (${fmt(resumen.reduce((n, r) => n + r.unidades, 0))})`)}
+            {resumen.map((r) => chip(r.grupo, `${ETIQUETA_GRUPO[r.grupo]} (${fmt(r.unidades)})`))}
+          </div>
+          {porCocina.length === 0 && <p className="px-3 py-2 text-sm text-slate-400">No hay módulos en este grupo.</p>}
           {porCocina.map((c) => {
             const abiertaCocina = cocinasAbiertas.has(c.cocina);
             return (
@@ -129,23 +157,31 @@ function ModulosProyecto({ modulos }: { modulos: ModuloProyectoFila[] }) {
                   <div className="overflow-x-auto px-3 pb-3">
                     <table className="w-full border-collapse">
                       <thead><tr>
-                        <th className={th}>Código</th><th className={`${th} text-right`}>Cantidad</th>
+                        <th className={th}>Grupo</th><th className={th}>Código</th><th className={th}>Medidas</th>
+                        <th className={`${th} text-right`}>Cantidad</th>
                         <th className={`${th} text-right`}>Piezas por módulo</th><th className={`${th} text-right`}>Piezas totales</th>
                       </tr></thead>
                       <tbody>
                         {c.filas.map((f) => (
-                          <tr key={`${f.codigo}-${f.piezasPorModulo}`}>
+                          <tr key={`${f.grupo}-${f.codigo}-${f.medidas.join('/')}-${f.piezasPorModulo}`}>
+                            <td className={`${td} text-xs text-slate-500`}>{ETIQUETA_GRUPO[f.grupo]}</td>
                             <td className={`${td} font-medium`}>
                               {f.codigo}
                               {f.lineas > 1 && <span className="ml-1 text-xs font-normal text-slate-400">{f.lineas} líneas</span>}
                             </td>
-                            <td className={tdNum}>{fmt(f.cantidad)}</td>
+                            <td className={`${td} text-xs text-slate-500`}>{f.medidas.join(' · ') || '—'}</td>
+                            <td className={tdNum}>
+                              {fmt(f.cantidad)}
+                              {[...f.repeticiones].some((r) => r > 1) && (
+                                <span className="ml-1 text-xs text-slate-400">(área ×{[...f.repeticiones].join('/')})</span>
+                              )}
+                            </td>
                             <td className={tdNum}>{fmt(f.piezasPorModulo, Number.isInteger(f.piezasPorModulo) ? 0 : 2)}</td>
                             <td className={tdNum}>{fmt(Math.round(f.piezasPorModulo * f.cantidad))}</td>
                           </tr>
                         ))}
                         <tr className="bg-slate-50 font-semibold">
-                          <td className={td}>{c.cocina}</td>
+                          <td className={td} colSpan={3}>{c.cocina}</td>
                           <td className={tdNum}>{fmt(c.unidades)}</td>
                           <td className={td} />
                           <td className={tdNum}>{fmt(Math.round(c.piezas))}</td>
@@ -438,7 +474,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
         {errorProyecto && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorProyecto}</div>}
         {proyecto && proyecto.errores.length > 0 && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            {proyecto.errores.length} módulo(s) no se pudieron calcular y quedan fuera: {proyecto.errores.map((e) => `${e.codigo} (${e.error})`).join('; ')}
+            {proyecto.errores.length} módulo(s) no se pudieron calcular y quedan fuera: {proyecto.errores.map((e) => `${e.codigo}${e.grupo ? ` [${ETIQUETA_GRUPO[e.grupo]}]` : ''}${e.unidades ? ` ×${e.unidades}` : ''} (${e.error})`).join('; ')}
           </div>
         )}
         {proyecto && proyecto.modulos.length === 0 && proyecto.errores.length === 0 && (
@@ -447,8 +483,23 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
 
         {lista && proyecto && proyecto.modulos.length > 0 && (
           <>
+            {(() => {
+              // Piezas por grupo (unidades × piezas por módulo) y su sumatoria.
+              const grupos = resumenPorGrupo(proyecto.modulos, proyecto.errores);
+              const totalPiezas = grupos.reduce((n, r) => n + r.piezas, 0);
+              const totalUnidades = grupos.reduce((n, r) => n + r.unidades, 0);
+              return (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {grupos.map((r) => (
+                    <Kpi key={r.grupo} label={`${ETIQUETA_GRUPO[r.grupo]} · piezas`} valor={fmt(r.piezas)}
+                      detalle={`${fmt(r.unidades)} unidades · ${fmt(r.lineas)} línea(s)${r.errores ? ` · ${fmt(r.errores)} sin calcular` : ''}`} />
+                  ))}
+                  <Kpi oscuro label="Total piezas" valor={fmt(totalPiezas)} detalle={`${fmt(totalUnidades)} unidades en total`} />
+                </div>
+              );
+            })()}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <Kpi label="Módulos" valor={fmt(proyecto.modulos.reduce((s, m) => s + m.cantidad, 0))} detalle={`${proyecto.modulos.length} líneas`} />
+              <Kpi label="Unidades" valor={fmt(resumenPorGrupo(proyecto.modulos).reduce((s, r) => s + r.unidades, 0))} detalle={`${proyecto.modulos.length} líneas · con repeticiones de área`} />
               <Kpi label="Materiales" valor={fmt(lista.materiales.length)} />
               <Kpi label="Piezas a cortar" valor={fmt(lista.totalPiezas)} />
               <div className="rounded-xl p-3 bg-slate-50">

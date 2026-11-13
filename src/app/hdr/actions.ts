@@ -35,6 +35,10 @@ export type ModuloHDR = {
   cantidad: number;
   /** Grupo físico (laterales compartidos). Las líneas de un grupo no se separan. */
   grupoId: string | null;
+  /** Tipo de mueble de la línea (en grupos, el de la primera). */
+  tipoMuebleId?: string | null;
+  /** Medidas tal como se cotizaron, p. ej. "30x34.5x24 in". */
+  medidas?: string;
   origenes?: { lineaId: string; codigoModulo: string; cantidad: number; repeticionesArea: number }[];
 } & ({ ok: true; result: ResultadoHdr } | { ok: false; error: string });
 
@@ -77,6 +81,7 @@ async function calcularModulosDeCotizacion(cotizacionId: string, catalogoPrefetc
   const etiqueta = (l: LineaPersistida) => codigoConMano(l.codigo_modulo ?? l.pref ?? '?', l.pref, puertasActuales.get(l.id), l.config?.manoPuerta);
   const avisoMano = (l: LineaPersistida) => requiereManoPuerta(l.pref, puertasActuales.get(l.id)) && !manoValida(l.config?.manoPuerta)
     ? ['Falta completar la apertura L/R de este mueble de una puerta en la cotización.'] : [];
+  const datosLinea = (l: LineaPersistida) => ({ tipoMuebleId: l.tipo_mueble_id ?? null, medidas: `${Number(l.largo)}x${Number(l.alto)}x${Number(l.prof)} ${l.unidad_dim ?? "in"}` });
   const descripcion = (l: LineaPersistida) => descripcionPiezaPlanaHdr(l.pref, l.anotaciones);
   const resultados: ModuloHDR[] = [];
   // Un catálogo compartido para el contraste; no repetir consultas por mueble.
@@ -92,9 +97,9 @@ async function calcularModulosDeCotizacion(cotizacionId: string, catalogoPrefetc
       const avisosValidacion = input.overrides?.n_entrepanos != null
         ? validarEntrepanosHdr((preparado ?? await prepararCotizacion(input, catalogo)).calc) : [];
       avisosValidacion.push(...avisoMano(linea));
-      resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), nombreDescriptivo: descripcion(linea), avisosValidacion, aperturaPendiente: avisoMano(linea).length > 0, pref: linea.pref ?? undefined, repeticionesArea, cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
+      resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), ...datosLinea(linea), nombreDescriptivo: descripcion(linea), avisosValidacion, aperturaPendiente: avisoMano(linea).length > 0, pref: linea.pref ?? undefined, repeticionesArea, cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
     } catch (e) {
-      resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), cocinaNombre, repeticionesArea, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: false, error: e instanceof Error ? e.message : 'Error' });
+      resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), ...datosLinea(linea), cocinaNombre, repeticionesArea, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: false, error: e instanceof Error ? e.message : 'Error' });
     }
   }
 
@@ -111,7 +116,7 @@ async function calcularModulosDeCotizacion(cotizacionId: string, catalogoPrefetc
         const origenes = grupo.map(({ linea, repeticionesArea }) => ({ lineaId: linea.id, codigoModulo: etiqueta(linea), cantidad: Number(linea.cantidad), repeticionesArea }));
         const nombres = grupo.map(({ linea }, i) => `A${i + 1}: ${descripcion(linea) ?? descripcionModulo(calculated.lineas[i] as CotizarResult, linea.pref ?? undefined)}`.trim());
         const result = resultadoFisicoHdr(calculated, Number(inputs[0].trm ?? 4200), Number(calculated.preparados[0]?.margen ?? 0), grupo.map(({ linea }) => linea.pref ?? ''));
-        resultados.push({ lineaId: grupo[0].linea.id, codigoModulo: `GRUPO ${grupo.map(({ linea }) => etiqueta(linea)).join(' + ')}`, nombreDescriptivo: nombres.join(' | '), avisosValidacion, aperturaPendiente: grupo.some(({ linea }) => avisoMano(linea).length > 0), cocinaNombre: grupo[0].cocinaNombre, repeticionesArea: grupo[0].repeticionesArea, cantidad: 1, grupoId: grupo[0].linea.grupo_id ?? null, origenes, ok: true, result });
+        resultados.push({ lineaId: grupo[0].linea.id, tipoMuebleId: grupo[0].linea.tipo_mueble_id ?? null, codigoModulo: `GRUPO ${grupo.map(({ linea }) => etiqueta(linea)).join(' + ')}`, nombreDescriptivo: nombres.join(' | '), avisosValidacion, aperturaPendiente: grupo.some(({ linea }) => avisoMano(linea).length > 0), cocinaNombre: grupo[0].cocinaNombre, repeticionesArea: grupo[0].repeticionesArea, cantidad: 1, grupoId: grupo[0].linea.grupo_id ?? null, origenes, ok: true, result });
         continue;
       }
       grupo.forEach(({ linea, cocinaNombre, repeticionesArea }, i) => {
@@ -121,12 +126,12 @@ async function calcularModulosDeCotizacion(cotizacionId: string, catalogoPrefetc
           trm: Number(base.trm ?? inputs[i].trm ?? 4200),
           margen: Number(base.margen ?? calculated.preparados[i]?.margen ?? 0),
         };
-        resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), nombreDescriptivo: descripcion(linea), avisosValidacion, aperturaPendiente: avisoMano(linea).length > 0, pref: linea.pref ?? undefined, repeticionesArea, cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
+        resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), ...datosLinea(linea), nombreDescriptivo: descripcion(linea), avisosValidacion, aperturaPendiente: avisoMano(linea).length > 0, pref: linea.pref ?? undefined, repeticionesArea, cocinaNombre, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: true, result });
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error';
       for (const { linea, cocinaNombre, repeticionesArea } of grupo) {
-        resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), cocinaNombre, repeticionesArea, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: false, error: msg });
+        resultados.push({ lineaId: linea.id, codigoModulo: etiqueta(linea), ...datosLinea(linea), cocinaNombre, repeticionesArea, cantidad: Number(linea.cantidad || 1), grupoId: linea.grupo_id ?? null, ok: false, error: msg });
       }
     }
   }

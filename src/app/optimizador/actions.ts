@@ -3,6 +3,7 @@ import { getUserAndRole } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { normalizarConfig, type ConfigOptimizador } from '@/lib/corte/config';
 import type { ModuloEntrada } from '@/lib/corte/lista';
+import { firmaDespiece, grupoDeTipo, unidadesFisicas, type GrupoOptimizador, type TipoClasificable } from "@/lib/corte/clasificacion";
 import { modulosDeCotizacionAction } from '../hdr/actions';
 import { normalizarSnapshot, validarTamanoGuardado, leerSnapshotTransportado, type GuardadoOptimizador, type ResumenGuardado } from './guardados';
 
@@ -45,19 +46,49 @@ export async function guardarConfigOptimizadorAction(raw: unknown): Promise<{ ok
   }
 }
 
+export type ModuloOptimizador = ModuloEntrada & {
+  lineaId: string;
+  cocina: string;
+  piezasPorModulo: number;
+  grupoId: string | null;
+  /** Muebles, paneles o fillers (cot_tipos_mueble.grupo_optimizador). */
+  grupo?: GrupoOptimizador;
+  pref?: string;
+  medidas?: string;
+  /** Cantidad de la línea y repeticiones del área; `cantidad` = ambas multiplicadas. */
+  cantidadLinea?: number;
+  repeticionesArea?: number;
+  /** Muebles que forma cada módulo físico (un grupo con laterales compartidos reúne varios). */
+  mueblesPorModulo?: number;
+  /** Firma del despiece: mismas medidas y piezas. */
+  firma?: string;
+};
+
 export type ProyectoOptimizador = {
-  modulos: (ModuloEntrada & { lineaId: string; cocina: string; piezasPorModulo: number; grupoId: string | null })[];
-  errores: { codigo: string; error: string }[];
+  modulos: ModuloOptimizador[];
+  errores: { codigo: string; error: string; grupo?: GrupoOptimizador; unidades?: number }[];
 };
 
 // Despiece actual de cada módulo de la cotización (recalculado con el motor vigente,
-// grupos incluidos), reducido a lo que necesita la lista de corte.
+// grupos incluidos), reducido a lo que necesita la lista de corte. Las unidades son
+// físicas: cantidad de la línea × repeticiones del área (p. ej. "APTO A COCINA" × 6).
+// Los artículos de "+ Agregar herrajes/otros" no son módulos y no entran.
 export async function proyectoDesdeCotizacionAction(cotizacionId: string): Promise<ProyectoOptimizador> {
   await assertAdmin();
-  const modulos = await modulosDeCotizacionAction(cotizacionId);
+  const sb = await createClient();
+  const [modulos, { data: tipos, error: te }] = await Promise.all([
+    modulosDeCotizacionAction(cotizacionId),
+    sb.from("cot_tipos_mueble").select("*"),
+  ]);
+  if (te) throw new Error(te.message);
+  const tipoPorId = new Map(((tipos ?? []) as (TipoClasificable & { id: string })[]).map((t) => [String(t.id), t]));
+  const grupoDe = (id: string | null | undefined) => grupoDeTipo(id ? tipoPorId.get(String(id)) : undefined);
   const out: ProyectoOptimizador = { modulos: [], errores: [] };
   for (const m of modulos) {
-    if (!m.ok) { out.errores.push({ codigo: m.codigoModulo, error: m.error }); continue; }
+    const repeticionesArea = m.repeticionesArea ?? 1;
+    const cantidad = unidadesFisicas(m.cantidad, repeticionesArea);
+    const grupo = grupoDe(m.tipoMuebleId);
+    if (!m.ok) { out.errores.push({ codigo: m.codigoModulo, error: m.error, grupo, unidades: cantidad }); continue; }
     const piezas = m.result.piezas
       .filter((p) => p.cant > 0)
       .map((p) => ({
@@ -69,7 +100,14 @@ export async function proyectoDesdeCotizacionAction(cotizacionId: string): Promi
       grupoId: m.grupoId,
       codigo: m.codigoModulo,
       cocina: m.cocinaNombre,
-      cantidad: m.cantidad,
+      cantidad,
+      cantidadLinea: m.cantidad,
+      repeticionesArea: unidadesFisicas(1, repeticionesArea),
+      grupo,
+      pref: m.pref,
+      medidas: m.medidas,
+      mueblesPorModulo: Math.max(1, m.origenes?.length ?? 1),
+      firma: firmaDespiece(piezas),
       piezas,
       piezasPorModulo: Math.round(piezas.reduce((s, p) => s + p.cant, 0) * 100) / 100,
       tableroPorRol: Object.fromEntries(m.result.maderaPorRol.map((r) => [r.rol, r.codigo])),

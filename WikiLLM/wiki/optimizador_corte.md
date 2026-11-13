@@ -30,11 +30,53 @@ múltiplos de 3 o 4) y a contar los cortes por pila. Detalle en `docs/plan_optim
   redondear. Por material calcula láminas mínimas (con disco y refilado), máximo de láminas para cumplir
   el desperdicio y el desperdicio mínimo alcanzable.
 - **Piezas por día** → días de corte y qué módulos van en cada uno, ver abajo.
-- El despiece sale de `modulosDeCotizacionAction` (HDR): motor vigente, grupos incluidos.
+- El despiece sale de `modulosDeCotizacionAction` (HDR): motor vigente, grupos incluidos. Unidades =
+  cantidad de la línea × repeticiones del área; separación Muebles/Paneles/Fillers, ver abajo (2026-11-12).
 - La textura por material se elige en pantalla pero aún no se guarda.
 - Pruebas: `tests/optimizador-corte.test.ts`, lane `lane:cutting` en `quality/manifest.json`.
 - Hallazgo con "Prueba Uno": 199 piezas; en frentes 18 mm y fondo 6 mm el volumen (< 2 láminas) no
   permite bajar del 15 % de desperdicio. Hay que decidir si el sobrante ≥ 1000 × 500 cuenta como desperdicio.
+
+## Muebles, Paneles y Fillers; unidades con repeticiones de área (2026-11-12)
+
+**Error corregido:** `proyectoDesdeCotizacionAction` tomaba solo la cantidad de la línea e ignoraba la
+cantidad del área (`cot_cocinas.cantidad`, p. ej. "APTO A COCINA 1" × 6). En Condominio V (Ramstack CR)
+mostraba 476 unidades y 1.467 piezas cuando el proyecto real tiene 2.868 unidades y 8.856 piezas.
+Ahora cada módulo lleva `cantidad = cantidad de la línea × repeticiones del área` (`unidadesFisicas`),
+igual que HDR y consumos; la lista de corte, el plan por días y los esquemas usan esas unidades.
+
+**Clasificación en Supabase (migración `0260_tipos_grupo_optimizador.sql`, aplicada):** columna
+`cot_tipos_mueble.grupo_optimizador` (`mueble` | `panel` | `filler`, NOT NULL, check). Se llenó desde
+`margen_key`: `muebles` → mueble (inferior, superior, vanity, closet, kit y piezas BT/DF/E); `pn_tk` → panel
+(PN, PN-SF, zócalo TK y complementos D/R); `fillers` → filler (F, F-SF). Un trigger asigna el grupo a los
+tipos nuevos según su `margen_key`; se puede cambiar a mano por tipo. El código
+(`src/lib/corte/clasificacion.ts`, `grupoDeTipo`) usa la columna y, si falta, cae al `margen_key`.
+
+**Lo que trae la acción:** todas las líneas con `tipo_mueble_id` de la cotización (cocinas y líneas sueltas,
+grupos físicos incluidos). Los artículos de "+ Agregar herrajes/otros" no son módulos y no entran. Cada
+módulo lleva `grupo`, `pref`, `medidas` cotizadas, `cantidadLinea`, `repeticionesArea`,
+`mueblesPorModulo` (un grupo con laterales compartidos aporta todos sus muebles al conteo) y `firma` del
+despiece. Las líneas que el motor no logra calcular quedan en `errores` con su grupo y unidades, a la vista.
+
+**Pantalla:** tres tarjetas (Muebles, Paneles, Fillers) con unidades, líneas, piezas y líneas sin calcular;
+"Unidades" total. "Módulos del proyecto" filtra por grupo y junta solo líneas con el mismo código **y el
+mismo despiece** (otra medida = otra fila), con columna de medidas y la repetición del área. El Excel
+exportado suma las unidades por grupo en la hoja general.
+
+**Verificación:** Condominio V → 444 muebles (64 líneas), 2.058 paneles (121, 54 despieces distintos) y
+366 fillers (30), 0 errores; coincide con el conteo directo en la base. Las 12 cotizaciones del sistema
+cuadran contra la base (2 líneas en otras cotizaciones no se calculan y quedan visibles como error).
+Pruebas: `tests/optimizador-grupos.test.ts` (lane `lane:cutting` y lanes de HDR/optimizador).
+Los guardados anteriores conservan sus cifras (snapshot); se corrigen al volver a cargar la cotización.
+
+### Zócalos aparte y piezas por grupo (2026-11-12)
+
+Migración `0261_tipos_grupo_optimizador_zocalo.sql` (aplicada): el check admite `zocalo` y TK (categoria
+`zocalo`) pasa a ese grupo; PN, PN-SF, D y R siguen en panel. El trigger da `zocalo` a los tipos nuevos con
+categoria `zocalo`; `grupoDeTipo` hace lo mismo como respaldo. La pantalla muestra cuatro tarjetas con las
+**piezas** de cada grupo (Muebles, Paneles, Fillers, Zócalos (TK)), con unidades y líneas como detalle, y una
+tarjeta final **Total piezas** con la sumatoria. El Excel suma unidades y piezas por grupo y el total.
+Condominio V: muebles 6.432, paneles 1.902, fillers 366, zócalos 156 → **8.856** piezas.
 
 ## Plan de corte por día (2026-10-14)
 `src/lib/corte/plan-diario.ts` (`planDiarioDeCorte`) responde *cuántos días de corte* y *qué
