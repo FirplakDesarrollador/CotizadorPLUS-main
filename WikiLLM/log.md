@@ -3166,7 +3166,7 @@ remotos quedaron en `fb6ae21`, con árbol de trabajo limpio y sin conflictos.
 
 `SBFD` existía en el catálogo pero estaba inactiva desde la migración `0194`,
 que retiró `F`, `OILVP` e `ILVP` (los alias métricos de `OSBFD` y `SBFD`).
-La migración `0264_sbfd_sin_gola_refuerzo_128.sql`, registrada como
+La migración `0266_sbfd_sin_gola_refuerzo_128.sql`, registrada como
 `sbfd_sin_gola_refuerzo_128` (versión `20261113161935`), reactiva esa misma
 fila conservando `id`, `pref = SBFD` y `pref_metrico = ILVP` para no romper
 referencias históricas, y reemplaza su configuración por una copia curada de
@@ -3197,4 +3197,7 @@ completo en transacción revertida y guardas en la migración (seis piezas, sin
 `n_entrepanos = 0`). `tests/sbfd.test.ts` cubre el despiece, las manijas, la
 ausencia de gola y la posición del refuerzo contra la cara posterior de la
 puerta; `tests/tipologias-inactivas.test.ts` refleja que `ILVP` deja de estar
-excluido. El cambio queda primero en la rama `LIz`, sin promover a DEV ni main.
+excluido. El archivo se renumeró de `0264` a `0266` para no colisionar con las
+migraciones del optimizador que llegaron a DEV como `0264`/`0265`; la versión
+registrada en Supabase (`20261113161935`) no cambia. El cambio se publicó desde
+`LIz` a `DEV` y luego a `main`.

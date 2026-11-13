@@ -4,7 +4,7 @@
 
 `SBFD` existía en el catálogo pero estaba inactiva desde la migración `0194`,
 que retiró `F`, `OILVP` e `ILVP` (los alias métricos de `OSBFD` y `SBFD`).
-La migración `0264_sbfd_sin_gola_refuerzo_128.sql` la reactiva conservando su
+La migración `0266_sbfd_sin_gola_refuerzo_128.sql` la reactiva conservando su
 identidad (`id`, `pref = SBFD`, `pref_metrico = ILVP`) y reemplaza su
 configuración por una copia curada de `SBFD-SM`.
 
