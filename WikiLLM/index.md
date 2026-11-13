@@ -62,6 +62,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [BLS36 desde hoja real](wiki/bls36_hoja_real.md) - Reconstrucción del esquinero Lazy Susan: once piezas, dos puertas, un entrepaño y respaldos de 15 mm.
 - [BLS-RS-SM sin entrepaño](wiki/bls_rs_sm.md) - Variante del esquinero Lazy Susan que conserva el despiece BLS excepto por la eliminación del entrepaño.
 - [SBFD-SMG](wiki/sbfd_smg.md) - Lavaplatos de dos puertas con gola metálica, despiece certificado y montaje basado en IGES.
+- [SBFD sin gola, refuerzo 128 mm](wiki/sbfd_sin_gola_refuerzo_128.md) - Reactivación de SBFD como copia de SBFD-SM sin gola, refuerzo pegado a los frentes y puerta con reveal de 3,2 mm.
 - [BFD-SMG](wiki/bfd_smg.md) - Mueble inferior de dos puertas con gola metálica, entrepaño, fondo de 6 mm y mecanizado frontal 27 × 73 mm.
 - [DB-SMG](wiki/db_smg.md) - Tres familias comerciales de cajoneras con gola metálica (base, FE y SF), doce tipologías y mecanizado lateral 27 × 73 mm.
 - [BMW-1 y BMW-1-FE](wiki/bmw_1_hoja_real.md) - Mueble inferior para microondas y su variante con caja de gaveta de madera y riel full extension.

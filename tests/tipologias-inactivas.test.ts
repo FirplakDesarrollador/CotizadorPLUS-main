@@ -10,6 +10,7 @@ const legacyAdicionalMigration = fs.readFileSync('db/migrations/0195_desactivar_
 const reactivarBfdMigration = fs.readFileSync('db/migrations/0196_reactivar_bfd.sql', 'utf8');
 const reactivarFMigration = fs.readFileSync('db/migrations/0203_reactivar_f.sql', 'utf8');
 const reactivarDbMigration = fs.readFileSync('db/migrations/0204_reactivar_tipologias_db.sql', 'utf8');
+const reactivarSbfdMigration = fs.readFileSync('db/migrations/0266_sbfd_sin_gola_refuerzo_128.sql', 'utf8');
 const catalog = fs.readFileSync('src/lib/cotizar.ts', 'utf8');
 const muebles = fs.readFileSync('src/lib/muebles.ts', 'utf8');
 const simulador = fs.readFileSync('src/app/cotizador/CotizadorForm.tsx', 'utf8');
@@ -86,10 +87,23 @@ test('los catálogos compartidos por Simulador y Cotizaciones consultan solo tip
     catalog,
     /from\('cot_tipos_mueble'\)[\s\S]*?\.eq\('activo', true\)\.order\('pref'\)/,
   );
-  for (const pref of ['S', 'SA', 'SLOC', 'SMO', 'ICP', 'ILVP', 'ALP', 'AL', 'ALH']) {
+  for (const pref of ['S', 'SA', 'SLOC', 'SMO', 'ICP', 'ALP', 'AL', 'ALH']) {
     assert.match(catalog, new RegExp(`TIPOLOGIAS_NO_COTIZABLES[\\s\\S]*?'${pref}'`));
   }
   assert.doesNotMatch(catalog, /TIPOLOGIAS_NO_COTIZABLES\s*=\s*new Set\(\[[^\]]*'IP'/);
   assert.match(catalog, /\[tipo\.pref, tipo\.pref_imperial, tipo\.pref_metrico\]\.some/);
   assert.match(catalog, /tipos:\s*\(tipos \?\? \[\]\)\.filter\([\s\S]*?!esTipologiaNoCotizable\(tipo\)\)/);
+});
+
+test('SBFD se reactiva como copia sin gola de SBFD-SM y su alias métrico deja de excluirse', () => {
+  assert.match(reactivarSbfdMigration, /activo = true/i);
+  assert.match(reactivarSbfdMigration, /where pref = 'SBFD'/);
+  assert.match(reactivarSbfdMigration, /nombre = 'gola_madera'/);
+  assert.match(reactivarSbfdMigration, /128\/25\.4/);
+  assert.match(reactivarSbfdMigration, /formula_ancho = 'A-RV'/);
+  // SBFD es la fila activa; ILVP era su alias métrico y ya no se excluye.
+  assert.doesNotMatch(
+    catalog,
+    /TIPOLOGIAS_NO_COTIZABLES\s*=\s*new Set\(\[[\s\S]*?'ILVP'[\s\S]*?\]\)/,
+  );
 });
