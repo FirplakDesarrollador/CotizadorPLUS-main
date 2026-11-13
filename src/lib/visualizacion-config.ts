@@ -8,9 +8,10 @@ export const FUNCIONES_MONTAJE = [
 export type FuncionMontaje = typeof FUNCIONES_MONTAJE[number];
 export type PlanoMontaje = 'XY' | 'XZ' | 'YZ';
 export type RecorteMontaje = {
-  borde: 'frontal_superior' | 'frontal_nivel_gaveta';
+  borde: 'frontal_superior' | 'frontal_nivel_gaveta' | 'frontal';
   profundidad: string;
   alto: string;
+  z?: string;
 };
 export type MontajeConfig = {
   version?: 1;
@@ -27,7 +28,7 @@ export type MontajeConfig = {
 
 // No JS evaluation in the browser. The server's trusted formula evaluator receives
 // only these coordinate variables; validate names and syntax before persistence.
-export const VARIABLES_MONTAJE = ['L','A','P','TC','TF','TB','MO','HOOD','LP','AP','EP','I','N','W','D','H','X','Y','Z'];
+export const VARIABLES_MONTAJE = ['L','A','P','TC','TR','TF','TB','MO','HOOD','FS','FI','LP','AP','EP','I','N','W','D','H','X','Y','Z'];
 export function validarMontaje(value: unknown): MontajeConfig | null {
   if (value == null) return null;
   if (typeof value !== 'object' || Array.isArray(value)) throw new Error('Montaje debe ser un objeto.');
@@ -53,9 +54,10 @@ export function validarMontaje(value: unknown): MontajeConfig | null {
   const validarRecorte = (value: unknown) => {
     if (typeof value !== 'object' || value == null || Array.isArray(value)) throw new Error('Recorte debe ser un objeto.');
     const recorte = value as Record<string, unknown>;
-    if (Object.keys(recorte).some(k => !['borde','profundidad','alto'].includes(k))) throw new Error('Campo de recorte desconocido.');
-    if (!['frontal_superior','frontal_nivel_gaveta'].includes(String(recorte.borde))) throw new Error('Borde de recorte no soportado.');
-    for (const key of ['profundidad','alto']) {
+    if (Object.keys(recorte).some(k => !['borde','profundidad','alto','z'].includes(k))) throw new Error('Campo de recorte desconocido.');
+    if (!['frontal_superior','frontal_nivel_gaveta','frontal'].includes(String(recorte.borde))) throw new Error('Borde de recorte no soportado.');
+    if (recorte.borde === 'frontal' && typeof recorte.z !== 'string') throw new Error('Recorte frontal requiere nivel Z.');
+    for (const key of ['profundidad','alto', ...(recorte.z == null ? [] : ['z'])]) {
       const formula = recorte[key];
       if (typeof formula !== 'string' || formula.length > 240 || !/^[\d\sA-Z+*/().<>=!&|?:-]+$/.test(formula)) throw new Error(`Fórmula ${key} de recorte inválida.`);
       const names = formula.match(/[A-Z]+/g) ?? [];

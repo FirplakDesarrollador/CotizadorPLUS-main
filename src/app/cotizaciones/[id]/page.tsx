@@ -89,13 +89,14 @@ export default async function CotizacionDetallePage({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <AppHeader nombre={nombre} email={user?.email} rol={rol} active="cotizaciones" />
+      <AppHeader nombre={nombre} email={user?.email} rol={rol} active="cotizaciones" helpContext="proyecto" />
       <main className="mx-auto w-full max-w-[1600px] px-4 py-6 space-y-5">
         {aperturasPendientes.length > 0 && <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-semibold">Debes completar la apertura L/R de {aperturasPendientes.length} mueble(s) de una puerta.</p><p>Edita los siguientes muebles y selecciona L o R antes de generar las hojas de ruta:</p><ul className="list-disc pl-5">{aperturasPendientes.map(l => <li key={l.id}>{l.codigo_modulo ?? l.pref} · {cocinas.find(c => c.id === l.cocina_id)?.nombre ?? 'Sin sección'}</li>)}</ul></div>}
         <CotizacionDetalleClient
           cabecera={cabecera as Parameters<typeof CotizacionDetalleClient>[0]['cabecera']}
           cocinas={cocinas as Cocina[]}
           cotizacionId={id}
+          lineasSinCocina={lineasSinCocina as Cocina['lineas']}
           tipos={data.tipos}
           tableros={data.tableros}
           cantos={data.cantos}

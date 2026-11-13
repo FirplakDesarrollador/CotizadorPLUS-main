@@ -29,6 +29,6 @@ export async function descargarExcelHdr(modulos: readonly DatosHdrExcel[], nombr
   const destino = destinoElegido ?? await crearDestinoHdr(nombre);
   const buffer = await crearWorkbookHdr(modulos).xlsx.writeBuffer();
   const blob = new Blob([new Uint8Array(buffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  await destino.guardar(`HDR_${nombre.replace(/[^\p{L}\p{N}_. -]/gu, '_').slice(0, 120) || 'muebles'}.xlsx`, blob);
+  await destino.guardar(`${nombre.replace(/[^\p{L}\p{N}_. -]/gu, '_').slice(0, 120) || 'muebles'}.xlsx`, blob);
   await destino.finalizar();
 }

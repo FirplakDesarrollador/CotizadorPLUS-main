@@ -39,10 +39,11 @@ test('cantos de abiertos: frente prevalece incluso sobre forceCalibre sin añadi
   assert.equal(result.piezas[2].cantoLargos, 0);
 });
 
-test('editar una estructura compartida separa el módulo; frentes y herrajes compatibles siguen individuales', () => {
+test('editar materiales o cantos conserva el grupo; cambios geométricos o de cantidad lo separan', () => {
   const original = { preset: { caja: 'C15', refuerzo: 'C15', frente: 'F18', fondo: 'F6' }, cantoCaja: '19x0,45', largo: 24, alto: 30, prof: 24, unidad: 'in' as const, cantidad: 1 };
-  assert.equal(requiereSepararModulo(original, { ...original, preset: { ...original.preset, caja: 'OTRO15' } }), true);
-  assert.equal(requiereSepararModulo(original, { ...original, cantoCaja: '19x1' }), true);
+  assert.equal(requiereSepararModulo(original, { ...original, preset: { ...original.preset, caja: 'OTRO15' } }), false);
+  assert.equal(requiereSepararModulo(original, { ...original, preset: { ...original.preset, refuerzo: 'OTRO' } }), false);
+  assert.equal(requiereSepararModulo(original, { ...original, cantoCaja: '19x1' }), false);
   assert.equal(requiereSepararModulo(original, { ...original, prof: 25 }), true);
   assert.equal(requiereSepararModulo(original, { ...original, cantidad: 2 }), true);
   assert.equal(requiereSepararModulo(original, { ...original, preset: { ...original.preset, frente: 'OTRO_FRENTE18' } }), false);

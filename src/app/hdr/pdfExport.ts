@@ -66,5 +66,5 @@ export function nombreArchivoPdf(titulo: string): string {
     .replace(/[^a-zA-Z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
     .slice(0, 80);
-  return `HDR_${slug || 'modulo'}.pdf`;
+  return `${slug || 'modulo'}.pdf`;
 }

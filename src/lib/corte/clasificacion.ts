@@ -1,6 +1,6 @@
 // Clasificación de los módulos de una cotización para el optimizador de corte.
 //
-// El grupo sale del catálogo (cot_tipos_mueble.grupo_optimizador, migraciones 0260 y 0261).
+// El grupo sale del catálogo (cot_tipos_mueble.grupo_optimizador, migraciones 0264 y 0265).
 // Si un tipo no lo trae, se deriva: categoria 'zocalo' → zocalo (TK); margen_key 'pn_tk' →
 // panel (PN, D, R); 'fillers' → filler (F); el resto → mueble.
 // Los artículos de "+ Agregar herrajes/otros" no son módulos y no llegan aquí.

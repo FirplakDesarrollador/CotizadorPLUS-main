@@ -5,7 +5,7 @@ import { firmaDespiece, grupoDeTipo, resumenPorGrupo, unidadesFisicas } from '..
 
 // Separación del optimizador en Muebles / Paneles / Fillers / Zócalos y conteo de unidades
 // físicas (cantidad de la línea × repeticiones del área), para cotizaciones
-// existentes y nuevas. El grupo sale de cot_tipos_mueble (migración 0260).
+// existentes y nuevas. El grupo sale de cot_tipos_mueble (migración 0264).
 
 test('grupoDeTipo usa la columna del catálogo y, si falta, el margen', () => {
   assert.equal(grupoDeTipo({ grupo_optimizador: 'panel', margen_key: 'muebles' }), 'panel');

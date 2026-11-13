@@ -6,7 +6,8 @@ import { actualizarCotizacionAction } from '../actions';
 import { monedasVisibles, type ColumnasMoneda } from '@/lib/monedas-visibles';
 import ComentariosProyecto from './ComentariosProyecto';
 import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario, parseComentariosCotizacion } from '@/lib/comentarios-cotizacion';
-import { ESTADOS_COTIZACION, ETIQUETAS_ESTADO } from '@/lib/pipeline-estados';
+import { ESTADOS_COTIZACION, ETIQUETAS_ESTADO, COLORES_ESTADO } from '@/lib/pipeline-estados';
+import type { ValoresCotizacion } from '@/lib/valores-cotizacion';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -24,6 +25,8 @@ export default function ProyectoHeader({
   children,
   margenGlobal,
   columnasMoneda,
+  valores,
+  margenAplicado,
 }: {
   cab: Cab;
   editing?: boolean;
@@ -35,6 +38,8 @@ export default function ProyectoHeader({
   children?: React.ReactNode;
   /** Casillas de columna del detalle. Sin ellas se muestran las dos monedas. */
   columnasMoneda?: ColumnasMoneda;
+  valores?: ValoresCotizacion;
+  margenAplicado?: string | number;
   margenGlobal?: { sinHerrajes: number | null; conHerrajes: number | null } | null;
 }) {
   const router = useRouter();
@@ -48,6 +53,8 @@ export default function ProyectoHeader({
   const [margenLocal, setMargenLocal] = useState(margen);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
+  const [mostrarValores, setMostrarValores] = useState(false);
 
   if (margen !== prevMargen) {
     setPrevMargen(margen);
@@ -86,6 +93,7 @@ export default function ProyectoHeader({
     const res = await actualizarCotizacionAction(cab.id, { nombre, cliente_nombre: cliente, comprador_nombre: comprador, moneda, trm, estado });
     setSaving(false);
     if (!res.ok) { setError(res.error ?? 'Error'); return; }
+    setWarning(res.warning ?? null);
     onClose?.(); router.refresh();
   }
 
@@ -166,7 +174,7 @@ export default function ProyectoHeader({
           <span>·</span>
           <span>TRM {Number(cab.trm).toLocaleString('es-CO')}</span>
           <span>·</span>
-          <span className="text-xs rounded-full bg-slate-100 px-2 py-0.5 capitalize">{cab.estado}</span>
+          <span className={`text-xs rounded-full px-2 py-0.5 ${COLORES_ESTADO[cab.estado as keyof typeof COLORES_ESTADO] ?? 'bg-slate-100 text-slate-700'}`}>{ETIQUETAS_ESTADO[cab.estado as keyof typeof ETIQUETAS_ESTADO] ?? cab.estado}</span>
           <span className="text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">{cab.sistema_medida === 'metrico' ? 'cm · métrico' : 'in · imperial'}</span>
           {margenGlobal?.sinHerrajes != null && Number.isFinite(margenGlobal.sinHerrajes) && (
             <>
@@ -205,6 +213,22 @@ export default function ProyectoHeader({
               {m === 'COP' ? fmtCOP(cab.total_cop) : fmtUSD(cab.total_usd)}
             </div>
           ))}
+        {valores && <div className="print:hidden mt-2">
+          <button type="button" aria-expanded={mostrarValores} onClick={() => setMostrarValores((visible) => !visible)} className="rounded-md border border-emerald-700 px-3 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-50">{mostrarValores ? 'Ocultar valores' : 'Valores'}</button>
+          {mostrarValores && <section aria-label="Valores de cotización" className="mt-2 w-[min(90vw,440px)] rounded-xl border border-slate-200 bg-white p-3 text-left text-xs shadow-lg">
+            <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
+              <strong></strong><strong className="text-right">Sin herrajes</strong><strong className="text-right">Con herrajes</strong>
+              <span>Costo USD</span><span className="text-right">{fmtUSD(valores.costoSinUsd)}</span><span className="text-right">{fmtUSD(valores.costoConUsd)}</span>
+              <span>Costo COP</span><span className="text-right">{fmtCOP(valores.costoSinCop)}</span><span className="text-right">{fmtCOP(valores.costoConCop)}</span>
+              <span>Precio USD</span><span className="text-right">{fmtUSD(valores.precioSinUsd)}</span><span className="text-right">{fmtUSD(valores.precioConUsd)}</span>
+              <span>Precio COP</span><span className="text-right">{fmtCOP(valores.precioSinCop)}</span><span className="text-right">{fmtCOP(valores.precioConCop)}</span>
+              <span>Utilidad USD</span><span className="text-right">{fmtUSD(valores.precioSinUsd - valores.costoSinUsd)}</span><span className="text-right">{fmtUSD(valores.precioConUsd - valores.costoConUsd)}</span>
+              <span>Utilidad COP</span><span className="text-right">{fmtCOP(valores.precioSinCop - valores.costoSinCop)}</span><span className="text-right">{fmtCOP(valores.precioConCop - valores.costoConCop)}</span>
+            </div>
+            <p className="mt-2 border-t border-slate-100 pt-2 text-slate-600">Margen aplicado: {margenAplicado === '' || margenAplicado == null ? 'Automático por reglas del sistema' : `${margenAplicado}%`}. Margen ponderado real (precio − costo) ÷ precio: s/H {margenGlobal?.sinHerrajes?.toFixed(1) ?? '—'}% · c/H {margenGlobal?.conHerrajes?.toFixed(1) ?? '—'}%.</p>
+          </section>}
+        </div>}
+        {warning && <p role="status" className="mt-2 max-w-sm text-left text-xs text-amber-800">{warning}</p>}
       </div>
     </div>
   );

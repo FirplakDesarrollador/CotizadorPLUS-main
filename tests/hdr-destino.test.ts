@@ -1,6 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { crearDestinoHdr, crearZipHdr, nombreCarpetaHdr, type DirectorioHdr } from '../src/app/hdr/destinoExportacion';
+import { nombreArchivoPdf } from '../src/app/hdr/pdfExport';
+import { descargarExcelHdr } from '../src/app/hdr/excel';
+
+test('los PDF se guardan con el nombre del mueble sin HDR y conservan HRJ si está incluido', () => {
+  assert.equal(nombreArchivoPdf('BOV8078.561-SMG 1 PUERTA'), 'BOV8078_561_SMG_1_PUERTA.pdf');
+  assert.equal(nombreArchivoPdf('HRJ BOV8078.561-SMG 1 PUERTA'), 'HRJ_BOV8078_561_SMG_1_PUERTA.pdf');
+});
+
+test('el Excel HDR se guarda sin anteponer HDR al nombre elegido', async () => {
+  const nombres: string[] = [];
+  await descargarExcelHdr([], 'BOV8078.561-SMG', { guardar: async nombre => { nombres.push(nombre); }, finalizar: async () => {} });
+  assert.deepEqual(nombres, ['BOV8078.561-SMG.xlsx']);
+});
 
 test('crea la carpeta del proyecto en el destino elegido y no sobrescribe referencias repetidas', async () => {
   const carpetas: string[] = [], files = new Map<string,string>();

@@ -42,11 +42,12 @@ La agrupación debe reflejarse en despiece, costo, precio, UI, impresión y Exce
 - El despiece presenta dimensiones con máximo un decimal. Los refuerzos y
   `gola_madera` nominales de 80 mm se normalizan a 80 mm exactos antes de
   calcular área, canto y costo; no se redondean únicamente en pantalla.
-- Al calcular un grupo, A1 define automáticamente el tablero de `caja`, el de
-  `refuerzo` y el canto de caja para todos los integrantes. Esto corrige estados
-  persistidos o cambios de perfil incompatibles sin alterar los materiales de
-  frente. En grupos B-SM no se compara el tablero de fondo porque esa pieza se
-  omite temporalmente.
+- La agrupación admite distintos códigos de tablero y cantos entre módulos.
+  Las piezas continuas solo se fusionan si su geometría, material y cantos
+  coinciden; de lo contrario conservan su fabricación local. Los laterales
+  solo descuentan una división compartida cuando ambos módulos tienen tablero
+  y canto compatibles. Cada pieza local usa el espesor de su propio tablero.
+  La profundidad, política de margen y espesor de frente mantienen sus reglas.
 
 ### 2.2 Código individual y agrupado
 
@@ -162,8 +163,8 @@ fondo. Los tipos no-SM permanecen intactos.
 Todos los miembros deben cumplir:
 
 - Misma altura y profundidad físicas, normalizadas a milímetros con tolerancia de `0.5 mm`.
-- Mismo código, material y espesor en roles `caja`, `refuerzo` y `fondo`.
-- Mismo calibre de canto de caja.
+- El material y el canto pueden variar; las piezas que no sean compatibles
+  permanecen locales y no se descuentan como compartidas.
 - Mismo espesor de frentes; material y color de frente sí pueden variar.
 - Misma política de margen.
 - `cantidad = 1` y mismo sistema de nomenclatura del proyecto.

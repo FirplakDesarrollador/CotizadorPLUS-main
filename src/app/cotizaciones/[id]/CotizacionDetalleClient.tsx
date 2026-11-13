@@ -4,8 +4,6 @@ import { useRouter } from 'next/navigation';
 import ProyectoHeader from './ProyectoHeader';
 import CocinaCard from './CocinaCard';
 import AddCocina from './AddCocina';
-import GuideButton from '@/components/GuideButton';
-import TooltipToggle from '@/components/TooltipToggle';
 import ProjectConfigPanel, { type ProjectDefaults } from './ProjectConfigPanel';
 import { eliminarCotizacionAction, actualizarCotizacionAction, reordenarCocinasAction } from '../actions';
 import VersionesCotizacion from './VersionesCotizacion';
@@ -15,6 +13,7 @@ import { calcularMargenGlobalProyecto } from '@/lib/module-groups';
 import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario } from '@/lib/comentarios-cotizacion';
 import { crearGuardadoSecuencial } from '@/lib/guardado-secuencial';
 import UbicacionEditor from './UbicacionEditor';
+import { calcularValoresCotizacion } from '@/lib/valores-cotizacion';
 
 type LineaConfig = {
   preset?: Record<string, string>;
@@ -74,19 +73,11 @@ function convertirMedidaProyecto(valor: string | undefined, origen: UnidadProyec
   return String(Math.round((numero * FACTOR_MM[origen] / FACTOR_MM[destino]) * 1e6) / 1e6);
 }
 
-const GUIA_PROYECTO = [
-  { title: 'Proyecto / cotización', description: 'Un proyecto agrupa cocinas, y cada cocina agrupa módulos (muebles). Así se arma una cotización completa.' },
-  { selector: '[data-tour="proyecto"]', title: 'Características del proyecto', description: 'Usa "editar" para cambiar en una sola sección nombre, cliente, moneda, TRM, estado, materiales y margen. A la derecha ves el total.' },
-  { selector: '[data-tour="export"]', title: 'Exportar', description: 'Descarga la cotización en Excel, o ábrela como PDF para imprimir/guardar.' },
-  { selector: '[data-tour="versiones"]', title: 'Versiones', description: 'Guarda puntos de retorno del proyecto y restaura una versión anterior cuando lo necesites.' },
-  { selector: '[data-tour="cocinas"]', title: 'Cocinas y módulos', description: 'Cada tarjeta es una cocina. Dentro agregas módulos con "+ Agregar módulo"; el subtotal por cocina se calcula solo.' },
-  { selector: '[data-tour="add-cocina"]', title: 'Agregar cocina', description: 'Añade tantas cocinas como necesite el proyecto. El total del proyecto suma todas.' },
-];
-
 interface Props {
   cabecera: Cab;
   cocinas: Cocina[];
   cotizacionId: string;
+  lineasSinCocina: Linea[];
   tipos: Tipo[];
   tableros: Tablero[];
   cantos: string[];
@@ -100,7 +91,7 @@ interface Props {
 }
 
 export default function CotizacionDetalleClient({
-  cabecera, cocinas, cotizacionId, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo, versiones
+  cabecera, cocinas, cotizacionId, lineasSinCocina, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo, versiones
 }: Props) {
   const unidadInicial: UnidadProyecto = cabecera.sistema_medida === 'metrico' ? 'cm' : 'in';
   // Estado global del proyecto: si viene initialConfig del query param ?cfg, úsalo;
@@ -235,6 +226,7 @@ export default function CotizacionDetalleClient({
     () => calcularMargenGlobalProyecto(cocinas, cabecera.total_cop),
     [cocinas, cabecera.total_cop]
   );
+  const valores = useMemo(() => calcularValoresCotizacion([...cocinas, { lineas: lineasSinCocina }], Number(cabecera.trm)), [cocinas, lineasSinCocina, cabecera.trm]);
 
   function handleProjectDefaultsChange(next: ProjectDefaults) {
     setProjectDefaults(next);
@@ -273,11 +265,7 @@ export default function CotizacionDetalleClient({
     <>
       <div className="flex items-start justify-between gap-2" data-tour="proyecto">
         <div className="flex-1">
-          <ProyectoHeader cab={cabecera} margenGlobal={margenGlobal} columnasMoneda={{ usd: columnasPrecio.usd, cop: columnasPrecio.cop }} />
-        </div>
-        <div className="flex gap-2">
-          <GuideButton steps={GUIA_PROYECTO} label="Guía" />
-          <TooltipToggle />
+          <ProyectoHeader cab={cabecera} margenGlobal={margenGlobal} valores={valores} margenAplicado={projectDefaults.margen} columnasMoneda={{ usd: columnasPrecio.usd, cop: columnasPrecio.cop }} />
         </div>
       </div>
 

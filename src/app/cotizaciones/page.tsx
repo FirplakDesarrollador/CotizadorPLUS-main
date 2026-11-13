@@ -5,8 +5,6 @@ import { listarCotizaciones } from '@/lib/cotizaciones';
 import { getCotizadorData } from '@/lib/cotizar';
 import { COLORES_ESTADO, ETIQUETAS_ESTADO, type EstadoCotizacion } from '@/lib/pipeline-estados';
 import AppHeader from '@/components/AppHeader';
-import GuideButton from '@/components/GuideButton';
-import TooltipToggle from '@/components/TooltipToggle';
 import CotizacionRowActions from './CotizacionRowActions';
 import NuevoCotizacionForm from './NuevoCotizacionForm';
 import RegistroForm from './pipeline/RegistroForm';
@@ -14,12 +12,6 @@ import PipelineVista from './pipeline/PipelineVista';
 import DashboardVista from './DashboardVista';
 import CotizacionesNavegacion from './CotizacionesNavegacion';
 
-const GUIA_LISTA = [
-  { title: 'Cotizaciones', description: 'Aquí creas y consultas tus proyectos. Cada proyecto contiene sus áreas y módulos.' },
-  { selector: '[data-tour="vistas"]', title: 'Registro, Pipeline y Dashboard', description: 'Registra oportunidades CEFI, consulta el Pipeline o abre el dashboard unificado. Volver te lleva al listado de cotizaciones.' },
-  { selector: '[data-tour="nuevo"]', title: 'Nuevo proyecto', description: 'Completa constructora, ubicación, moneda, materiales y familias. Al venir de Pipeline se precargan solo los datos del proyecto.' },
-  { selector: '[data-tour="lista"]', title: 'Tus proyectos', description: 'Consulta totales y estados. La tabla tiene scroll propio y su cabecera permanece visible.' },
-];
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 export default async function CotizacionesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -29,10 +21,7 @@ export default async function CotizacionesPage({ searchParams }: { searchParams:
   const vista = typeof params.vista === 'string' && ['registro','pipeline','dashboard'].includes(params.vista) ? params.vista : 'lista';
   function marco(children:React.ReactNode, lista=false) {
     return <div className="min-h-screen bg-slate-50">
-      <AppHeader nombre={nombre} email={user?.email} rol={rol} active="cotizaciones"/>
-      <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-end gap-3 px-4 py-4">
-        <GuideButton steps={GUIA_LISTA} label="Guía de uso"/><TooltipToggle/>
-      </div>
+      <AppHeader nombre={nombre} email={user?.email} rol={rol} active="cotizaciones" helpContext={vista === 'pipeline' ? 'pipeline' : 'cotizaciones'}/>
       <main className={lista?'cotizaciones-main-grid mx-auto w-full max-w-[1600px] px-4 pb-6':'mx-auto w-full min-w-0 max-w-[1600px] space-y-5 px-4 pb-6'}>
         {!lista&&<div className="flex flex-wrap items-center justify-between gap-4"><Link href="/cotizaciones" className="inline-block text-sm font-medium text-slate-600 underline">Volver</Link><CotizacionesNavegacion vista={vista}/></div>}{children}
       </main>

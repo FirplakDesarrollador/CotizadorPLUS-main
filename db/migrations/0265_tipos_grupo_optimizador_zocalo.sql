@@ -1,6 +1,6 @@
--- 0261 — Zócalos (TK) como grupo propio del optimizador
+-- 0265 — Zócalos (TK) como grupo propio del optimizador
 --
--- El optimizador discrimina Muebles, Paneles, Fillers y Zócalos. Hasta 0260 el zócalo TK
+-- El optimizador discrimina Muebles, Paneles, Fillers y Zócalos. Hasta 0264 el zócalo TK
 -- contaba como panel por compartir margen_key 'pn_tk'; ahora va aparte según su
 -- categoria 'zocalo'. PN y los complementos D/R siguen como panel.
 -- Idempotente.

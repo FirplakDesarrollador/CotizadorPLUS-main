@@ -45,7 +45,7 @@ mostraba 476 unidades y 1.467 piezas cuando el proyecto real tiene 2.868 unidade
 Ahora cada módulo lleva `cantidad = cantidad de la línea × repeticiones del área` (`unidadesFisicas`),
 igual que HDR y consumos; la lista de corte, el plan por días y los esquemas usan esas unidades.
 
-**Clasificación en Supabase (migración `0260_tipos_grupo_optimizador.sql`, aplicada):** columna
+**Clasificación en Supabase (migración `0264_tipos_grupo_optimizador.sql`, aplicada):** columna
 `cot_tipos_mueble.grupo_optimizador` (`mueble` | `panel` | `filler`, NOT NULL, check). Se llenó desde
 `margen_key`: `muebles` → mueble (inferior, superior, vanity, closet, kit y piezas BT/DF/E); `pn_tk` → panel
 (PN, PN-SF, zócalo TK y complementos D/R); `fillers` → filler (F, F-SF). Un trigger asigna el grupo a los
@@ -71,7 +71,7 @@ Los guardados anteriores conservan sus cifras (snapshot); se corrigen al volver 
 
 ### Zócalos aparte y piezas por grupo (2026-11-12)
 
-Migración `0261_tipos_grupo_optimizador_zocalo.sql` (aplicada): el check admite `zocalo` y TK (categoria
+Migración `0265_tipos_grupo_optimizador_zocalo.sql` (aplicada): el check admite `zocalo` y TK (categoria
 `zocalo`) pasa a ese grupo; PN, PN-SF, D y R siguen en panel. El trigger da `zocalo` a los tipos nuevos con
 categoria `zocalo`; `grupoDeTipo` hace lo mismo como respaldo. La pantalla muestra cuatro tarjetas con las
 **piezas** de cada grupo (Muebles, Paneles, Fillers, Zócalos (TK)), con unidades y líneas como detalle, y una

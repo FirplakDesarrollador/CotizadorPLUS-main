@@ -150,7 +150,8 @@ const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM'
 const PREFS_TORRE_DIMENSIONES_TK = ['PC', 'PCFD', 'PCFD-MO', 'VPC', 'OVPC'] as const;
 
 function esTorreConDimensionesTk(pref: string): boolean {
-  return (PREFS_TORRE_DIMENSIONES_TK as readonly string[]).includes(pref);
+  return (PREFS_TORRE_DIMENSIONES_TK as readonly string[]).includes(pref.replace(/-SF$/, ''))
+    || /^PC(?:-MO)?(?:-SMG?)?(?:-SF)?$/.test(pref);
 }
 
 export function incluyeAltoEnCodigo(pref: string | null | undefined): boolean {
@@ -187,13 +188,15 @@ export type CodigoComercialInput = {
 export function codigoComercial(input: CodigoComercialInput): string {
   const { pref, largo, alto, prof, unidad, sistema } = input;
   const prefNormalizado = String(pref).toUpperCase();
+  const prefSinFondo = prefNormalizado.replace(/-SF$/, '');
+  const blindSinFondo = /^(BBLFD(?:-D-L\/R-SM)?|WBL-D-L\/R-SM)-SF$/.test(prefNormalizado);
   // SMG18 es una convención del segmento comercial, no una lista cerrada de
   // tipologías. Aplica a cualquier familia que declare un segmento SMG.
   const esSmg = prefNormalizado.split('-').includes('SMG');
   const esTw = prefNormalizado === 'TW';
   const esTwSmPush = prefNormalizado === 'TW-SM-PUSH';
   const esTwSmHood = prefNormalizado === 'TW-SM-HOOD';
-  let codigo = codigoModulo(pref, largo, unidad, sistema);
+  let codigo = codigoModulo(blindSinFondo ? prefSinFondo : pref, largo, unidad, sistema);
   // Las nuevas tipologías con sufijo propio (W-SM, OW-MO, W-SM-PUSH) conservan
   // ese sufijo al final: sus medidas variables se insertan antes de él.
   const agregarMedida = (medida: string) => {
@@ -255,14 +258,14 @@ export function codigoComercial(input: CodigoComercialInput): string {
   // DB-*-SM / DB-*-SM-FE, por lo que un estado heredado nunca debe convertir
   // DB en `DBXX-...-SM`.
   const bloqueaSmTransversal = prefNormalizado === 'DB' || esDbFe;
-  const bblfdSufijo = prefNormalizado === 'BBLFD'
+  const bblfdSufijo = prefSinFondo === 'BBLFD'
     && input.door != null
     && Number.isFinite(input.door)
     && input.door > 0
     && input.doorHand
     ? `-D${anchoCodigo(input.door, unidad, sistema)}${input.doorHand}`
     : '';
-  if ((prefNormalizado === 'WBL-D-L/R-SM' || prefNormalizado === 'BBLFD-D-L/R-SM')
+  if ((prefSinFondo === 'WBL-D-L/R-SM' || prefSinFondo === 'BBLFD-D-L/R-SM')
     && input.door != null
     && Number.isFinite(input.door)
     && input.door > 0
@@ -279,9 +282,9 @@ export function codigoComercial(input: CodigoComercialInput): string {
     : null;
   const codigoBase = codigo + bblfdSufijo + dbSufijo + pcfdSufijo
     + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente))
-    + (input.conFondo === false
+    + (blindSinFondo || (input.conFondo === false
       && !esIndependienteDeFondo(prefNormalizado)
-      && !prefNormalizado.split('-').includes('SF') ? '-SF' : '');
+      && !prefNormalizado.split('-').includes('SF')) ? '-SF' : '');
   const tkMedida = esTorreTk && input.zocaloIn != null
     ? anchoCodigo(input.zocaloIn, 'in', sistema)
     : '';

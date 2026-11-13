@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { CAMPOS_PIPELINE, DESCONOCIDO_PIPELINE, validarRegistroPipeline, validarUrlPipeline, validarFechaPipeline } from '@/lib/pipeline-campos';
 import { CAMPOS_EXTRA_PIPELINE, NUMEROS_PIPELINE } from '@/lib/pipeline';
 import { ESTADOS_COTIZACION } from '@/lib/pipeline-estados';
+import { notificarAdminsEnDesarrollo } from '@/lib/notificar-en-desarrollo';
 export async function registrarPipelineAction(_prev: unknown, form: FormData): Promise<{ ok: boolean; error?: string; id?: string }> {
   try {
     const { user } = await getUserAndRole();
@@ -46,8 +47,10 @@ export async function editarPipelineAction(id: string, cambios: Record<string,st
       if(key.startsWith('fecha_'))patch[key]=validarFechaPipeline(value);
     }
     if(!Object.keys(patch).length)return {ok:true,row:actual.data};
+    const entraEnDesarrollo=patch.estado==='en_desarrollo'&&actual.data.estado!=='en_desarrollo';
     const result=await sb.from('cot_pipeline').update({...patch,campos_desconocidos:[...desconocidos]}).eq('id',id).select('*').single();
     if(result.error)throw new Error('No se pudieron guardar los cambios.');
-    revalidatePath('/cotizaciones');return {ok:true,row:result.data};
+    const warning=entraEnDesarrollo?await notificarAdminsEnDesarrollo({cotizacionId:id,nombre:String(actual.data.nombre_proyecto??actual.data.cliente??'Oportunidad'),estadoAnterior:String(actual.data.estado)}):undefined;
+    revalidatePath('/cotizaciones');return {ok:true,row:result.data,warning};
   }catch(e){return {ok:false,error:e instanceof Error?e.message:'Error al guardar.'};}
 }

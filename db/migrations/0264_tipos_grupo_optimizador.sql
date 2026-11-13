@@ -1,4 +1,4 @@
--- 0260 — Grupo de conteo del optimizador por tipo de mueble
+-- 0264 — Grupo de conteo del optimizador por tipo de mueble
 --
 -- El optimizador de corte separa los módulos de una cotización en tres grupos:
 -- Muebles, Paneles y Fillers. La clasificación vive en el catálogo para que aplique

@@ -26,7 +26,7 @@ const pieza = (nombre: string, rol_tablero: string, formula_cantidad: string, fo
   },
 });
 
-function calcularPc() {
+function calcularPc(puertaSup = 15) {
   const piezas = [
     pieza('lateral', 'caja', '2', 'A-zocalo', 'P'),
     pieza('base_tapa', 'caja', '3', 'L-2*TC', 'P'),
@@ -41,7 +41,7 @@ function calcularPc() {
       dims: { L: 30, A: 96, P: 24 },
       piezas,
       reglas: [],
-      overrides: { n_entrepanos: 5, n_puertas: 2, zocalo: 4, PUERTA_SUP: 15, RV: 0.125 },
+      overrides: { n_entrepanos: 5, n_puertas: 2, zocalo: 4, PUERTA_SUP: puertaSup, RV: 0.125 },
       preset: { caja: 'CAJA', refuerzo: 'CAJA', frente: 'FRENTE' },
       tablerosByCode: {
         CAJA: { codigo: 'CAJA', espesor_mm: 15, precio_m2: 1 },
@@ -142,6 +142,28 @@ test('PC visualiza las puertas superiores arriba y las inferiores desde TK', () 
   assert.ok(superiores.every((p) => Math.abs(p.z + p.h - (96 * 25.4 - 3.175)) < 0.1));
   assert.ok(inferiores.every((p) => Math.abs(p.z - 4 * 25.4) < 0.1));
   assert.ok(Math.max(...inferiores.map((p) => p.z + p.h)) < Math.min(...superiores.map((p) => p.z)));
+});
+
+test('PC mantiene el fijo centrado en la junta aunque cambie PUERTA_SUP', () => {
+  for (const altura of [15, 24, 36, 40]) {
+    const { scene } = calcularPc(altura);
+    const fijos = scene.paneles.filter(p => p.nombre === 'base_tapa').sort((a,b)=>a.z-b.z);
+    const superior = scene.paneles.find(p=>p.nombre === 'puerta_superior')!;
+    const inferior = scene.paneles.find(p=>p.nombre === 'puerta_inferior')!;
+    const junta = (superior.z + inferior.z + inferior.h)/2;
+    assert.ok(Math.abs(fijos[1].z + fijos[1].h/2-junta)<0.001);
+  }
+});
+
+test('PC cuenta el fijo en la regla superior y distribuye el resto debajo', () => {
+  for (const [altura, cantidadSuperior] of [[15,0],[24,0],[36,1],[40,2]]) {
+    const { scene } = calcularPc(altura);
+    const fijo = scene.paneles.filter(p=>p.nombre==='base_tapa').sort((a,b)=>a.z-b.z)[1];
+    const moviles = scene.paneles.filter(p=>p.nombre==='entrepano');
+    assert.equal(moviles.filter(p=>p.z>=fijo.z+fijo.h).length,cantidadSuperior);
+    assert.equal(moviles.filter(p=>p.z+p.h<=fijo.z).length,4-cantidadSuperior);
+    assert.equal(moviles.length,4);
+  }
 });
 
 test('PCFD corta tres base_tapa_division y cuatro entrepaños móviles', () => {

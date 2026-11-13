@@ -27,6 +27,9 @@ export function ajustarGeometriaBov<T extends Pieza>(piezas: readonly T[], pref:
 
 /** Normaliza ejes geométricos; orientarPieza muestra después el alto del frente primero. */
 export function normalizarPlantillasFabricacion<T extends Pieza>(piezas: readonly T[], pref: string): T[] {
+  const corregida = /^(?:PC(?:-MO)?-SMG?|(?:BMW|BOMH)-1(?:-FE)?-SMG?)(?:-SF)?$/.test(pref);
+  const bomh = /^BOMH-1(?:-FE)?-SMG?(?:-SF)?$/.test(pref);
+  const base = piezas.find(p => p.nombre === 'base' || p.nombre === 'base_tapa');
   return piezas.map(original => {
     let p = original;
     if (pref === 'SVFDH-SMG' && p.nombre === 'frente') p = { ...p, formula_ancho: 'A-30/25.4' };
@@ -35,9 +38,18 @@ export function normalizarPlantillasFabricacion<T extends Pieza>(piezas: readonl
     if (/^DB(?:-|$)/.test(pref) && !/-FE(?:-|$)/.test(pref) && p.nombre === 'base_gaveta') p = { ...p, cantos: { ...p.cantos, largos: 2, anchos: 0 } };
     const largo = String(p.formula_largo ?? ''), ancho = String(p.formula_ancho ?? '');
     const invertida = (/\bA\b/.test(largo) && !/\bA\b/.test(ancho)) || (!/\bL\b/.test(largo) && /\bL\b/.test(ancho));
-    if (FRENTES_HEREDADOS.has(pref) && p.rol_tablero === 'frente' && /^(frente|puerta)(_|$)/.test(p.nombre) && invertida) {
+    if ((FRENTES_HEREDADOS.has(pref) || /^BOMH-1(?:-FE)?-SMG?(?:-SF)?$/.test(pref)) && p.rol_tablero === 'frente' && /^(frente|puerta)(_|$)/.test(p.nombre) && invertida) {
       p = { ...p, formula_largo: p.formula_ancho, formula_ancho: p.formula_largo, ...(p.visualizacion ? { visualizacion: { ...p.visualizacion, intercambiar: false } } : {}) };
     }
+    if (corregida && base && /^refuerzo_delantero(?:_|$)/.test(p.nombre)) p = {
+      ...p, formula_largo: base.formula_largo, resta_largo: base.resta_largo,
+      formula_ancho: '80/25.4', resta_ancho: 0,
+    };
+    if (bomh && /^(frente_izq|frente_der)$/.test(p.nombre)) p = {
+      ...p, formula_ancho: 'A-80/25.4-fijo_inferior_z-TR', resta_ancho: 0,
+      visualizacion: { ...p.visualizacion, z: 'FI+TR', intercambiar: false },
+    };
+    if (/^BOMH-1-SMG?(?:-SF)?$/.test(pref) && p.nombre === 'trasero_gaveta') p = { ...p, formula_ancho: '68/25.4', resta_ancho: 0 };
     const carcasa = (/^base(?:_|$)/.test(p.nombre) && !/^base_gaveta(?:_|$)/.test(p.nombre)) || /^tapa(?:_|$)/.test(p.nombre) || /refuerzo|gola/.test(p.nombre);
     if (carcasa && p.cantos) p = { ...p, cantos: { ...p.cantos, largos: Number(p.cantos.largos ?? 0) || Number(p.cantos.anchos ?? 0), anchos: 0 } };
     return p;
@@ -52,22 +64,24 @@ export function normalizarReglasPuertas<T extends Regla>(reglas: readonly T[]): 
 /** El segundo eje de los entrepaños es su profundidad de fabricación. */
 export function ajustarEntrepanos<T extends Pieza>(piezas: readonly T[], pref: string): T[] {
   const tipo = pref.trim().toUpperCase();
+  const fijoComoBase = /^(?:PC-MO(?:-SMG?)?|(?:BMW|BOMH)-1(?:-FE)?-SMG?)(?:-SF)?$/.test(tipo);
+  const base = piezas.find(p => p.nombre === 'base' || p.nombre === 'base_tapa');
   const formula = tipo === 'B-SF' ? '350/25.4'
     : /^(B|B-FE)(?:-SF)?$/.test(tipo) ? '300/25.4'
     : 'P <= 23.000000001 ? P-1.5 : P-2';
-  return piezas.map(p => /^entrepano(?:_|$)/i.test(p.nombre)
+  return piezas.map(p => fijoComoBase && base && p.nombre === 'entrepano_fijo'
+    ? { ...p, formula_largo: base.formula_largo, formula_ancho: base.formula_ancho,
+      resta_largo: base.resta_largo, resta_ancho: base.resta_ancho,
+      visualizacion: { ...p.visualizacion, y: base.visualizacion?.y ?? '0' } }
+    : /^entrepano(?:_|$)/i.test(p.nombre)
     ? { ...p, formula_ancho: formula, resta_ancho: 0 }
     : p);
 }
 
 type ModuloEditable = { preset: Record<string, string>; cantoCaja?: string; largo: number; alto: number; prof: number; unidad: UnidadDim; cantidad?: number };
 
-/** Una edición incompatible se conserva separando únicamente el módulo editado. */
+/** Solo los cambios geométricos o de cantidad requieren separar una línea del grupo. */
 export function requiereSepararModulo(antes: ModuloEditable, despues: ModuloEditable): boolean {
-  const tablero = (m: ModuloEditable, rol: string) => m.preset[rol] ?? (rol === 'refuerzo' ? m.preset.caja : '');
-  const canto = (m: ModuloEditable) => (m.cantoCaja ?? '').toUpperCase().replace(/\s/g, '').replace(',', '.');
-  return ['caja', 'refuerzo', 'fondo'].some(rol => tablero(antes, rol) !== tablero(despues, rol))
-    || canto(antes) !== canto(despues)
-    || (['largo', 'alto', 'prof'] as const).some(eje => Math.abs(toInches(antes[eje], antes.unidad) - toInches(despues[eje], despues.unidad)) > 0.000001)
+  return (['largo', 'alto', 'prof'] as const).some(eje => Math.abs(toInches(antes[eje], antes.unidad) - toInches(despues[eje], despues.unidad)) > 0.000001)
     || Number(despues.cantidad ?? 1) !== 1;
 }

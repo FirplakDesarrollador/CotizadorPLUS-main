@@ -9,7 +9,7 @@ export default async function CotizadorPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <AppHeader nombre={nombre} email={user?.email} rol={rol} active="cotizador" />
+      <AppHeader nombre={nombre} email={user?.email} rol={rol} active="cotizador" helpContext="simulador" />
       <main className="mx-auto max-w-6xl px-4 py-6">
         <CotizadorForm tipos={data.tipos} tableros={data.tableros} trmDefault={data.trmDefault} presetDefault={data.presetDefault} rolesByTipo={data.rolesByTipo} perfiles={data.perfiles} perfilDefaultId={data.perfilDefaultId} herrajesByTipo={data.herrajesByTipo} cantos={data.cantos} />
       </main>
