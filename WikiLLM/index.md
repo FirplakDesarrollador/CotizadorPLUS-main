@@ -81,6 +81,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Visualización y agrupación de familias FE](wiki/visualizacion_familias_fe.md) - Corrección geométrica 3D (fondo de gaveta, frentes mixtos y cajón superior) y homologación continua para B-FE, UB-FE y V-FE.
 
 - [Plantilla de propuesta FIRPLAK](wiki/plantilla_propuesta_firplak.md) - Selección automática, datos de cotización, campos editables, imágenes originales y documento imprimible FIRPLAK.
+- [Propuesta impresa en inglés](wiki/propuesta_ingles.md) - Botón Print / PDF (English), parámetro lang=en, glosario de ebanistería y textos editables en inglés de FIRPLAK.
 
 ## Entorno de Desarrollo
 - [Dependencias del Proyecto](wiki/dependencias_proyecto.md) - Stack tecnológico (Next.js, React, Zustand, Supabase client).

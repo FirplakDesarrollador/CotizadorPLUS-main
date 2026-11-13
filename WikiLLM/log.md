@@ -3173,3 +3173,11 @@ Migración 0265 (aplicada; creada como 0261): grupo `zocalo` para TK. Tarjetas c
 ## [2026-11-13] update | Renumeración de migraciones del optimizador a 0264/0265
 
 Al integrar DEV, `0260_tipos_grupo_optimizador` y `0261_tipos_grupo_optimizador_zocalo` chocaban con `0260_pipeline_en_desarrollo` y `0261_pc_bmw_bomh_sm_smg`. Se renombraron a `0264` y `0265`. Ya estaban aplicadas en Supabase; el cambio solo afecta el nombre del archivo. Ver [optimizador_corte](wiki/optimizador_corte.md).
+
+## [2026-11-13] update | PDF FIRPLAK: se quita la fila de herrajes adicionales del resumen
+
+El pie del resumen comercial de la plantilla FIRPLAK ya no imprime “Herrajes / otros adicionales (ver detalle)”; queda el subtotal de muebles y el total. La sección de herrajes/otros y el cálculo del total no cambian. Ver [plantilla_propuesta_firplak](wiki/plantilla_propuesta_firplak.md).
+
+## [2026-11-13] ingest | Botón Print / PDF (English) y propuesta en inglés
+
+Nuevo botón junto a Imprimir / PDF que abre la impresión con `lang=en`. `src/lib/propuesta-ingles.ts` reúne el glosario de ebanistería, la traducción de descripciones, anotaciones, herrajes y especificaciones, y los números en palabras. FIRPLAK traduce todos sus textos y guarda textos editables en inglés (`*En`) en `plantilla_firplak` sin migración; la plantilla general y los bloques compartidos de CEMA también se traducen. Pruebas en `tests/propuesta-ingles.test.ts`. Ver [propuesta_ingles](wiki/propuesta_ingles.md).

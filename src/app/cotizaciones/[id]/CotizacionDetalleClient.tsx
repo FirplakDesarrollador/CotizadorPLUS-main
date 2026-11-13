@@ -349,6 +349,14 @@ export default function CotizacionDetalleClient({
           }}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
         >🖨 Imprimir / PDF</a>
+        {/* Misma impresion con lang=en: textos fijos y descripciones en ingles. */}
+        <a
+          href={`/cotizaciones/${cotizacionId}/imprimir?sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}&lang=en`}
+          onClick={(event) => {
+            if (estadoRequiereAlertaComentario(cabecera.estado) && !window.confirm(ALERTA_COMENTARIO)) event.preventDefault();
+          }}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+        >🖨 Print / PDF (English)</a>
         <VersionesCotizacion cotizacionId={cotizacionId} versiones={versiones} estado={cabecera.estado} />
       </div>
 

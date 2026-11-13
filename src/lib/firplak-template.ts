@@ -9,6 +9,9 @@ export type FirplakTemplate = {
   closetBoard: string; closetBack: string; closetCase: string; closetDoors: string; closetPanels: string;
   bathBoard: string; bathBack: string; bathCase: string; bathDoors: string; bathPanels: string;
   packagingNotes: string; exclusions: string; additionalTerms: string;
+  // Versión en inglés de los textos libres, para "Print / PDF (English)". Se
+  // guardan aparte porque no se pueden traducir solos.
+  deliveryScopeEn: string; packagingNotesEn: string; exclusionsEn: string; additionalTermsEn: string;
 };
 
 export const FIRPLAK_TEMPLATE_DEFAULTS: FirplakTemplate = {
@@ -26,6 +29,10 @@ export const FIRPLAK_TEMPLATE_DEFAULTS: FirplakTemplate = {
   packagingNotes: 'Muebles empacados individualmente y protegidos para transporte. El empaque especial debe acordarse antes de producción.',
   exclusions: 'No incluye instalación, mesones, lavaplatos, grifería, desagüe, iluminación ni electrodomésticos.',
   additionalTerms: '',
+  deliveryScopeEn: 'Delivery in Colombia',
+  packagingNotesEn: 'Cabinets are individually packed and protected for shipping. Special packaging must be agreed upon before production.',
+  exclusionsEn: 'Installation, countertops, sinks, faucets, plumbing, lighting and appliances are not included.',
+  additionalTermsEn: '',
 };
 
 /**

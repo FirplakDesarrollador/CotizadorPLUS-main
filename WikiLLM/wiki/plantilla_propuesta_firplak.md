@@ -20,3 +20,11 @@ La barra superior conserva las mismas tres acciones de CEMA: **Volver**, **Guard
 ## Programación opcional (2026-11-04)
 
 El interruptor situado antes del listado guarda `showModuleSchedule` en la plantilla. Predeterminado ON; OFF elimina por completo la página de programación al imprimir, sin afectar importes ni resumen. Ver [reglas y evidencia](inferiores_b_ow_mo_programacion_pdf.md).
+
+## Pie del resumen comercial (2026-11-13)
+
+El pie de la tabla **Resumen de la cotización** muestra solo **Subtotal muebles con herrajes incorporados** y el total (con IVA cuando aplica). Se retiró la fila intermedia “Herrajes / otros adicionales (ver detalle)”. Los artículos de **Agregar herrajes/otros** siguen con cantidades y valores en su sección propia, y el total los sigue incluyendo una sola vez.
+
+## Versión en inglés (2026-11-13)
+
+Con `lang=en` (botón **Print / PDF (English)**) la plantilla imprime todos sus textos en inglés y usa los campos `*En` de la plantilla para embalaje, exclusiones, alcance y condiciones adicionales. Ver [propuesta en inglés](propuesta_ingles.md).
