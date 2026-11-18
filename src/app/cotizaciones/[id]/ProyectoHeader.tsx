@@ -8,6 +8,7 @@ import ComentariosProyecto from './ComentariosProyecto';
 import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario, parseComentariosCotizacion } from '@/lib/comentarios-cotizacion';
 import { ESTADOS_COTIZACION, ETIQUETAS_ESTADO, COLORES_ESTADO } from '@/lib/pipeline-estados';
 import type { ValoresCotizacion } from '@/lib/valores-cotizacion';
+import type { Incoterm } from '@/lib/entrega-cotizacion';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -27,6 +28,7 @@ export default function ProyectoHeader({
   columnasMoneda,
   valores,
   margenAplicado,
+  incoterm,
 }: {
   cab: Cab;
   editing?: boolean;
@@ -40,6 +42,7 @@ export default function ProyectoHeader({
   columnasMoneda?: ColumnasMoneda;
   valores?: ValoresCotizacion;
   margenAplicado?: string | number;
+  incoterm?: Incoterm | null;
   margenGlobal?: { sinHerrajes: number | null; conHerrajes: number | null } | null;
 }) {
   const router = useRouter();
@@ -202,6 +205,7 @@ export default function ProyectoHeader({
               </span>
             </>
           )}
+          {incoterm && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{incoterm}</span>}
         </p>
       </div>
       {/* Las casillas de columna eligen que monedas se ven; la moneda del proyecto

@@ -1,6 +1,15 @@
 import type { EspecificacionProyecto } from '@/lib/materiales-proyecto';
 import type { AdicionalPropuesta } from '@/lib/propuesta-cotizacion';
 import type { IdiomaPropuesta } from '@/lib/propuesta-ingles';
+export function EntregaPdf({ contenedores, idioma }: { contenedores: number | null; idioma: 'es' | 'en' }) {
+  const en = idioma === 'en';
+  return <div data-pdf="entrega" className="break-inside-avoid">
+    <dl className="flex items-center justify-between gap-4 bg-slate-100 px-3 py-2 text-sm">
+      <dt>{en ? 'Containers' : 'Contenedores'}</dt>
+      <dd className="text-right font-semibold tabular-nums">{contenedores?.toLocaleString(en ? 'en-US' : 'es-CO') ?? '—'}</dd>
+    </dl>
+  </div>;
+}
 
 export function MaterialesProyectoPdf({ bloques }: { bloques: EspecificacionProyecto[] }) {
   return <><style>{`@media print { thead { display: table-header-group; break-after: avoid; } tfoot { display: table-row-group; } tr { break-inside: avoid; } h2, h3 { break-after: avoid; } }`}</style><div data-pdf="materiales-proyecto">{bloques.map((bloque, indice) => <div key={`${bloque.familia}-${indice}`} className="mb-4 break-inside-avoid">

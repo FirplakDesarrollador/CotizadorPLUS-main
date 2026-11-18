@@ -7,6 +7,8 @@ import { getCotizadorData } from '@/lib/cotizar';
 import AppHeader from '@/components/AppHeader';
 import CotizacionDetalleClient from './CotizacionDetalleClient';
 import type { ProjectDefaults } from './ProjectConfigPanel';
+import { getParametros } from '@/lib/admin';
+import { normalizarDdp, normalizarEntrega } from '@/lib/entrega-cotizacion';
 
 type LineaConfig = {
   preset?: Record<string, string>;
@@ -68,11 +70,12 @@ export default async function CotizacionDetallePage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const [{ user, rol, nombre }, { cabecera, cocinas, lineasSinCocina }, data, versiones] = await Promise.all([
+  const [{ user, rol, nombre }, { cabecera, cocinas, lineasSinCocina }, data, versiones, parametros] = await Promise.all([
     getUserAndRole(),
     getCotizacion(id),
     getCotizadorData(),
     listarVersionesCotizacion(id),
+    getParametros(),
   ]);
   if (!cabecera) notFound();
   const aperturasPendientes = [...cocinas.flatMap(c => c.lineas), ...lineasSinCocina].filter(l => {
@@ -103,6 +106,9 @@ export default async function CotizacionDetallePage({
           presetDefault={data.presetDefault}
           rolesByTipo={data.rolesByTipo}
           initialConfig={initialConfig}
+          abrirCaracteristicas={Boolean(sp.cfg)}
+          entregaInicial={normalizarEntrega(cabecera.entrega)}
+          ddp={normalizarDdp(parametros.ddp)}
           perfiles={data.perfiles}
           perfilDefaultId={data.perfilDefaultId}
           herrajesByTipo={data.herrajesByTipo}

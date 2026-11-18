@@ -11,7 +11,7 @@ técnicas y los términos para evitar páginas con contenido residual.
 ## Selección automática
 
 `/cotizaciones/[id]/imprimir` consulta `cot_cotizaciones.cotizador_por`. Para
-`CEMA` renderiza `CemaPrintEditor`; para `FIRPLAK` usa su editor de propuesta comercial. El botón “Imprimir / PDF” no necesita parámetros de plantilla.
+`CEMA` renderiza `CemaPrintEditor`; para `FIRPLAK` usa su editor de propuesta comercial. “Imprimir / PDF” solicita `lang=es` y “Print / PDF (English)” solicita `lang=en`. CEMA localiza el texto fijo, las fechas y el formato monetario según ese idioma.
 
 ## Datos automáticos
 
@@ -31,6 +31,7 @@ de puertas; especificación de mesones; aviso arancelario y términos adicionale
 “Guardar” persiste sin imprimir y “Guardar e imprimir / PDF” persiste antes de
 invocar el diálogo nativo. La Server Action usa el cliente autenticado y las
 políticas RLS existentes de `cot_cotizaciones`.
+Los campos traducibles en español se guardan en `plantilla_cema.textosEs`. La versión inglesa usa los campos históricos del mismo JSON. Los importes, fechas y referencias son comunes. Los avisos y condiciones libres se editan en cada idioma.
 “Imprimir / PDF” abre la plantilla en la misma pestaña. El botón “Volver” usa el
 historial para regresar al detalle y conservar la posición previa; si la
 plantilla fue abierta directamente, navega a `/cotizaciones/[id]` como respaldo.

@@ -16,6 +16,7 @@ import type { FirplakTemplate } from '@/lib/firplak-template';
 import { normalizarUbicacion } from '@/lib/ubicacion-cotizacion';
 import { actualizarUbicacionCotizacion } from '@/lib/cotizaciones';
 import { getUserAndRole } from '@/lib/auth';
+import { normalizarEntrega, type ConfigEntrega } from '@/lib/entrega-cotizacion';
 import { createClient } from '@/lib/supabase/server';
 import { notificarAdminsEnDesarrollo } from '@/lib/notificar-en-desarrollo';
 
@@ -211,6 +212,21 @@ export async function agregarComentarioCotizacionAction(id: string, texto: strin
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'No se pudo agregar el comentario' };
+  }
+}
+
+export async function guardarEntregaAction(id: string, entrega: ConfigEntrega): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const sb = await createClient();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return { ok: false, error: 'Sesión requerida.' };
+    const { error } = await sb.from('cot_cotizaciones').update({ entrega: normalizarEntrega(entrega) }).eq('id', id).select('id').single();
+    if (error) throw error;
+    revalidatePath(`/cotizaciones/${id}`);
+    revalidatePath(`/cotizaciones/${id}/imprimir`);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'No se pudo guardar la entrega.' };
   }
 }
 

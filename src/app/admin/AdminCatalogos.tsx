@@ -572,6 +572,9 @@ function NumInput({ label, value, set, hint }: { label: string; value: number; s
 
 // ---- Editor de parámetros globales ----
 function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> }) {
+  const ddpInicial = (parametros.ddp ?? {}) as { tableroPct?: number; herrajesPct?: number };
+  const [ddpTablero, setDdpTablero] = useState(ddpInicial.tableroPct ?? 0);
+  const [ddpHerrajes, setDdpHerrajes] = useState(ddpInicial.herrajesPct ?? 0);
   const router = useRouter();
   const trm0 = (parametros.trm ?? {}) as { valor?: number; modo?: string };
   const marg0 = (parametros.margenes ?? {}) as Record<string, number>;
@@ -592,6 +595,10 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
   const [error, setError] = useState<string | null>(null);
 
   async function save() {
+    if (![ddpTablero, ddpHerrajes].every(valor => Number.isFinite(valor) && valor >= 0)) {
+      setError('Los porcentajes DDP deben ser mayores o iguales a cero.');
+      return;
+    }
     setSaving(true); setError(null); setMsg(null);
     const updates: { key: string; value: unknown }[] = [
       { key: 'trm', value: { valor: trmValor, modo: trmModo } },
@@ -599,6 +606,7 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
       { key: 'recargo_extra', value: recargo / 100 },
       { key: 'margen_herraje', value: margenHerraje / 100 },
       { key: 'margenes', value: { muebles: mMuebles / 100, fillers: mFillers / 100, pn_tk: mPnTk / 100 } },
+      { key: 'ddp', value: { tableroPct: ddpTablero, herrajesPct: ddpHerrajes } },
     ];
     try {
       if (avanzado) {
@@ -638,6 +646,14 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
           <NumInput label="Margen herraje" value={margenHerraje} set={setMargenHerraje} />
           {/* <NumInput label="Recargo extra" value={recargo} set={setRecargo} /> */}
           <NumInput label="Desperdicio madera" value={despMadera} set={setDespMadera} />
+        </div>
+      </section>
+
+      <section>
+        <h3 className="mb-3 text-sm font-medium text-slate-900">DDP</h3>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <NumInput label="Recargo sobre venta de tablero (%)" value={ddpTablero} set={setDdpTablero} />
+          <NumInput label="Recargo sobre venta de herrajes (%)" value={ddpHerrajes} set={setDdpHerrajes} />
         </div>
       </section>
 

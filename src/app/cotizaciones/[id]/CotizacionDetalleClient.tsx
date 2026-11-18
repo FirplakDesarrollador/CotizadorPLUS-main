@@ -5,7 +5,9 @@ import ProyectoHeader from './ProyectoHeader';
 import CocinaCard from './CocinaCard';
 import AddCocina from './AddCocina';
 import ProjectConfigPanel, { type ProjectDefaults } from './ProjectConfigPanel';
-import { eliminarCotizacionAction, actualizarCotizacionAction, reordenarCocinasAction } from '../actions';
+import EntregaPanel from './EntregaPanel';
+import { calcularRecargoEntrega, resumirEntrega, type AreaEntrega, type ConfigEntrega, type ParametrosDdp } from '@/lib/entrega-cotizacion';
+import { eliminarCotizacionAction, actualizarCotizacionAction, reordenarCocinasAction, guardarEntregaAction } from '../actions';
 import VersionesCotizacion from './VersionesCotizacion';
 import type { CotizacionVersion } from '@/lib/cotizaciones';
 import { CLAVE_CONFIG_FAMILIA, type FamiliaMaterial } from '@/lib/muebles';
@@ -84,6 +86,9 @@ interface Props {
   presetDefault: Record<string, string>;
   rolesByTipo: Record<string, string[]>;
   initialConfig?: Partial<ProjectDefaults> | null;
+  abrirCaracteristicas?: boolean;
+  entregaInicial: ConfigEntrega;
+  ddp: ParametrosDdp;
   perfiles: Perfil[];
   perfilDefaultId: string;
   herrajesByTipo: Record<string, HerrajeTipo[]>;
@@ -91,7 +96,7 @@ interface Props {
 }
 
 export default function CotizacionDetalleClient({
-  cabecera, cocinas, cotizacionId, lineasSinCocina, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo, versiones
+  cabecera, cocinas, cotizacionId, lineasSinCocina, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, abrirCaracteristicas = false, entregaInicial, ddp, perfiles, perfilDefaultId, herrajesByTipo, versiones
 }: Props) {
   const unidadInicial: UnidadProyecto = cabecera.sistema_medida === 'metrico' ? 'cm' : 'in';
   // Estado global del proyecto: si viene initialConfig del query param ?cfg, úsalo;
@@ -156,7 +161,8 @@ export default function CotizacionDetalleClient({
       },
     };
   });
-  const [showCharacteristics, setShowCharacteristics] = useState(false);
+  const [showCharacteristics, setShowCharacteristics] = useState(abrirCaracteristicas);
+  const [entrega, setEntrega] = useState(entregaInicial);
   const [columnasPrecio, setColumnasPrecio] = useState<ColumnasPrecio>({ sinHerrajes: true, conHerrajes: true, usd: true, cop: true });
 
   const router = useRouter();
@@ -227,6 +233,15 @@ export default function CotizacionDetalleClient({
     [cocinas, cabecera.total_cop]
   );
   const valores = useMemo(() => calcularValoresCotizacion([...cocinas, { lineas: lineasSinCocina }], Number(cabecera.trm)), [cocinas, lineasSinCocina, cabecera.trm]);
+  const areasEntrega = cocinas as AreaEntrega[];
+  const logistica = useMemo(() => entrega.modo ? resumirEntrega(entrega, areasEntrega, tableros) : [], [entrega, areasEntrega, tableros]);
+  const recargo = useMemo(() => calcularRecargoEntrega(entregaInicial, ddp, areasEntrega, Number(cabecera.trm)), [entregaInicial, ddp, areasEntrega, cabecera.trm]);
+
+  async function guardarEntrega(config: ConfigEntrega) {
+    const resultado = await guardarEntregaAction(cotizacionId, config);
+    if (resultado.ok) router.refresh();
+    return resultado;
+  }
 
   function handleProjectDefaultsChange(next: ProjectDefaults) {
     setProjectDefaults(next);
@@ -265,7 +280,7 @@ export default function CotizacionDetalleClient({
     <>
       <div className="flex items-start justify-between gap-2" data-tour="proyecto">
         <div className="flex-1">
-          <ProyectoHeader cab={cabecera} margenGlobal={margenGlobal} valores={valores} margenAplicado={projectDefaults.margen} columnasMoneda={{ usd: columnasPrecio.usd, cop: columnasPrecio.cop }} />
+          <ProyectoHeader cab={{ ...cabecera, total_cop: Number(cabecera.total_cop) + recargo.cop, total_usd: Number(cabecera.total_usd) + recargo.usd }} incoterm={entregaInicial.incoterm} margenGlobal={margenGlobal} valores={valores} margenAplicado={projectDefaults.margen} columnasMoneda={{ usd: columnasPrecio.usd, cop: columnasPrecio.cop }} />
         </div>
       </div>
 
@@ -301,6 +316,7 @@ export default function CotizacionDetalleClient({
               defaults={projectDefaults}
               onChange={handleProjectDefaultsChange}
             />
+            <EntregaPanel config={entrega} areas={areasEntrega} resultados={logistica} onChange={setEntrega} onSave={guardarEntrega} />
           </ProyectoHeader>
         ) : null}
       </section>
@@ -341,7 +357,7 @@ export default function CotizacionDetalleClient({
       </div>
 
       <div className="flex flex-wrap gap-2" data-tour="export">
-        <a href={`/cotizaciones/${cotizacionId}/export?sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">⬇ Exportar Excel</a>
+        <a href={`/cotizaciones/${cotizacionId}/export?lang=es&sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">⬇ Exportar Excel</a>
         <a
           href={`/cotizaciones/${cotizacionId}/imprimir?sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}`}
           onClick={(event) => {

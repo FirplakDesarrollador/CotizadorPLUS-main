@@ -3236,3 +3236,27 @@ Se agrega `src/components/AvisoActualizacion.tsx`, montado en `src/app/layout.ts
 ## [2026-11-13] update | HDR: interruptor HRJ en Buscar/Crear
 
 La sección Buscar/Crear incorpora un switch **Prefijo HRJ** independiente del de la generación desde cotización. Antepone `HRJ ` al nombre mostrado y exportado (PDF y Excel) del mueble buscado y del creado manualmente, excepto PN/F/TK y sin duplicar el prefijo. Se extrae `prefijarHrj` en `datosHdr.ts` y se actualizan `HdrBuscarGuardados`, `HdrBuscador` y `tests/hdr-buscar-seguimiento.test.ts`. Ver [HDR Buscar/Crear](wiki/hdr_buscar_seguimiento.md) y [HDR y Excel](wiki/hdr_excel_consolidado.md). El cambio queda primero en `LIz`.
+
+## [2026-11-18] update | Entregas parciales e Incoterm en cotizaciones
+
+Ver [Entrega e Incoterm en cotizaciones](wiki/entrega_cotizaciones.md).
+
+## [2026-11-18] update | Carga útil de contenedores de 20 y 40 pies
+
+Se configuran 28.280 kg y 26.730 kg para entregas parciales y totales.
+
+## [2026-11-18] update | Ajuste de cargas utiles para entregas
+
+Se fijan 15.000 kg para 20 pies y 22.000 kg para 40 pies.
+
+## [2026-11-18] update | Migracion de Entrega en Supabase
+
+Migracion 0267 registrada. Escritura verificada con rollback y calculo de entregas con datos de Kundara Campestre.
+
+## [2026-11-18] update | Modulos por entrega parcial con una sola area
+
+Se asignan lineas completas por ID y se recalculan las unidades, el peso y los contenedores de cada parcial.
+
+## [2026-11-18] update | Transporte DDP y PDF CEMA por idioma
+
+DDP permite sumar transporte manual y activar los porcentajes de parametros. CEMA localiza la propuesta y conserva los campos comerciales por idioma.

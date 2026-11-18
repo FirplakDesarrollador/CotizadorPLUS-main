@@ -1,0 +1,9 @@
+# Entrega e Incoterm en cotizaciones
+
+Características del proyecto se abre en la primera navegación tras crear la cotización. Allí se guarda el Incoterm y la modalidad de entrega. Con varias áreas, los parciales asignan áreas completas por ID. Con una sola área, incluida cocina, baño o clóset, se asignan módulos por ID de línea. El módulo completo va en un solo parcial con su cantidad cotizada y las repeticiones del área. Si se había guardado el área completa, se conserva esa selección. El avance se mide por unidades de muebles. La selección se guarda en el JSON existente de Entrega.
+
+El cálculo usa el despiece persistido y el espesor de cada tablero. Los tamaños de 20 y 40 pies usan cargas útiles de 15.000 kg y 22.000 kg, respectivamente. Las claves guardadas son `20T` y `40T`. El PDF de CEMA y FIRPLAK muestra la cantidad total de contenedores de la modalidad guardada.
+
+FOB conserva el importe base. CIF convierte el importe indicado con la TRM de la cotización. DDP suma el transporte manual en COP o USD y, si se marca Aplicar tarifas, también suma los porcentajes de Materiales-Parámetros sobre el precio de venta de tablero y herrajes, incluidos los adicionales de esos tipos. Para un módulo, la participación del tablero se obtiene prorrateando la venta sin herrajes según su participación en el costo. Las configuraciones DDP anteriores con tarifas implícitas conservan ese cálculo. El recargo se aplica al total presentado. Los motores y los precios persistidos de cada línea conservan sus reglas. El PDF indica que el total incluye DDP.
+
+La migración `0267_entrega_cotizaciones.sql` agrega la configuración de entrega al proyecto e inicializa el parámetro `ddp`. Está aplicada y registrada en Supabase. Se verificó la escritura con rollback y se probó el cálculo con datos de Kundara Campestre: 8 contenedores de 20 pies o 6 de 40 pies para la entrega total. Ver [protocolo de cotizaciones y PDF](protocolo_pdf_cotizaciones.md).

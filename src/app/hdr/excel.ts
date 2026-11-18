@@ -12,7 +12,12 @@ export function crearWorkbookHdr(modulos: readonly DatosHdrExcel[]): ExcelJS.Wor
     const espesor = f.espesorCanto === '' ? null : Number(f.espesorCanto.replace(',', '.'));
     ws.addRow([m.titulo, f.letra, f.pieza, Number(f.largoMm.toFixed(1)), Number(f.anchoMm.toFixed(1)), f.espesorMm, f.cantoLargoColor, f.cantoAnchoColor, f.cantoLargoBlanco, f.cantoAnchoBlanco, espesor != null && Number.isFinite(espesor) ? espesor : null, m.cantidad.trim() === '' ? null : Number(m.cantidad), normalizarColorHdr(m.color), m.proyecto, normalizarColorHdr(f.color, m.color), f.origen ?? '', f.tableroCodigo ?? '']);
   }
-  ws.columns.forEach((c, i) => { c.width = i === 0 ? 65 : i === 2 ? 25 : i >= 12 ? 24 : 19; });
+  const anchoColor = (valores: readonly string[]) => Math.max(24, ...valores.map(v => v.length + 2));
+  const coloresGenerales = modulos.map(m => normalizarColorHdr(m.color));
+  const coloresPieza = modulos.flatMap(m => m.filas.map(f => normalizarColorHdr(f.color, m.color)));
+  ws.columns.forEach((c, i) => {
+    c.width = i === 0 ? 65 : i === 2 ? 25 : i === 12 ? anchoColor(coloresGenerales) : i === 14 ? anchoColor(coloresPieza) : i >= 12 ? 24 : 19;
+  });
   for (const index of [4, 5, 6]) ws.getColumn(index).numFmt = '0.0';
   ws.getColumn(11).numFmt = '0.00';
   ws.getColumn(12).numFmt = '0.###';

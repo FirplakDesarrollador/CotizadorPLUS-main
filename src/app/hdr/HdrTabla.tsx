@@ -22,6 +22,8 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; 
   const contenedorRef = useRef<HTMLDivElement>(null);
 
   const filas = useMemo(() => construirFilas(res, tableros, pref), [res, tableros, pref]);
+  // El campo de color crece con el texto para que el PDF muestre el nombre completo.
+  const anchoCampoColor = (valor: string) => Math.max(12, valor.length + 2);
 
   const exportarPdf = useCallback(async (guardar?: GuardarArchivoHdr) => {
     if (!contenedorRef.current) return;
@@ -67,7 +69,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; 
           {referenciaRepetida && <p className="mt-1 text-xs text-slate-600">Referencia con variantes de notas o fabricación. Materiales: {res.maderaPorRol.filter(m => m.cm2 > 0).map(m => `${m.rol}: ${m.codigo}`).join(' · ')}. Herrajes: {res.herrajes.filter(h => h.cant > 0).map(h => `${h.codigo ?? h.rol} × ${h.cant}`).join(' · ') || 'Sin herrajes'}.</p>}
           <div className="mt-2 grid grid-cols-3 gap-x-6 gap-y-1 text-sm text-slate-600">
             <label className="flex items-center gap-2">Color:
-              <input aria-label="Color general" required value={color} onChange={(e) => setColor(e.target.value)} onBlur={() => setColor(normalizarColorHdr(color))} placeholder="Por definir" className="inp-sm" />
+              <input aria-label="Color general" required size={anchoCampoColor(color)} value={color} onChange={(e) => setColor(e.target.value)} onBlur={() => setColor(normalizarColorHdr(color))} placeholder="Por definir" className="inp-sm inp-color" />
             </label>
             <label className="flex items-center gap-2">Proyecto:
               <input value={proyecto} onChange={(e) => setProyecto(e.target.value)} placeholder="Por definir" className="inp-sm" />
@@ -124,6 +126,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; 
                   <input
                     aria-label={`Color de ${f.letra} ${f.pieza}`}
                     required
+                    size={anchoCampoColor(colorPorLetra[f.letra] ?? normalizarColorHdr(color))}
                     value={colorPorLetra[f.letra] ?? normalizarColorHdr(color)}
                     onChange={(e) => setColorPorLetra((cs) => ({ ...cs, [f.letra]: e.target.value }))}
                     onBlur={() => setColorPorLetra(cs => {
@@ -133,7 +136,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; 
                       return siguiente;
                     })}
                     placeholder="Por definir"
-                    className="inp-sm"
+                    className="inp-sm inp-color"
                   />
                 </td>
                 {filas.some(f => f.origen) && <td className="px-2 text-xs">{f.origen}<div className="text-slate-500">{f.tableroCodigo}</div></td>}
@@ -143,7 +146,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; 
         </table>
       </div>
 
-      <style>{`.inp-sm{border:1px solid #cbd5e1;border-radius:.375rem;padding:.2rem .4rem;font-size:.8125rem;min-width:7rem}.inp-sm:focus{outline:2px solid #94a3b8;outline-offset:0}`}</style>
+      <style>{`.inp-sm{border:1px solid #cbd5e1;border-radius:.375rem;padding:.2rem .4rem;font-size:.8125rem;min-width:7rem}.inp-sm:focus{outline:2px solid #94a3b8;outline-offset:0}.inp-color{field-sizing:content;max-width:none}`}</style>
       </div>
     </div>
   );
