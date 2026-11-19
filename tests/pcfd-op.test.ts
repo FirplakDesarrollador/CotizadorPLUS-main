@@ -103,7 +103,7 @@ test('PCFD 2OP reproduce la geometría CEMA de la fila 5449', () => {
   assert.ok(Math.abs(piece(result, 'base_gaveta').areaCm2 - 4437.75) < 0.01);
   assert.ok(Math.abs(piece(result, 'trasero_gaveta').areaCm2 - 670.07) < 0.01);
   assert.ok(Math.abs(result.cantoPorCalibre[0].longCm - 1206.81) < 0.01);
-  assert.equal(hardware(result, 'bisagra').cant, 2);
+  assert.equal(hardware(result, 'bisagra').cant, 5);
   assert.equal(hardware(result, 'manija').cant, 0);
   assert.equal(hardware(result, 'riel').cant, 2);
   assert.equal(hardware(result, 'push').cant, 2);

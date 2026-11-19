@@ -30,7 +30,7 @@ export default function HdrBuscarGuardados({ tableros, prefijoHrj = false }: { t
     </div>}
     {seleccionado && (seleccionado.modulo.ok ? <div className="space-y-2">
       {!!seleccionado.modulo.avisosValidacion?.length && <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{seleccionado.modulo.avisosValidacion.map((a, i) => <p key={i}>{a}</p>)}<a className="underline" href={`/cotizaciones/${seleccionado.cotizacionId}`}>Abrir cotización para revisar</a></div>}
-      <HdrTabla key={`${seleccionado.cotizacionId}-${seleccionado.modulo.lineaId}`} res={seleccionado.modulo.result} pref={seleccionado.modulo.pref} tableros={tableros} titulo={tituloModuloHdr(seleccionado.modulo, prefijoHrj)} proyectoInicial={seleccionado.proyecto} cantidadInicial={seleccionado.modulo.cantidad} mostrarBotonExportar={!seleccionado.modulo.avisosValidacion?.length && !seleccionado.modulo.aperturaPendiente} />
+      <HdrTabla key={`${seleccionado.cotizacionId}-${seleccionado.modulo.lineaId}`} res={seleccionado.modulo.result} pref={seleccionado.modulo.pref} codigoModulo={seleccionado.modulo.codigoModulo} tableros={tableros} titulo={tituloModuloHdr(seleccionado.modulo, prefijoHrj)} proyectoInicial={seleccionado.proyecto} mostrarBotonExportar={!seleccionado.modulo.avisosValidacion?.length && !seleccionado.modulo.aperturaPendiente} />
     </div> : <p role="alert" className="text-sm text-red-700">{seleccionado.modulo.error}</p>)}
   </div>;
 }

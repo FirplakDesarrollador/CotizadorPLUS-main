@@ -13,10 +13,12 @@ test('HDR identifica sin repetir todas las piezas: Z→AA, AZ→BA y ZZ→AAA', 
     herrajesPlantilla: [], herrajesByCode: {}, cantosByCalibre: {}, consumiblesBySelector: {}, etiquetasUnd: 0, usaCarton: false, margen: 0, trm: 4000, desperdicio: 0,
   });
   const html = renderToStaticMarkup(createElement(HdrTabla, { res: { ...resultado, trm: 4000, margen: 0 }, tableros: [{ codigo: 'TAB15', espesor_mm: 15 }], titulo: 'Regresión de identificadores', mostrarBotonExportar: false }));
+  assert.match(html, /<input\b(?=[^>]*\btype="number")(?=[^>]*\bvalue="")[^>]*>/, 'la cantidad de la tarjeta empieza vacía');
   const cuerpo = html.match(/<tbody>([\s\S]*?)<\/tbody>/)![1];
   const letras = [...cuerpo.matchAll(/<tr[^>]*>\s*<td[^>]*>([A-Z]+)<\/td>/g)].map(m => m[1]);
   assert.equal(letras.length, 703);
   assert.equal(new Set(letras).size, 703);
   for (const [i, letra] of [[0, 'A'], [25, 'Z'], [26, 'AA'], [51, 'AZ'], [52, 'BA'], [701, 'ZZ'], [702, 'AAA']] as const) assert.equal(letras[i], letra);
-  assert.equal((cuerpo.match(/<input/g) ?? []).length, 703, 'cada fila mantiene su propio campo de color');
+  const letrasDeColor = [...cuerpo.matchAll(/<textarea[^>]*aria-label="Color de ([A-Z]+) /g)].map(m => m[1]);
+  assert.deepEqual(letrasDeColor, letras, 'cada fila mantiene un campo de color identificado con su propia letra');
 });

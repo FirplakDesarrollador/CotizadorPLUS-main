@@ -112,10 +112,10 @@ test('superiores aplican la regla de entrepanos en todos sus limites', () => {
 test('W-SM conserva bisagras y elimina manijas', () => {
   const result = calcularMueble(input({ gola: 1 }));
 
-  assert.equal(hardware(result, 'bisagra')?.cant, 2);
-  assert.equal(hardware(result, 'bisagra')?.costo, 11600);
+  assert.equal(hardware(result, 'bisagra')?.cant, 4);
+  assert.equal(hardware(result, 'bisagra')?.costo, 23200);
   assert.equal(hardware(result, 'manija'), undefined);
-  assert.equal(result.costoHerrajes, 11600);
+  assert.equal(result.costoHerrajes, 23200);
 });
 
 test('W con manija conserva el alto de puerta previo', () => {

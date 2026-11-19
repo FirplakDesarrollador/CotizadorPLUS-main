@@ -106,9 +106,24 @@ function espesorCantoLabel(calibre: string | null): string {
   return calibre.split(/x/i)[1] ?? '';
 }
 
+export const CAMPOS_COLOR_HDR = [
+  ['caja', 'Color de la caja'],
+  ['refuerzo', 'Color de los refuerzos'],
+  ['frente', 'Color de los frentes'],
+  ['fondo', 'Color del fondo'],
+] as const;
+
+export type ColoresHdr = Partial<Record<(typeof CAMPOS_COLOR_HDR)[number][0], string>>;
+
+export function colorPiezaHdr(rol: string, colores: ColoresHdr, general: string, individual?: string) {
+  const porRol = CAMPOS_COLOR_HDR.find(([campo]) => campo === rol)?.[0];
+  return normalizarColorHdr(individual, porRol ? normalizarColorHdr(colores[porRol], general) : general);
+}
+
 export type FilaHDR = {
   origen?: string;
   tableroCodigo?: string;
+  rol: string;
   letra: string;
   pieza: string;
   largoMm: number;
@@ -121,7 +136,7 @@ export type FilaHDR = {
   espesorCanto: string;
 };
 
-export function construirFilas(res: ResultadoHdr, tableros: Tablero[], pref?: string): FilaHDR[] {
+export function construirFilas(res: ResultadoHdr, tableros: Tablero[], pref?: string, codigoModulo?: string): FilaHDR[] {
   const rolToEspesor: Record<string, number | null> = {};
   for (const m of res.maderaPorRol) {
     rolToEspesor[m.rol] = tableros.find((t) => t.codigo === m.codigo)?.espesor_mm ?? null;
@@ -165,10 +180,13 @@ export function construirFilas(res: ResultadoHdr, tableros: Tablero[], pref?: st
       filas.push({
         origen: p.compartida ? 'Compartida del grupo' : p.origen,
         tableroCodigo,
+        rol: p.rol,
         letra: siguienteLetra(),
         pieza: nombreConInstruccion(nombre, p.pieza, espesor, p.contextoHdr?.fondosLaterales
           ? { ...p.contextoHdr, conFondo: p.contextoHdr.fondosLaterales[i] ?? p.contextoHdr.conFondo } : p.contextoHdr ?? contexto),
-        largoMm: orientada.largoIn * 25.4,
+        largoMm: p.pieza === 'panel' && (codigoModulo === 'PN80240' || codigoModulo === 'PN82240')
+          ? 2352
+          : orientada.largoIn * 25.4,
         anchoMm: orientada.anchoIn * 25.4,
         espesorMm: espesor,
         cantoLargoColor: !sinCanto && visible ? p.cantoLargos : 0,

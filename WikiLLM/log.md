@@ -3260,3 +3260,19 @@ Se asignan lineas completas por ID y se recalculan las unidades, el peso y los c
 ## [2026-11-18] update | Transporte DDP y PDF CEMA por idioma
 
 DDP permite sumar transporte manual y activar los porcentajes de parametros. CEMA localiza la propuesta y conserva los campos comerciales por idioma.
+
+## [2026-11-19] update | Colores por rol y ajuste vertical en HDR
+
+La generacion desde cotizacion propaga los cuatro colores a las piezas y ajusta los textos de la tarjeta para PDF y Excel.
+
+## [2026-11-19] update | Cantidad sin precarga en HDR
+
+La cantidad de cada tarjeta comienza vacia y se ingresa manualmente.
+
+## [2026-11-19] update | Largo HDR para PN80240 y PN82240
+
+La pieza panel muestra 2352 mm en Largo para ambas referencias.
+
+## [2026-11-19] update | Regla de bisagras por alto de puerta
+
+Se usa el alto efectivo por hoja y se conservan las unidades de cobro del catalogo. Ver [Bisagras por alto de puerta](wiki/bisagras_por_altura.md).

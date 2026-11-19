@@ -4,7 +4,7 @@
 
 Desde una cotización, HDR conserva el despiece real de cada grupo físico y consolida únicamente módulos equivalentes: mismo código y descripción/notas exactas; mismas piezas físicas (sin depender del orden del array), medidas, cantidades, cantos, referencias de tablero y herrajes con cantidad positiva. Ignora el área para consolidar, pero no une muebles de distinta fabricación aunque compartan código. Mantiene la primera aparición y el orden de piezas; las gavetas conservan su orden relativo.
 
-Para muebles individuales, la cantidad inicial suma `cantidad de línea × repeticiones del área` de todas las apariciones equivalentes. Para conjuntos físicos, indica cantidad de grupos completos y conserva los identificadores y cantidades de todos sus módulos para conciliación. Es editable y se puede vaciar. No se agrega área ni multiplicador al título. PN conserva `PN - Panel` y sus notas; F conserva sus notas. La consolidación se aplica a la vista HDR, no elimina líneas ni áreas de las cotizaciones ni cambia los grupos usados por el optimizador.
+El campo editable de cantidad empieza vacío en cada HDR, tanto al generar desde una cotización como al buscar un mueble guardado. En conjuntos físicos el campo se titula Cantidad de grupos. Los conteos de la cotización y del resumen de generación conservan las cantidades y las repeticiones del área para conciliación. No se agrega área ni multiplicador al título. PN conserva `PN - Panel` y sus notas; F conserva sus notas. La consolidación se aplica a la vista HDR, no elimina líneas ni áreas de las cotizaciones ni cambia los grupos usados por el optimizador.
 
 En todas las variantes DB cuya tipología termina en `-FE` o `-FE-SF`, HDR presenta cada pieza en una fila independiente, en este orden: base, sides, rails delantero, rails trasero, laterales de gaveta pequeños/grandes, traseros de gaveta, contraparche pequeño/grande, frentes de gaveta, fondos de gaveta y backing. Los traseros de gaveta se muestran como `TRASERO GAV` y permanecen juntos. Cuando varias piezas comparten nombre, se ordenan por tamaño ascendente; no se agrupan ni se pierden sus letras individuales.
 
@@ -12,7 +12,11 @@ En la generación desde una cotización guardada, el switch **Prefijo HRJ** cont
 
 La búsqueda manual por tipo también admite notas en F. El caché del simulador pasa a v12: conserva entradas/notas/muebles y descarta resultados previos a las nuevas reglas. Las especificaciones impresas aclaran que las paredes DB-FE usan caja y sus fondos usan respaldo y omiten personalizaciones históricas de gaveta que no se utilizan en ese tipo.
 
+Debajo de Prefijo HRJ, la generación desde una cotización permite indicar los colores de caja, refuerzos, frentes y fondo. Cada pieza toma el color de su rol de tablero real, incluso cuando varios roles usan la misma referencia. El color individual prevalece sobre el de rol y las piezas sin color asignado heredan el general. Los textos largos se ajustan en varias líneas en la tarjeta y en el PDF. Excel conserva el texto completo en Color pieza.
+
 Se retiraron la nota de inferencia Color/Blanco y los sufijos de rol B/P/C/F de los nombres de pieza. Las letras A, B, C… de identificación de filas y las columnas de canto se conservan.
+
+Las referencias PN80240 y PN82240 muestran 2352 mm en Largo de la pieza panel en la tarjeta HDR y sus exportaciones. La regla se aplica a la fila de presentación después de orientar la pieza. La referencia, el ancho, el espesor, los cantos y las dimensiones de la cotización conservan sus valores.
 
 Regla posterior del 2026-11-07: los tableros de 4,5/5,5/6/9 mm no muestran calibre ni contadores de canto y no generan su costo, incluido el BACKING de WLD. Se aplica en motor y presentación; véase [materiales delgados sin canto](cantos_por_espesor.md). El caché vigente del simulador es v17.
 

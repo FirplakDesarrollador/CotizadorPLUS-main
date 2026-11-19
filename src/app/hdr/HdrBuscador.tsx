@@ -15,7 +15,7 @@ import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from '
 import HdrConsumos from './HdrConsumos';
 import HdrSeguimiento from './HdrSeguimiento';
 import HdrBuscarGuardados from './HdrBuscarGuardados';
-import { consolidarModulosHdr, descripcionPiezaPlanaHdr, prefijarHrj, tituloModuloHdr } from './datosHdr';
+import { CAMPOS_COLOR_HDR, consolidarModulosHdr, descripcionPiezaPlanaHdr, prefijarHrj, tituloModuloHdr, type ColoresHdr } from './datosHdr';
 import { crearDestinoHdr, esCancelacionHdr } from './destinoExportacion';
 import { exigirRevisionHdr } from './validacion';
 
@@ -45,6 +45,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [cotizacionId, setCotizacionId] = useState('');
   const [proyectoHdr, setProyectoHdr] = useState('');
   const [prefijoHrj, setPrefijoHrj] = useState(false);
+  const [coloresHdr, setColoresHdr] = useState<ColoresHdr>({});
   const [prefijoHrjBuscar, setPrefijoHrjBuscar] = useState(false);
   const [modLoading, setModLoading] = useState(false);
   const [modError, setModError] = useState<string | null>(null);
@@ -227,6 +228,12 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
           <span aria-hidden="true" className="relative h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-emerald-600 peer-checked:after:translate-x-5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-emerald-700" />
           <span>Agregar HRJ al nombre del mueble</span>
         </label>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {CAMPOS_COLOR_HDR.map(([rol, etiqueta]) => <Campo key={rol} label={etiqueta}>
+            <input value={coloresHdr[rol] ?? ''} onChange={e => setColoresHdr(actual => ({ ...actual, [rol]: e.target.value }))}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          </Campo>)}
+        </div>
         {modLoading && <p className="text-slate-400 text-sm">Cargando módulos…</p>}
         {modError && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{modError}</div>}
         {modulos && modulos.length === 0 && <p className="text-slate-400 text-sm">Esta cotización no tiene módulos.</p>}
@@ -267,10 +274,11 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
                   }}
                   res={m.result}
                   pref={m.pref}
+                  codigoModulo={m.codigoModulo}
                   tableros={tableros}
                   titulo={tituloModuloHdr(m, prefijoHrj)}
-                  cantidadInicial={m.cantidad}
                   proyectoInicial={proyectoHdr}
+                  coloresPorRol={coloresHdr}
                   referenciaRepetida={(referencias.get(m.codigoModulo) ?? 0) > 1}
                   mostrarBotonExportar={false}
                 />
@@ -379,7 +387,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
         {res && (
           <div className="mt-4">
-            <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} pref={tipoSel?.pref} tableros={tableros} proyectoInicial={proyectoHdr} titulo={tituloCreado} />
+            <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} pref={tipoSel?.pref} codigoModulo={codigo} tableros={tableros} proyectoInicial={proyectoHdr} titulo={tituloCreado} />
           </div>
         )}
       </div>

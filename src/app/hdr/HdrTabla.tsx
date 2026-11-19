@@ -2,7 +2,7 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { exportarNodoAPdf, nombreArchivoPdf } from './pdfExport';
-import { construirFilas, normalizarColorHdr, type FilaHDR, type ResultadoHdr } from './datosHdr';
+import { colorPiezaHdr, construirFilas, normalizarColorHdr, type ColoresHdr, type FilaHDR, type ResultadoHdr } from './datosHdr';
 import { crearDestinoHdr, esCancelacionHdr, type GuardarArchivoHdr } from './destinoExportacion';
 export { descripcionModulo } from './datosHdr';
 
@@ -10,20 +10,31 @@ export type Tablero = { codigo: string; espesor_mm: number | null };
 export type DatosHdrExcel = { titulo: string; cantidad: string; color: string; proyecto: string; filas: (FilaHDR & { color: string })[] };
 export type HdrTablaHandle = { exportarPdf: (guardar?: GuardarArchivoHdr) => Promise<void>; datosExcel: () => DatosHdrExcel };
 
-const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; tableros: Tablero[]; titulo: string; mostrarBotonExportar?: boolean; cantidadInicial?: number; proyectoInicial?: string; referenciaRepetida?: boolean }>(
-  function HdrTabla({ res, pref, tableros, titulo, mostrarBotonExportar = true, cantidadInicial, proyectoInicial = '', referenciaRepetida }, ref) {
+const SIN_COLORES: ColoresHdr = {};
+
+function CampoColorHdr({ etiqueta, valor, onChange, onBlur }: {
+  etiqueta: string; valor: string; onChange: (valor: string) => void; onBlur: () => void;
+}) {
+  return <div className="hdr-color relative w-40 max-w-full rounded-md border border-slate-300 text-[.8125rem] leading-5">
+    <div aria-hidden="true" data-hdr-color-texto className="invisible whitespace-pre-wrap px-1.5 py-1 [overflow-wrap:anywhere]">{valor || 'Por definir'}{'\u200b'}</div>
+    <textarea aria-label={etiqueta} rows={1} required value={valor} onChange={e => onChange(e.target.value)} onBlur={onBlur}
+      data-hdr-color-editor placeholder="Por definir"
+      className="absolute inset-0 size-full resize-none overflow-hidden rounded-md px-1.5 py-1 whitespace-pre-wrap [overflow-wrap:anywhere] focus:outline-2 focus:outline-slate-400" />
+  </div>;
+}
+
+const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; codigoModulo?: string; tableros: Tablero[]; titulo: string; mostrarBotonExportar?: boolean; proyectoInicial?: string; referenciaRepetida?: boolean; coloresPorRol?: ColoresHdr }>(
+  function HdrTabla({ res, pref, codigoModulo, tableros, titulo, mostrarBotonExportar = true, proyectoInicial = '', referenciaRepetida, coloresPorRol = SIN_COLORES }, ref) {
   const [color, setColor] = useState('Por definir');
   const [proyectoEditado, setProyecto] = useState<string>();
   const proyecto = proyectoEditado ?? proyectoInicial;
-  const [cantidad, setCantidad] = useState(cantidadInicial == null ? '' : String(cantidadInicial));
+  const [cantidad, setCantidad] = useState('');
   const [colorPorLetra, setColorPorLetra] = useState<Record<string, string>>({});
   const [exportando, setExportando] = useState(false);
   const [errorExportacion, setErrorExportacion] = useState<string | null>(null);
   const contenedorRef = useRef<HTMLDivElement>(null);
 
-  const filas = useMemo(() => construirFilas(res, tableros, pref), [res, tableros, pref]);
-  // El campo de color crece con el texto para que el PDF muestre el nombre completo.
-  const anchoCampoColor = (valor: string) => Math.max(12, valor.length + 2);
+  const filas = useMemo(() => construirFilas(res, tableros, pref, codigoModulo), [res, tableros, pref, codigoModulo]);
 
   const exportarPdf = useCallback(async (guardar?: GuardarArchivoHdr) => {
     if (!contenedorRef.current) return;
@@ -37,7 +48,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; 
     }
   }, [titulo, proyecto]);
 
-  const datosExcel = useCallback((): DatosHdrExcel => ({ titulo, cantidad, color: normalizarColorHdr(color), proyecto, filas: filas.map(f => ({ ...f, color: normalizarColorHdr(colorPorLetra[f.letra], color) })) }), [titulo, cantidad, color, proyecto, filas, colorPorLetra]);
+  const datosExcel = useCallback((): DatosHdrExcel => ({ titulo, cantidad, color: normalizarColorHdr(color), proyecto, filas: filas.map(f => ({ ...f, color: colorPiezaHdr(f.rol, coloresPorRol, color, colorPorLetra[f.letra]) })) }), [titulo, cantidad, color, proyecto, filas, colorPorLetra, coloresPorRol]);
   const informarError = (e: unknown) => { if (!esCancelacionHdr(e)) setErrorExportacion(e instanceof Error ? e.message : 'No se pudo completar la exportación.'); };
   const exportarExcel = async () => {
     setErrorExportacion(null);
@@ -64,18 +75,18 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; 
       {errorExportacion && <p role="alert" className="mb-2 text-sm text-red-700">{errorExportacion}</p>}
       <div ref={contenedorRef} data-hdr-modulo={titulo} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
       <div className="p-4 border-b border-slate-200 flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <div className="font-bold text-slate-900">{titulo}</div>
           {referenciaRepetida && <p className="mt-1 text-xs text-slate-600">Referencia con variantes de notas o fabricación. Materiales: {res.maderaPorRol.filter(m => m.cm2 > 0).map(m => `${m.rol}: ${m.codigo}`).join(' · ')}. Herrajes: {res.herrajes.filter(h => h.cant > 0).map(h => `${h.codigo ?? h.rol} × ${h.cant}`).join(' · ') || 'Sin herrajes'}.</p>}
-          <div className="mt-2 grid grid-cols-3 gap-x-6 gap-y-1 text-sm text-slate-600">
+          <div className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm text-slate-600 sm:grid-cols-2 xl:grid-cols-3">
             <label className="flex items-center gap-2">Color:
-              <input aria-label="Color general" required size={anchoCampoColor(color)} value={color} onChange={(e) => setColor(e.target.value)} onBlur={() => setColor(normalizarColorHdr(color))} placeholder="Por definir" className="inp-sm inp-color" />
+              <CampoColorHdr etiqueta="Color general" valor={color} onChange={setColor} onBlur={() => setColor(normalizarColorHdr(color))} />
             </label>
             <label className="flex items-center gap-2">Proyecto:
               <input value={proyecto} onChange={(e) => setProyecto(e.target.value)} placeholder="Por definir" className="inp-sm" />
             </label>
             <label className="flex items-center gap-2">{(res.vars.modulos ?? 1) > 1 ? 'Cantidad de grupos:' : 'Cantidad:'}
-              <input type="number" min={0} step={1} value={cantidad} onChange={(e) => setCantidad(e.target.value)} placeholder="Por definir" className="inp-sm" />
+              <input type="number" min={0} step={1} value={cantidad} onChange={(e) => setCantidad(e.target.value)} className="inp-sm" />
             </label>
           </div>
         </div>
@@ -122,21 +133,17 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; 
                 <td className="px-2 text-right">{f.cantoLargoBlanco || 0}</td>
                 <td className="px-2 text-right">{f.cantoAnchoBlanco || 0}</td>
                 <td className="px-2 text-right">{f.espesorCanto}</td>
-                <td className="px-2">
-                  <input
-                    aria-label={`Color de ${f.letra} ${f.pieza}`}
-                    required
-                    size={anchoCampoColor(colorPorLetra[f.letra] ?? normalizarColorHdr(color))}
-                    value={colorPorLetra[f.letra] ?? normalizarColorHdr(color)}
-                    onChange={(e) => setColorPorLetra((cs) => ({ ...cs, [f.letra]: e.target.value }))}
+                <td className="px-2 py-1">
+                  <CampoColorHdr
+                    etiqueta={`Color de ${f.letra} ${f.pieza}`}
+                    valor={colorPorLetra[f.letra] ?? colorPiezaHdr(f.rol, coloresPorRol, color)}
+                    onChange={valor => setColorPorLetra(cs => ({ ...cs, [f.letra]: valor }))}
                     onBlur={() => setColorPorLetra(cs => {
                       const siguiente = { ...cs };
                       if (siguiente[f.letra]?.trim()) siguiente[f.letra] = siguiente[f.letra].trim();
                       else delete siguiente[f.letra];
                       return siguiente;
                     })}
-                    placeholder="Por definir"
-                    className="inp-sm inp-color"
                   />
                 </td>
                 {filas.some(f => f.origen) && <td className="px-2 text-xs">{f.origen}<div className="text-slate-500">{f.tableroCodigo}</div></td>}
@@ -146,7 +153,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; 
         </table>
       </div>
 
-      <style>{`.inp-sm{border:1px solid #cbd5e1;border-radius:.375rem;padding:.2rem .4rem;font-size:.8125rem;min-width:7rem}.inp-sm:focus{outline:2px solid #94a3b8;outline-offset:0}.inp-color{field-sizing:content;max-width:none}`}</style>
+      <style>{`.inp-sm{border:1px solid #cbd5e1;border-radius:.375rem;padding:.2rem .4rem;font-size:.8125rem;min-width:7rem}.inp-sm:focus{outline:2px solid #94a3b8;outline-offset:0}`}</style>
       </div>
     </div>
   );

@@ -26,6 +26,8 @@ export async function exportarNodoAPdf(el: HTMLElement, filename: string, guarda
     onclone: (_document, clon) => {
       clon.style.width = `${ancho}px`; clon.style.maxWidth = 'none'; clon.style.overflow = 'visible';
       clon.querySelectorAll<HTMLElement>('.overflow-x-auto').forEach(n => { n.style.overflow = 'visible'; });
+      clon.querySelectorAll<HTMLElement>('[data-hdr-color-texto]').forEach(n => { n.style.visibility = 'visible'; });
+      clon.querySelectorAll<HTMLElement>('[data-hdr-color-editor]').forEach(n => { n.style.display = 'none'; });
     },
   });
   const imgData = canvas.toDataURL('image/png');

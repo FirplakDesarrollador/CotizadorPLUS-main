@@ -249,7 +249,8 @@ export const useSimuladorStore = create<SimuladorState>()(
       // v18: BOV-SMG segun STEP, seis paneles y frente al ras inferior.
       // v19: refuerzo delantero vertical a 27 mm, sin tarugos graficos.
       // v20: elimina el rail delantero de BOV-SMG/BOV-SMG-SF y recalcula el despiece.
-      version: 20,
+      // v21: vuelve a calcular los resultados con las bisagras por alto de puerta.
+      version: 21,
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<SimuladorState>;
         return {

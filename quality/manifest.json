@@ -227,10 +227,13 @@
       "description": "Fórmulas de corte, cantos, herrajes, reglas de tipologías y piezas individuales",
       "patterns": [
         "src/lib/engine.ts",
+        "src/lib/bisagras.ts",
+        "tests/bisagras.test.ts",
         "src/lib/muebles.ts"
       ],
       "tests": [
         "tests/b12-hoja-real.test.ts",
+        "tests/bisagras.test.ts",
         "tests/barras-estabilizadoras.test.ts",
         "tests/bbl.test.ts",
         "tests/bblfd-sm.test.ts",

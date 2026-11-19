@@ -8,6 +8,7 @@
 
 import type { MontajeConfig } from './visualizacion-config';
 import { noLlevaCanto } from './cantos';
+import { cantidadBisagras } from './bisagras';
 
 export const IN2CM = 2.54;
 const norm = (s: unknown) => String(s ?? '').toUpperCase().replace(/\s+/g, '');
@@ -379,7 +380,9 @@ export function calcularMueble(inp: CalcInput): Breakdown {
     if (excluidos.has(rolHerraje)) continue;
     const esBarra = rolHerraje === 'barra';
     if (esBarra) tieneBarraPlantilla = true;
-    const cant = esBarra ? paresBarras : num(hp.formula_cantidad);
+    const cant = esBarra ? paresBarras : rolHerraje === 'bisagra'
+      ? cantidadBisagras(piezasDet, hp.herraje_codigo, num(hp.formula_cantidad))
+      : num(hp.formula_cantidad);
     if (cant > 0 && ((rolHerraje === 'riel' && inp.rielCodigo === '') || (esBarra && inp.barraCodigo === ''))) throw new Error(`Selecciona el tipo de ${rolHerraje}.`);
     const codigo = rolHerraje === 'riel' ? (inp.rielCodigo || hp.herraje_codigo) : esBarra ? (inp.barraCodigo || hp.herraje_codigo) : hp.herraje_codigo;
     const precio = Number((inp.herrajesByCode[codigo || ''] || {}).precio || 0);
