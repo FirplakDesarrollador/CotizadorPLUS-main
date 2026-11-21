@@ -123,7 +123,7 @@ function coincide(texto: string, m: ModuloHDR): boolean {
  * canto por calibre y consumibles por tipo — en el MISMO orden y con las MISMAS
  * filas que la tabla «Materiales» del Simulador, para que ambos cuadren.
  */
-function discriminar(
+export function consumoModuloHdr(
   m: ModuloHDR,
   cantidad: number,
   pct: number,
@@ -202,7 +202,7 @@ export function calcularConsumos(
     const cantidad = editada !== undefined && Number.isFinite(editada) && editada >= 0 ? editada : 1;
     const piezasUnidad = res.piezas.reduce((s, p) => (p.cant > 0 ? s + Math.round(p.cant) : s), 0);
     const { codigo, descripcion, titulo } = tituloDe(m);
-    const { materiales, cantos, consumibles } = discriminar(m, cantidad, pct);
+    const { materiales, cantos, consumibles } = consumoModuloHdr(m, cantidad, pct);
 
     filas.push({
       clave: m.lineaId,

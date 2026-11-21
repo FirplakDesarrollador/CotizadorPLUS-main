@@ -274,8 +274,8 @@ type PiezaAjustable = {
 };
 
 // "Sin fondo" es una configuración de proyecto que describe los módulos
-// INFERIORES: anula la pieza de respaldo y deja la base en la profundidad menos
-// exactamente un espesor de tablero de caja. **Los muebles superiores siempre
+// INFERIORES: anula el respaldo. La base descuenta un espesor de caja por
+// defecto. DB-FE sin fondo usa la profundidad completa. **Los muebles superiores siempre
 // llevan fondo**, así que la transformación no les aplica — de lo contrario un W
 // se cotizaría sin respaldo y el tablero de fondo de superiores que el formulario
 // sigue pidiendo no se consumiría.
@@ -286,6 +286,7 @@ export function ajustarPiezasSinFondo<T extends PiezaAjustable>(
   piezas: T[], pref: string | null | undefined, conFondo: boolean | undefined,
 ): T[] {
   if (conFondo !== false || esMuebleSuperior(pref) || esIndependienteDeFondo(pref)) return piezas;
+  const profundidadBase = esTipologiaDbFe(pref) ? 'P' : 'P-TC';
   return piezas.map((pieza) => {
     // `fondo_gaveta` pertenece al cajón; solo se elimina el respaldo `fondo`.
     if (pieza.nombre.toLowerCase() === 'fondo') return { ...pieza, formula_cantidad: '0' };
@@ -293,8 +294,8 @@ export function ajustarPiezasSinFondo<T extends PiezaAjustable>(
       // Los BOV descuentan el refuerzo trasero, independientemente de la opción de espaldar.
       if (/^BOV(?:-SMG)?(?:-SF)?$/i.test(String(pref ?? ''))) return pieza;
     // Se conserva el eje de largo propio de cada plantilla.
-    if (/\bP\b/.test(pieza.formula_ancho ?? '')) return { ...pieza, formula_ancho: 'P-TC' };
-    if (/\bP\b/.test(pieza.formula_largo ?? '')) return { ...pieza, formula_largo: 'P-TC' };
+    if (/\bP\b/.test(pieza.formula_ancho ?? '')) return { ...pieza, formula_ancho: profundidadBase };
+    if (/\bP\b/.test(pieza.formula_largo ?? '')) return { ...pieza, formula_largo: profundidadBase };
     return pieza;
   });
 }

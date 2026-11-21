@@ -3276,3 +3276,47 @@ La pieza panel muestra 2352 mm en Largo para ambas referencias.
 ## [2026-11-19] update | Regla de bisagras por alto de puerta
 
 Se usa el alto efectivo por hoja y se conservan las unidades de cobro del catalogo. Ver [Bisagras por alto de puerta](wiki/bisagras_por_altura.md).
+
+## [2026-11-20] update | Canto de color en los anchos de la base OW-MO en HDR
+
+La hoja de ruta y su Excel indican dos anchos con canto Color para la base de OW-MO y OW-MO-SF, también en grupos.
+
+## [2026-11-20] update | Profundidad completa de la base DB-FE-SF
+
+Auditoría de Condominio V: 13 líneas, 132 módulos y 338 filas de HDR. La base usa P completo, de 425 a 440 mm de profundidad, y las demás medidas coinciden.
+
+## [2026-11-20] update | Enchapes blancos en los laterales de gaveta FE
+
+La HDR y su Excel indican dos largos y dos anchos en Blanco por lateral de gaveta FE, incluso en grupos mixtos.
+
+## [2026-11-20] update | Canto ancho Color en F, PN y TK de menos de 100 mm
+
+La HDR y sus exportaciones muestran cero en Canto ancho Color para anchos orientados menores de 100 mm.
+
+## [2026-11-20] update | Selección de HDR de cotización para PDF
+
+Cada hoja disponible tiene casilla de inclusión. El PDF exporta solo las seleccionadas, con contador y acciones de selección masiva.
+
+## [2026-11-20] update | Instalación por zona y reparto de entregas parciales
+
+Tarifas USD por zona, cálculos de instalación, asignación parcial por unidades de línea y detalle de contenedores en el PDF.
+
+## [2026-11-20] update | Parámetros avanzados históricos ocultos
+
+El formulario conserva Desperdicio madera y omite los tres parámetros históricos del bloque Avanzado.
+
+## [2026-11-20] update | Navegación de Diseño y consumos aproximados en Optimizador
+
+Cinco accesos en Diseño, tres espacios HDR con prefijo HRJ independiente, consumos de cotización consolidados y parámetros de planta plegables.
+
+## [2026-11-20] update | Corte con refilado y módulos completos
+
+El esquema incluye piezas de medida nominal igual al formato, explica el refilado y conserva cada línea y grupo físico en su jornada.
+
+## [2026-11-20] update | Restablecer el reparto por unidades en corte
+
+El optimizador vuelve a repartir líneas sueltas entre jornadas por unidades completas. Se conserva el refilado incluido para medidas nominales.
+
+## [2026-11-20] update | Acceso desde Diseño y publicación de Instalación
+
+HDR y Optimizador se abren desde Diseño. La migración 0268 inicializa las zonas de instalación sin sobrescribir tarifas.

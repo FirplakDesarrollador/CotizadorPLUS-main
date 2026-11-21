@@ -21,6 +21,10 @@ La opción manual conserva el comportamiento paramétrico de DB. La carcasa, fre
 
 ## Ajustes FE
 
+En DB-FE sin respaldo (DB-FE-SF), el eje de profundidad de la base toma `P` completo. El largo conserva su fórmula de plantilla y los fondos de gaveta siguen en el despiece. En Condominio V se compararon 13 líneas (132 módulos por repetición de áreas), con 338 filas HDR antes y después. Las bases pasaron de 425 a 440 mm de profundidad, con largos de 470, 480, 530 y 570 mm. Las otras 325 filas coincidieron en medidas y orden.
+
+Dos cargas independientes en Chrome local verificaron las cuatro referencias de la HDR. Dos generaciones de la vista imprimible de Condominio V produjeron diez páginas cada una, con texto y páginas renderizadas idénticos. La auditoría de solo lectura concilió Condominio V sin diferencias de materiales ni importes. La auditoría estricta global reportó errores fuera de Condominio V, entre ellos un grupo de Satori cocinas. La verificación no escribió en la cotización. Pasaron 141 suites y `quality:learn -- --strict` no reportó hallazgos HIGH.
+
 - Laterales de gaveta: largo 500 mm si P ≥ 609,6 mm; 450 mm si 533,4 ≤ P < 609,6 mm; 350 mm si P < 533,4 mm. Alturas 100 mm para pequeñas y 200 mm para grandes; dos por gaveta.
 - Traseros: largo `L − 2×espesor caja − 26 mm − 2×espesor lateral de gaveta`; alturas 80 mm y 180 mm. Conservan cantos, tarugos y montaje del donante FE.
 - Contraparches: largo `L − 2×espesor caja − 26 mm − 2×espesor lateral de gaveta`; alturas 100 mm y 200 mm. Uno por gaveta, con mecanizados FE.

@@ -7,6 +7,7 @@ import {
   formatoConfigurado, laminasPorPila,
   type ConfigOptimizador, type FormatoLamina,
 } from './config';
+import { areaConSierra, medidaParaCorte } from './medida-corte';
 
 const MM_POR_IN = 25.4;
 
@@ -77,6 +78,7 @@ export type ListaCorte = {
 export const SIN_TABLERO = '(sin tablero asignado)';
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
+export const medidaListaCorte = (pulgadas: number) => r1(pulgadas * MM_POR_IN);
 
 export function construirListaCorte(modulos: ModuloEntrada[], tableros: TableroInfo[], cfg: ConfigOptimizador): ListaCorte {
   const tabPorCodigo = new Map(tableros.map((t) => [t.codigo, t]));
@@ -88,8 +90,8 @@ export function construirListaCorte(modulos: ModuloEntrada[], tableros: TableroI
     for (const p of m.piezas) {
       if (!(p.cant > 0)) continue;
       const material = m.tableroPorRol[p.rol] || SIN_TABLERO;
-      const largoMm = r1(p.largoIn * MM_POR_IN);
-      const anchoMm = r1(p.anchoIn * MM_POR_IN);
+      const largoMm = medidaListaCorte(p.largoIn);
+      const anchoMm = medidaListaCorte(p.anchoIn);
       // El enchape va en la llave: dos piezas iguales con canto distinto no se cortan igual.
       const key = [material, largoMm, anchoMm, p.cantoLargos, p.cantoAnchos, p.cantoCalibre ?? '', p.pieza].join('|');
       const fila = filas.get(key) ?? {
@@ -117,8 +119,11 @@ export function construirListaCorte(modulos: ModuloEntrada[], tableros: TableroI
     const tab = tabPorCodigo.get(material);
     const formato = formatoConfigurado(cfg, tab?.formato);
     const piezas = filasMat.reduce((s, f) => s + f.cantidad, 0);
-    const areaNetaMm2 = filasMat.reduce((s, f) => s + f.cantidad * f.largoMm * f.anchoMm, 0);
-    const areaConSierraMm2 = filasMat.reduce((s, f) => s + f.cantidad * (f.largoMm + cfg.discoMm) * (f.anchoMm + cfg.discoMm), 0);
+    const medidas = filasMat.map(f => ({ f, medida: formato ? medidaParaCorte(f, formato, cfg.refiladoMm, cfg.giraLamina) : null }));
+    const areaNetaMm2 = medidas.reduce((s, { f, medida }) => {
+      const dimensiones = medida ?? f;
+      return s + f.cantidad * dimensiones.largoMm * dimensiones.anchoMm;
+    }, 0);
     const alertas: string[] = [];
     let laminasMinimas: number | null = null;
     let laminasMaxDesperdicio: number | null = null;
@@ -132,8 +137,10 @@ export function construirListaCorte(modulos: ModuloEntrada[], tableros: TableroI
     if (formato) {
       const areaLamina = formato.largoMm * formato.anchoMm;
       const areaUtil = (formato.largoMm - 2 * cfg.refiladoMm) * (formato.anchoMm - 2 * cfg.refiladoMm);
-      const enLamina = filasMat.every((f) => cabeEnLamina(f, formato, cfg));
+      const enLamina = medidas.every(({ medida }) => medida !== null);
       if (!enLamina) alertas.push('Hay piezas más grandes que la lámina útil');
+      if (medidas.some(({ medida }) => medida?.medidaConRefilado)) alertas.push('Hay medidas nominales que incluyen refilado');
+      const areaConSierraMm2 = medidas.reduce((s, { f, medida }) => s + f.cantidad * areaConSierra(medida ?? f, formato, cfg.refiladoMm, cfg.discoMm), 0);
       if (areaUtil > 0 && areaNetaMm2 > 0) {
         laminasMinimas = Math.ceil(areaConSierraMm2 / areaUtil);
         laminasMaxDesperdicio = Math.floor(areaNetaMm2 / (areaLamina * (1 - cfg.desperdicioMaxPct / 100)));
@@ -167,11 +174,4 @@ export function construirListaCorte(modulos: ModuloEntrada[], tableros: TableroI
 
   const totalPiezas = lista.reduce((s, f) => s + f.cantidad, 0);
   return { filas: lista, materiales, totalPiezas };
-}
-
-// La pieza cabe en la lámina útil en alguna orientación (la veta se decide después).
-function cabeEnLamina(f: FilaListaCorte, formato: FormatoLamina, cfg: ConfigOptimizador): boolean {
-  const L = formato.largoMm - 2 * cfg.refiladoMm;
-  const A = formato.anchoMm - 2 * cfg.refiladoMm;
-  return (f.largoMm <= L && f.anchoMm <= A) || (f.largoMm <= A && f.anchoMm <= L);
 }

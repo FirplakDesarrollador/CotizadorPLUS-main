@@ -12,8 +12,6 @@ import { usaFrentesDosPequenosGola } from '@/lib/frentes-gaveta';
 import { esPanel, etiquetaTipoModulo } from '@/lib/nombres-modulos';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
-import HdrConsumos from './HdrConsumos';
-import HdrSeguimiento from './HdrSeguimiento';
 import HdrBuscarGuardados from './HdrBuscarGuardados';
 import { CAMPOS_COLOR_HDR, consolidarModulosHdr, descripcionPiezaPlanaHdr, prefijarHrj, tituloModuloHdr, type ColoresHdr } from './datosHdr';
 import { crearDestinoHdr, esCancelacionHdr } from './destinoExportacion';
@@ -22,6 +20,14 @@ import { exigirRevisionHdr } from './validacion';
 type Tipo = { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; nombre_es: string | null; categoria: string | null };
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
 const DB_SM_FE_SF_GROUP_VALUE = '__DB_SM_FE_SF__';
+
+function PrefijoHrj({ checked, onChange, contexto }: { checked: boolean; onChange: (valor: boolean) => void; contexto: string }) {
+  return <label className="flex w-fit cursor-pointer items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-slate-700">
+    <span>Prefijo HRJ</span>
+    <input type="checkbox" role="switch" aria-label={`Agregar prefijo HRJ ${contexto}`} checked={checked} onChange={e => onChange(e.target.checked)} className="peer sr-only" />
+    <span aria-hidden="true" className="relative h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-emerald-600 peer-checked:after:translate-x-5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-emerald-700" />
+  </label>;
+}
 
 export default function HdrBuscador({ tipos, presetDefault, tableros, cotizaciones }:
   { tipos: Tipo[]; presetDefault: Record<string, string>; tableros: Tablero[]; cotizaciones: CotizacionHeader[] }) {
@@ -47,12 +53,18 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [prefijoHrj, setPrefijoHrj] = useState(false);
   const [coloresHdr, setColoresHdr] = useState<ColoresHdr>({});
   const [prefijoHrjBuscar, setPrefijoHrjBuscar] = useState(false);
+  const [prefijoHrjCrear, setPrefijoHrjCrear] = useState(false);
   const [modLoading, setModLoading] = useState(false);
   const [modError, setModError] = useState<string | null>(null);
   const [modulos, setModulos] = useState<ModuloHDR[] | null>(null);
-  const [exportandoTodas, setExportandoTodas] = useState<{ hecho: number; total: number } | null>(null);
+  const [seleccionPdf, setSeleccionPdf] = useState<Set<string>>(() => new Set());
+  const [exportandoPdf, setExportandoPdf] = useState<{ hecho: number; total: number } | null>(null);
   const [exportandoExcel, setExportandoExcel] = useState(false);
+  const cargaCotizacion = useRef(0);
   const tablasRef = useRef(new Map<string, HdrTablaHandle>());
+  const hdrDisponibles = (modulos ?? []).filter(m => m.ok);
+  const hdrSeleccionadas = hdrDisponibles.filter(m => seleccionPdf.has(m.lineaId));
+  const exportando = exportandoPdf !== null || exportandoExcel;
   const referencias = useMemo(() => { const conteo = new Map<string, number>(); for (const m of modulos ?? []) conteo.set(m.codigoModulo, (conteo.get(m.codigoModulo) ?? 0) + 1); return conteo; }, [modulos]);
   const totalMuebles = (modulos ?? []).reduce((n, m) => n + (m.origenes ?? []).reduce((s, o) => s + o.cantidad * o.repeticionesArea, 0), 0);
 
@@ -144,41 +156,53 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   }
 
   async function handleCotizacionChange(id: string) {
+    const solicitud = ++cargaCotizacion.current;
     setRevisionConfirmada(false);
     setCotizacionId(id);
     setProyectoHdr(cotizaciones.find(c => c.id === id)?.nombre ?? '');
     setModulos(null);
+    setSeleccionPdf(new Set());
     setModError(null);
     tablasRef.current.clear();
+    setModLoading(Boolean(id));
     if (!id) return;
-    setModLoading(true);
     try {
       const r = await modulosDeCotizacionAction(id);
-      setModulos(consolidarModulosHdr(r));
+      if (solicitud !== cargaCotizacion.current) return;
+      const hojas = consolidarModulosHdr(r);
+      setModulos(hojas);
+      setSeleccionPdf(new Set(hojas.filter(m => m.ok).map(m => m.lineaId)));
     } catch (e) {
-      setModError(e instanceof Error ? e.message : 'Error al cargar los módulos de la cotización.');
+      if (solicitud === cargaCotizacion.current) setModError(e instanceof Error ? e.message : 'Error al cargar los módulos de la cotización.');
     } finally {
-      setModLoading(false);
+      if (solicitud === cargaCotizacion.current) setModLoading(false);
     }
+  }
+
+  function seleccionarHdr(lineaId: string, marcada: boolean) {
+    setSeleccionPdf(actual => {
+      const siguiente = new Set(actual);
+      if (marcada) siguiente.add(lineaId);
+      else siguiente.delete(lineaId);
+      return siguiente;
+    });
   }
 
   // Un solo botón, un PDF independiente por módulo (no un PDF combinado). Secuencial,
   // no en paralelo: cada exportación usa html2canvas (pesado) y varios navegadores
   // bloquean descargas múltiples disparadas de golpe si no van una detrás de otra.
-  async function exportarTodasPdf() {
-    const okModulos = (modulos ?? []).filter((m) => m.ok);
-    if (okModulos.length === 0) return;
-    setExportandoTodas({ hecho: 0, total: okModulos.length });
+  async function exportarSeleccionPdf() {
+    if (!hdrSeleccionadas.length) return;
+    setExportandoPdf({ hecho: 0, total: hdrSeleccionadas.length });
     setModError(null);
     try {
-      exigirRevisionHdr(modulos ?? [], revisionConfirmada);
-      if (modulos?.some(m => !m.ok)) throw new Error('Hay muebles con errores. Corrígelos antes de exportar para no omitirlos.');
-      const handles = okModulos.map(m => { const handle = tablasRef.current.get(m.lineaId); if (!handle) throw new Error(`La HDR de ${m.codigoModulo} aún no está lista.`); return handle; });
+      exigirRevisionHdr(hdrSeleccionadas, revisionConfirmada);
+      const handles = hdrSeleccionadas.map(m => { const handle = tablasRef.current.get(m.lineaId); if (!handle) throw new Error(`La HDR de ${m.codigoModulo} aún no está lista.`); return handle; });
       const destino = await crearDestinoHdr(proyectoHdr);
-      for (let i = 0; i < handles.length; i++) { await handles[i].exportarPdf(destino.guardar); setExportandoTodas({ hecho: i + 1, total: handles.length }); }
+      for (let i = 0; i < handles.length; i++) { await handles[i].exportarPdf(destino.guardar); setExportandoPdf({ hecho: i + 1, total: handles.length }); }
       await destino.finalizar();
-    } catch (e) { if (!esCancelacionHdr(e)) setModError(e instanceof Error ? e.message : 'No se pudo completar la exportación de todas las HDR.'); }
-    finally { setExportandoTodas(null); }
+    } catch (e) { if (!esCancelacionHdr(e)) setModError(e instanceof Error ? e.message : 'No se pudo exportar la selección de HDR.'); }
+    finally { setExportandoPdf(null); }
   }
 
   async function exportarExcel() {
@@ -208,26 +232,21 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const tituloCreado = res
     ? (() => {
         const nombre = `${codigo} ${descripcionPiezaPlanaHdr(tipoSel?.pref, notaPanel) ?? descripcionModulo(res, tipoSel?.pref)}`;
-        return prefijoHrjBuscar ? prefijarHrj(nombre, tipoSel?.pref, codigo) : nombre;
+        return prefijoHrjCrear ? prefijarHrj(nombre, tipoSel?.pref, codigo) : nombre;
       })()
     : '';
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
-        <h2 className="font-semibold text-slate-900">Generar desde una cotización guardada</h2>
+        <h2 className="font-semibold text-slate-900">Generar desde cotización</h2>
         <Campo label="Cotización">
-          <Combobox value={cotizacionId} options={cotizacionOptions} onChange={handleCotizacionChange} placeholder="Buscar cotización por código, nombre o cliente…" />
+          <Combobox value={cotizacionId} options={cotizacionOptions} onChange={handleCotizacionChange} disabled={exportando} placeholder="Buscar cotización por código, nombre o cliente…" />
         </Campo>
         <Campo label="Nombre del proyecto">
           <input value={proyectoHdr} onChange={e => setProyectoHdr(e.target.value)} placeholder="Nombre para las hojas de ruta" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
         </Campo>
-        <label className="flex w-fit cursor-pointer items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-slate-700">
-          <span>Prefijo HRJ</span>
-          <input type="checkbox" role="switch" aria-label="Agregar prefijo HRJ al nombre del mueble" checked={prefijoHrj} onChange={e => setPrefijoHrj(e.target.checked)} className="peer sr-only" />
-          <span aria-hidden="true" className="relative h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-emerald-600 peer-checked:after:translate-x-5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-emerald-700" />
-          <span>Agregar HRJ al nombre del mueble</span>
-        </label>
+        <PrefijoHrj checked={prefijoHrj} onChange={setPrefijoHrj} contexto="al nombre del mueble" />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {CAMPOS_COLOR_HDR.map(([rol, etiqueta]) => <Campo key={rol} label={etiqueta}>
             <input value={coloresHdr[rol] ?? ''} onChange={e => setColoresHdr(actual => ({ ...actual, [rol]: e.target.value }))}
@@ -247,41 +266,53 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
               <ul className="list-disc pl-5">{modulos.flatMap(m => (m.avisosValidacion ?? []).map((aviso, i) => <li key={`${m.lineaId}-${i}`}>{m.codigoModulo}: {aviso}</li>))}</ul>
               <a href={`/cotizaciones/${cotizacionId}`} className="underline">Abrir cotización para corregir las cantidades</a>
               <p>Después de guardar la corrección, vuelve a seleccionar la cotización para validar las HDR.</p>
-              {modulos.some(m => m.aperturaPendiente) ? <p>La apertura L/R es obligatoria. Complétala en la cotización para poder exportar.</p> : <label className="flex items-start gap-2"><input type="checkbox" checked={revisionConfirmada} onChange={e => setRevisionConfirmada(e.target.checked)} />He revisado todos los avisos y confirmo que las cantidades guardadas son intencionales.</label>}
+              {modulos.some(m => m.aperturaPendiente) && <p>Completa la apertura L/R en la cotización para exportar las hojas afectadas.</p>}
+              {modulos.some(m => m.avisosValidacion?.length && !m.aperturaPendiente) && <label className="flex items-start gap-2"><input type="checkbox" checked={revisionConfirmada} onChange={e => setRevisionConfirmada(e.target.checked)} />He revisado los avisos y confirmo que las cantidades guardadas son intencionales.</label>}
             </div>
           )}
           <p className="text-sm text-slate-600">Al exportar, elige Descargas: se creará «{proyectoHdr.trim() || 'Proyecto'} - HDR». Si tu navegador no admite carpetas, se descargará un ZIP con esa carpeta.</p>
           <p className="text-sm text-slate-600">Muebles contabilizados: {totalMuebles.toLocaleString('es-CO')} · HDR: {modulos.length}. Los grupos físicos se muestran completos, con sus piezas compartidas contadas una sola vez.</p>
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={exportarExcel} disabled={exportandoExcel || !modulos.some(m => m.ok)} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm disabled:opacity-50">{exportandoExcel ? 'Generando Excel…' : 'Exportar Excel'}</button>
+          <div className="flex flex-wrap items-center gap-3">
+            <span aria-live="polite" className="text-sm text-slate-700">{hdrSeleccionadas.length} de {hdrDisponibles.length} HDR seleccionadas</span>
+            <button type="button" onClick={() => setSeleccionPdf(new Set(hdrDisponibles.map(m => m.lineaId)))} disabled={exportando || hdrSeleccionadas.length === hdrDisponibles.length} className="text-sm underline disabled:opacity-50">Seleccionar todas</button>
+            <button type="button" onClick={() => setSeleccionPdf(new Set())} disabled={exportando || !hdrSeleccionadas.length} className="text-sm underline disabled:opacity-50">Desmarcar todas</button>
+            <button type="button" onClick={exportarExcel} disabled={exportando || !hdrDisponibles.length} className="ml-auto rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm disabled:opacity-50">{exportandoExcel ? 'Generando Excel…' : 'Exportar Excel'}</button>
             <button
               type="button"
-              onClick={exportarTodasPdf}
-              disabled={exportandoTodas !== null || !modulos.some((m) => m.ok)}
+              onClick={exportarSeleccionPdf}
+              disabled={exportando || !hdrSeleccionadas.length}
               className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
             >
-              {exportandoTodas ? `Generando ${exportandoTodas.hecho}/${exportandoTodas.total}…` : '⬇ Exportar todas en PDF'}
+              {exportandoPdf ? `Generando ${exportandoPdf.hecho}/${exportandoPdf.total}…` : '⬇ Exportar selección en PDF'}
             </button>
           </div>
 
           {modulos.map((m) => (
-            <div key={m.lineaId}>
+            <div key={m.lineaId} className="space-y-1">
               {m.ok ? (
-                <HdrTabla
-                  ref={(handle) => {
-                    if (handle) tablasRef.current.set(m.lineaId, handle);
-                    else tablasRef.current.delete(m.lineaId);
-                  }}
-                  res={m.result}
-                  pref={m.pref}
-                  codigoModulo={m.codigoModulo}
-                  tableros={tableros}
-                  titulo={tituloModuloHdr(m, prefijoHrj)}
-                  proyectoInicial={proyectoHdr}
-                  coloresPorRol={coloresHdr}
-                  referenciaRepetida={(referencias.get(m.codigoModulo) ?? 0) > 1}
-                  mostrarBotonExportar={false}
-                />
+                <>
+                  <label className="inline-flex w-fit cursor-pointer items-center gap-2 px-1 py-1 text-sm text-slate-700">
+                    <input type="checkbox" checked={seleccionPdf.has(m.lineaId)} disabled={exportando}
+                      aria-label={`Incluir en PDF: ${tituloModuloHdr(m, prefijoHrj)}`}
+                      onChange={e => seleccionarHdr(m.lineaId, e.target.checked)} className="size-4 accent-emerald-700" />
+                    Incluir en PDF
+                  </label>
+                  <HdrTabla
+                    ref={(handle) => {
+                      if (handle) tablasRef.current.set(m.lineaId, handle);
+                      else tablasRef.current.delete(m.lineaId);
+                    }}
+                    res={m.result}
+                    pref={m.pref}
+                    codigoModulo={m.codigoModulo}
+                    tableros={tableros}
+                    titulo={tituloModuloHdr(m, prefijoHrj)}
+                    proyectoInicial={proyectoHdr}
+                    coloresPorRol={coloresHdr}
+                    referenciaRepetida={(referencias.get(m.codigoModulo) ?? 0) > 1}
+                    mostrarBotonExportar={false}
+                  />
+                </>
               ) : (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                   {m.codigoModulo}: {m.error}
@@ -292,18 +323,14 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         </div>
       )}
 
-      <HdrConsumos cotizaciones={cotizaciones} />
-      <HdrSeguimiento cotizaciones={cotizaciones} tipos={tipos} />
-
-      <div className="border-t border-slate-200 pt-6">
-        <h2 className="font-semibold text-slate-900 mb-3">Buscar/Crear</h2>
-        <label className="mb-3 flex w-fit cursor-pointer items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-slate-700">
-          <span>Prefijo HRJ</span>
-          <input type="checkbox" role="switch" aria-label="Agregar prefijo HRJ al nombre del mueble buscado o creado" checked={prefijoHrjBuscar} onChange={e => setPrefijoHrjBuscar(e.target.checked)} className="peer sr-only" />
-          <span aria-hidden="true" className="relative h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-emerald-600 peer-checked:after:translate-x-5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-emerald-700" />
-          <span>Agregar HRJ al nombre del mueble</span>
-        </label>
+      <section className="space-y-3 border-t border-slate-200 pt-6" aria-label="Buscar HDR">
+        <h2 className="font-semibold text-slate-900">Buscar</h2>
+        <PrefijoHrj checked={prefijoHrjBuscar} onChange={setPrefijoHrjBuscar} contexto="al nombre del mueble buscado" />
         <HdrBuscarGuardados tableros={tableros} prefijoHrj={prefijoHrjBuscar} />
+      </section>
+      <section className="space-y-3 border-t border-slate-200 pt-6" aria-label="Crear HDR">
+        <h2 className="font-semibold text-slate-900">Crear</h2>
+        <PrefijoHrj checked={prefijoHrjCrear} onChange={setPrefijoHrjCrear} contexto="al nombre del mueble creado" />
         <form onSubmit={buscar} className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
           <div className="grid grid-cols-12 gap-2 items-end">
             <Campo label="Tipo De Mueble" className="col-span-12 sm:col-span-5">
@@ -390,7 +417,7 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
             <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} pref={tipoSel?.pref} codigoModulo={codigo} tableros={tableros} proyectoInicial={proyectoHdr} titulo={tituloCreado} />
           </div>
         )}
-      </div>
+      </section>
 
     </div>
   );

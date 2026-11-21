@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import DetalleFlotante from '@/components/DetalleFlotante';
+import InstalacionEntrega, { type DatosInstalacion } from './InstalacionEntrega';
 import type { AreaEntrega, ConfigEntrega, EntregaParcial, ImporteEntrega, TamanoContenedor } from '@/lib/entrega-cotizacion';
-import { CAPACIDAD_ENTREGA, modulosDeEntrega, modulosDelParcial, type resumirEntrega } from '@/lib/entrega-cotizacion';
+import { CAPACIDAD_ENTREGA, cantidadProyecto, cantidadesDeParciales, modulosDeEntrega, type resumirEntrega } from '@/lib/entrega-cotizacion';
 
 const decimal = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const cantidad = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 6 });
@@ -53,36 +55,52 @@ function Contenedor({ valor, onChange }: { valor: TamanoContenedor | null; onCha
   </div>;
 }
 
-export default function EntregaPanel({ config, areas, resultados, onChange, onSave }: {
+export default function EntregaPanel({ config, areas, resultados, instalacion, onChange, onSave }: {
   config: ConfigEntrega;
   areas: readonly AreaEntrega[];
   resultados: ReturnType<typeof resumirEntrega>;
+  instalacion?: DatosInstalacion;
   onChange: (valor: ConfigEntrega) => void;
   onSave: (valor: ConfigEntrega) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState('');
-  const asignadas = new Set(config.parciales.flatMap(parcial => parcial.areas));
-  const areaUnica = areas.length === 1 ? areas[0] : undefined;
-  const modulos = areaUnica ? modulosDeEntrega(areaUnica) : [];
-  const modulosPorParcial = areaUnica ? config.parciales.map(parcial => modulosDelParcial(parcial, areaUnica)) : [];
-  const modulosAsignados = new Set(modulosPorParcial.flat());
-  const maxParciales = Math.min(100, Math.max(1, areaUnica ? modulos.length : areas.length, config.parciales.length));
+  const asignaciones = cantidadesDeParciales(config.parciales, areas);
+  const totalesAsignados = new Map<string, number>();
+  for (const parcial of asignaciones) for (const [id, total] of parcial) {
+    totalesAsignados.set(id, (totalesAsignados.get(id) ?? 0) + total);
+  }
+  const unidadesProyecto = areas.reduce((total, area) => total + modulosDeEntrega(area).reduce((n, linea) => n + cantidadProyecto(area, linea), 0), 0);
+  const maxParciales = Math.min(100, Math.max(1, Math.ceil(unidadesProyecto), config.parciales.length));
 
   function cambiarParcial(i: number, parcial: EntregaParcial) {
     onChange({ ...config, parciales: config.parciales.map((actual, j) => i === j ? parcial : actual) });
   }
 
+  function cambiarCantidades(i: number, cantidades: Map<string, number>) {
+    onChange({ ...config, parciales: config.parciales.map((parcial, j) => ({
+      contenedor: parcial.contenedor,
+      areas: [],
+      cantidades: Object.fromEntries(j === i ? cantidades : asignaciones[j]),
+    })) });
+  }
+
   async function guardar() {
     setGuardando(true);
-    const resultado = await onSave(config);
-    setMensaje(resultado.ok ? 'Entrega guardada.' : resultado.error ?? 'No se pudo guardar la entrega.');
-    setGuardando(false);
+    try {
+      const resultado = await onSave(config);
+      setMensaje(resultado.ok ? 'Entrega guardada.' : resultado.error ?? 'No se pudo guardar la entrega.');
+    } catch {
+      setMensaje('No se pudo guardar la entrega.');
+    } finally {
+      setGuardando(false);
+    }
   }
 
   return <section className="mt-4 rounded-md border border-slate-200 p-4">
     <h3 className="font-semibold text-slate-900">Entrega</h3>
     <fieldset disabled={guardando} className="mt-3 space-y-3">
+      {instalacion && <InstalacionEntrega config={config.instalacion} datos={instalacion} onChange={instalacion => onChange({ ...config, instalacion })} />}
       <fieldset className="flex gap-4 text-sm">
         <legend className="mb-1 font-medium">Incoterm</legend>
         {(['FOB', 'CIF', 'DDP'] as const).map(incoterm => <label key={incoterm} className="flex items-center gap-1">
@@ -114,39 +132,61 @@ export default function EntregaPanel({ config, areas, resultados, onChange, onSa
             {Array.from({ length: maxParciales }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
           </select>
         </label>
-        {config.parciales.map((parcial, i) => <fieldset key={i} className="space-y-2 rounded border border-slate-200 p-3">
-          <legend className="px-1 text-sm font-semibold">Entrega parcial {i + 1}</legend>
+        {config.parciales.map((parcial, i) => <section key={i} className="space-y-2 rounded border border-slate-200 p-3">
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-semibold">Entrega parcial {i + 1}</h4>
+            <DetalleFlotante icono etiqueta={`Ver módulos de entrega parcial ${i + 1}`} titulo={`Contenido de entrega parcial ${i + 1}`}>
+            {() => areas.map(area => {
+              const filas = modulosDeEntrega(area).map(linea => {
+                const total = cantidadProyecto(area, linea);
+                const asignada = asignaciones[i].get(linea.id) ?? 0;
+                const maximo = Math.max(0, total - ((totalesAsignados.get(linea.id) ?? 0) - asignada));
+                return { linea, total, asignada, maximo };
+              });
+              function actualizar(id: string, valor: number, maximo: number) {
+                const siguiente = new Map(asignaciones[i]);
+                if (Number.isFinite(valor) && valor > 0) siguiente.set(id, Math.min(valor, maximo));
+                else siguiente.delete(id);
+                cambiarCantidades(i, siguiente);
+              }
+              return <section key={area.id} className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold">Módulos de {area.nombre}</h4>
+                  {filas.some(fila => fila.maximo > fila.asignada) && <button type="button" className="text-sm underline" onClick={() => {
+                    const siguiente = new Map(asignaciones[i]);
+                    for (const fila of filas) if (fila.maximo > 0) siguiente.set(fila.linea.id, fila.maximo);
+                    cambiarCantidades(i, siguiente);
+                  }}>Asignar disponibles</button>}
+                </div>
+                {!filas.length ? <p className="text-sm text-slate-600">Esta área aún no tiene módulos.</p> : <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-100 text-left"><tr><th className="p-2">Módulo</th><th className="p-2 text-right">Total proyecto</th><th className="p-2 text-right">Disponible aquí</th><th className="p-2">Cantidad en entrega</th></tr></thead>
+                    <tbody>{filas.map(({ linea, total, asignada, maximo }, indice) => {
+                      const codigo = linea.codigo_modulo || linea.pref || `Módulo ${indice + 1}`;
+                      return <tr key={linea.id} className="border-b border-slate-100">
+                        <td className="p-2"><label className="flex items-start gap-2">
+                          <input type="checkbox" className="mt-1" checked={asignada > 0} disabled={!maximo}
+                            aria-label={`Incluir ${codigo}`} onChange={e => actualizar(linea.id, e.target.checked ? maximo : 0, maximo)} />
+                          <span>{codigo}{linea.descripcion_es ? ` · ${linea.descripcion_es}` : ''}</span>
+                        </label></td>
+                        <td className="p-2 text-right tabular-nums">{cantidad.format(total)}</td>
+                        <td className="p-2 text-right tabular-nums">{cantidad.format(maximo)}</td>
+                        <td className="p-2"><input type="number" min="0" max={maximo} step={Number.isInteger(total) ? 1 : 'any'}
+                          className={`${selector} w-24`} aria-label={`Cantidad de ${codigo}`} disabled={!maximo}
+                          value={asignada || ''} placeholder="0" onFocus={e => e.target.select()}
+                          onChange={e => actualizar(linea.id, Number.isInteger(total) ? Math.trunc(e.target.valueAsNumber) : e.target.valueAsNumber, maximo)} /></td>
+                      </tr>;
+                    })}</tbody>
+                  </table>
+                </div>}
+              </section>;
+            })}
+            </DetalleFlotante>
+          </div>
           <Contenedor valor={parcial.contenedor} onChange={contenedor => cambiarParcial(i, { ...parcial, contenedor })} />
-          {areaUnica ? <fieldset className="grid gap-1 text-sm sm:grid-cols-2">
-            <legend className="font-medium">Módulos de {areaUnica.nombre}</legend>
-            {modulos.length === 0 && <p className="text-slate-600">Esta área aún no tiene módulos.</p>}
-            {modulos.map((linea, indice) => {
-              const ids = modulosPorParcial[i];
-              const incluido = ids.includes(linea.id);
-              const codigo = linea.codigo_modulo || linea.pref || `Módulo ${indice + 1}`;
-              return <label key={linea.id} className="flex items-start gap-2">
-                <input type="checkbox" className="mt-1" checked={incluido} disabled={!incluido && modulosAsignados.has(linea.id)}
-                  onChange={e => cambiarParcial(i, { ...parcial, areas: [], modulos: e.target.checked ? [...ids, linea.id] : ids.filter(id => id !== linea.id) })} />
-                <span>{codigo}{linea.descripcion_es ? ` · ${linea.descripcion_es}` : ''} · {cantidad.format(Number(linea.cantidad ?? 1))} por área</span>
-              </label>;
-            })}
-          </fieldset> : <fieldset className="grid gap-1 text-sm sm:grid-cols-2">
-            <legend className="font-medium">Áreas de la cotización</legend>
-            {areas.map(area => {
-              const incluida = parcial.areas.includes(area.id);
-              const pendientes = modulosDeEntrega(area).filter(linea => parcial.modulos?.includes(linea.id));
-              const asignadaPorModulo = modulosDeEntrega(area).some(linea =>
-                config.parciales.some((otro, j) => j !== i && otro.modulos?.includes(linea.id)));
-              return <label key={area.id} className="flex items-center gap-2">
-                <input type="checkbox" checked={incluida} disabled={!incluida && (asignadas.has(area.id) || asignadaPorModulo)}
-                  onChange={e => cambiarParcial(i, { ...parcial, areas: e.target.checked ? [...parcial.areas, area.id] : parcial.areas.filter(id => id !== area.id) })} />
-                {area.nombre}{pendientes.length > 0 && ` · ${pendientes.length} módulos asignados`}
-              </label>;
-            })}
-          </fieldset>}
           <p className="text-sm font-medium">{decimal.format(resultados[i]?.porcentaje ?? 0)} % de las unidades del proyecto</p>
           {resultados[i] && <Resumen resultado={resultados[i]} />}
-        </fieldset>)}
+        </section>)}
       </>}
       {config.modo && <div className="space-y-1 text-xs text-slate-600">
         <p>Unidades = cantidad de cada módulo × veces que se repite su área</p>

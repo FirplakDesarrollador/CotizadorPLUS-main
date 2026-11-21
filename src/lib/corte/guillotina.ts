@@ -13,6 +13,7 @@
 // varias heurísticas de ordenación y se queda con la mejor según el criterio de
 // planta. Siempre se informa el mínimo teórico para saber a qué distancia quedó.
 import type { ConfigOptimizador, FormatoLamina } from './config';
+import { areaConSierra, medidaParaCorte, type MedidaCorte } from './medida-corte';
 
 export type PiezaCorte = {
   /** Identifica la fila de la lista de corte de la que sale. */
@@ -69,11 +70,9 @@ export type Patron = {
   transpuesta?: boolean;
 };
 
-export type GrupoMedida = {
+export type GrupoMedida = MedidaCorte & {
   grupo: number;
   etiqueta: string;
-  largoMm: number;
-  anchoMm: number;
   cantidad: number;
 };
 
@@ -149,15 +148,16 @@ export function optimizarMaterial(
   for (const p of piezas) {
     const cantidad = Math.round(p.cantidad);
     if (!(cantidad > 0) || !(p.largoMm > 0) || !(p.anchoMm > 0)) continue;
-    if (!cabe(p.largoMm, p.anchoMm, utilL, utilA, p.girable)) {
+    const medida = medidaParaCorte(p, formato, cfg.refiladoMm, p.girable);
+    if (!medida) {
       noCaben.push({ etiqueta: p.etiqueta, largoMm: p.largoMm, anchoMm: p.anchoMm, cantidad });
       continue;
     }
-    const clave = `${p.largoMm}x${p.anchoMm}`;
+    const clave = `${medida.largoMm}x${medida.anchoMm}|${medida.medidaConRefilado ? `${p.largoMm}x${p.anchoMm}` : ''}`;
     const g = porMedida.get(clave);
     if (g) { g.cantidad += cantidad; g.girable = g.girable && p.girable; continue; }
     porMedida.set(clave, {
-      grupo: 0, etiqueta: p.etiqueta, largoMm: p.largoMm, anchoMm: p.anchoMm,
+      grupo: 0, etiqueta: p.etiqueta, ...medida,
       cantidad, girable: p.girable, id: p.id,
     });
   }
@@ -190,7 +190,7 @@ export function optimizarMaterial(
   // deje el hueco libre más grande (el criterio de planta: un solo sobrante útil).
   const caja = { X0: cfg.refiladoMm, Y0: cfg.refiladoMm, X1, Y1 };
   const laminasIdeal = Math.max(1, Math.ceil(
-    grupos.reduce((t, g) => t + g.cantidad * (g.largoMm + cfg.discoMm) * (g.anchoMm + cfg.discoMm), 0) / (utilL * utilA),
+    grupos.reduce((t, g) => t + g.cantidad * areaConSierra(g, formato, cfg.refiladoMm, cfg.discoMm), 0) / (utilL * utilA),
   ));
   const { mejor, iteraciones } = buscarAcomodo(unidades, caja, cfg, laminasIdeal);
   const laminas = mejor ?? [];
@@ -224,11 +224,8 @@ export function optimizarMaterial(
 }
 
 const limpiar = (g: GrupoMedida & { girable?: boolean; id?: string }): GrupoMedida =>
-  ({ grupo: g.grupo, etiqueta: g.etiqueta, largoMm: g.largoMm, anchoMm: g.anchoMm, cantidad: g.cantidad });
-
-function cabe(l: number, a: number, utilL: number, utilA: number, girable: boolean): boolean {
-  return (l <= utilL && a <= utilA) || (girable && a <= utilL && l <= utilA);
-}
+  ({ grupo: g.grupo, etiqueta: g.etiqueta, largoMm: g.largoMm, anchoMm: g.anchoMm, cantidad: g.cantidad,
+    ...(g.medidaConRefilado ? { medidaConRefilado: g.medidaConRefilado } : {}) });
 
 // Cada heurística fija una orientación de partida y un orden de entrada. La
 // seccionadora corta franjas, así que el orden manda sobre el resultado.

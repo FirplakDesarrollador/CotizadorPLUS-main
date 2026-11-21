@@ -269,6 +269,9 @@
       "patterns": [
         "src/lib/corte/**",
         "src/app/optimizador/**",
+        "tests/optimizador-consumos.test.ts",
+        "tests/medida-corte.test.ts",
+        "tests/lista.test.ts",
         "src/proxy.ts",
         "db/migrations/0244_optimizador_guardados.sql",
         "tests/guardados.test.ts",
@@ -282,6 +285,9 @@
       ],
       "tests": [
         "tests/optimizador-corte.test.ts",
+        "tests/optimizador-consumos.test.ts",
+        "tests/medida-corte.test.ts",
+        "tests/lista.test.ts",
         "tests/guardados.test.ts",
         "tests/imagenes.test.ts",
         "tests/optimizador-actions.test.ts",
@@ -313,6 +319,9 @@
         "src/lib/guias.ts",
         "src/lib/contenedores.ts",
         "src/lib/entrega-cotizacion.ts",
+        "src/lib/instalacion-cotizacion.ts",
+        "tests/entrega-cotizacion.test.ts",
+        "tests/instalacion-cotizacion.test.ts",
         "tests/contenedores.test.ts",
         "tests/hdr-consumos.test.ts",
         "tests/hdr-buscar-seguimiento.test.ts"
@@ -342,6 +351,8 @@
         "tests/grupos-programacion.test.ts",
         "tests/propuesta-cotizacion.test.ts",
         "tests/contenedores.test.ts",
+        "tests/entrega-cotizacion.test.ts",
+        "tests/instalacion-cotizacion.test.ts",
         "tests/materiales-proyecto.test.ts",
         "tests/cotizaciones.test.ts",
         "tests/hdr-consumos.test.ts",

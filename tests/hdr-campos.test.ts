@@ -28,6 +28,30 @@ test('PN80240 y PN82240 imprimen largo 2352 mm y conservan el resto de la fila',
   }
 });
 
+test('F, PN y TK con ancho inferior a 100 mm suprimen solo el canto ancho Color en HDR y Excel', () => {
+  const tablero = { codigo: 'C18', espesor_mm: 18, precio_m2: 100 };
+  for (const anchoMm of [99.9, 100, 100.1]) {
+    const res = { ...calcularMueble({
+      dims: { L: anchoMm / 25.4, A: 600 / 25.4, P: 18 / 25.4 },
+      piezas: [{ nombre: 'panel', rol_tablero: 'frente', formula_cantidad: '1', formula_largo: 'L', formula_ancho: 'A',
+        cantos: { calibre: '22x1', largos: 2, anchos: 2 } }],
+      reglas: [], preset: { frente: tablero.codigo }, tablerosByCode: { C18: tablero },
+      cantosByCalibre: { '22X1': { calibre: '22x1', precio: 100 } }, herrajesByCode: {}, herrajesPlantilla: [],
+      consumiblesBySelector: {}, etiquetasUnd: 0, margen: 0, trm: 4000, desperdicio: 0,
+    }), trm: 4000, margen: 0 };
+    const [control] = construirFilas(res, [tablero], 'FPK');
+    assert.equal(control.cantoAnchoColor, 2);
+    for (const pref of ['F', 'PN', 'TK']) {
+      const [fila] = construirFilas(res, [tablero], pref);
+      const esperado = anchoMm < 100 ? 0 : 2;
+      assert.deepEqual(fila, { ...control, cantoAnchoColor: esperado });
+      const hoja = crearWorkbookHdr([{ titulo: pref, cantidad: '', color: '', proyecto: '', filas: [{ ...fila, color: '' }] }]).getWorksheet('HDR');
+      assert.equal(hoja?.getCell('G2').value, 2);
+      assert.equal(hoja?.getCell('H2').value, esperado);
+    }
+  }
+});
+
 test('la HDR y el Excel usan el color del rol real y conservan textos largos y ediciones individuales', () => {
   const largo = 'Roble precompuesto mate con veta continua para frente exterior';
   const colores = { caja: ' Blanco ', refuerzo: 'Gris', frente: largo, fondo: 'Natural' };

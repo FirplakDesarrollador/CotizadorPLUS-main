@@ -186,17 +186,7 @@ function entradaDeReparto(
       const delDia = modulos.map((m, i) => ({ ...m, cantidad: u[i] })).filter((m) => m.cantidad > 0);
       if (!delDia.length) return 0;
       const lista = construirListaCorte(delDia, [...tableros], cfgRapida);
-      let total = 0;
-      for (const mat of lista.materiales) {
-        if (!mat.formato) continue;
-        const util = (mat.formato.largoMm - 2 * cfgRapida.refiladoMm) * (mat.formato.anchoMm - 2 * cfgRapida.refiladoMm);
-        if (!(util > 0)) continue;
-        const conSierra = lista.filas
-          .filter((f) => f.material === mat.material)
-          .reduce((s, f) => s + f.cantidad * (f.largoMm + cfgRapida.discoMm) * (f.anchoMm + cfgRapida.discoMm), 0);
-        total += Math.ceil(conSierra / util);
-      }
-      return total;
+      return lista.materiales.reduce((total, mat) => total + (mat.laminasMinimas ?? 0), 0);
     },
     evaluarDia: (u) => {
       const delDia = modulos.map((m, i) => ({ ...m, cantidad: u[i] })).filter((m) => m.cantidad > 0);

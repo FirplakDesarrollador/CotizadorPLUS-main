@@ -23,8 +23,6 @@ export default function AppHeader({ nombre, email, rol, active, helpContext }: {
           {link('/cotizaciones', 'Cotizaciones', 'cotizaciones')}
           {rol === 'admin' && link('/admin', 'Materiales-Parámetros', 'admin')}
           {rol === 'admin' && link('/admin/diseno', 'Diseño', 'diseno')}
-          {rol === 'admin' && link('/hdr', 'HDR', 'hdr')}
-          {rol === 'admin' && link('/optimizador', 'Optimizador', 'optimizador')}
           {link('/manual', 'Manual', 'manual')}
           </nav>
         </div>

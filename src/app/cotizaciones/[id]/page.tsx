@@ -9,6 +9,7 @@ import CotizacionDetalleClient from './CotizacionDetalleClient';
 import type { ProjectDefaults } from './ProjectConfigPanel';
 import { getParametros } from '@/lib/admin';
 import { normalizarDdp, normalizarEntrega } from '@/lib/entrega-cotizacion';
+import { normalizarTarifasInstalacion } from '@/lib/instalacion-cotizacion';
 
 type LineaConfig = {
   preset?: Record<string, string>;
@@ -109,6 +110,7 @@ export default async function CotizacionDetallePage({
           abrirCaracteristicas={Boolean(sp.cfg)}
           entregaInicial={normalizarEntrega(cabecera.entrega)}
           ddp={normalizarDdp(parametros.ddp)}
+          tarifasInstalacion={normalizarTarifasInstalacion(parametros.instalacion)}
           perfiles={data.perfiles}
           perfilDefaultId={data.perfilDefaultId}
           herrajesByTipo={data.herrajesByTipo}

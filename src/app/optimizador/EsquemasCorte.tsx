@@ -270,6 +270,9 @@ function MaterialEsquema({ material, meta, dia }: { material: MaterialDia; meta:
             <li key={g.grupo} className="flex items-center gap-1.5">
               <span className="inline-block h-3 w-3 rounded-sm border border-slate-400" style={{ background: colorDe(g.grupo) }} />
               <span className="font-medium">({g.grupo})</span> {g.etiqueta} · {fmt(g.largoMm, 1)} × {fmt(g.anchoMm, 1)} · {fmt(g.cantidad)} und
+              {g.medidaConRefilado && <span className="font-medium text-amber-800">
+                Medida nominal {fmt(g.medidaConRefilado.largoMm, 1)} × {fmt(g.medidaConRefilado.anchoMm, 1)} mm incluye refilado
+              </span>}
             </li>
           ))}
         </ul>

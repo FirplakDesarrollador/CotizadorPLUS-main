@@ -7,6 +7,7 @@ import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import { TIPS_MATERIALES } from '@/lib/tooltips';
 import { calcAreaM2, calcPrecio, calcPrecioM2 } from '@/lib/catalogo-tableros-calculos';
+import InstalacionParametros from './InstalacionParametros';
 
 type Field = { key: string; label: string; type: 'text' | 'number' | 'bool'; required?: boolean };
 type Row = Record<string, unknown> & { id?: string };
@@ -586,10 +587,6 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
   const [mMuebles, setMMuebles] = useState<number>(Number(marg0.muebles ?? 0.57) * 100);
   const [mFillers, setMFillers] = useState<number>(Number(marg0.fillers ?? 0.52) * 100);
   const [mPnTk, setMPnTk] = useState<number>(Number(marg0.pn_tk ?? 0.44) * 100);
-  const [avanzado, setAvanzado] = useState(false);
-  const [jLamina, setJLamina] = useState(JSON.stringify(parametros.lamina ?? {}, null, 2));
-  const [jCanto, setJCanto] = useState(JSON.stringify(parametros.desperdicio_canto ?? {}, null, 2));
-  const [jSm, setJSm] = useState(JSON.stringify(parametros.factores_sm ?? {}, null, 2));
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -608,15 +605,6 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
       { key: 'margenes', value: { muebles: mMuebles / 100, fillers: mFillers / 100, pn_tk: mPnTk / 100 } },
       { key: 'ddp', value: { tableroPct: ddpTablero, herrajesPct: ddpHerrajes } },
     ];
-    try {
-      if (avanzado) {
-        updates.push({ key: 'lamina', value: JSON.parse(jLamina) });
-        updates.push({ key: 'desperdicio_canto', value: JSON.parse(jCanto) });
-        updates.push({ key: 'factores_sm', value: JSON.parse(jSm) });
-      }
-    } catch {
-      setSaving(false); setError('JSON inválido en sección avanzada'); return;
-    }
     const res = await guardarParametrosAction(updates);
     setSaving(false);
     if (!res.ok) { setError(res.error ?? 'Error'); return; }
@@ -657,22 +645,7 @@ function ParametrosEditor({ parametros }: { parametros: Record<string, unknown> 
         </div>
       </section>
 
-      <section>
-        <button onClick={() => setAvanzado((a) => !a)} className="text-sm text-slate-500 hover:text-slate-900">
-          {avanzado ? '▾' : '▸'} Avanzado (lámina, desperdicio canto, factores SM)
-        </button>
-        {avanzado && (
-          <div className="grid sm:grid-cols-3 gap-3 mt-3">
-            {[['Lámina (m²/cm²)', jLamina, setJLamina], ['Desperdicio canto', jCanto, setJCanto], ['Factores SM', jSm, setJSm]].map(([lab, val, set], i) => (
-              <label key={i} className="block">
-                <span className="block text-xs text-slate-500 mb-1">{lab as string}</span>
-                <textarea value={val as string} onChange={(e) => (set as (s: string) => void)(e.target.value)} rows={6}
-                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-mono" />
-              </label>
-            ))}
-          </div>
-        )}
-      </section>
+      <InstalacionParametros inicial={parametros.instalacion} />
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       {msg && <p className="text-sm text-green-600">{msg}</p>}

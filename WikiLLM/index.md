@@ -12,13 +12,13 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Instrucciones R…L en HDR](wiki/hdr_instrucciones_ranura.md) - Indicaciones de carcasa con fondo por familia/espesor y cuatro nombres de gavetas FE, sin cambios geométricos.
 - [BOV interno y BOV-SMG](wiki/bov_frente_interno_smg.md) - Frente interno sin holguras, base hasta el refuerzo, 73 mm superiores en SMG y conversión verificada de Condominio V.
 - [Materiales delgados sin canto](wiki/cantos_por_espesor.md) - Regla universal por espesor real de 4,5/5,5/6/9 mm, sin calibre ni costo; recálculo y protección de resultados históricos.
-- [HDR consolidada y Excel continuo](wiki/hdr_excel_consolidado.md) - Cantidades editables, colores por rol, módulos repetidos entre áreas, tabla Excel y excepciones DB/DB-FE de la migración 0249.
+- [HDR consolidada y Excel continuo](wiki/hdr_excel_consolidado.md) - Cantidades editables, colores por rol, módulos repetidos, selección de HDR para PDF, Excel y reglas de canto.
 - [Consumos en la página HDR](wiki/hdr_consumos.md) - Selector de cotización propio, buscador de muebles, desperdicio de tablero sobre la medida neta, cantidad editable por mueble (por defecto 1) y consumo discriminado por rol y código de tablero (m²), calibre de canto (m lineal) y consumible (unidades), reconciliado fila a fila con la tabla Materiales del Simulador, con conteo de muebles, unidades y piezas.
 - [Puertas, orientación y cantos de carcasa](wiki/puertas_cantos_orientacion.md) - Umbral en tres unidades, ejes de frentes, cantos solo en largos, migración 0248 y recálculo verificado.
 - [Tablero Gaveta de 15 mm en DB](wiki/tablero_gaveta_db.md) - Material separado en simulador y cotizaciones, referencias elegibles de rieles y barras, aplicación histórica y auditoría.
 - [Pipeline CEFI y cotizaciones](wiki/pipeline_cotizaciones.md) - Registro con opción Desconocido, referencias navegables de Cotizador PLUS, oportunidades con RLS, importación histórica y dashboard único.
 - [Ayuda, valores y desarrollo](wiki/ayuda_valores_y_desarrollo.md) - Guías contextuales en el encabezado, resumen financiero privado, estado En desarrollo con avisos Resend y compatibilidad de materiales al agrupar módulos.
-- [DB-FE paramétrica](wiki/db_fe.md) - Copia de la DB vigente con cajas de gaveta FE y riel RIELFE500; seis variantes internas, persistencia y pruebas.
+- [DB-FE paramétrica](wiki/db_fe.md) - Cajas de gaveta FE, riel RIELFE500, seis variantes internas y profundidad completa de la base sin respaldo.
 - [Ordenar secciones de una cotización](wiki/orden_secciones_cotizacion.md) - Arrastre y flechas para cocinas, closets y baños; persistencia atómica, permisos, manejo de errores y orden en el resumen PDF/Excel.
 - [Fondos del color del frente en abiertos](wiki/fondos_color_abiertos.md) - Alcance OW y otros abiertos, fondo real de 6 mm, validación de catálogo, consumo/costo y evidencia del OW de ELEVEN.
 - [Inferiores B, OW-MO y programación opcional](wiki/inferiores_b_ow_mo_programacion_pdf.md) - Dimensiones variables en códigos B, fondo de OW-MO del color del frente e interruptor persistido de programación FIRPLAK/CEMA y aplicación a cotizaciones existentes.
@@ -27,15 +27,15 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Frentes DB-2S con gola SM/SMG](wiki/frentes_db_2s_gola.md) - Dos golas de 30 mm, reparto de dos frentes pequeños y uno grande, variantes FE/SF, aplicación a cotizaciones y ejemplos de 780/785 mm.
 - [Nombres comerciales y paneles PN](wiki/nombres_comerciales_modulos.md) - Dimensiones no estándar, PN con sufijo de 15 mm según frente, nombres con notas y reconstrucción consistente en simulador, cotizaciones, HDR y exportaciones.
 - [Cálculos automáticos del catálogo de tableros](wiki/calculos_automaticos_catalogo_tableros.md) - Área derivada del formato y sincronización bidireccional entre precio y precio por m² en altas y ediciones de tableros.
-- [Mejora de UX en tabla de catálogos](wiki/ux_catalogo_materiales_parametros.md) - Barra de scroll horizontal visible, columna sticky, editor inline responsivo y adaptado sin scroll, y acciones de fila accesibles.
+- [Mejora de UX en tabla de catálogos](wiki/ux_catalogo_materiales_parametros.md) - Desplazamiento, edición en línea, acciones accesibles y parámetros visibles.
 - [Descripción de una línea contra el despiece](wiki/descripcion_linea_vs_despiece.md) - Por qué `n_entrepanos` no describe el mueble: 47 de 81 tipos no coincidían, y la deuda equivalente en puertas y gavetas.
 - [Líneas de material suelto](wiki/lineas_material_suelto.md) - Tablero, canto o herraje cobrados sin módulo: unidades, margen por tipo, clasificación en Herrajes / otros del PDF y exclusión en HDR y Optimizador.
 - [Protocolo de cotizaciones y PDF](wiki/protocolo_pdf_cotizaciones.md) - Clasificación y agrupación de adicionales sin precios en el detalle, materiales por área closet, reparación histórica y doble verificación de impresión.
 - [Bisagras por alto de puerta](wiki/bisagras_por_altura.md) - Tramos por hoja, equivalencias de unidades y actualización de cotizaciones y simulador.
-- [Entrega e Incoterm en cotizaciones](wiki/entrega_cotizaciones.md) - Entregas parciales y totales, capacidad útil, avance por unidades y recargos CIF y DDP.
+- [Entrega, Incoterm e instalación](wiki/entrega_cotizaciones.md) - Reparto de módulos por cantidad, contenedores por entrega y tarifas de instalación por zona.
 - [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles, soportes por entrepaño, cálculo grupal y recálculo masivo por lotes con precarga de catálogo (`engine.ts` y `cotizar.ts`).
-- [Optimizador de corte](wiki/optimizador_corte.md) - Plan de corte de una cotización: condiciones de planta, lista de piezas, plan día por día, esquemas de corte con desperdicio, m², tableros y número de cortes, y fases pendientes. Incluye comparación con repositorios de GitHub (packingsolver, OpenCutList, gdrr-2bp).
-- [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, encabezado y menú de usuario, Zustand, cotizaciones con constructora/comprador, materiales, herrajes, unidades, dimensiones y búsqueda por color.
+- [Optimizador de corte](wiki/optimizador_corte.md) - Consumos, parámetros de planta, refilado incluido en medidas nominales y reparto de unidades por jornada.
+- [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, encabezado, acceso a HDR y Optimizador desde Diseño, Zustand y flujos de cotización.
 - [Aviso de nueva versión](wiki/aviso_actualizacion.md) - Barra superior que informa de una versión nueva, pide actualizar, recarga la página y recuerda el cierre en localStorage.
 - [Sistema de Undo/Redo](wiki/sistema_undo_redo.md) - Historial temporal de estados, captura de atajos de teclado y notificaciones.
 - [Versiones de cotizaciones](wiki/versiones_cotizaciones.md) - Snapshots persistentes manuales, inmutables, nombre obligatorio, orden cronológico y restauración transaccional limpia sin respaldos automáticos.

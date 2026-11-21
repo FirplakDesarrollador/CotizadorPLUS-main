@@ -82,6 +82,16 @@ test('un modulo inferior si pierde el fondo con "Sin fondo"', () => {
   assert.equal(r.find((p) => p.nombre === 'lateral')!.formula_ancho, 'P', 'el resto del despiece no se toca');
 });
 
+test('DB-FE sin fondo usa la profundidad completa en la base', () => {
+  for (const pref of ['DB-FE', 'DB-FE-SF']) {
+    const r = ajustarPiezasSinFondo(piezas, pref, false);
+    assert.deepEqual(base(r), { ...base(piezas), formula_ancho: 'P' });
+    assert.equal(fondo(r).formula_cantidad, '0');
+    assert.equal(ajustarPiezasSinFondo(piezas, pref, true), piezas);
+  }
+  assert.equal(base(ajustarPiezasSinFondo(piezas, 'DB', false)).formula_ancho, 'P-TC');
+});
+
 test('Sin fondo conserva el fondo de gaveta porque no es el respaldo del mueble', () => {
   const conGaveta = [...piezas, {
     nombre: 'fondo_gaveta', rol_tablero: 'fondo', formula_cantidad: '1',

@@ -152,3 +152,18 @@ test('un material sin formato de lamina no se acomoda a ciegas', () => {
     assert.ok(!d.materiales.some((m) => m.material === 'FONDO6'), 'no se inventa un acomodo sin medida de lamina');
   }
 });
+
+test('una línea se reparte por unidades completas y la medida nominal conserva el refilado en cada jornada', () => {
+  const modulo = { ...MODULOS[0], piezas: [pieza('panel nominal', 'caja', 1, 2440, 500), pieza('puerta', 'frente', 1, 700, 395)] };
+  const cfg = normalizarConfig({ ...CONFIG_OPTIMIZADOR_DEFAULT, piezasPorDia: 4 });
+  const plan = planDeCorte([modulo], TABLEROS, cfg, () => 'Soft', { iteracionesMax: 0, tiempoMaxMs: 0 });
+  assert.deepEqual(plan.dias.map(dia => dia.modulos.map(m => [m.unidades, m.partido])), [[[2, true]], [[2, true]], [[2, true]]]);
+  for (const dia of plan.dias) {
+    const grupos = dia.materiales.flatMap(m => m.esquema.plan.grupos);
+    assert.equal(grupos.find(g => g.etiqueta === 'puerta')?.cantidad, 2);
+    const panel = grupos.find(g => g.etiqueta === 'panel nominal');
+    assert.equal(panel?.cantidad, 2);
+    assert.equal(panel?.largoMm, 2430);
+    assert.deepEqual(panel?.medidaConRefilado, { largoMm: 2440, anchoMm: 500 });
+  }
+});

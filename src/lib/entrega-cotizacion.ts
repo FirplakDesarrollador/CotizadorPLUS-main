@@ -1,9 +1,10 @@
 import { calcularContenedores, type TableroPeso } from './contenedores';
 import { esHerrajeOtroAdicional, totalLineaPropuesta, type AreaPropuesta, type LineaPropuesta } from './propuesta-cotizacion';
+import { normalizarInstalacion, type ConfigInstalacion } from './instalacion-cotizacion';
 
 export type Incoterm = 'FOB' | 'CIF' | 'DDP';
 export type TamanoContenedor = '20T' | '40T';
-export type EntregaParcial = { contenedor: TamanoContenedor | null; areas: string[]; modulos?: string[] };
+export type EntregaParcial = { contenedor: TamanoContenedor | null; areas: string[]; modulos?: string[]; cantidades?: Record<string, number> };
 export type ImporteEntrega = { importe: number; moneda: 'COP' | 'USD' };
 export type ConfigEntrega = {
   incoterm: Incoterm | null;
@@ -12,6 +13,7 @@ export type ConfigEntrega = {
   modo: 'parcial' | 'total' | null;
   contenedor: TamanoContenedor | null;
   parciales: EntregaParcial[];
+  instalacion: ConfigInstalacion;
 };
 export type ParametrosDdp = { tableroPct: number; herrajesPct: number };
 export type AreaEntrega = AreaPropuesta & { id: string };
@@ -44,12 +46,39 @@ export function modulosDeEntrega(area: AreaEntrega) {
   return area.lineas.filter(linea => !esHerrajeOtroAdicional(linea));
 }
 
-export function modulosDelParcial(parcial: EntregaParcial, area: AreaEntrega) {
-  return parcial.areas.includes(area.id) ? modulosDeEntrega(area).map(linea => linea.id) : parcial.modulos ?? [];
+export function areasParaEntrega(areas: AreaEntrega[], sinArea: LineaPropuesta[]): AreaEntrega[] {
+  return sinArea.some(linea => !esHerrajeOtroAdicional(linea))
+    ? [...areas, { id: 'sin-area', nombre: 'Sin área', lineas: sinArea }]
+    : areas;
+}
+
+export function cantidadProyecto(area: AreaEntrega, linea: LineaPropuesta): number {
+  return positivo(Number(linea.cantidad ?? 1)) * positivo(Number(area.cantidad ?? 1));
+}
+
+/** Convierte asignaciones históricas y limita todas las entregas al saldo del proyecto. */
+export function cantidadesDeParciales(parciales: readonly EntregaParcial[], areas: readonly AreaEntrega[]) {
+  const lineas = areas.flatMap(area => modulosDeEntrega(area).map(linea => ({ areaId: area.id, id: linea.id, total: cantidadProyecto(area, linea) })));
+  const saldos = new Map(lineas.map(({ id, total }) => [id, total]));
+  return parciales.map(parcial => {
+    const areasAsignadas = new Set(parcial.areas);
+    const modulos = new Set(parcial.modulos);
+    const cantidades = new Map<string, number>();
+    for (const { id, total, areaId } of lineas) {
+      const solicitada = parcial.cantidades?.[id] ?? (areasAsignadas.has(areaId) || modulos.has(id) ? total : 0);
+      const saldo = saldos.get(id) ?? 0;
+      const asignada = Math.min(saldo, positivo(solicitada));
+      if (asignada) {
+        cantidades.set(id, asignada);
+        saldos.set(id, saldo - asignada);
+      }
+    }
+    return cantidades;
+  });
 }
 
 export function normalizarEntrega(valor: unknown): ConfigEntrega {
-  const { incoterm, cif, ddp, modo, contenedor: tamano, parciales } = objeto(valor);
+  const { incoterm, cif, ddp, modo, contenedor: tamano, parciales, instalacion } = objeto(valor);
   const { aplicarTarifas, transporte } = objeto(ddp);
   const asignadas = new Set<string>();
   const modulosAsignados = new Set<string>();
@@ -59,6 +88,9 @@ export function normalizarEntrega(valor: unknown): ConfigEntrega {
       contenedor: contenedor(parcial.contenedor),
       areas: asignaciones(parcial.areas, asignadas),
       ...(Array.isArray(parcial.modulos) ? { modulos: asignaciones(parcial.modulos, modulosAsignados) } : {}),
+      ...(parcial.cantidades != null ? {
+        cantidades: Object.fromEntries(Object.entries(objeto(parcial.cantidades)).filter(([, cantidad]) => positivo(cantidad) > 0)) as Record<string, number>,
+      } : {}),
     };
   });
   return {
@@ -71,6 +103,7 @@ export function normalizarEntrega(valor: unknown): ConfigEntrega {
     modo: modo === 'parcial' || modo === 'total' ? modo : null,
     contenedor: contenedor(tamano),
     parciales: entregas,
+    instalacion: normalizarInstalacion(instalacion),
   };
 }
 
@@ -103,18 +136,16 @@ export function resumirEntrega(
   }));
   const unidadesProyecto = datos.reduce((total, area) => total + area.resultado.unidadesTotales, 0);
   const entregas: EntregaParcial[] = config.modo === 'parcial' ? config.parciales : [{ contenedor: config.contenedor, areas: datos.map(area => area.id) }];
-  const modulosUsados = new Set<string>();
-  return entregas.map(entrega => {
+  const asignacionesParciales = config.modo === 'parcial' ? cantidadesDeParciales(entregas, areas) : [];
+  return entregas.map((entrega, i) => {
     const ids = new Set(entrega.areas);
     const seleccionadas = config.modo === 'parcial' ? areas.flatMap(area => {
-      const modulos = new Set(modulosDelParcial(entrega, area));
-      if (!modulos.size) return [];
-      const lineas = modulosDeEntrega(area).filter(linea => {
-        if (!modulos.has(linea.id) || modulosUsados.has(linea.id)) return false;
-        modulosUsados.add(linea.id);
-        return true;
+      const cantidades = asignacionesParciales[i];
+      const lineas = modulosDeEntrega(area).flatMap(linea => {
+        const cantidad = cantidades.get(linea.id);
+        return cantidad ? [{ ...linea, cantidad }] : [];
       });
-      return lineas.length ? [{ resultado: calcularArea(area, lineas) }] : [];
+      return lineas.length ? [{ resultado: calcularArea({ ...area, cantidad: 1 }, lineas) }] : [];
     }) : datos.filter(area => ids.has(area.id));
     const unidades = seleccionadas.reduce((total, area) => total + area.resultado.unidadesTotales, 0);
     const pesoKg = seleccionadas.reduce((total, area) => total + area.resultado.pesoTotalKg, 0);

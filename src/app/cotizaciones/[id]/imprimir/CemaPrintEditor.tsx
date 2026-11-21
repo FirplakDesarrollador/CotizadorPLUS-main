@@ -1,6 +1,6 @@
 'use client';
 import PrintDocumentTitle from './PrintDocumentTitle';
-import { EntregaPdf, HerrajesOtrosPdf, MaterialesProyectoPdf } from './DetallesProyecto';
+import { EntregaPdf, HerrajesOtrosPdf, MaterialesProyectoPdf, type ParcialPdf } from './DetallesProyecto';
 import type { AdicionalPropuesta } from '@/lib/propuesta-cotizacion';
 import type { EspecificacionProyecto } from '@/lib/materiales-proyecto';
 
@@ -12,6 +12,7 @@ import { esCampoCemaTraducible, textoCema, type CemaTemplate } from '@/lib/cema-
 export type CemaScheduleRow = { sku: string; description: string; quantity: number };
 export type CemaProposalData = {
   logistica: number | null;
+  entregasParciales?: ParcialPdf[];
   incluyeDdp: boolean;
   recargoEntregaUsd: number;
   id: string; projectName: string; preparedFor: string; contact: string; kitchens: number;
@@ -101,7 +102,7 @@ function CemaProposal({ data, onScheduleChange }: { data: CemaProposalData; onSc
     </Page>
 
     <Page idioma={idioma} number={t.showModuleSchedule ? 5 : 4} title={tx('ENTREGA', 'DELIVERY')}>
-      <EntregaPdf contenedores={data.logistica} idioma={idioma} />
+      <EntregaPdf contenedores={data.logistica} parciales={data.entregasParciales} idioma={idioma} />
     </Page>
 
     <Page idioma={idioma} number={t.showModuleSchedule ? 6 : 5} title={tx('TÉRMINOS Y CONDICIONES', 'TERMS & CONDITIONS')} subtitle={tx('Condiciones comerciales, de plazos, instalación y garantía', 'Commercial, schedule, installation and warranty provisions')}>

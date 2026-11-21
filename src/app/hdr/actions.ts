@@ -8,7 +8,8 @@ import {
 import { cotizar, cotizarGrupo, prepararCotizacion, cargarCatalogoPrecompilado, type CotizarResult } from '@/lib/cotizar';
 import { validarEntrepanosHdr } from './validacion';
 import { descripcionPiezaPlanaHdr, descripcionModulo, resultadoFisicoHdr, type ResultadoHdr } from './datosHdr';
-import { esModuloLinea } from '@/lib/materiales-linea';
+import { esModuloLinea, type MaterialLinea } from '@/lib/materiales-linea';
+import { unidadesFisicas } from '@/lib/corte/clasificacion';
 import { calcularMueble } from '@/lib/engine';
 import { coincideNombreHdr } from './seguimiento';
 import type { CatalogoPrecompilado } from '@/lib/cotizar';
@@ -51,8 +52,20 @@ export async function modulosDeCotizacionAction(cotizacionId: string): Promise<M
   return calcularModulosDeCotizacion(cotizacionId);
 }
 
-async function calcularModulosDeCotizacion(cotizacionId: string, catalogoPrefetch?: CatalogoPrecompilado): Promise<ModuloHDR[]> {
-  const { cocinas, lineasSinCocina } = await getCotizacion(cotizacionId);
+export async function modulosYMaterialesDeCotizacionAction(cotizacionId: string) {
+  await assertAdmin();
+  const cotizacion = await getCotizacion(cotizacionId);
+  const areas = [...cotizacion.cocinas, { cantidad: 1, lineas: cotizacion.lineasSinCocina }];
+  const materiales = areas.flatMap(area => (area.lineas as LineaPersistida[]).flatMap(linea => {
+    const material = linea.config?.material as MaterialLinea | undefined;
+    if (!material || !['tablero', 'canto', 'herraje'].includes(material.tipo)) return [];
+    return [{ tipo: material.tipo, codigo: material.codigo, cantidad: Number(material.cantidad) * unidadesFisicas(Number(linea.cantidad), Number(area.cantidad ?? 1)) }];
+  }));
+  return { modulos: await calcularModulosDeCotizacion(cotizacionId, undefined, cotizacion), materiales };
+}
+
+async function calcularModulosDeCotizacion(cotizacionId: string, catalogoPrefetch?: CatalogoPrecompilado, cotizacion?: Awaited<ReturnType<typeof getCotizacion>>): Promise<ModuloHDR[]> {
+  const { cocinas, lineasSinCocina } = cotizacion ?? await getCotizacion(cotizacionId);
 
   const items: { linea: LineaPersistida; cocinaNombre: string; repeticionesArea: number }[] = [];
   for (const c of cocinas as unknown as { nombre: string; cantidad?: number; lineas: LineaPersistida[] }[]) {

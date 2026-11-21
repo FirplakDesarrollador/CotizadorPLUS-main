@@ -6,7 +6,7 @@ import CocinaCard from './CocinaCard';
 import AddCocina from './AddCocina';
 import ProjectConfigPanel, { type ProjectDefaults } from './ProjectConfigPanel';
 import EntregaPanel from './EntregaPanel';
-import { calcularRecargoEntrega, resumirEntrega, type AreaEntrega, type ConfigEntrega, type ParametrosDdp } from '@/lib/entrega-cotizacion';
+import { areasParaEntrega, calcularRecargoEntrega, resumirEntrega, type ConfigEntrega, type ParametrosDdp } from '@/lib/entrega-cotizacion';
 import { eliminarCotizacionAction, actualizarCotizacionAction, reordenarCocinasAction, guardarEntregaAction } from '../actions';
 import VersionesCotizacion from './VersionesCotizacion';
 import type { CotizacionVersion } from '@/lib/cotizaciones';
@@ -16,6 +16,7 @@ import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario } from '@/lib/comenta
 import { crearGuardadoSecuencial } from '@/lib/guardado-secuencial';
 import UbicacionEditor from './UbicacionEditor';
 import { calcularValoresCotizacion } from '@/lib/valores-cotizacion';
+import { cantidadesInstalacion, type TarifasInstalacion } from '@/lib/instalacion-cotizacion';
 
 type LineaConfig = {
   preset?: Record<string, string>;
@@ -89,6 +90,7 @@ interface Props {
   abrirCaracteristicas?: boolean;
   entregaInicial: ConfigEntrega;
   ddp: ParametrosDdp;
+  tarifasInstalacion: TarifasInstalacion;
   perfiles: Perfil[];
   perfilDefaultId: string;
   herrajesByTipo: Record<string, HerrajeTipo[]>;
@@ -96,7 +98,7 @@ interface Props {
 }
 
 export default function CotizacionDetalleClient({
-  cabecera, cocinas, cotizacionId, lineasSinCocina, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, abrirCaracteristicas = false, entregaInicial, ddp, perfiles, perfilDefaultId, herrajesByTipo, versiones
+  cabecera, cocinas, cotizacionId, lineasSinCocina, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, abrirCaracteristicas = false, entregaInicial, ddp, tarifasInstalacion, perfiles, perfilDefaultId, herrajesByTipo, versiones
 }: Props) {
   const unidadInicial: UnidadProyecto = cabecera.sistema_medida === 'metrico' ? 'cm' : 'in';
   // Estado global del proyecto: si viene initialConfig del query param ?cfg, úsalo;
@@ -233,9 +235,10 @@ export default function CotizacionDetalleClient({
     [cocinas, cabecera.total_cop]
   );
   const valores = useMemo(() => calcularValoresCotizacion([...cocinas, { lineas: lineasSinCocina }], Number(cabecera.trm)), [cocinas, lineasSinCocina, cabecera.trm]);
-  const areasEntrega = cocinas as AreaEntrega[];
+  const areasEntrega = useMemo(() => areasParaEntrega(cocinas, lineasSinCocina), [cocinas, lineasSinCocina]);
   const logistica = useMemo(() => entrega.modo ? resumirEntrega(entrega, areasEntrega, tableros) : [], [entrega, areasEntrega, tableros]);
-  const recargo = useMemo(() => calcularRecargoEntrega(entregaInicial, ddp, areasEntrega, Number(cabecera.trm)), [entregaInicial, ddp, areasEntrega, cabecera.trm]);
+  const unidadesInstalacion = useMemo(() => cantidadesInstalacion([...cocinas, { nombre: 'Sin área', lineas: lineasSinCocina }], tipos), [cocinas, lineasSinCocina, tipos]);
+  const recargo = useMemo(() => calcularRecargoEntrega(entregaInicial, ddp, cocinas, Number(cabecera.trm)), [entregaInicial, ddp, cocinas, cabecera.trm]);
 
   async function guardarEntrega(config: ConfigEntrega) {
     const resultado = await guardarEntregaAction(cotizacionId, config);
@@ -316,7 +319,9 @@ export default function CotizacionDetalleClient({
               defaults={projectDefaults}
               onChange={handleProjectDefaultsChange}
             />
-            <EntregaPanel config={entrega} areas={areasEntrega} resultados={logistica} onChange={setEntrega} onSave={guardarEntrega} />
+            <EntregaPanel config={entrega} areas={areasEntrega} resultados={logistica}
+              instalacion={{ tarifas: tarifasInstalacion, cantidades: unidadesInstalacion, moneda: cabecera.moneda === 'COP' ? 'COP' : 'USD', trm: Number(cabecera.trm) }}
+              onChange={setEntrega} onSave={guardarEntrega} />
           </ProyectoHeader>
         ) : null}
       </section>

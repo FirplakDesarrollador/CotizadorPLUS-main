@@ -1,5 +1,19 @@
 # Optimizador de corte
 
+## Refilado y distribución de módulos
+
+Cuando el largo o el ancho nominal coincide con el lado bruto de la lámina en una orientación permitida por la veta, esa dimensión incluye los refilos de ambos extremos. El acomodo conserva los márgenes y usa la dimensión útil en el eje coincidente. Una lámina de 2440 × 1830 mm con 5 mm de refilado por lado deja 2430 × 1820 mm útiles para una pieza de lámina completa. Los esquemas y el Excel muestran las medidas útiles y aclaran qué medida nominal incluye refilado. Las medidas de cotización y HDR se conservan.
+
+Las líneas sueltas pueden repartirse por unidades completas entre jornadas y se identifican como `(parte)`. Los grupos físicos permanecen juntos. Los esquemas avisan qué piezas no caben o qué materiales carecen de formato. Una prueba de regresión verifica dos unidades completas por jornada con cada panel nominal de 2440 mm acomodado a 2430 mm útiles.
+
+## Consumos aproximados y parámetros
+
+La primera tarjeta del Optimizador resume la cotización completa. Comparte selección con Proyecto a optimizar y usa el despiece HDR vigente, incluidos los grupos físicos y las repeticiones de cada área. Agrupa tableros por referencia, cantos por calibre y herrajes por referencia. Los artículos de material suelto se suman en la unidad de su catálogo. Las referencias de herraje coincidentes aparecen en una sola fila con su cantidad total.
+
+El porcentaje manual de desperdicio se aplica al área neta del tablero de los módulos. Los m² de tablero agregados directamente conservan la cantidad indicada, y los cantos conservan la merma lineal del motor. El resumen muestra cantidades en m², metros y unidades. Los módulos que no pudieron calcularse se indican en el resumen. Las optimizaciones antiguas que carecen del resumen pueden consultarlo seleccionando la cotización.
+
+Parámetros de planta agrupa en un bloque plegable la seccionadora, los sobrantes, las pilas, las texturas y los formatos de lámina, con los controles de guardar y descartar.
+
 Funcionalidad planeada: generar el plan de corte de una cotización (láminas por material, acomodo
 en guillotina, secuencia y número de cortes, sobrantes y etiquetas). Plan completo en
 `docs/plan_optimizador_corte.md`.

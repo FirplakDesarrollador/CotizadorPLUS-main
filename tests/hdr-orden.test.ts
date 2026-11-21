@@ -45,6 +45,48 @@ test('los avisos sobreviven a la consolidación y exigen revisión antes de expo
   assert.doesNotThrow(() => exigirRevisionHdr([base], false));
 });
 
+test('HDR indica canto Color en ambos anchos de la base de OW-MO, incluso en grupos', () => {
+  const cantos = { calibre: '19x0,45', largos: 2, anchos: 0 };
+  const piezas = ['base', 'tapa'].map(nombre => ({ ...calc.piezas[0], nombre, formula_cantidad: '1', cantos }));
+  const cantosByCalibre = { '19X0,45': { calibre: cantos.calibre, precio: 100 } };
+  const res = { ...calcularMueble({ ...calc, piezas, cantosByCalibre }), trm: 4000, margen: 0 };
+  const tableros = [{ codigo: 'C15', espesor_mm: 15 }];
+  const cantosFila = (fila: ReturnType<typeof construirFilas>[number]) =>
+    [fila.cantoLargoColor, fila.cantoAnchoColor, fila.cantoAnchoBlanco, fila.espesorCanto];
+  for (const pref of ['OW-MO', 'OW-MO-SF']) {
+    assert.deepEqual(construirFilas(res, tableros, pref).map(cantosFila), [[2, 2, 0, '0,45'], [2, 0, 0, '0,45']]);
+  }
+  assert.deepEqual(construirFilas(res, tableros, 'OW').map(cantosFila), [[2, 0, 0, '0,45'], [2, 0, 0, '0,45']]);
+  const grupo = { ...res, piezas: res.piezas.map(p => ({ ...p, contextoHdr: { pref: 'OW-MO', conFondo: true } })) };
+  assert.deepEqual(construirFilas(grupo, tableros).map(cantosFila), [[2, 2, 0, '0,45'], [2, 0, 0, '0,45']]);
+  assert.equal(construirFilas(res, [{ codigo: 'C15', espesor_mm: 6 }], 'OW-MO')[0].cantoAnchoColor, 0);
+});
+
+test('HDR indica dos largos y dos anchos blancos para cada lateral de gaveta FE', () => {
+  const cantos = { calibre: '19x0,45', largos: 1, anchos: 0 };
+  const piezas = ['lateral_gaveta', 'lateral_gaveta_pequena', 'lateral_gaveta_grande', 'lateral'].map(nombre => ({
+    ...calc.piezas[0], nombre, formula_cantidad: '2', cantos,
+  }));
+  const cantosByCalibre = { '19X0,45': { calibre: cantos.calibre, precio: 100 } };
+  const res = { ...calcularMueble({ ...calc, piezas, cantosByCalibre }), trm: 4000, margen: 0 };
+  const tableros = [{ codigo: 'C15', espesor_mm: 15 }];
+  const enchapes = (fila: ReturnType<typeof construirFilas>[number]) =>
+    [fila.cantoLargoColor, fila.cantoAnchoColor, fila.cantoLargoBlanco, fila.cantoAnchoBlanco];
+  for (const pref of ['B-FE', 'DB-FE-SF', 'DB-2S-SM-FE-SF', 'BOMH-1-FE-SMG']) {
+    const gaveta = construirFilas(res, tableros, pref).filter(fila => !fila.pieza.startsWith('SIDE'));
+    assert.equal(gaveta.length, 6);
+    assert.ok(gaveta.every(fila => enchapes(fila).join() === '0,0,2,2'), pref);
+  }
+  const grupo = { ...res, piezas: res.piezas.map(p => ({
+    ...p, contextoHdr: { pref: p.pieza === 'lateral_gaveta_pequena' ? 'DB-FE' : 'DB', conFondo: true },
+  })) };
+  const filas = construirFilas(grupo, tableros);
+  assert.equal(filas.filter(fila => enchapes(fila).join() === '0,0,2,2').length, 2);
+  assert.equal(filas.filter(fila => enchapes(fila).join() === '0,0,1,0').length, 4);
+  assert.equal(filas.filter(fila => enchapes(fila).join() === '1,0,0,0').length, 2);
+  assert.ok(construirFilas(res, [{ codigo: 'C15', espesor_mm: 6 }], 'DB-FE').every(fila => enchapes(fila).every(n => n === 0)));
+});
+
 test('HDR usa el orden de la referencia independientemente del orden de plantilla', () => {
   const piezas = ['fondo', 'lateral', 'frente', 'entrepano', 'tapa', 'refuerzo_trasero', 'base'].map(pieza => ({ pieza }));
   const antes = structuredClone(piezas);

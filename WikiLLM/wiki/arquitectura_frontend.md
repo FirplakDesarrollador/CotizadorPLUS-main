@@ -273,3 +273,9 @@ mediante Playwright, ya que el plugin Browser no está disponible: recuperar
 estado incompleto → calcular individual/combinado → resultado sin overlay y
 sin borrar los módulos guardados; FREE ausente sigue siendo obligatorio.
 Resultado final: quality:plan → quality:impact → quality:gate aprobados (91 suites); quality:learn --strict sin hallazgos HIGH. La prueba en navegador no escribió cotizaciones ni modificó el almacenamiento del usuario.
+
+## Navegación de Diseño
+
+La pestaña Diseño abre HDR, Optimizador, Reglas de diseño, Consumos y Seguimiento en la misma pestaña mediante `/admin/diseno?seccion=...`. La cuadrícula tiene tres botones por fila y centra la última fila. El servidor carga los datos de la sección elegida. Los enlaces históricos `/hdr` y `/optimizador` redirigen a su sección en Diseño. La navegación principal muestra Diseño como entrada a ambas herramientas.
+
+HDR separa Generar desde cotización, Buscar y Crear. Cada sección tiene su propio interruptor de prefijo HRJ. Consumos y Seguimiento tienen entradas propias en Diseño.

@@ -13,9 +13,9 @@ import { grupoDeLinea } from '@/lib/grupos-programacion';
 import { monedasVisibles } from '@/lib/monedas-visibles';
 import { separarPropuesta, totalLineaPropuesta, type LineaPropuesta } from '@/lib/propuesta-cotizacion';
 import { especificacionesProyecto } from '@/lib/materiales-proyecto';
-import { calcularRecargoEntrega, normalizarDdp, normalizarEntrega, resumirEntrega } from '@/lib/entrega-cotizacion';
+import { areasParaEntrega, calcularRecargoEntrega, normalizarDdp, normalizarEntrega, resumirEntrega } from '@/lib/entrega-cotizacion';
 import { getParametros } from '@/lib/admin';
-import { HerrajesOtrosPdf, MaterialesProyectoPdf } from './DetallesProyecto';
+import { EntregaPdf, HerrajesOtrosPdf, MaterialesProyectoPdf } from './DetallesProyecto';
 import { idiomaDeConsulta, traducirEspecificaciones, traducirTexto, traducirUnidad } from '@/lib/propuesta-ingles';
 
 const fmtCOP = (n: number) => Number(n || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
@@ -26,7 +26,7 @@ function precios(l: Linea, trm: number) { const b = l.breakdown ?? {}; const can
 
 export default async function ImprimirPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params; const query = await searchParams;
-  const { cabecera, cocinas } = await getCotizacion(id); if (!cabecera) notFound();
+  const { cabecera, cocinas, lineasSinCocina } = await getCotizacion(id); if (!cabecera) notFound();
   const propuesta = separarPropuesta(cocinas as Cocina[]);
   // "Print / PDF (English)" abre esta misma ruta con lang=en.
   const idioma = idiomaDeConsulta(query.lang); const en = idioma === 'en';
@@ -36,7 +36,11 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
     tablerosDeProyecto(),
     entrega.incoterm === 'DDP' && entrega.ddp.aplicarTarifas ? getParametros() : undefined,
   ]);
-  const lotes = entrega.modo ? resumirEntrega(entrega, propuesta.muebles, tableros) : [];
+  const lotes = entrega.modo ? resumirEntrega(entrega, areasParaEntrega(propuesta.muebles, lineasSinCocina as Linea[]), tableros) : [];
+  const entregasParciales = entrega.modo === 'parcial' ? entrega.parciales.map((parcial, i) => ({
+    contenedores: lotes[i].contenedores,
+    tamano: parcial.contenedor,
+  })) : undefined;
   const logistica = lotes.length && lotes.every(lote => lote.contenedores !== null)
     ? lotes.reduce((suma, lote) => suma + (lote.contenedores ?? 0), 0) : null;
   const recargo = calcularRecargoEntrega(entrega, normalizarDdp(parametros?.ddp), cocinas as Cocina[], Number(cabecera.trm));
@@ -77,6 +81,7 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
       adicionales,
       materiales,
       logistica,
+      entregasParciales,
       incluyeDdp,
       idioma,
       schedule: [...scheduleMap.values()].sort((a, b) => a.sku.localeCompare(b.sku)),
@@ -116,7 +121,7 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
       for (const line of cocina.lineas) { const sku=line.codigo_modulo??line.pref??'SIN SKU'; const lineQuantity=Number(line.cantidad||0)*quantity; const current=scheduleMap.get(sku); if(current) current.quantity+=lineQuantity; else scheduleMap.set(sku,{sku,description:tx(line.descripcion_es),quantity:lineQuantity,grupo:grupoDeLinea(line.pref??line.codigo_modulo)}); }
       return { name:cocina.nombre, quantity, unitUsd, totalUsd:unitUsd*quantity, unitCop, totalCop:unitCop*quantity };
     });
-    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||(en?'Untitled project':'Proyecto sin nombre'), builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:referenciaCotizacion({id,codigo:cabecera.codigo}), totalUsd:propuesta.totalUsd + recargo.usd, totalCop:propuesta.totalCop + recargo.cop, moneda:monedaElegida, template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), materiales, adicionales, herrajes, idioma, logistica, incluyeDdp }} />;
+    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||(en?'Untitled project':'Proyecto sin nombre'), builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:referenciaCotizacion({id,codigo:cabecera.codigo}), totalUsd:propuesta.totalUsd + recargo.usd, totalCop:propuesta.totalCop + recargo.cop, moneda:monedaElegida, template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), materiales, adicionales, herrajes, idioma, logistica, entregasParciales, incluyeDdp }} />;
   }
   const mostrarSin = query.sinHerrajes !== '0'; const mostrarCon = query.conHerrajes !== '0'; const mostrarUsd = query.usd !== '0'; const mostrarCop = query.cop !== '0'; const trm = Number(cabecera.trm || 0);
   const proyecto = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 };
@@ -127,6 +132,7 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
       {c.lineas.map((l) => { const p = precios(l, trm); const costoCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0); const count = c.lineas.filter((x) => x.grupo_id === l.grupo_id).length; const label = count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? ''); return <tr key={l.id} className="border-b border-slate-100"><td className="py-1 font-semibold">{label}</td><td className="font-medium">{l.codigo_modulo ?? l.pref}</td><td className="text-slate-600 whitespace-pre-wrap">{tx(l.descripcion_es)}{!esPanel(l.pref) && l.anotaciones ? ` · ${tx(l.anotaciones)}` : ''}</td>{mostrarUsd && <td className="text-right">{fmtUSD(trm > 0 ? costoCop / trm : 0)}</td>}{mostrarCop && <td className="text-right">{fmtCOP(costoCop)}</td>}<td className="text-right">{p.cant}</td>{mostrarSin && mostrarUsd && <><td className="text-right">{fmtUSD(p.sinUsd)}</td><td className="text-right">{fmtUSD(p.sinUsd * p.cant)}</td></>}{mostrarSin && mostrarCop && <><td className="text-right">{fmtCOP(p.sinCop)}</td><td className="text-right">{fmtCOP(p.sinCop * p.cant)}</td></>}{mostrarCon && mostrarUsd && <><td className="text-right">{fmtUSD(p.conUsd)}</td><td className="text-right">{fmtUSD(p.conUsd * p.cant)}</td></>}{mostrarCon && mostrarCop && <><td className="text-right">{fmtCOP(p.conCop)}</td><td className="text-right">{fmtCOP(p.conCop * p.cant)}</td></>}</tr>; })}
       <tr className="font-semibold"><td colSpan={3 + Number(mostrarUsd) + Number(mostrarCop) + 1} className="py-1 text-right">Subtotal {c.nombre}</td>{mostrarSin && mostrarUsd && <><td></td><td className="text-right">{fmtUSD(sub.sinUsd * mult)}</td></>}{mostrarSin && mostrarCop && <><td></td><td className="text-right">{fmtCOP(sub.sinCop * mult)}</td></>}{mostrarCon && mostrarUsd && <><td></td><td className="text-right">{fmtUSD(sub.conUsd * mult)}</td></>}{mostrarCon && mostrarCop && <><td></td><td className="text-right">{fmtCOP(sub.conCop * mult)}</td></>}</tr>
     </tbody></table></div>)}
+    {entregasParciales && <EntregaPdf contenedores={logistica} parciales={entregasParciales} idioma={idioma} />}
     <HerrajesOtrosPdf filas={adicionales} moneda={monedaElegida} idioma={idioma} /><MaterialesProyectoPdf bloques={materiales} />
     <div className="mt-4 border-t-2 border-slate-800 pt-3"><table className="ml-auto text-sm"><tbody>{mostrarSin && <tr><td className="pr-6 font-bold">{en ? 'TOTAL WITHOUT HARDWARE' : 'TOTAL SIN HERRAJES'}</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.sinUsd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.sinCop)}</td>}</tr>}{mostrarCon && <tr><td className="pr-6 font-bold">{en ? 'TOTAL WITH HARDWARE' : 'TOTAL CON HERRAJES'}</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.conUsd + propuesta.totalAdicionalUsd + recargo.usd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.conCop + propuesta.totalAdicionalCop + recargo.cop)}</td>}</tr>}</tbody></table></div>
     {incluyeDdp && <p className="mt-2 text-sm text-slate-600">{en ? 'The total includes DDP.' : 'El total incluye DDP.'}</p>}

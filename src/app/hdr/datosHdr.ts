@@ -1,5 +1,5 @@
 import type { CotizarResult } from '@/lib/cotizar';
-import { orientarPieza, esTipologiaDbFe, puertasDescripcion, contarEntrepanos, familiaMaterialPorPrefijo } from '@/lib/muebles';
+import { orientarPieza, esElementoPlano, esTipologiaDbFe, puertasDescripcion, contarEntrepanos, familiaMaterialPorPrefijo } from '@/lib/muebles';
 import { indiceALetras } from '@/lib/module-groups';
 import { esTipologiaDbFeHdr, ordenarPiezasHdr } from './ordenPiezas';
 import type { ModuloHDR } from './actions';
@@ -62,10 +62,12 @@ function nombreProduccion(nombre: string, tienePuertas: boolean): string {
   return nombre.toUpperCase().replace(/_/g, ' ');
 }
 
+const PREFIJO_FE = /(?:^|-)FE(?:-|$)/i;
+
 /** Instrucción de producción: solo cambia el texto de las piezas solicitadas. */
 function nombreConInstruccion(nombre: string, pieza: string, espesor: number | null, contexto?: ContextoPiezaHdr): string {
   if (!contexto?.pref) return nombre;
-  if (/(?:^|-)FE(?:-|$)/i.test(contexto.pref)) {
+  if (PREFIJO_FE.test(contexto.pref)) {
     const nombresFe: Record<string, string> = {
       lateral_gaveta_pequena: 'LAT GAV PEQ R13L',
       lateral_gaveta_grande: 'LAT GAV GRANDE R13L',
@@ -155,10 +157,17 @@ export function construirFilas(res: ResultadoHdr, tableros: Tablero[], pref?: st
       ? 'TRASERO GAV'
       : nombreProduccion(p.pieza, tienePuertas);
     const visible = esVisible(p.pieza);
+    const prefPieza = p.contextoHdr?.pref ?? pref ?? res.prefMueble ?? '';
+    const esBaseOwMo = p.pieza === 'base' && /^OW-MO(?:-SF)?$/.test(prefPieza);
+    const lateralGavetaFeConCanto = Boolean(p.cantoCalibre) && /^lateral_gaveta(?:_|$)/.test(p.pieza) && PREFIJO_FE.test(prefPieza);
+    const cantoAnchos = esBaseOwMo ? 2 : p.cantoAnchos;
     const tableroCodigo = p.tableroCodigo ?? res.maderaPorRol.find(m => m.rol === p.rol)?.codigo;
     const espesor = p.tableroCodigo ? tableros.find(t => t.codigo === p.tableroCodigo)?.espesor_mm ?? null : rolToEspesor[p.rol] ?? null;
     const sinCanto = noLlevaCanto(espesor);
     const espesorCanto = sinCanto ? '' : espesorCantoLabel(p.cantoCalibre);
+    const orientada = orientarPieza(p);
+    const anchoMm = orientada.anchoIn * 25.4;
+    const sinCantoAnchoColor = esElementoPlano(prefPieza || codigoModulo) && anchoMm < 100;
     const n = Math.round(p.cant);
     if (Math.abs(n - p.cant) > 0.000001) throw new Error(`La pieza ${p.pieza} tiene cantidad fraccionaria; debe generarse la HDR del grupo completo.`);
     for (let i = 0; i < n; i++) {
@@ -175,8 +184,6 @@ export function construirFilas(res: ResultadoHdr, tableros: Tablero[], pref?: st
         : esEntrepanoPar
         ? `SHELF ${i + 1}`
         : nombreBase;
-      // Orientación de presentación compartida con el despiece del Simulador.
-      const orientada = orientarPieza(p);
       filas.push({
         origen: p.compartida ? 'Compartida del grupo' : p.origen,
         tableroCodigo,
@@ -187,12 +194,12 @@ export function construirFilas(res: ResultadoHdr, tableros: Tablero[], pref?: st
         largoMm: p.pieza === 'panel' && (codigoModulo === 'PN80240' || codigoModulo === 'PN82240')
           ? 2352
           : orientada.largoIn * 25.4,
-        anchoMm: orientada.anchoIn * 25.4,
+        anchoMm,
         espesorMm: espesor,
         cantoLargoColor: !sinCanto && visible ? p.cantoLargos : 0,
-        cantoAnchoColor: !sinCanto && visible ? p.cantoAnchos : 0,
-        cantoLargoBlanco: !sinCanto && !visible ? p.cantoLargos : 0,
-        cantoAnchoBlanco: !sinCanto && !visible ? p.cantoAnchos : 0,
+        cantoAnchoColor: !sinCanto && visible && !sinCantoAnchoColor ? cantoAnchos : 0,
+        cantoLargoBlanco: !sinCanto && !visible ? (lateralGavetaFeConCanto ? 2 : p.cantoLargos) : 0,
+        cantoAnchoBlanco: !sinCanto && !visible ? (lateralGavetaFeConCanto ? 2 : p.cantoAnchos) : 0,
         espesorCanto,
       });
     }

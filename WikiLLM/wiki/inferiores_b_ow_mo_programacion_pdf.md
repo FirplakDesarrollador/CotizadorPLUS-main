@@ -10,6 +10,8 @@ Ejemplos: BFD de 45 × 77 × 60 cm produce `BFD457760`; BFD de 24 × 31 1/2 × 2
 
 ## Material OW-MO
 
+En la HDR y su Excel, la base de OW-MO y OW-MO-SF tiene dos anchos con canto en la columna Color. La regla también se aplica a la base dentro de un grupo mediante el prefijo de origen de la pieza. Se conserva el calibre resuelto por el motor y la exclusión de canto en tableros delgados. La indicación pertenece a la hoja de ruta.
+
 `presetMaterialesTipologia` aplica el frente a caja y refuerzos de OW-MO, incluidas sus variantes sin fondo. El fondo usa la referencia del frente con el espesor sustituido por 6 mm, manteniendo proveedor, sustrato y color: `PRIRH15CONSTRUCTOR` → `PRIRH6CONSTRUCTOR`. Una variante sin fondo conserva la exclusión geométrica de esa pieza. La regla también se aplica al motor de cotización y a la selección por familia; un área closet conserva prioridad. Las especificaciones PDF explicitan el fondo de OW-MO como excepción al fondo general.
 
 ## Interruptor de programación FIRPLAK

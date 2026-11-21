@@ -8,7 +8,7 @@ El campo editable de cantidad empieza vacío en cada HDR, tanto al generar desde
 
 En todas las variantes DB cuya tipología termina en `-FE` o `-FE-SF`, HDR presenta cada pieza en una fila independiente, en este orden: base, sides, rails delantero, rails trasero, laterales de gaveta pequeños/grandes, traseros de gaveta, contraparche pequeño/grande, frentes de gaveta, fondos de gaveta y backing. Los traseros de gaveta se muestran como `TRASERO GAV` y permanecen juntos. Cuando varias piezas comparten nombre, se ordenan por tamaño ascendente; no se agrupan ni se pierden sus letras individuales.
 
-En la generación desde una cotización guardada, el switch **Prefijo HRJ** controla si las HDR muestran y exportan los nombres de mueble con `HRJ ` al inicio, excepto para las tipologías `PN`, `F` y `TK`. El switch no duplica un prefijo ya presente. En la sección Buscar/Crear hay un interruptor equivalente que aplica a la HDR del mueble buscado y a la que se crea manualmente por tipo y medidas, también para PDF y Excel. Los PDF individuales se guardan con el nombre del mueble sin anteponer `HDR_`; los Excel usan el nombre del mueble o proyecto, también sin `HDR_`.
+Generar desde cotización, Buscar y Crear tienen interruptores **Prefijo HRJ** independientes. Cada uno aplica a los nombres de su sección y a sus exportaciones, excepto para las tipologías `PN`, `F` y `TK`. Un nombre que ya tiene el prefijo lo conserva una vez. Los PDF individuales se guardan con el nombre del mueble. Los Excel usan el nombre del mueble o del proyecto.
 
 La búsqueda manual por tipo también admite notas en F. El caché del simulador pasa a v12: conserva entradas/notas/muebles y descarta resultados previos a las nuevas reglas. Las especificaciones impresas aclaran que las paredes DB-FE usan caja y sus fondos usan respaldo y omiten personalizaciones históricas de gaveta que no se utilizan en ese tipo.
 
@@ -17,6 +17,8 @@ Debajo de Prefijo HRJ, la generación desde una cotización permite indicar los 
 Se retiraron la nota de inferencia Color/Blanco y los sufijos de rol B/P/C/F de los nombres de pieza. Las letras A, B, C… de identificación de filas y las columnas de canto se conservan.
 
 Las referencias PN80240 y PN82240 muestran 2352 mm en Largo de la pieza panel en la tarjeta HDR y sus exportaciones. La regla se aplica a la fila de presentación después de orientar la pieza. La referencia, el ancho, el espesor, los cantos y las dimensiones de la cotización conservan sus valores.
+
+Para F, PN y TK, la HDR y sus exportaciones muestran cero en Canto ancho Color cuando el ancho orientado de la pieza es menor de 100 mm. A partir de 100 mm se conserva la cantidad de la plantilla. La regla se aplica al despiece de presentación.
 
 Regla posterior del 2026-11-07: los tableros de 4,5/5,5/6/9 mm no muestran calibre ni contadores de canto y no generan su costo, incluido el BACKING de WLD. Se aplica en motor y presentación; véase [materiales delgados sin canto](cantos_por_espesor.md). El caché vigente del simulador es v17.
 
@@ -31,7 +33,7 @@ Implementación: `datosHdr.ts` comparte filas/descripciones y consolidación; `H
 ## Correcciones de fabricación del 2026-11-07
 
 - BFD-SMG, SBFD-SMG y sus variantes SF tenían frente con cantidad fija 2 y ancho `(L-2*RV)/2`, aunque `n_puertas` indicara una. Se reemplazan por `n_puertas` y `(L-n_puertas*RV)/n_puertas`. Se conservan las fórmulas existentes de altura/gola. El BFD de 43 cm produce una puerta de 426,8 mm de ancho.
-- `base_gaveta`, mostrada como PIEZA CAJON, lleva dos cantos largos y cero anchos en DB sin FE. Las variantes FE conservan sus reglas de canto.
+- `base_gaveta`, mostrada como PIEZA CAJON, lleva dos cantos largos y cero anchos en DB sin FE. En todas las tipologías FE, la HDR y su Excel indican dos largos y dos anchos en Blanco por cada lateral de gaveta. En grupos se toma el prefijo de origen de la pieza. Se conserva el calibre resuelto y la exclusión para tableros delgados.
 - Solo DB-FE y DB-FE-SF dejan de usar el tablero independiente de gaveta. Contraparche, laterales y traseros usan `caja`, también si es de 18 mm. Desde 0252, fondo/base de gaveta usa `fondo` en todas las FE, igual que el backing. Se oculta su selector individual y no se exige tablero gaveta de 15 mm. Las otras DB, incluidas DB-SM-FE, conservan su selección independiente. No se elimina la selección global necesaria para esas otras familias.
 - La descripción HDR de DB-FE muestra solo la cantidad de gavetas, sin entrepaños de reglas globales que no correspondan a piezas físicas.
 
@@ -61,7 +63,11 @@ Verificación de campos: Chrome local con Casa A: nombre precargado, cambios com
 
 ## Exportación por carpeta y consolidación física
 
-La exportación solicita elegir Descargas mediante showDirectoryPicker y crea <Proyecto> - HDR. Guarda Excel y PDF allí; en navegadores sin API descarga un ZIP con la misma carpeta raíz. Los nombres repetidos reciben un sufijo numérico para evitar sobrescrituras. La generación comprueba que todas las HDR estén disponibles y no exporta parcialmente una cotización que tenga módulos con error. La cancelación y los fallos de escritura se manejan sin indicar éxito. ZIP sin compresión para preservar los archivos originales, sin dependencias nuevas.
+La exportación solicita elegir Descargas mediante showDirectoryPicker y crea <Proyecto> - HDR. Guarda Excel y PDF allí. En navegadores sin esa API descarga un ZIP con la misma carpeta raíz. Los nombres repetidos reciben un sufijo numérico para evitar sobrescrituras. La cancelación y los fallos de escritura se manejan sin indicar éxito. El ZIP guarda los archivos originales sin compresión.
+
+En una cotización guardada, cada HDR disponible tiene una casilla **Incluir en PDF**. Al cargar la cotización todas las hojas disponibles quedan marcadas. Se pueden seleccionar o desmarcar todas y el contador indica cuántas se exportarán. **Exportar selección en PDF** genera un archivo por hoja marcada en el orden de la lista y valida sus avisos y aperturas. Las hojas con errores de cálculo aparecen en la lista sin casilla. La selección se reinicia al cambiar de cotización. El Excel consolidado sigue abarcando toda la cotización y exige la validación completa.
+
+Verificación local en Condominio V: dos cargas independientes con 122 hojas, selección vacía con el botón PDF deshabilitado y elección de F768 y PN8156 por clic y teclado. Cada ZIP incluyó exactamente los dos PDF seleccionados. Se revisaron los renders, idénticos entre pasadas. Pasaron 141 suites y no hubo hallazgos HIGH en la auditoría de calidad. La auditoría de solo lectura concilió Condominio V y volvió a reportar incidencias externas a esta cotización, entre ellas un grupo de Satori cocinas.
 
 La auditoría de solo lectura concilió los identificadores y cantidades de las doce cotizaciones. Detectó referencias compartidas por materiales distintos, notas distintas y 31 grupos con repartos fraccionados de piezas. El usuario confirmó una HDR completa por grupo físico y mantener separadas las notas distintas. La corrección suma las asignaciones fraccionarias antes de fabricar las filas; nunca redondea una pieza parcial por módulo. Browser plugin no disponible; se prueba con Playwright.
 

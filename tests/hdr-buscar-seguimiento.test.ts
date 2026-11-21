@@ -142,14 +142,13 @@ const actions = createRequire(import.meta.url)('../src/app/hdr/actions.ts') as t
 const HdrBuscador = (createRequire(import.meta.url)('../src/app/hdr/HdrBuscador.tsx') as typeof import('../src/app/hdr/HdrBuscador')).default;
 loader._load = old;
 
-test('la pantalla presenta HDR, Consumos, Seguimiento y Buscar/Crear en el orden solicitado', () => {
+test('HDR separa generación, búsqueda y creación y muestra un prefijo HRJ independiente en cada sección', () => {
   const html = renderToStaticMarkup(createElement(HdrBuscador, { tipos: [], tableros: [], presetDefault: {}, cotizaciones: [] }));
-  const etiquetas = ['Generar desde una cotización guardada', '>Consumos</h2>', '>Seguimiento</h2>', '>Buscar/Crear</h2>', 'Buscar mueble creado en cotizaciones', '>Buscar</button>', 'Tipo De Mueble', '>Crear</button>'];
+  const etiquetas = ['>Generar desde cotización</h2>', 'aria-label="Agregar prefijo HRJ al nombre del mueble"', '>Buscar</h2>', 'aria-label="Agregar prefijo HRJ al nombre del mueble buscado"', 'Buscar mueble creado en cotizaciones', '>Buscar</button>', '>Crear</h2>', 'aria-label="Agregar prefijo HRJ al nombre del mueble creado"', 'Tipo De Mueble', '>Crear</button>'];
   let anterior = -1;
   for (const texto of etiquetas) { const actual = html.indexOf(texto); assert.ok(actual > anterior, `Orden o contenido incorrecto: ${texto}`); anterior = actual; }
-  assert.equal(html.includes('Buscar por tipo y medidas'), false);
-  assert.equal(html.split('Agregar HRJ al nombre del mueble').length - 1, 2);
-  assert.ok(html.includes('aria-label="Agregar prefijo HRJ al nombre del mueble buscado o creado"'));
+  assert.doesNotMatch(html, /Buscar\/Crear|>Consumos<\/h2>|>Seguimiento<\/h2>/);
+  assert.equal(html.match(/role="switch"/g)?.length, 3);
 });
 
 test('buscar en cotizaciones reutiliza catálogo, conserva el grupo físico y expone errores sin escribir', async () => {

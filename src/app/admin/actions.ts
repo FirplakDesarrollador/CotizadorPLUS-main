@@ -1,6 +1,8 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { getUserAndRole } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/server';
+import { normalizarTarifasInstalacion, type TarifasInstalacion } from '@/lib/instalacion-cotizacion';
 import { upsertFila, eliminarFila, upsertParametros, upsertPerfil, eliminarPerfil, type CatalogoTabla } from '@/lib/admin';
 
 async function assertAdmin() {
@@ -27,6 +29,24 @@ export async function guardarParametrosAction(updates: { key: string; value: unk
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };
+  }
+}
+
+export async function guardarTarifasInstalacionAction(tarifas: TarifasInstalacion): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await assertAdmin();
+    const sb = await createClient();
+    const { error } = await sb.from('cot_parametros').upsert({
+      key: 'instalacion',
+      value: normalizarTarifasInstalacion(tarifas),
+      descripcion: 'Tarifas unitarias de instalación en USD por zona',
+    }, { onConflict: 'key' });
+    if (error) throw error;
+    revalidatePath('/admin');
+    revalidatePath('/cotizaciones/[id]', 'page');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudieron guardar las tarifas.' };
   }
 }
 

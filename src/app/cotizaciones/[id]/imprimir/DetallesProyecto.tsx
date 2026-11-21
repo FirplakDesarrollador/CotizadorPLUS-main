@@ -1,13 +1,24 @@
 import type { EspecificacionProyecto } from '@/lib/materiales-proyecto';
 import type { AdicionalPropuesta } from '@/lib/propuesta-cotizacion';
 import type { IdiomaPropuesta } from '@/lib/propuesta-ingles';
-export function EntregaPdf({ contenedores, idioma }: { contenedores: number | null; idioma: 'es' | 'en' }) {
+import type { TamanoContenedor } from '@/lib/entrega-cotizacion';
+
+export type ParcialPdf = { contenedores: number | null; tamano: TamanoContenedor | null };
+
+export function EntregaPdf({ contenedores, parciales, idioma }: { contenedores: number | null; parciales?: ParcialPdf[]; idioma: 'es' | 'en' }) {
   const en = idioma === 'en';
+  const cantidad = (valor: number | null) => valor?.toLocaleString(en ? 'en-US' : 'es-CO') ?? '—';
   return <div data-pdf="entrega" className="break-inside-avoid">
     <dl className="flex items-center justify-between gap-4 bg-slate-100 px-3 py-2 text-sm">
       <dt>{en ? 'Containers' : 'Contenedores'}</dt>
-      <dd className="text-right font-semibold tabular-nums">{contenedores?.toLocaleString(en ? 'en-US' : 'es-CO') ?? '—'}</dd>
+      <dd className="text-right font-semibold tabular-nums">{cantidad(contenedores)}</dd>
     </dl>
+    {!!parciales?.length && <dl className="divide-y divide-slate-200 border-b border-slate-200 text-xs">
+      {parciales.map(({ contenedores, tamano }, i) => <div key={i} className="flex justify-between gap-4 px-3 py-2">
+        <dt>{en ? 'Partial delivery' : 'Entrega parcial'} {i + 1}</dt>
+        <dd className="text-right tabular-nums">{cantidad(contenedores)}{tamano && ` · ${tamano === '20T' ? 20 : 40} ${en ? 'ft' : 'pies'}`}</dd>
+      </div>)}
+    </dl>}
   </div>;
 }
 

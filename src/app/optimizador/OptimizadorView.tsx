@@ -16,6 +16,7 @@ import EsquemasCorte from './EsquemasCorte';
 import { guardarConfigOptimizadorAction, proyectoDesdeCotizacionAction, guardarOptimizacionAction, listarOptimizacionesAction, obtenerOptimizacionAction, eliminarOptimizacionAction, contextoGuardadosAction, type ProyectoOptimizador } from './actions';
 import { normalizarSnapshot, prepararGuardado, compararParametros, fechaExacta, nombreArchivo, type SnapshotOptimizador, type ResumenGuardado } from './guardados';
 import { imagenesSnapshot } from './imagenes';
+import ConsumosAproximados from './ConsumosAproximados';
 
 const fmt = (n: number | null | undefined, d = 0) =>
   n == null || !Number.isFinite(n) ? '—' : n.toLocaleString('es-CO', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -221,7 +222,7 @@ function PlanDias({ plan, totalLista }: { plan: PlanDiario; totalLista: number }
         <h3 className="text-sm font-semibold text-slate-800">Plan de corte por día</h3>
         <p className="text-xs text-slate-500">
           {fmt(plan.dias.length)} día(s) a {fmt(plan.ritmo)} piezas/día. Los módulos se agrupan por
-          tablero —primero el material con más volumen— y un módulo se puede partir entre dos días.
+          tablero —primero el material con más volumen— y una línea se puede repartir por unidades completas entre jornadas.
         </p>
       </div>
 
@@ -291,7 +292,7 @@ function PlanDias({ plan, totalLista }: { plan: PlanDiario; totalLista: number }
       </div>
 
       <p className="text-xs text-slate-500 mt-1">
-        {'(parte)'} = el módulo se corta en más de un día.
+        {'(parte)'} = las unidades de la línea se distribuyen entre jornadas.
         {difiere && ` El plan suma ${fmt(plan.totalPiezas)} piezas del despiece por módulo; la lista de corte cuenta ${fmt(totalLista)} porque las piezas compartidas de los módulos agrupados se redondean una sola vez por medida.`}
       </p>
     </div>
@@ -327,6 +328,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
   const [segundos, setSegundos] = useState(0);
   const [errorPlan, setErrorPlan] = useState<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
+  const solicitudProyecto = useRef(0);
   useEffect(() => () => workerRef.current?.terminate(), []);
 
   const sucio = JSON.stringify(cfg) !== JSON.stringify(guardado);
@@ -358,19 +360,21 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
   );
 
   async function cargarCotizacion(id: string) {
+    const solicitud = ++solicitudProyecto.current;
     setCargado(null);setAvisoParametros([]);setMensajeGuardado('');setNombreGuardado(cotizaciones.find(c=>c.id===id)?.nombre??'');workerRef.current?.terminate();setOptimizando(false);
     setCotizacionId(id);
     setProyecto(null);
     setErrorProyecto(null);
     setEsquemas(null);
+    setCargando(Boolean(id));
     if (!id) return;
-    setCargando(true);
     try {
-      setProyecto(await proyectoDesdeCotizacionAction(id));
+      const resultado = await proyectoDesdeCotizacionAction(id, true);
+      if (solicitud === solicitudProyecto.current) setProyecto(resultado);
     } catch (e) {
-      setErrorProyecto(e instanceof Error ? e.message : 'No se pudo cargar la cotización.');
+      if (solicitud === solicitudProyecto.current) setErrorProyecto(e instanceof Error ? e.message : 'No se pudo cargar la cotización.');
     } finally {
-      setCargando(false);
+      if (solicitud === solicitudProyecto.current) setCargando(false);
     }
   }
 
@@ -384,8 +388,10 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
     try{const cot=cotizaciones.find(c=>c.id===cotizacionId);const snapshot=normalizarSnapshot({version:1,cotizacionId:cotizacionId||null,cotizacionCodigo:cot?.codigo??null,proyectoNombre:cargado?.proyectoNombre??cot?.nombre??'Sin nombre',cfg,texturaPorMaterial,tableros:cargado?.tableros??tableros,proyecto,lista,planDiario:plan,planCorte:esquemas.plan});const datos={nombre:nombreGuardado,snapshot,esquemasAlDia:true,clave:esquemas.clave};const envio=await prepararGuardado(datos);const r=await guardarOptimizacionAction(envio);await refrescarGuardados();setMensajeGuardado(`Optimización guardada el ${fechaExacta(r.created_at)} (America/Bogota) por ${r.autor_email}.`);}catch(e){setErrorGuardado(e instanceof Error?e.message:'No se pudo guardar.');}finally{setOcupadoGuardado(false);}
   }
   async function cargarGuardado(id:string){
+    const solicitud = ++solicitudProyecto.current;
+    setCargando(false);
     setOcupadoGuardado(true);setErrorGuardado('');setAvisoParametros([]);setMensajeGuardado('');
-    try{const [g,ctx]=await Promise.all([obtenerOptimizacionAction(id),contextoGuardadosAction()]);const s=g.resultado;workerRef.current?.terminate();setOptimizando(false);setCotizacionId(s.cotizacionId??'');setCfg(s.cfg);setGuardado(ctx.configActual);setTexturaPorMaterial(s.texturaPorMaterial);setProyecto(s.proyecto);setCargado(s);setEsquemas({plan:s.planCorte,clave:JSON.stringify([s.cotizacionId??'',s.cfg,s.texturaPorMaterial])});setNombreGuardado(g.nombre);setAvisoParametros(compararParametros(g.config,ctx.configActual));setErrorProyecto(null);setErrorPlan(null);setMensajeGuardado(`Cargada: ${g.nombre} · ${fechaExacta(g.created_at)} · ${g.autor_email}.`);}catch(e){setErrorGuardado(e instanceof Error?e.message:'No se pudo cargar.');}finally{setOcupadoGuardado(false);}
+    try{const [g,ctx]=await Promise.all([obtenerOptimizacionAction(id),contextoGuardadosAction()]);if(solicitud!==solicitudProyecto.current)return;const s=g.resultado;workerRef.current?.terminate();setOptimizando(false);setCotizacionId(s.cotizacionId??'');setCfg(s.cfg);setGuardado(ctx.configActual);setTexturaPorMaterial(s.texturaPorMaterial);setProyecto(s.proyecto);setCargado(s);setEsquemas({plan:s.planCorte,clave:JSON.stringify([s.cotizacionId??'',s.cfg,s.texturaPorMaterial])});setNombreGuardado(g.nombre);setAvisoParametros(compararParametros(g.config,ctx.configActual));setErrorProyecto(null);setErrorPlan(null);setMensajeGuardado(`Cargada: ${g.nombre} · ${fechaExacta(g.created_at)} · ${g.autor_email}.`);}catch(e){if(solicitud===solicitudProyecto.current)setErrorGuardado(e instanceof Error?e.message:'No se pudo cargar.');}finally{setOcupadoGuardado(false);}
   }
   async function exportarGuardado(id:string){
     setOcupadoGuardado(true);setErrorGuardado('');
@@ -455,6 +461,8 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
 
   return (
     <div className="space-y-5">
+      <ConsumosAproximados cotizacionId={cotizacionId} opciones={cotizacionOptions} seleccionar={cargarCotizacion}
+        resumen={proyecto?.consumos} cargando={cargando} error={errorProyecto} errores={proyecto?.errores.length ?? 0} />
       <Seccion titulo="Optimizaciones guardadas" nota="Fecha y hora en America/Bogota. Los guardados son compartidos con el equipo autenticado.">
         {mensajeGuardado&&<p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{mensajeGuardado}</p>}
         {errorGuardado&&<p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorGuardado}</p>}
@@ -466,7 +474,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
       <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.35rem .5rem;font-size:.8rem;background:white}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}.inp-sm{width:6rem}`}</style>
 
       {/* ---------------- 1. Proyecto ---------------- */}
-      <Seccion titulo="1. Proyecto a optimizar" nota="Las piezas salen del despiece actual del motor para cada módulo de la cotización (con su cantidad y agrupación).">
+      <Seccion titulo="Proyecto a optimizar" nota="Las piezas salen del despiece actual del motor para cada módulo de la cotización (con su cantidad y agrupación).">
         <Campo label="Cotización">
           <Combobox value={cotizacionId} options={cotizacionOptions} onChange={cargarCotizacion} placeholder="Buscar cotización por código, nombre o cliente…" />
         </Campo>
@@ -624,7 +632,12 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
         )}
       </Seccion>
 
-      {/* ---------------- Guardar ---------------- */}
+      <details className="group rounded-2xl border border-slate-200 bg-white p-4">
+        <summary className="cursor-pointer font-semibold text-slate-900">
+          Parámetros de planta
+          {sucio && <span className="ml-2 text-sm font-normal text-amber-800">Cambios sin guardar</span>}
+        </summary>
+      <div className="mt-4 space-y-4">
       <div className="sticky top-[52px] z-30 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/95 backdrop-blur px-4 py-2">
         <p className="text-sm text-slate-600">
           {sucio ? 'Hay cambios sin guardar en los parámetros de planta.' : 'Parámetros de planta (se aplican a todos los proyectos).'}
@@ -638,7 +651,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
 
       <div className="grid gap-5 lg:grid-cols-2">
         {/* ---------------- 2. Seccionadora ---------------- */}
-        <Seccion titulo="2. Seccionadora y lámina" nota="Condiciones confirmadas por producción el 07-10-2026. Los niveles de corte son provisionales.">
+        <Seccion titulo="Seccionadora y lámina" nota="Condiciones confirmadas por producción el 07-10-2026. Los niveles de corte son provisionales.">
           <div className="grid grid-cols-2 gap-3">
             <Campo label="Máquina" className="col-span-2"><input value={cfg.maquina} onChange={(e) => set('maquina', e.target.value)} className="inp" /></Campo>
             <Campo label="Espesor del disco (mm)"><input type="number" step="0.1" min={0} value={cfg.discoMm} onChange={(e) => set('discoMm', num(e.target.value))} className="inp" /></Campo>
@@ -655,7 +668,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
         </Seccion>
 
         {/* ---------------- 3. Sobrantes y criterio ---------------- */}
-        <Seccion titulo="3. Sobrantes y criterio de optimización" nota="El orden de la lista define la prioridad: el primero manda.">
+        <Seccion titulo="Sobrantes y criterio de optimización" nota="El orden de la lista define la prioridad: el primero manda.">
           <div className="grid grid-cols-2 gap-3">
             <Campo label="Sobrante útil mínimo: largo (mm)"><input type="number" min={0} value={cfg.sobranteMinLargoMm} onChange={(e) => set('sobranteMinLargoMm', num(e.target.value))} className="inp" /></Campo>
             <Campo label="Sobrante útil mínimo: ancho (mm)"><input type="number" min={0} value={cfg.sobranteMinAnchoMm} onChange={(e) => set('sobranteMinAnchoMm', num(e.target.value))} className="inp" /></Campo>
@@ -681,7 +694,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
         </Seccion>
 
         {/* ---------------- 4. Pila por espesor ---------------- */}
-        <Seccion titulo="4. Láminas por pila según espesor" nota="Cuántas láminas corta la seccionadora a la vez."
+        <Seccion titulo="Láminas por pila según espesor" nota="Cuántas láminas corta la seccionadora a la vez."
           accion={<button type="button" onClick={() => set('pilas', [...cfg.pilas, { espesorMm: 0, laminas: 1 }])} className="rounded-lg border border-slate-300 px-2 py-1 text-xs">+ Agregar</button>}>
           <table className="w-full border-collapse">
             <thead><tr><th className={th}>Espesor (mm)</th><th className={th}>Láminas por pila</th><th className={th}></th></tr></thead>
@@ -698,7 +711,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
         </Seccion>
 
         {/* ---------------- 5. Texturas ---------------- */}
-        <Seccion titulo="5. Texturas y veta" nota="Si la textura no rota veta, las piezas no se pueden girar al acomodarlas. Rustick y Amazonas: pendiente de confirmar."
+        <Seccion titulo="Texturas y veta" nota="Si la textura no rota veta, las piezas no se pueden girar al acomodarlas. Rustick y Amazonas: pendiente de confirmar."
           accion={<button type="button" onClick={() => set('texturas', [...cfg.texturas, { nombre: '', rotaVeta: true }])} className="rounded-lg border border-slate-300 px-2 py-1 text-xs">+ Agregar</button>}>
           <table className="w-full border-collapse">
             <thead><tr><th className={th}>Textura</th><th className={th}>¿Rota veta?</th><th className={th}></th></tr></thead>
@@ -719,7 +732,7 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
         </Seccion>
 
         {/* ---------------- 6. Formatos ---------------- */}
-        <Seccion titulo="6. Formatos de lámina" nota={`Se cruzan con el formato de cada tablero del catálogo. Formatos en el catálogo: ${formatosCatalogo.join(', ') || '—'}.`}
+        <Seccion titulo="Formatos de lámina" nota={`Se cruzan con el formato de cada tablero del catálogo. Formatos en el catálogo: ${formatosCatalogo.join(', ') || '—'}.`}
           accion={<button type="button" onClick={() => set('formatos', [...cfg.formatos, { codigo: '', largoMm: 0, anchoMm: 0, activo: true }])} className="rounded-lg border border-slate-300 px-2 py-1 text-xs">+ Agregar</button>}>
           <table className="w-full border-collapse">
             <thead><tr>
@@ -755,6 +768,8 @@ export default function OptimizadorView({ configInicial, configGuardada, tablero
           )}
         </Seccion>
       </div>
+      </div>
+      </details>
     </div>
   );
 }

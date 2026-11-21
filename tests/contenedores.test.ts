@@ -263,13 +263,24 @@ test('un área única permite repartir módulos por línea y conserva repeticion
   const html = renderToStaticMarkup(createElement(EntregaPanel, {
     config, areas, resultados, onChange() {}, async onSave() { return { ok: true }; },
   }));
-  assert.match(html, /Módulos de Clóset principal/);
+  assert.match(html, /aria-label="Ver módulos de entrega parcial 1"/);
+  assert.match(html, /Contenido de entrega parcial 1/);
   assert.match(html, /<option value="2" selected="">2<\/option>/);
-  assert.match(html, /CLO-01/);
-  assert.doesNotMatch(html, /EXTRA|Áreas de la cotización/);
+  assert.doesNotMatch(html, /CLO-01|EXTRA|Áreas de la cotización/);
 
   const anterior = normalizarEntrega({ modo: 'parcial', parciales: [
     { contenedor: '20T', areas: ['closet'] }, { contenedor: '40T', modulos: ['b'] },
   ] });
   assert.deepEqual(resumirEntrega(anterior, areas, [tablero]).map(r => r.unidades), [100, 0]);
+});
+
+test('PDF parcial imprime total y tamaño por lote en español e inglés', () => {
+  const parciales = [{ contenedores: 2, tamano: '20T' }, { contenedores: 1, tamano: '40T' }] as const;
+  for (const idioma of ['es', 'en'] as const) {
+    const html = renderToStaticMarkup(createElement(EntregaPdf, { contenedores: 3, parciales: [...parciales], idioma }));
+    assert.match(html, /(?:Contenedores|Containers)<\/dt><dd[^>]*>3<\/dd>/);
+    assert.match(html, /(?:Entrega parcial|Partial delivery) 1<\/dt><dd[^>]*>2 · 20 (?:pies|ft)<\/dd>/);
+    assert.match(html, /(?:Entrega parcial|Partial delivery) 2<\/dt><dd[^>]*>1 · 40 (?:pies|ft)<\/dd>/);
+    assert.doesNotMatch(html, /Peso|weight|kg|Ocupación|Occupancy/);
+  }
 });

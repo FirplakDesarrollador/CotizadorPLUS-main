@@ -16,6 +16,27 @@ const pz = (etiqueta: string, largoMm: number, anchoMm: number, cantidad: number
 
 const colocaciones = (plan: PlanMaterialCorte) => plan.patrones.flatMap((p) => p.colocaciones);
 
+test('las medidas iguales a la lámina incluyen el refilado y entran con su dimensión útil', () => {
+  const plan = optimizarMaterial([
+    pz('lámina completa', 2440, 1830, 2, false),
+    pz('panel largo', 2440, 500, 3, false),
+    pz('panel girado', 500, 2440, 1),
+    pz('sobredimensionado', 2441, 500, 1),
+    pz('entre bruto y útil', 2435, 500, 1, false),
+  ], LAMINA, cfg);
+  assert.deepEqual([...contar(plan)].sort(), [['lámina completa', 2], ['panel girado', 1], ['panel largo', 3]]);
+  assert.deepEqual(plan.noCaben.map(p => p.etiqueta), ['sobredimensionado', 'entre bruto y útil']);
+  const completa = plan.grupos.find(p => p.etiqueta === 'lámina completa')!;
+  assert.deepEqual(completa.medidaConRefilado, { largoMm: 2440, anchoMm: 1830 });
+  assert.deepEqual([completa.largoMm, completa.anchoMm], [2430, 1820]);
+  const largo = plan.grupos.find(p => p.etiqueta === 'panel largo')!;
+  assert.deepEqual([largo.largoMm, largo.anchoMm], [2430, 500]);
+  assert.ok(colocaciones(plan).every(p => p.x + p.largoMm <= 2435 && p.y + p.anchoMm <= 1825));
+  const soloCompleta = optimizarMaterial([pz('lámina completa', 2440, 1830, 2, false)], LAMINA, cfg);
+  assert.equal(soloCompleta.laminasMinimas, 2);
+  assert.equal(soloCompleta.laminas, 2);
+});
+
 /** Cada pieza colocada, repeticiones de patron incluidas. */
 function contar(plan: PlanMaterialCorte): Map<string, number> {
   const m = new Map<string, number>();

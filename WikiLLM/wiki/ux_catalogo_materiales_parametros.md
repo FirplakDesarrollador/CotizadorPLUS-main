@@ -1,5 +1,9 @@
 # Mejora de UX en la Tabla de Catálogos (Materiales-Parámetros)
 
+## Parámetros visibles
+
+El editor omite el bloque Avanzado. Las claves históricas `lamina`, `desperdicio_canto` y `factores_sm` se conservan en `cot_parametros` y quedan fuera del guardado del formulario. Los cálculos actuales no leen esas claves. Desperdicio madera sigue visible porque el motor lo usa para calcular el consumo facturable de tablero.
+
 ## Contexto y Diagnóstico
 En la sección de administración (`src/app/admin/AdminCatalogos.tsx`), el componente `CatalogManager` gestiona los catálogos dinámicos (`cot_tableros`, `cot_cantos`, `cot_herrajes`). La tabla presentaba cuatro problemas críticos de experiencia de usuario:
 1. **Scroll horizontal inalcanzable**: La barra de desplazamiento horizontal se ubicaba al fondo de toda la tabla, obligando a desplazarse cientos de filas abajo para poder moverla.
