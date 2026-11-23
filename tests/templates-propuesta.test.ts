@@ -28,19 +28,19 @@ test('normalizarFirplakTemplate aplica valores por defecto cuando recibe null o 
   assert.deepEqual(normalizarFirplakTemplate(undefined), FIRPLAK_TEMPLATE_DEFAULTS);
 });
 
-test('normalizarFirplakTemplate mezcla overrides y preserva condiciones comerciales base', () => {
+test('normalizarFirplakTemplate mezcla overrides vigentes y preserva condiciones comerciales base', () => {
   const res = normalizarFirplakTemplate({
     projectAddress: 'Medellín, El Poblado',
     depositPercent: 60,
     balancePercent: 40,
-    trashBin: 'SI',
+    showModuleSchedule: false,
   });
 
   assert.equal(res.projectAddress, 'Medellín, El Poblado');
   assert.equal(res.depositPercent, 60);
   assert.equal(res.balancePercent, 40);
-  assert.equal(res.trashBin, 'SI');
+  assert.equal(res.showModuleSchedule, false);
   assert.equal(res.deliveryScope, FIRPLAK_TEMPLATE_DEFAULTS.deliveryScope);
   assert.equal(FIRPLAK_TEMPLATE_DEFAULTS.depositPercent, 50);
-  assert.equal(FIRPLAK_TEMPLATE_DEFAULTS.trashBin, 'NO');
+  assert.equal(FIRPLAK_TEMPLATE_DEFAULTS.showModuleSchedule, true);
 });

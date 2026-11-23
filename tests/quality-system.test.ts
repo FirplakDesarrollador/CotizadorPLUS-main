@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import test from 'node:test';
-import { evaluateStageGate, normalizeRunReceipt, type Baseline, type StageReceipt } from '../scripts/quality/common';
+import { evaluateStageGate, normalizeRunReceipt, ROOT_DIR, type Baseline, type StageReceipt } from '../scripts/quality/common';
 import { getLineChangeCount } from '../scripts/quality/learn';
 import { computeImpactPlan } from '../scripts/quality/plan';
 import {
@@ -126,6 +128,14 @@ test('normalizeRunReceipt migra recibos v1 legados sin producir modos undefined'
 });
 
 test('getLineChangeCount cuenta líneas en archivos nuevos aún no presentes en HEAD', () => {
-  const count = getLineChangeCount('tests/templates-propuesta.test.ts');
-  assert.ok(count >= 20, `Se esperaban >=20 líneas para archivo nuevo, recibido: ${count}`);
+  const relTmp = '.tmp/quality/test-line-count-probe.tmp.ts';
+  const absTmp = path.join(ROOT_DIR, relTmp);
+  fs.mkdirSync(path.dirname(absTmp), { recursive: true });
+  fs.writeFileSync(absTmp, Array.from({ length: 25 }, (_, i) => `export const v${i} = ${i};`).join('\n'), 'utf-8');
+  try {
+    const count = getLineChangeCount(relTmp);
+    assert.equal(count, 25);
+  } finally {
+    if (fs.existsSync(absTmp)) fs.unlinkSync(absTmp);
+  }
 });
