@@ -15,7 +15,7 @@ import { separarPropuesta, totalLineaPropuesta, type LineaPropuesta } from '@/li
 import { especificacionesProyecto } from '@/lib/materiales-proyecto';
 import { areasParaEntrega, calcularRecargoEntrega, normalizarDdp, normalizarEntrega, resumirEntrega } from '@/lib/entrega-cotizacion';
 import { getParametros } from '@/lib/admin';
-import { EntregaPdf, HerrajesOtrosPdf, MaterialesProyectoPdf } from './DetallesProyecto';
+import { EntregaPdf, HerrajesOtrosPdf, MesonesPdf, MaterialesProyectoPdf } from './DetallesProyecto';
 import { idiomaDeConsulta, traducirEspecificaciones, traducirTexto, traducirUnidad } from '@/lib/propuesta-ingles';
 
 const fmtCOP = (n: number) => Number(n || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
@@ -79,6 +79,7 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
       recargoEntregaUsd: recargo.usd,
       template,
       adicionales,
+      mesones: propuesta.mesones,
       materiales,
       logistica,
       entregasParciales,
@@ -121,7 +122,7 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
       for (const line of cocina.lineas) { const sku=line.codigo_modulo??line.pref??'SIN SKU'; const lineQuantity=Number(line.cantidad||0)*quantity; const current=scheduleMap.get(sku); if(current) current.quantity+=lineQuantity; else scheduleMap.set(sku,{sku,description:tx(line.descripcion_es),quantity:lineQuantity,grupo:grupoDeLinea(line.pref??line.codigo_modulo)}); }
       return { name:cocina.nombre, quantity, unitUsd, totalUsd:unitUsd*quantity, unitCop, totalCop:unitCop*quantity };
     });
-    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||(en?'Untitled project':'Proyecto sin nombre'), builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:referenciaCotizacion({id,codigo:cabecera.codigo}), totalUsd:propuesta.totalUsd + recargo.usd, totalCop:propuesta.totalCop + recargo.cop, moneda:monedaElegida, template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), materiales, adicionales, herrajes, idioma, logistica, entregasParciales, incluyeDdp }} />;
+    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||(en?'Untitled project':'Proyecto sin nombre'), builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:referenciaCotizacion({id,codigo:cabecera.codigo}), totalUsd:propuesta.totalUsd + recargo.usd, totalCop:propuesta.totalCop + recargo.cop, moneda:monedaElegida, template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), materiales, adicionales, mesones: propuesta.mesones, herrajes, idioma, logistica, entregasParciales, incluyeDdp }} />;
   }
   const mostrarSin = query.sinHerrajes !== '0'; const mostrarCon = query.conHerrajes !== '0'; const mostrarUsd = query.usd !== '0'; const mostrarCop = query.cop !== '0'; const trm = Number(cabecera.trm || 0);
   const proyecto = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 };
@@ -133,8 +134,9 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
       <tr className="font-semibold"><td colSpan={3 + Number(mostrarUsd) + Number(mostrarCop) + 1} className="py-1 text-right">Subtotal {c.nombre}</td>{mostrarSin && mostrarUsd && <><td></td><td className="text-right">{fmtUSD(sub.sinUsd * mult)}</td></>}{mostrarSin && mostrarCop && <><td></td><td className="text-right">{fmtCOP(sub.sinCop * mult)}</td></>}{mostrarCon && mostrarUsd && <><td></td><td className="text-right">{fmtUSD(sub.conUsd * mult)}</td></>}{mostrarCon && mostrarCop && <><td></td><td className="text-right">{fmtCOP(sub.conCop * mult)}</td></>}</tr>
     </tbody></table></div>)}
     {entregasParciales && <EntregaPdf contenedores={logistica} parciales={entregasParciales} idioma={idioma} />}
+    <MesonesPdf filas={propuesta.mesones} moneda={monedaElegida} idioma={idioma} />
     <HerrajesOtrosPdf filas={adicionales} moneda={monedaElegida} idioma={idioma} /><MaterialesProyectoPdf bloques={materiales} />
-    <div className="mt-4 border-t-2 border-slate-800 pt-3"><table className="ml-auto text-sm"><tbody>{mostrarSin && <tr><td className="pr-6 font-bold">{en ? 'TOTAL WITHOUT HARDWARE' : 'TOTAL SIN HERRAJES'}</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.sinUsd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.sinCop)}</td>}</tr>}{mostrarCon && <tr><td className="pr-6 font-bold">{en ? 'TOTAL WITH HARDWARE' : 'TOTAL CON HERRAJES'}</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.conUsd + propuesta.totalAdicionalUsd + recargo.usd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.conCop + propuesta.totalAdicionalCop + recargo.cop)}</td>}</tr>}</tbody></table></div>
+    <div className="mt-4 border-t-2 border-slate-800 pt-3"><table className="ml-auto text-sm"><tbody>{mostrarSin && <tr><td className="pr-6 font-bold">{en ? 'TOTAL WITHOUT HARDWARE' : 'TOTAL SIN HERRAJES'}</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.sinUsd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.sinCop)}</td>}</tr>}{mostrarCon && <tr><td className="pr-6 font-bold">{en ? 'TOTAL WITH HARDWARE' : 'TOTAL CON HERRAJES'}</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(propuesta.totalUsd + recargo.usd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(propuesta.totalCop + recargo.cop)}</td>}</tr>}</tbody></table></div>
     {incluyeDdp && <p className="mt-2 text-sm text-slate-600">{en ? 'The total includes DDP.' : 'El total incluye DDP.'}</p>}
     {!mostrarSin && !mostrarCon && <p className="text-sm text-slate-500">{en ? 'The quote was generated without price columns.' : 'La cotización fue generada sin columnas de precio.'}</p>}<p className="mt-8 text-xs text-slate-400">{en ? 'Generated by' : 'Generado por'} Cotizador PLUS · {new Date().toLocaleString(en ? 'en-US' : 'es-CO')}</p></div></div>;
 }

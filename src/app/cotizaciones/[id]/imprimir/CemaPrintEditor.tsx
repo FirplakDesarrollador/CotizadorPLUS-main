@@ -1,7 +1,7 @@
 'use client';
 import PrintDocumentTitle from './PrintDocumentTitle';
-import { EntregaPdf, HerrajesOtrosPdf, MaterialesProyectoPdf, type ParcialPdf } from './DetallesProyecto';
-import type { AdicionalPropuesta } from '@/lib/propuesta-cotizacion';
+import { EntregaPdf, HerrajesOtrosPdf, MesonesPdf, MaterialesProyectoPdf, type ParcialPdf } from './DetallesProyecto';
+import type { AdicionalPropuesta, MesonPropuesta } from '@/lib/propuesta-cotizacion';
 import type { EspecificacionProyecto } from '@/lib/materiales-proyecto';
 
 import { Fragment, useState } from 'react';
@@ -16,7 +16,7 @@ export type CemaProposalData = {
   incluyeDdp: boolean;
   recargoEntregaUsd: number;
   id: string; projectName: string; preparedFor: string; contact: string; kitchens: number;
-  adicionales: AdicionalPropuesta[]; materiales: EspecificacionProyecto[]; totalUsd: number; template: CemaTemplate; schedule: CemaScheduleRow[]; idioma?: 'es' | 'en';
+  adicionales: AdicionalPropuesta[]; mesones?: MesonPropuesta[]; materiales: EspecificacionProyecto[]; totalUsd: number; template: CemaTemplate; schedule: CemaScheduleRow[]; idioma?: 'es' | 'en';
 };
 
 
@@ -60,7 +60,7 @@ function CemaProposal({ data, onScheduleChange }: { data: CemaProposalData; onSc
   const money = (value: number) => value.toLocaleString(locale, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
   const dateLabel = (value: string) => value ? new Date(`${value}T12:00:00`).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' }) : tx('Por definir', 'TBD');
   const texto = (campo: Parameters<typeof textoCema>[1]) => textoCema(t, campo, idioma);
-  const countertops = Math.max(0, Number(t.countertopAmountUsd));
+  const countertops = data.mesones?.length ? data.mesones.reduce((s, m) => s + m.totalUsd, 0) : Math.max(0, Number(t.countertopAmountUsd));
   const cabinetry = Math.max(0, data.totalUsd - data.recargoEntregaUsd - countertops - data.adicionales.reduce((sum, fila) => sum + fila.totalUsd, 0));
   const category = (pattern: RegExp) => data.schedule.filter((row) => pattern.test(row.sku)).reduce((sum, row) => sum + row.quantity, 0);
   return <div lang={idioma} className="cema-document bg-slate-100 py-6 print:bg-white print:py-0">
@@ -78,7 +78,7 @@ function CemaProposal({ data, onScheduleChange }: { data: CemaProposalData; onSc
 
     <Page idioma={idioma} number={1} title={tx('RESUMEN DEL PROYECTO', 'PROJECT OVERVIEW')} subtitle={tx('Alcance, precios y base comercial', 'Scope, pricing and commercial basis')}>
       {data.incluyeDdp && <p className="mb-2 text-xs text-slate-600">{tx('El total incluye DDP.', 'The total includes DDP.')}</p>}
-      <p className="mb-5 text-sm leading-6">{tx('CEMA USA, INC. presenta esta propuesta comercial para el suministro, la entrega y la instalación de muebles a medida para cocinas y baños con mesones de cuarzo en', 'CEMA USA, INC. is pleased to submit this commercial proposal for the supply, delivery and installation of custom modern kitchen and bathroom cabinetry with quartz countertops for')} <b>{data.projectName}</b>.</p>
+      <p className="mb-5 text-sm leading-6">{tx('CEMA USA, INC. presenta esta propuesta comercial para el suministro, la entrega y la instalación de muebles a medida para cocinas y baños en', 'CEMA USA, INC. is pleased to submit this commercial proposal for the supply, delivery and installation of custom modern kitchen and bathroom cabinetry for')} <b>{data.projectName}</b>.</p>
       <table className="w-full text-sm"><thead className="bg-[#101615] text-white"><tr><th className="p-2 text-left">{tx("ALCANCE", "SCOPE")}</th><th className="text-left">{tx("CANTIDAD", "QUANTITY")}</th><th className="pr-2 text-right">{tx("VALOR", "AMOUNT")}</th></tr></thead><tbody><tr className="bg-[#eef1ed]"><td className="p-2">{tx("Muebles", "Cabinetry")}</td><td>{data.kitchens} {tx('cocinas', 'kitchens')} / {t.bathrooms} {tx('baños', 'bathrooms')}</td><td className="pr-2 text-right">{money(cabinetry)}</td></tr><tr><td className="p-2">{tx("Mesones", "Countertops")}</td><td>{tx("Cocinas y baños", "Kitchen + Bathroom Scope")}</td><td className="pr-2 text-right">{money(countertops)}</td></tr><tr className="font-bold"><td className="p-2">{tx("VALOR TOTAL DEL CONTRATO", "TOTAL CONTRACT VALUE")}</td><td>{texto('pricingBasis')}</td><td className="pr-2 text-right">{money(data.totalUsd)}</td></tr></tbody></table>
       <h3 className="mt-6 font-bold">{tx("HITOS COMERCIALES", "COMMERCIAL MILESTONES")}</h3><div className="mt-2 grid grid-cols-4 gap-2 text-center text-xs">{[[`${t.depositPercent}%`,tx('ANTICIPO', 'INITIAL DEPOSIT')],[`${t.leadTimeDays} ${tx('DÍAS', 'DAYS')}`,tx('PLAZO', 'LEAD TIME')],[`${t.materialPaymentPercent}%`,tx('COSTO DE MATERIALES', 'MATERIAL COST')],[tx('MENSUAL', 'MONTHLY'),tx('PAGO POR AVANCE', 'PROGRESS PAY')]].map(([v,l])=><div key={l} className="border border-slate-300"><b className="block bg-[#65796d] p-2 text-white">{v}</b><span className="block p-3">{l}</span></div>)}</div>
       {texto('tariffNotice') && <><h3 className="mt-7 font-bold">{tx("AVISO ARANCELARIO", "TARIFF NOTICE")}</h3><p className="mt-2 text-xs leading-5">{texto('tariffNotice')}</p></>}
@@ -98,7 +98,7 @@ function CemaProposal({ data, onScheduleChange }: { data: CemaProposalData; onSc
 
     <Page idioma={idioma} number={t.showModuleSchedule ? 4 : 3} title={tx('ESPECIFICACIONES TÉCNICAS', 'TECHNICAL SPECIFICATIONS')} subtitle={tx('Construcción y acabados de los muebles', 'Cabinet construction and finish selections')}>
       <MaterialesProyectoPdf bloques={data.materiales} />
-      <h3 className="mt-8 font-bold">{tx("ESPECIFICACIONES DE MESONES", "COUNTERTOP SPECIFICATIONS")}</h3><table className="mt-2 w-full text-xs"><tbody>{[['Material',texto('countertopMaterial')],['Color',texto('countertopColor')],[tx('Espesor', 'Thickness'),texto('countertopThickness')],[tx('Profundidad de cocina', 'Kitchen depth'),texto('kitchenDepth')],[tx('Profundidad de baño', 'Bathroom depth'),texto('bathroomDepth')],[tx('Salpicadero de cocina', 'Kitchen backsplash'),texto('kitchenBacksplash')],[tx('Salpicadero de baño', 'Bathroom backsplash'),texto('bathroomBacksplash')],[tx('Bordes y caídas laterales', 'Edge / Waterfalls'),texto('waterfalls')]].map(([a,b],i)=><tr key={a} className={i%2===0?'bg-[#eef1ed]':''}><td className="p-2 font-bold">{a}</td><td className="p-2">{b}</td></tr>)}</tbody></table>
+      {data.mesones?.length ? <MesonesPdf filas={data.mesones} moneda="USD" idioma={idioma} /> : <><h3 className="mt-8 font-bold">{tx("ESPECIFICACIONES DE MESONES", "COUNTERTOP SPECIFICATIONS")}</h3><table className="mt-2 w-full text-xs"><tbody>{[['Material',texto('countertopMaterial')],['Color',texto('countertopColor')],[tx('Espesor', 'Thickness'),texto('countertopThickness')],[tx('Profundidad de cocina', 'Kitchen depth'),texto('kitchenDepth')],[tx('Profundidad de baño', 'Bathroom depth'),texto('bathroomDepth')],[tx('Salpicadero de cocina', 'Kitchen backsplash'),texto('kitchenBacksplash')],[tx('Salpicadero de baño', 'Bathroom backsplash'),texto('bathroomBacksplash')],[tx('Bordes y caídas laterales', 'Edge / Waterfalls'),texto('waterfalls')]].map(([a,b],i)=><tr key={a} className={i%2===0?'bg-[#eef1ed]':''}><td className="p-2 font-bold">{a}</td><td className="p-2">{b}</td></tr>)}</tbody></table></>}
     </Page>
 
     <Page idioma={idioma} number={t.showModuleSchedule ? 5 : 4} title={tx('ENTREGA', 'DELIVERY')}>

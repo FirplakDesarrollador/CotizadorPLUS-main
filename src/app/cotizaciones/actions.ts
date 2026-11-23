@@ -1,5 +1,6 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import type { ConfiguracionMeson } from '@/lib/mesones';
 import type { TipoMaterial } from '@/lib/materiales-linea';
 import { redirect } from 'next/navigation';
 import {
@@ -8,7 +9,7 @@ import {
   reordenarGruposCocina, reordenarCocinas,
   guardarVersionCotizacion, restaurarVersionCotizacion,
   agregarComentarioCotizacion,
-  agregarLineaMaterial, getMaterialesDisponibles, type MaterialDisponible,
+  agregarLineaMeson, obtenerCatalogoMesones, obtenerMueblesParaMeson, agregarLineaMaterial, getMaterialesDisponibles, type MaterialDisponible,
   type AgregarLineaInput,
 } from '@/lib/cotizaciones';
 import type { CemaTemplate } from '@/lib/cema-template';
@@ -116,6 +117,38 @@ export async function desagruparGrupoAction(grupoId: string): Promise<{ ok: bool
 // por toda la jerarquia de la cotizacion.
 export async function getMaterialesDisponiblesAction(): Promise<Record<TipoMaterial, MaterialDisponible[]>> {
   return getMaterialesDisponibles();
+}
+
+export async function catalogoMesonesAction(cocinaId: string) {
+  try {
+    const { user } = await getUserAndRole();
+    if (!user) throw new Error('No autenticado.');
+    const sb = await createClient();
+    const [catalogo, area, muebles] = await Promise.all([
+      obtenerCatalogoMesones(),
+      sb.from('cot_cocinas').select('cot_cotizaciones(config_default)').eq('id', cocinaId).single(),
+      obtenerMueblesParaMeson(cocinaId),
+    ]);
+    if (area.error) throw new Error('Sección no encontrada.');
+    const cab = area.data.cot_cotizaciones as unknown as { config_default?: { descuento?: number } } | null;
+    return { catalogo, muebles, descuento: Number(cab?.config_default?.descuento ?? 0) };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'No se pudo cargar el catálogo.' };
+  }
+}
+
+export async function agregarMesonAction(cocinaId: string, materialId: string, opciones: ConfiguracionMeson) {
+  try {
+    const { user } = await getUserAndRole();
+    if (!user) throw new Error('No autenticado.');
+    const id = await agregarLineaMeson(cocinaId, materialId, opciones);
+    revalidatePath('/cotizaciones');
+    revalidatePath(`/cotizaciones/${id}`);
+    revalidatePath(`/cotizaciones/${id}/imprimir`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo agregar el mesón.' };
+  }
 }
 
 export async function agregarLineaMaterialAction(

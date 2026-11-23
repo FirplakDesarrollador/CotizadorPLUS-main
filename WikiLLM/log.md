@@ -3331,3 +3331,14 @@ Se resolvieron los hallazgos detectados tras auditar el motor `/desplegar`: norm
 
 ## [2026-11-23] lint | Eliminados los 35 errores históricos de ESLint y trinquete congelado en 0/0/0
 Se reemplazaron los tipos `any` heredados en `src/lib/admin.ts`, `src/lib/diseno.ts`, `src/lib/cotizar.ts` y `src/lib/cotizaciones.ts` por tipos explícitos equivalentes sin modificar el comportamiento en runtime. Verificado con `npm run typecheck` (0 errores), `npm run lint` (0 errores), `916/916` pruebas en verde y `npm run quality:baseline:update`, bajando `docs/quality/baseline.json` de `35` a `0` errores permitidos (`maxLintErrors=0`, `maxTypeErrors=0`, `maxFailingTests=0`).
+
+## [2026-11-23] ingest | Análisis de mesones PB Shore y propuesta de elemento adicional
+Se documentó la lógica de la hoja `Summary` de `CONTENEDORES/pb shore.xlsx`: áreas por configuración, anchos de muebles bajos, islas, waterfalls, muros laterales, perforaciones, pulidos y cadenas de precio US/COL, con un ejemplo de 80 unidades. Se listaron quince limitaciones del libro (heurística de largo, posible doble conteo, cantos inflados, diferencias de claves por origen, TRM y márgenes dispersos) y se propuso un elemento de mesones para Cotizador PLUS que lee secciones, anchos y cantidades, con catálogo propio, `jsonb` de configuración, huella de vigencia, líneas `clasificacionPdf = 'mesones'`, integración en PDF, instalación, versiones y pruebas de paridad. Ver [mesones_pb_shore.md](wiki/mesones_pb_shore.md).
+
+## [2026-11-23] update | Cálculo de mesones, catálogo editable PB Shore e impresión
+
+Cálculo por tramo con merma y márgenes editables, catálogo Colombia y USA, persistencia por área y sección independiente de mesones en las tres propuestas.
+
+## [2026-11-23] update | Largo automático y configuración de mesones por área
+
+El cálculo toma los muebles inferiores del área y añade opciones para dishwasher, Range, Cooktop, isla, muros laterales, cantos pulidos y cascadas.

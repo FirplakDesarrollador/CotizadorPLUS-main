@@ -403,6 +403,7 @@
         "src/lib/monedas-visibles.ts",
         "src/lib/numero-en-letras.ts",
         "src/lib/propuesta-cotizacion.ts",
+        "src/lib/mesones.ts",
         "src/lib/propuesta-ingles.ts",
         "src/app/cotizaciones/[id]/imprimir/**",
         "src/app/cotizaciones/[id]/export/**",

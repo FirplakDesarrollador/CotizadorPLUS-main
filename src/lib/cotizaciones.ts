@@ -9,6 +9,7 @@ import {
   type SistemaMedida,
 } from '@/lib/module-groups';
 import { contarEntrepanos, puertasDescripcion, esElementoPlano, etiquetaDescripcion, aplicarConfiguracionDbFe } from '@/lib/muebles';
+import { calcularMeson, catalogoInicialMesones, medidasMesonDesdeMuebles, mueblesParaMeson, type CatalogoMesones, type ConfiguracionMeson } from '@/lib/mesones';
 import { calcularPrecioMaterial, descripcionMaterial, grupoSeSaltaElMotor, type TipoMaterial } from '@/lib/materiales-linea';
 import { normalizarPreciosTableros } from '@/lib/precios-tableros';
 import { siguienteOrdenGrupo as siguienteOrden } from '@/lib/grupos-orden';
@@ -645,6 +646,7 @@ export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: str
     .select('*').eq('id', lineaId).single();
   if (lineError || !linea) throw new Error('Módulo no encontrado');
   const current = linea as LineaPersistida;
+  if (current.config?.clasificacionPdf === 'mesones') throw new Error('Los mesones se mantienen en bloques independientes.');
   if (!current.cocina_id) throw new Error('El módulo no pertenece a una cocina');
 
   if (!current.grupo_id) {
@@ -697,6 +699,9 @@ export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: str
   prospective.splice(requestedPos - 1, 0, current);
   if (prospective.length > 1) {
     try {
+      if (prospective.some(row => row.config?.clasificacionPdf === 'mesones')) {
+        throw new Error('Los mesones se mantienen en bloques independientes.');
+      }
       if (prospective.some((row) => Number(row.cantidad) !== 1)) {
         throw new Error('Para agrupar módulos, cada línea debe tener cantidad 1.');
       }
@@ -1157,6 +1162,55 @@ export async function agregarLineaMaterial(
     },
   );
 
+  return insertarAdicional(cocinaId, cotizacionId, entrada.codigo,
+    { clasificacionPdf: 'herrajes_otros', material: { ...entrada, precioUnitarioCop: item.precio } },
+    descripcionMaterial(entrada), precios);
+}
+
+export async function obtenerCatalogoMesones(): Promise<CatalogoMesones> {
+  const sb = await createClient();
+  const { data, error } = await sb.from('cot_parametros').select('value').eq('key', 'mesones').maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.value as CatalogoMesones | undefined) ?? catalogoInicialMesones;
+}
+
+export async function obtenerMueblesParaMeson(cocinaId: string) {
+  const sb = await createClient();
+  const { data: lineas } = await leerCatalogoPaginado<Parameters<typeof mueblesParaMeson>[0][number]>((a, b) =>
+    sb.from('cot_cotizacion_lineas')
+      .select('id,largo,cantidad,unidad_dim,codigo_modulo,tipo:cot_tipos_mueble(categoria,pref)')
+      .eq('cocina_id', cocinaId).order('id').range(a, b));
+  return mueblesParaMeson(lineas);
+}
+
+export async function agregarLineaMeson(cocinaId: string, materialId: string, opciones: ConfiguracionMeson) {
+  const sb = await createClient();
+  const [area, catalogo, muebles] = await Promise.all([
+    sb.from('cot_cocinas').select('cotizacion_id').eq('id', cocinaId).single(),
+    obtenerCatalogoMesones(),
+    obtenerMueblesParaMeson(cocinaId),
+  ]);
+  if (area.error || !area.data) throw new Error('Sección no encontrada.');
+  const id = area.data.cotizacion_id as string;
+  const { data: cab, error } = await sb.from('cot_cotizaciones').select('trm,config_default').eq('id', id).single();
+  if (error || !cab) throw new Error('Cotización no encontrada.');
+  const material = catalogo.materiales.find(m => m.id === materialId);
+  if (!material) throw new Error('Material de mesón no encontrado.');
+  const medidas = medidasMesonDesdeMuebles(muebles, opciones);
+  const resultado = calcularMeson(medidas, material, catalogo.parametros, Number(cab.trm), Number(cab.config_default?.descuento ?? 0));
+  return insertarAdicional(cocinaId, id, 'MESON',
+    { clasificacionPdf: 'mesones', meson: { medidas, material, parametros: catalogo.parametros, resultado } },
+    `${material.nombre} · ${material.origen} · ${resultado.areaSqft.toFixed(2)} ft²`,
+    { costoSinHerrajes: resultado.costoCop, costoHerrajes: 0, costoConHerrajes: resultado.costoCop,
+      precioConHerrajesCop: resultado.precioCop, precioConHerrajesUsd: resultado.precioUsd });
+}
+
+async function insertarAdicional<T extends Pick<ReturnType<typeof calcularPrecioMaterial>,
+  'costoSinHerrajes' | 'costoHerrajes' | 'costoConHerrajes' | 'precioConHerrajesCop' | 'precioConHerrajesUsd'>>(
+  cocinaId: string, cotizacionId: string, codigo: string, config: Record<string, unknown>,
+  descripcion: string, precios: T,
+) {
+  const sb = await createClient();
   const { count } = await sb.from('cot_cotizacion_lineas')
     .select('id', { count: 'exact', head: true }).eq('cocina_id', cocinaId);
   const { data: grupo, error: groupError } = await sb.from('cot_grupos_modulos').insert({
@@ -1168,11 +1222,11 @@ export async function agregarLineaMaterial(
   const { error } = await sb.from('cot_cotizacion_lineas').insert({
     cotizacion_id: cotizacionId, cocina_id: cocinaId, grupo_id: grupo.id,
     posicion_grupo: 1, orden: count ?? 0,
-    tipo_mueble_id: null, pref: null, sku: entrada.codigo,
-    codigo_modulo: entrada.codigo,
+    tipo_mueble_id: null, pref: null, sku: codigo,
+    codigo_modulo: codigo,
     largo: 0, alto: 0, prof: 0, unidad_dim: 'in',
     cantidad: 1,  // el "cuantos" vive en la cantidad del material, no en la linea
-    config: { clasificacionPdf: 'herrajes_otros', material: { ...entrada, precioUnitarioCop: item.precio } },
+    config,
     costo_sin_herrajes_cop: precios.costoSinHerrajes,
     costo_herrajes_cop: precios.costoHerrajes,
     costo_total_cop: precios.costoConHerrajes,
@@ -1180,7 +1234,7 @@ export async function agregarLineaMaterial(
     precio_unit_usd: precios.precioConHerrajesUsd,
     precio_total_cop: precios.precioConHerrajesCop,
     precio_total_usd: precios.precioConHerrajesUsd,
-    descripcion_es: descripcionMaterial(entrada),
+    descripcion_es: descripcion,
     breakdown: precios,
   });
   if (error) {

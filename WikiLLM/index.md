@@ -31,6 +31,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Descripción de una línea contra el despiece](wiki/descripcion_linea_vs_despiece.md) - Por qué `n_entrepanos` no describe el mueble: 47 de 81 tipos no coincidían, y la deuda equivalente en puertas y gavetas.
 - [Líneas de material suelto](wiki/lineas_material_suelto.md) - Tablero, canto o herraje cobrados sin módulo: unidades, margen por tipo, clasificación en Herrajes / otros del PDF y exclusión en HDR y Optimizador.
 - [Protocolo de cotizaciones y PDF](wiki/protocolo_pdf_cotizaciones.md) - Clasificación y agrupación de adicionales sin precios en el detalle, materiales por área closet, reparación histórica y doble verificación de impresión.
+- [Mesones de cocina y baño](wiki/mesones_pb_shore.md) - Cálculo por tramo, catálogo Colombia y USA, y sección de mesones en el PDF.
 - [Bisagras por alto de puerta](wiki/bisagras_por_altura.md) - Tramos por hoja, equivalencias de unidades y actualización de cotizaciones y simulador.
 - [Entrega, Incoterm e instalación](wiki/entrega_cotizaciones.md) - Reparto de módulos por cantidad, contenedores por entrega y tarifas de instalación por zona.
 - [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles, soportes por entrepaño, cálculo grupal y recálculo masivo por lotes con precarga de catálogo (`engine.ts` y `cotizar.ts`).

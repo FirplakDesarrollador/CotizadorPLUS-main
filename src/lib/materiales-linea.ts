@@ -122,6 +122,6 @@ export function esModuloLinea(linea: {
 }): boolean {
   if (!linea.tipo_mueble_id) return false;
   const cfg = linea.config as { material?: unknown; clasificacionPdf?: unknown } | null | undefined;
-  if (cfg?.material || cfg?.clasificacionPdf === 'herrajes_otros') return false;
+  if (cfg?.material || ['herrajes_otros', 'mesones'].includes(String(cfg?.clasificacionPdf))) return false;
   return true;
 }

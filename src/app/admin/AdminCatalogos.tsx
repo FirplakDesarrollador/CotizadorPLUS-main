@@ -9,6 +9,9 @@ import { TIPS_MATERIALES } from '@/lib/tooltips';
 import { calcAreaM2, calcPrecio, calcPrecioM2 } from '@/lib/catalogo-tableros-calculos';
 import InstalacionParametros from './InstalacionParametros';
 
+import MesonesParametros from './MesonesParametros';
+import { catalogoInicialMesones, type CatalogoMesones } from '@/lib/mesones';
+
 type Field = { key: string; label: string; type: 'text' | 'number' | 'bool'; required?: boolean };
 type Row = Record<string, unknown> & { id?: string };
 
@@ -52,10 +55,11 @@ const FIELDS: Record<CatalogoTabla, Field[]> = {
   ], */
 };
 
-type TabKey = CatalogoTabla | 'parametros' | 'perfiles';
+type TabKey = CatalogoTabla | 'parametros' | 'perfiles' | 'mesones';
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'cot_tableros', label: 'Tableros' },
   { key: 'cot_cantos', label: 'Cantos' },
+  { key: 'mesones', label: 'Mesones' },
   { key: 'cot_herrajes', label: 'Herrajes' },
   // { key: 'cot_recargos_cliente', label: 'Clientes' },
   { key: 'perfiles', label: 'Perfiles de material' },
@@ -79,7 +83,9 @@ export default function AdminCatalogos({ tableros, cantos, herrajes, recargos, p
           </button>
         ))}
       </div>
-      {tab === 'parametros'
+      {tab === 'mesones'
+        ? <MesonesParametros inicial={(parametros.mesones as CatalogoMesones | undefined) ?? catalogoInicialMesones} />
+        : tab === 'parametros'
         ? <ParametrosEditor parametros={parametros} />
         : tab === 'perfiles'
         ? <PerfilesEditor perfiles={perfiles} tableros={tableros} />

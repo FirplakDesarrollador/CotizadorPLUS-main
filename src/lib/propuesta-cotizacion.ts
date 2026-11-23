@@ -1,3 +1,4 @@
+import type { MaterialMeson, MedidasMeson } from './mesones';
 import { UNIDAD_MATERIAL, type MaterialLinea } from './materiales-linea';
 import type { MaterialesFamilia, PersonalizacionMateriales } from './materiales-proyecto';
 
@@ -5,7 +6,7 @@ export type LineaPropuesta = {
   id: string; cantidad: number; tipo_mueble_id?: string | null;
   pref?: string | null; codigo_modulo?: string | null; descripcion_es?: string | null;
   precio_total_cop?: number; precio_total_usd?: number; precio_unit_usd?: number;
-  config?: (MaterialesFamilia & { material?: MaterialLinea; clasificacionPdf?: string; personalizacionMateriales?: PersonalizacionMateriales | null }) | null;
+  config?: (MaterialesFamilia & { material?: MaterialLinea; clasificacionPdf?: string; meson?: { material: MaterialMeson; medidas: MedidasMeson; resultado: { areaSqft: number } }; personalizacionMateriales?: PersonalizacionMateriales | null }) | null;
   breakdown?: Record<string, unknown> | null;
 };
 export type AreaPropuesta<T extends LineaPropuesta = LineaPropuesta> = { nombre: string; cantidad?: number; lineas: T[] };
@@ -23,11 +24,25 @@ export function totalLineaPropuesta(linea: LineaPropuesta, moneda: 'COP' | 'USD'
   return Number(unitario ?? 0) * Number(linea.cantidad ?? 1);
 }
 
+export type MesonPropuesta = {
+  id: string; area: string; material: string; origen: MaterialMeson['origen'];
+  medidas: MedidasMeson; cantidad: number; areaSqft: number; totalCop: number; totalUsd: number;
+};
+
 export function separarPropuesta<T extends LineaPropuesta, A extends AreaPropuesta<T>>(areas: readonly A[]) {
   const adicionales: AdicionalPropuesta[] = [];
+  const mesones: MesonPropuesta[] = [];
   const muebles = areas.map(area => {
     const veces = Number(area.cantidad ?? 1);
     const lineas = area.lineas.filter(linea => {
+      if (linea.config?.clasificacionPdf === 'mesones' && linea.config.meson) {
+        const { material, medidas, resultado } = linea.config.meson;
+        const cantidad = Number(linea.cantidad ?? 1) * veces;
+        mesones.push({ id: linea.id, area: area.nombre, material: material.nombre, origen: material.origen,
+          medidas, cantidad, areaSqft: resultado.areaSqft * cantidad,
+          totalCop: totalLineaPropuesta(linea, 'COP') * veces, totalUsd: totalLineaPropuesta(linea, 'USD') * veces });
+        return false;
+      }
       if (!esHerrajeOtroAdicional(linea)) return true;
       const material = linea.config?.material;
       const cantidad = Number(material?.cantidad ?? 1) * Number(linea.cantidad ?? 1) * veces;
@@ -42,5 +57,7 @@ export function separarPropuesta<T extends LineaPropuesta, A extends AreaPropues
   const totalAdicionalUsd = adicionales.reduce((s, r) => s + r.totalUsd, 0);
   const totalMueblesCop = muebles.reduce((s, a) => s + a.lineas.reduce((n, l) => n + totalLineaPropuesta(l, 'COP'), 0) * Number(a.cantidad ?? 1), 0);
   const totalMueblesUsd = muebles.reduce((s, a) => s + a.lineas.reduce((n, l) => n + totalLineaPropuesta(l, 'USD'), 0) * Number(a.cantidad ?? 1), 0);
-  return { muebles, adicionales, totalAdicionalCop, totalAdicionalUsd, totalMueblesCop, totalMueblesUsd, totalCop: totalMueblesCop + totalAdicionalCop, totalUsd: totalMueblesUsd + totalAdicionalUsd };
+  const totalMesonesCop = mesones.reduce((s, r) => s + r.totalCop, 0);
+  const totalMesonesUsd = mesones.reduce((s, r) => s + r.totalUsd, 0);
+  return { muebles, adicionales, mesones, totalMesonesCop, totalMesonesUsd, totalAdicionalCop, totalAdicionalUsd, totalMueblesCop, totalMueblesUsd, totalCop: totalMueblesCop + totalAdicionalCop + totalMesonesCop, totalUsd: totalMueblesUsd + totalAdicionalUsd + totalMesonesUsd };
 }

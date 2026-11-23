@@ -1,6 +1,7 @@
 'use client';
 import { Fragment, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import AgregarMesonForm from './AgregarMesonForm';
 import AgregarMaterialForm from './AgregarMaterialForm';
 import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineForm';
 import { actualizarCocinaAction, eliminarCocinaAction, duplicarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
@@ -14,6 +15,7 @@ const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'curren
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 type LineaConfig = {
+  clasificacionPdf?: string;
   preset?: Record<string, string>;
   conHerrajes?: boolean;
   recargoPct?: number;
@@ -102,6 +104,7 @@ export default function CocinaCard({
 }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
+  const [showMeson, setShowMeson] = useState(false);
   const [showAddMaterial, setShowAddMaterial] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState(false);
@@ -454,6 +457,7 @@ export default function CocinaCard({
             return (
               <Fragment key={block.grupoId}>
                 {block.lineas.map((l, lineIdx) => {
+                  const esMeson = l.config?.clasificacionPdf === 'mesones';
                   const label = members > 1 ? `${block.etiqueta}${l.posicion_grupo}` : block.etiqueta;
                   const isFirstLine = lineIdx === 0;
 
@@ -495,7 +499,7 @@ export default function CocinaCard({
                         e.preventDefault();
                         setContextMenu({ x: e.clientX, y: e.clientY, lineaId: l.id });
                       }}
-                      onClick={() => setSelectedLineId((selected) => selected === l.id ? null : l.id)}
+                      onClick={esMeson ? undefined : () => setSelectedLineId((selected) => selected === l.id ? null : l.id)}
                     >
                       <td className="px-2 py-2 text-center align-middle cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-700 select-none">
                         {isFirstLine && (
@@ -526,7 +530,7 @@ export default function CocinaCard({
                       </td>
 
                       <td className="px-4 py-2">
-                        <input
+                        {esMeson ? <span className="font-medium">{label}</span> : <input
                           key={`${l.id}-${label}`}
                           defaultValue={label}
                           disabled={groupBusy === l.id || groupBusy === 'reorder'}
@@ -535,7 +539,7 @@ export default function CocinaCard({
                           onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                           onBlur={(e) => saveGroup(l, e.currentTarget.value, e.currentTarget, label)}
                           className="w-14 rounded-md border border-slate-300 bg-white/80 px-2 py-1 text-center font-semibold uppercase disabled:opacity-50"
-                        />
+                        />}
                       </td>
                       <td className="px-2 py-2 font-medium text-slate-900 cursor-context-menu whitespace-nowrap">
                         <div>{l.codigo_modulo ?? l.pref}</div>
@@ -550,7 +554,7 @@ export default function CocinaCard({
                       {columnasPrecio.sinHerrajes && <>{columnasPrecio.usd && <><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.sinUnitUsd)}</td><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.sinUnitUsd * precio.cantidad)}</td></>}{columnasPrecio.cop && <><td className="px-2 text-right whitespace-nowrap">{fmtCOP(precio.sinUnitCop)}</td><td className="px-3 text-right whitespace-nowrap">{fmtCOP(precio.sinUnitCop * precio.cantidad)}</td></>}</>}
                       {columnasPrecio.conHerrajes && <>{columnasPrecio.usd && <><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.conUnitUsd)}</td><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.conUnitUsd * precio.cantidad)}</td></>}{columnasPrecio.cop && <><td className="px-2 text-right whitespace-nowrap">{fmtCOP(precio.conUnitCop)}</td><td className="px-3 text-right whitespace-nowrap">{fmtCOP(precio.conUnitCop * precio.cantidad)}</td></>}</>}
                       <td className="px-3 whitespace-nowrap text-right">
-                        <button onClick={(e) => { e.stopPropagation(); setEditId(l.id); setSelectedLineId(null); setShowAdd(false); }} className="text-slate-500 hover:text-slate-900 mr-2" title="Editar módulo">Editar</button>
+                        {!esMeson && <button onClick={(e) => { e.stopPropagation(); setEditId(l.id); setSelectedLineId(null); setShowAdd(false); }} className="text-slate-500 hover:text-slate-900 mr-2" title="Editar módulo">Editar</button>}
                         <button onClick={(e) => { e.stopPropagation(); delLinea(l.id); }} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button>
                       </td>
                     </tr>
@@ -677,8 +681,13 @@ export default function CocinaCard({
           <div className="flex gap-2">
             <button onClick={() => { setEditId(null); setShowAdd(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
             <button onClick={() => { setEditId(null); setShowAddMaterial(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar herrajes/otros</button>
+            <button type="button" onClick={() => { setEditId(null); setShowAddMaterial(false); setShowMeson(v => !v); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar mesón</button>
           </div>
         )}
+        {showMeson && <AgregarMesonForm cocinaId={cocina.id} veces={cocina.cantidad ?? 1} trm={trm} onDone={() => {
+          setShowMeson(false);
+          router.refresh();
+        }} />}
         {showAddMaterial && <div className="mt-3"><AgregarMaterialForm cocinaId={cocina.id} onDone={() => setShowAddMaterial(false)} /></div>}
       </div>
 

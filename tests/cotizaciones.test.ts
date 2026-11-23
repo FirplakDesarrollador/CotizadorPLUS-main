@@ -47,7 +47,7 @@ test('un error al crear la variante SF impide guardar la línea original', async
 import Module, { createRequire } from 'node:module';
 
 type Row = Record<string, unknown>;
-type Result = { data: Row | Row[] | null; error: null };
+type Result = { data: Row | Row[] | null; error: null; count: number };
 const tablas: Record<string, Row[]> = {};
 const requireLocal = createRequire(import.meta.url);
 
@@ -55,17 +55,27 @@ class Consulta {
   private filtros: Array<[string, unknown]> = [];
   private patch?: Row;
   private unica = false;
+  private nueva?: Row;
   constructor(private tabla: string) {}
   select() { return this; }
   eq(key: string, value: unknown) { this.filtros.push([key, value]); return this; }
   order() { return this; }
   range() { return this; }
+  limit() { return this; }
+  insert(row: Row) { this.nueva = row; return this; }
+  maybeSingle() { return this.single(); }
   single() { this.unica = true; return this; }
   update(patch: Row) { this.patch = patch; return this; }
   then(resolve: (result: Result) => unknown) {
+    if (this.nueva) {
+      const rows = (tablas[this.tabla] ??= []);
+      const fila = { id: `${this.tabla}-${rows.length + 1}`, ...structuredClone(this.nueva) };
+      rows.push(fila);
+      return Promise.resolve({ data: this.unica ? fila : [fila], error: null, count: 1 } as Result).then(resolve);
+    }
     const rows = (tablas[this.tabla] ?? []).filter(row => this.filtros.every(([k, v]) => row[k] === v));
     if (this.patch) for (const row of rows) Object.assign(row, this.patch);
-    return Promise.resolve({ data: this.unica ? rows[0] ?? null : rows, error: null } as Result).then(resolve);
+    return Promise.resolve({ data: this.unica ? rows[0] ?? null : rows, error: null, count: rows.length } as Result).then(resolve);
   }
 }
 
@@ -324,4 +334,35 @@ test('ordenar secciones usa una sola RPC, propaga errores y no llama al motor', 
   await assert.rejects(() => api.reordenarCocinas('cotizacion', ['b', 'a']), /No se pudo guardar/);
   assert.equal(recalculos, antes);
   copiaResultado = { data: 'nueva-seccion', error: null };
+});
+
+test('agregar un mesón deriva el largo en el servidor y guarda el valor por unidad', async () => {
+  tablas.cot_cotizaciones = [{ id: 'q-meson', trm: 4000, config_default: {} }];
+  tablas.cot_cocinas = [{ id: 'a-meson', cotizacion_id: 'q-meson', cantidad: 80 }];
+  tablas.cot_grupos_modulos = [];
+  tablas.cot_cotizacion_lineas = [
+    { id: 'bajo', cocina_id: 'a-meson', cotizacion_id: 'q-meson', tipo: { categoria: 'inferior', pref: 'BFD' },
+      largo: 60.96, cantidad: 2, unidad_dim: 'cm', precio_total_usd: 20, precio_total_cop: 80000 },
+    { id: 'superior', cocina_id: 'a-meson', cotizacion_id: 'q-meson', tipo: { categoria: 'superior', pref: 'W' },
+      largo: 40, cantidad: 1, unidad_dim: 'in', precio_total_usd: 10, precio_total_cop: 40000 },
+  ];
+  tablas.cot_parametros = [];
+  const opciones = { profundidad: 24, backsplash: 4, espesor: 0.75, dishwasher: 24,
+    equipo: 'range' as const, anchoRange: 30, murosLaterales: 0, cantosPulidos: 0, waterfalls: 0,
+    isla: null, huecos: 1, pulirHuecos: false };
+
+  await assert.rejects(api.agregarLineaMeson('a-meson', 'marmol', opciones), /tarifa/);
+  assert.equal(tablas.cot_grupos_modulos.length, 0);
+  assert.equal(await api.agregarLineaMeson('a-meson', 'quarztone-us', opciones), 'q-meson');
+  const linea = tablas.cot_cotizacion_lineas.find(l => l.codigo_modulo === 'MESON')!;
+  assert.equal(linea.tipo_mueble_id, null);
+  assert.equal(linea.cantidad, 1);
+  const config = linea.config as { clasificacionPdf: string; meson: { resultado: { areaSqft: number }; medidas: { largo: number; largoBacksplash: number; opciones: unknown } } };
+  assert.equal(config.clasificacionPdf, 'mesones');
+  assert.deepEqual(config.meson.medidas.opciones, opciones);
+  assert.equal(config.meson.medidas.largo, 72);
+  assert.equal(config.meson.medidas.largoBacksplash, 102);
+  assert.ok(Math.abs(config.meson.resultado.areaSqft - (72 * 24 + 102 * 4) / 144 * 1.05) < 1e-8);
+  assert.equal(tablas.cot_cocinas[0].total_cop, (120000 + Number(linea.precio_total_cop)) * 80);
+  assert.equal(tablas.cot_cotizaciones[0].total_usd, (30 + Number(linea.precio_total_usd)) * 80);
 });

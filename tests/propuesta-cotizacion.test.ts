@@ -3,7 +3,9 @@ import test from 'node:test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { separarPropuesta, esHerrajeOtroAdicional, type LineaPropuesta } from '../src/lib/propuesta-cotizacion';
-import { HerrajesOtrosPdf, MaterialesProyectoPdf } from '../src/app/cotizaciones/[id]/imprimir/DetallesProyecto';
+import { catalogoInicialMesones, calcularMeson, medidasMesonDesdeMuebles, mueblesParaMeson, type MedidasMeson } from '../src/lib/mesones';
+import { esModuloLinea } from '../src/lib/materiales-linea';
+import { MesonesPdf, HerrajesOtrosPdf, MaterialesProyectoPdf } from '../src/app/cotizaciones/[id]/imprimir/DetallesProyecto';
 import { especificacionesProyecto } from '../src/lib/materiales-proyecto';
 
 const modulo: LineaPropuesta = { id: 'm', tipo_mueble_id: 'B', cantidad: 2, codigo_modulo: 'BFD', precio_total_cop: 800, precio_total_usd: 0.2 };
@@ -81,4 +83,88 @@ test('agrupa referencias iguales entre áreas, suma cantidades y conserva unidad
   assert.doesNotMatch(html, /Valor unitario|Valor total|Subtotal|\$|· 5 und|· 3 und/);
   assert.deepEqual(r, snapshot, 'agrupar para imprimir no modifica filas ni importes');
   assert.equal(r.totalCop, 1680, 'las áreas repetidas conservan su importe en el total');
+});
+
+const tramo: MedidasMeson = {
+  largo: 72, profundidad: 24, largoBacksplash: 72, backsplash: 4, espesor: 0.75,
+  voladizo: 0, extensionLateral: 0, waterfalls: 0, cantoExpuesto: 72, huecos: 1, pulirHuecos: false,
+};
+const { materiales: catalogoPbShore, parametros: pMeson } = catalogoInicialMesones;
+const cerca = (actual: number, esperado: number) => assert.ok(Math.abs(actual - esperado) < 1e-8, `${actual} ≠ ${esperado}`);
+
+test('mesón USA usa las tarifas PB Shore y cobra una sola perforación', () => {
+  const quartz = catalogoPbShore.find(m => m.id === 'quarztone-us')!;
+  const r = calcularMeson(tramo, quartz, pMeson, 4000);
+  cerca(r.areaSqft, 14.7);
+  cerca(r.piesPulidos, 6);
+  cerca(r.costoUsd, 14.7 * (9.9 + 6) + 25);
+  cerca(r.precioUsd, 14.7 * 9.9 / 0.6401 + 14.7 * 6 / 0.641467 + 25 / 0.641);
+  cerca(r.precioCop, r.precioUsd * 4000);
+});
+
+test('Colombia conserva costo real, aplica los márgenes en cadena y exige costo de material', () => {
+  const granito = catalogoPbShore.find(m => m.id === 'granito-col')!;
+  const d = { ...tramo, espesor: 1.5, waterfalls: 1, voladizo: 3, extensionLateral: 2, pulirHuecos: true };
+  const r = calcularMeson(d, granito, pMeson, 4000);
+  const area = (74 * 27 + 72 * 4 + 27 * 36 + 72 * 4) / 144 * 1.05;
+  cerca(r.areaSqft, area);
+  const suministro = area * (180000 + 16357) / 10.76;
+  const acabados = 6 * 77800 / 3.28 + 50000;
+  cerca(r.costoCop, suministro + acabados);
+  cerca(r.precioCop, suministro / 0.5 / 0.6401 + acabados / 0.7 / 0.641);
+  assert.throws(() => calcularMeson(d, catalogoPbShore[0], pMeson, 4000), /tarifa/);
+  assert.throws(() => calcularMeson({ ...d, huecos: 1.5 }, granito, pMeson, 4000), /cantidades/);
+});
+
+test('la sección impresa de mesones usa material real y aplica las repeticiones exactamente una vez', () => {
+  const material = catalogoPbShore.find(m => m.id === 'polar')!;
+  const resultado = calcularMeson(tramo, material, pMeson, 4000);
+  const meson = { id: 'meson', cantidad: 1, precio_total_cop: 2300000, precio_total_usd: 575,
+    config: { clasificacionPdf: 'mesones', meson: { material, medidas: tramo, resultado } } };
+  const r = separarPropuesta([{ nombre: 'Cocina', cantidad: 80, lineas: [modulo, extra('herraje'), meson] }]);
+  assert.equal(esModuloLinea(meson), false);
+  assert.equal(r.muebles[0].lineas.length, 1);
+  assert.equal(r.adicionales.length, 1);
+  assert.equal(r.mesones[0].cantidad, 80);
+  cerca(r.mesones[0].areaSqft, 1176);
+  assert.equal(r.totalMesonesUsd, 46000);
+  assert.equal(r.totalCop, (2300000 + 800 + 120) * 80);
+  const html = renderToStaticMarkup(createElement(MesonesPdf, { filas: r.mesones, moneda: 'USD', idioma: 'en' }));
+  assert.match(html, /data-pdf="mesones"/);
+  assert.match(html, /Quarztone Blanco Polar/);
+  assert.match(html, /46,000.00/);
+  assert.doesNotMatch(html, /BRAZOPUSH|BFD/);
+});
+
+test('mesón calcula la isla una vez, agrega muros y cascadas y cobra la perforación del cooktop', () => {
+  const tipo = (categoria: string, pref: string) => ({ categoria, pref });
+  const muebles = mueblesParaMeson([
+    { id: 'bajo', largo: 24, cantidad: 2, unidad_dim: 'in', tipo: tipo('inferior', 'BFD') },
+    { id: 'isla', largo: 762, cantidad: 1, unidad_dim: 'mm', tipo: tipo('inferior', 'DB') },
+    { id: 'torre', largo: 24, cantidad: 1, unidad_dim: 'in', tipo: tipo('inferior', 'PCFD') },
+    { id: 'panel', largo: 100, cantidad: 2, unidad_dim: 'cm', tipo: tipo('inferior', 'PN') },
+    { id: 'suelto', largo: 50, cantidad: 3, unidad_dim: 'in', tipo: null },
+  ]);
+  assert.deepEqual(muebles.map(m => m.id), ['bajo', 'isla']);
+  const opciones = {
+    profundidad: 24, backsplash: 4, espesor: 0.75, dishwasher: 18, equipo: 'cooktop' as const, anchoRange: 30,
+    murosLaterales: 1, cantosPulidos: 2, waterfalls: 1, huecos: 1, pulirHuecos: false,
+    isla: { largo: 48, voladizoFrontal: 3, voladizoLateral: 2, cantosPulidos: 1, waterfalls: 2, mueblesIds: ['isla'] },
+  };
+  const d = medidasMesonDesdeMuebles(muebles, opciones);
+  assert.equal(d.largo, 66);
+  assert.equal(d.largoBacksplash, 66);
+  assert.equal(d.huecos, 2);
+  assert.equal(d.cantoExpuesto, 83);
+  const material = catalogoPbShore.find(m => m.id === 'quarztone-us')!;
+  const r = calcularMeson(d, material, pMeson, 4000);
+  const area = (66 * 24 + 66 * 4 + 24 * 36 + 24 * 7 + 50 * 27 + 2 * 27 * 36) / 144 * 1.05;
+  cerca(r.areaSqft, area);
+  cerca(r.costoUsd, area * (9.9 + 6) + 50);
+  const aislada = medidasMesonDesdeMuebles([], { ...opciones, dishwasher: null,
+    murosLaterales: 0, cantosPulidos: 0, waterfalls: 0, isla: { ...opciones.isla, mueblesIds: [] } });
+  assert.equal(aislada.largo, 0);
+  assert.equal(aislada.huecos, 2);
+  cerca(calcularMeson(aislada, material, pMeson, 4000).areaSqft, (50 * 27 + 2 * 27 * 36) / 144 * 1.05);
+  assert.throws(() => medidasMesonDesdeMuebles([], { ...opciones, isla: null }), /muebles inferiores/);
 });

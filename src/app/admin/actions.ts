@@ -1,4 +1,5 @@
 'use server';
+import { validarCatalogoMesones, type CatalogoMesones } from '@/lib/mesones';
 import { revalidatePath } from 'next/cache';
 import { getUserAndRole } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
@@ -29,6 +30,22 @@ export async function guardarParametrosAction(updates: { key: string; value: unk
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };
+  }
+}
+
+export async function guardarMesonesAction(catalogo: CatalogoMesones) {
+  try {
+    await assertAdmin();
+    validarCatalogoMesones(catalogo);
+    const sb = await createClient();
+    const { error } = await sb.from('cot_parametros').upsert({
+      key: 'mesones', value: catalogo, descripcion: 'Catálogo y parámetros de cálculo de mesones',
+    }, { onConflict: 'key' });
+    if (error) throw new Error(error.message);
+    revalidatePath('/admin');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo guardar el catálogo.' };
   }
 }
 
