@@ -15,7 +15,7 @@ import {
   codigoComercial,
   incluyeAltoEnCodigo,
 } from '@/lib/module-groups';
-import { DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb, usaPuertaParametrica } from '@/lib/muebles';
+import { DB_TIPOLOGIAS, DB_TIPOLOGIAS_COTIZABLES, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, familiaMaterialPorPrefijo, nombrePieza, ordenarPiezasDespiece, orientarPieza, permiteTipologiaDb, usaPuertaParametrica } from '@/lib/muebles';
 
 test('clasifica materiales por la primera B o W del prefijo', () => {
   assert.equal(familiaMaterialPorPrefijo('BBLFD'), 'inferior');
@@ -116,18 +116,23 @@ test('los superiores W, paneles PN, fillers F y zocalos TK llevan el alto en el 
 test('codigoComercial arma el código final completo', () => {
   const base = { unidad: 'in', sistema: 'imperial' } as const;
   // El caso del reporte: superior de pared con gola.
-  assert.equal(codigoComercial({ ...base, pref: 'W', largo: 29, alto: 36, sistemaFrente: 'gola' }), 'W2936-SM');
-  assert.equal(codigoComercial({ ...base, pref: 'W', largo: 29, alto: 36, sistemaFrente: 'manija' }), 'W2936');
+  assert.equal(codigoComercial({ ...base, pref: 'W', largo: 29, alto: 36, prof: 12, sistemaFrente: 'gola' }), 'W293612-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'W', largo: 29, alto: 36, prof: 12, sistemaFrente: 'manija' }), 'W293612');
   assert.equal(codigoComercial({ ...base, pref: 'W', largo: 30, alto: 20, prof: 24 }), 'W302024');
-  assert.equal(codigoComercial({ ...base, pref: 'W', largo: 30, alto: 20, prof: 12 }), 'W3020');
+  assert.equal(codigoComercial({ ...base, pref: 'W', largo: 30, alto: 20, prof: 12 }), 'W302012');
   assert.equal(codigoComercial({ ...base, pref: 'BFD-SM', largo: 16, alto: 30 }), 'BFD16-SM');
   assert.equal(codigoComercial({ ...base, pref: 'BMW-1', largo: 36, alto: 30, prof: 24 }), 'BMW36-1');
   assert.equal(codigoComercial({ ...base, pref: 'BMW-1-FE', largo: 36, alto: 30, prof: 24 }), 'BMW36-1-FE');
   assert.equal(codigoComercial({ ...base, pref: 'SBFD-SM', largo: 16, alto: 30 }), 'SBFD16-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'SBFD-SMG', largo: 33, alto: 30, espesorCajaMm: 15, espesorFrenteMm: 18 }), 'SBFD33-SMG');
+  assert.equal(codigoComercial({ ...base, pref: 'SBFD-SMG', largo: 33, alto: 30, espesorCajaMm: 18, espesorFrenteMm: 18 }), 'SBFD33-SMG18');
+  assert.equal(codigoComercial({ ...base, pref: 'BFD-SMG', largo: 24, alto: 30, espesorCajaMm: 15, espesorFrenteMm: 18 }), 'BFD24-SMG');
+  assert.equal(codigoComercial({ ...base, pref: 'BFD-SMG', largo: 24, alto: 30, espesorCajaMm: 18, espesorFrenteMm: 18 }), 'BFD24-SMG18');
+  assert.equal(codigoComercial({ ...base, pref: 'BFD-SMG', largo: 24, alto: 30, espesorCajaMm: 18, espesorFrenteMm: 15 }), 'BFD24-SMG');
   assert.equal(codigoComercial({ ...base, pref: 'SB-SM', largo: 30, alto: 30 }), 'SB30-SM');
-  assert.equal(codigoComercial({ ...base, pref: 'OW-MO', largo: 24, alto: 25, prof: 12 }), 'OW2425-MO');
-  assert.equal(codigoComercial({ ...base, pref: 'W-SM', largo: 34, alto: 36, prof: 12 }), 'W3436-SM');
-  assert.equal(codigoComercial({ ...base, pref: 'W-SM-LOC', largo: 34, alto: 36, prof: 12 }), 'W3436-SM-LOC');
+  assert.equal(codigoComercial({ ...base, pref: 'OW-MO', largo: 24, alto: 25, prof: 12 }), 'OW242512-MO');
+  assert.equal(codigoComercial({ ...base, pref: 'W-SM', largo: 34, alto: 36, prof: 12 }), 'W343612-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'W-SM-LOC', largo: 34, alto: 36, prof: 12 }), 'W343612-SM-LOC');
   assert.equal(codigoComercial({ ...base, pref: 'W-SM-PUSH', largo: 33, alto: 21, prof: 24 }), 'W332124-SM-PUSH');
   assert.equal(codigoComercial({ ...base, pref: 'TW-SM-PUSH', largo: 30, alto: 24, prof: 12 }), 'TW302412-SM-PUSH');
   assert.equal(codigoComercial({ ...base, pref: 'TW-SM-PUSH', largo: 30, alto: 18, prof: 15 }), 'TW301815-SM-PUSH');
@@ -135,16 +140,16 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'BBLFD', largo: 42, alto: 30, prof: 24, door: 17.875, doorHand: 'R' }), 'BBLFD42-D17 7/8R');
   assert.equal(codigoComercial({ ...base, pref: 'BBLFD', largo: 42, alto: 30, prof: 24, door: 17.875, doorHand: 'L' }), 'BBLFD42-D17 7/8L');
   assert.equal(codigoComercial({ ...base, pref: 'BBLFD', largo: 42, alto: 30, prof: 24, door: Number.NaN, doorHand: 'R' }), 'BBLFD42');
-  assert.equal(codigoComercial({ ...base, pref: 'WBL-D-L/R-SM', largo: 38, alto: 40, prof: 12, door: 22.875, doorHand: 'L' }), 'WBL3840-D22 7/8L-SM');
-  assert.equal(codigoComercial({ ...base, pref: 'WBL-D-L/R-SM', largo: 38, alto: 40, prof: 12, door: 22.875, doorHand: 'R' }), 'WBL3840-D22 7/8R-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'WBL-D-L/R-SM', largo: 38, alto: 40, prof: 12, door: 22.875, doorHand: 'L' }), 'WBL384012-D22 7/8L-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'WBL-D-L/R-SM', largo: 38, alto: 40, prof: 12, door: 22.875, doorHand: 'R' }), 'WBL384012-D22 7/8R-SM');
   assert.equal(codigoComercial({ ...base, pref: 'BBLFD-D-L/R-SM', largo: 42, alto: 30, prof: 24, door: 17.875, doorHand: 'L' }), 'BBLFD42-D17 7/8L-SM');
   assert.equal(codigoComercial({ ...base, pref: 'BBLFD-D-L/R-SM', largo: 42, alto: 30, prof: 24, door: 17.875, doorHand: 'R' }), 'BBLFD42-D17 7/8R-SM');
   assert.equal(codigoComercial({ ...base, pref: 'WSM', largo: 9, alto: 36, prof: 14 }), 'WSM93614');
-  assert.equal(codigoComercial({ ...base, pref: 'WER', largo: 24, alto: 36, sistemaFrente: 'gola' }), 'WER2436-SM');
-  assert.equal(codigoComercial({ ...base, pref: 'UW', largo: 12, alto: 36 }), 'UW1236');
-  assert.equal(codigoComercial({ ...base, pref: 'OW', largo: 30, alto: 18 }), 'OW3018');
-  // Sin alto en el código: el alto no entra aunque venga en el input.
-  assert.equal(codigoComercial({ ...base, pref: 'B', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'WER', largo: 24, alto: 36, prof: 12, sistemaFrente: 'gola' }), 'WER243612-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'UW', largo: 12, alto: 36, prof: 13 }), 'UW123613');
+  assert.equal(codigoComercial({ ...base, pref: 'OW', largo: 30, alto: 18, prof: 12 }), 'OW301812');
+  // Con alto variable en el código: se incluye al diferir de 30 pulgadas.
+  assert.equal(codigoComercial({ ...base, pref: 'B', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B1234 1/2-SM');
   // DB tradicional nunca adopta SM: las cajoneras con Gola son tipos separados.
   assert.equal(codigoComercial({ ...base, pref: 'DB', largo: 18, alto: 34.5, dbTipo: 'DB-1S', sistemaFrente: 'gola' }), 'DB18-1S');
   for (const dbTipo of ['DB-1S', 'DB-2S', 'DB-2', 'DB-3', 'DB-4', 'DB2-1OP']) {
@@ -153,16 +158,27 @@ test('codigoComercial arma el código final completo', () => {
   assert.equal(codigoComercial({ ...base, pref: 'DB-2S-SM', largo: 26, alto: 30 }), 'DB26-2S-SM');
   assert.equal(codigoComercial({ ...base, pref: 'DB-2S-SM-FE', largo: 12, alto: 30 }), 'DB12-2S-SM-FE');
   assert.equal(codigoComercial({ ...base, pref: 'DB-2-SM', largo: 26, alto: 30 }), 'DB26-2-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'DB-2-1INT-SM', largo: 22, alto: 30 }), 'DB22-2-1INT-SM');
   assert.equal(codigoComercial({ ...base, pref: 'DB-3-SM', largo: 26, alto: 30 }), 'DB26-3-SM');
   assert.equal(codigoComercial({ ...base, pref: 'UDB', largo: 18, alto: 28.75, dbTipo: 'DB-2S' }), 'UDB18-2S');
   assert.equal(codigoComercial({ ...base, pref: 'UDV', largo: 24, alto: 28.75, dbTipo: 'DB-3' }), 'UDV24-3');
-  assert.equal(codigoComercial({ ...base, pref: 'B-FE', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B12-FE-SM');
+  assert.equal(codigoComercial({ ...base, pref: 'B-FE', largo: 12, alto: 34.5, sistemaFrente: 'gola' }), 'B1234 1/2-FE-SM');
   assert.equal(codigoComercial({ ...base, pref: 'F', largo: 6, alto: 30, sistemaFrente: 'manija' }), 'F630');
   assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36 }), 'PN12 7/836');
   assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 12.875, alto: 36.75 }), 'PN12 7/836 3/4');
   assert.equal(codigoComercial({ ...base, pref: 'TK', largo: 4.25, alto: 36.5 }), 'TK4 1/436 1/2');
   // PCFD con gavetas ocultas.
-  assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, pcfdCajones: 2 }), 'PCFD12-2OP-PUSH');
+  assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 12, alto: 96, prof: 24, pcfdCajones: 2 }), 'PCFD129624-2OP-PUSH');
+  assert.equal(codigoComercial({ ...base, pref: 'PC', largo: 30, alto: 96, prof: 24, zocaloIn: 4.5 }), 'PC309624 TK4 1/2');
+  assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 30, alto: 96, prof: 24, pcfdCajones: 2, zocaloIn: 5.25 }), 'PCFD309624-2OP-PUSH TK5 1/4');
+  assert.equal(codigoComercial({ ...base, pref: 'PCFD', largo: 30, alto: 96, prof: 24, conFondo: false, zocaloIn: 4.5 }), 'PCFD309624 TK4 1/2');
+  assert.equal(codigoComercial({ ...base, pref: 'PCFD-MO', largo: 30, alto: 96, prof: 24, zocaloIn: 4 }), 'PCFD309624-MO TK4');
+  assert.equal(codigoComercial({ ...base, pref: 'VPC', largo: 24, alto: 84, prof: 22, zocaloIn: 0 }), 'VPC248422 TK0');
+  assert.equal(codigoComercial({ ...base, pref: 'OVPC', largo: 24, alto: 84, prof: 22, zocaloIn: 4 }), 'OVPC248422 TK4');
+  assert.equal(codigoComercial({
+    pref: 'PCFD-MO', largo: 60, alto: 237, prof: 45,
+    unidad: 'cm', sistema: 'metrico', zocaloIn: 3.937008,
+  }), 'PCFD6023745-MO TK10');
   // Sistema métrico.
   assert.equal(codigoComercial({ pref: 'W', largo: 73.66, alto: 91.44, unidad: 'cm', sistema: 'metrico', sistemaFrente: 'gola' }), 'W73.6691.44-SM');
 });
@@ -180,11 +196,11 @@ test('codigoComercial agrega 18MM solo cuando caja y frente son de 18mm', () => 
   assert.equal(codigoComercial({
     ...base, pref: 'W', largo: 26, alto: 36, prof: 12, sistemaFrente: 'gola',
     espesorCajaMm: 18, espesorFrenteMm: 18,
-  }), 'W2636-SM18');
+  }), 'W263612-SM18');
   assert.equal(codigoComercial({
     ...base, pref: 'WLD', largo: 30, alto: 30, prof: 12, sistemaFrente: 'gola',
     espesorCajaMm: 18, espesorFrenteMm: 18,
-  }), 'WLD3030-SM18');
+  }), 'WLD303012-SM18');
   assert.equal(codigoComercial({
     ...base, pref: 'TW-SM-PUSH', largo: 30, alto: 24, prof: 12,
     espesorCajaMm: 18, espesorFrenteMm: 18,
@@ -198,7 +214,7 @@ test('codigoComercial agrega 18MM solo cuando caja y frente son de 18mm', () => 
 test('codigoComercial agrega 15MM con las mismas reglas de integración SM', () => {
   const base = { pref: 'WSM', largo: 25, alto: 15, prof: 14, unidad: 'in', sistema: 'imperial' } as const;
   assert.equal(codigoComercial({ ...base, espesorCajaMm: 15, espesorFrenteMm: 15 }), 'WSM251514-15MM');
-  assert.equal(codigoComercial({ ...base, pref: 'B', largo: 30, alto: 34.5, espesorCajaMm: 15, espesorFrenteMm: 15 }), 'B30-15MM');
+  assert.equal(codigoComercial({ ...base, pref: 'B', largo: 30, alto: 34.5, espesorCajaMm: 15, espesorFrenteMm: 15 }), 'B3034 1/214-15MM');
   assert.equal(codigoComercial({
     ...base, pref: 'W-SM-PUSH', largo: 33, alto: 21, prof: 24,
     espesorCajaMm: 15, espesorFrenteMm: 15,
@@ -210,8 +226,61 @@ test('codigoComercial agrega 15MM con las mismas reglas de integración SM', () 
   assert.equal(codigoComercial({
     ...base, pref: 'WBL-D-L/R-SM', largo: 38, alto: 40, prof: 12, door: 22.875, doorHand: 'L',
     espesorCajaMm: 15, espesorFrenteMm: 15,
-  }), 'WBL3840-D22 7/8L-SM15');
+  }), 'WBL384012-D22 7/8L-SM15');
   assert.equal(codigoComercial({ ...base, espesorCajaMm: 15, espesorFrenteMm: 18 }), 'WSM251514');
+});
+
+test('SMG integra 15 en todas sus variantes sin duplicar MM ni SF', () => {
+  const base = { largo:24,alto:30,prof:24,unidad:'in',sistema:'imperial',espesorCajaMm:15,espesorFrenteMm:15 } as const;
+  for(const pref of ['BFD-SMG','SBFD-SMG','DB-2S-SMG','DB-2-SMG-FE','DB-3-SMG-SF','DB-2-1INT-SMG-FE-SF']) {
+    const code=codigoComercial({...base,pref});
+    assert.ok(code.includes('-SMG15'),code);
+    assert.ok(!code.includes('15MM'),code);
+    assert.equal(code.split('-SF').length,pref.split('-SF').length,code);
+    assert.equal(codigoComercial({...base,pref,espesorFrenteMm:18}),code.replace('SMG15','SMG'));
+  }
+  assert.equal(codigoComercial({...base,pref:'BFD-SMG',conFondo:false}),'BFD24-SMG15-SF');
+});
+
+test('codigoComercial ordena SF después de SM y antes del espesor', () => {
+  const base = { unidad: 'in', sistema: 'imperial' } as const;
+  assert.equal(codigoComercial({
+    ...base, pref: 'BFD-SM', largo: 26, alto: 30, conFondo: false,
+  }), 'BFD26-SM-SF');
+  assert.equal(codigoComercial({
+    ...base, pref: 'BFD-SM', largo: 26, alto: 30, conFondo: false,
+    espesorCajaMm: 15, espesorFrenteMm: 15,
+  }), 'BFD26-SM-SF-15MM');
+  assert.equal(codigoComercial({
+    ...base, pref: 'BFD-SM-SF', largo: 26, alto: 30,
+    espesorCajaMm: 15, espesorFrenteMm: 15,
+  }), 'BFD26-SM-SF-15MM', 'una tipología SF propia no duplica el sufijo');
+});
+
+test('codigoComercial no agrega SF a las tipologías independientes del fondo', () => {
+  const base = { unidad: 'in', sistema: 'imperial', conFondo: false } as const;
+  assert.equal(codigoComercial({ ...base, pref: 'F', largo: 6, alto: 30 }), 'F630');
+  assert.equal(codigoComercial({ ...base, pref: 'PN', largo: 24, alto: 36 }), 'PN2436');
+  assert.equal(codigoComercial({ ...base, pref: 'TK', largo: 4, alto: 96 }), 'TK496');
+  assert.equal(codigoComercial({ ...base, pref: 'DFE', largo: 80, alto: 50, prof: 40 }), 'DFE805040');
+});
+
+test('DFE incluye alto y profundidad en su código comercial', () => {
+  assert.equal(
+    codigoComercial({ pref: 'DFE', largo: 56, alto: 17, prof: 45, unidad: 'cm', sistema: 'metrico' }),
+    'DFE561745',
+    'DFE métrico en cm con largo 56, alto 17 y profundidad 45'
+  );
+  assert.equal(
+    codigoComercial({ pref: 'DFE', largo: 520, alto: 200, prof: 520, unidad: 'mm', sistema: 'metrico' }),
+    'DFE522052',
+    'DFE métrico en mm con largo 520, alto 200 y profundidad 520'
+  );
+  assert.equal(
+    codigoComercial({ pref: 'DFE', largo: 24, alto: 8, prof: 18, unidad: 'in', sistema: 'imperial' }),
+    'DFE24818',
+    'DFE imperial con largo 24, alto 8 y profundidad 18'
+  );
 });
 
 test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {
@@ -226,22 +295,67 @@ test('interpreta medidas en fracción imperial sin corromperse a NaN/0', () => {
   assert.ok(Number.isNaN(parseMedida('abc')));
 });
 
+test('una medida ausente no lanza trim ni se convierte en cero', () => {
+  for (const value of [undefined, null, '', '   ', 'undefined']) {
+    assert.equal(Number.isNaN(parseMedida(value)), true);
+  }
+  assert.equal(parseMedida(0), 0);
+  assert.equal(parseMedida('0'), 0);
+  assert.equal(parseMedida('24 7/8'), 24.875);
+});
+
 test('habilita tipologia DB solo en las familias de cajoneras compatibles', () => {
   for (const pref of ['DB', 'UDB', 'UDV', 'udb']) assert.equal(permiteTipologiaDb(pref), true, pref);
   for (const pref of ['B', 'DV', 'DBL', 'PCFD', '', null]) assert.equal(permiteTipologiaDb(pref), false, String(pref));
 });
 
-test('agrupa solo las tres tipologias DB-SM sin ampliar la familia DB existente', () => {
-  assert.deepEqual(DB_SM_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM']);
-  for (const pref of ['DB-2S-SM', 'DB-2-SM', 'DB-3-SM', 'db-3-sm']) assert.equal(esTipologiaDbSm(pref), true, pref);
+test('ofrece todas las configuraciones DB creadas', () => {
+  assert.deepEqual(DB_TIPOLOGIAS_COTIZABLES.map((tipo) => tipo.key), DB_TIPOLOGIAS.map((tipo) => tipo.key));
+});
+
+test('agrupa las tipologias DB-SM sin ampliar la familia DB existente', () => {
+  assert.deepEqual(DB_SM_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM', 'DB-2-SM', 'DB-2-1INT-SM', 'DB-3-SM']);
+  for (const pref of ['DB-2S-SM', 'DB-2-SM', 'DB-2-1INT-SM', 'DB-3-SM', 'db-3-sm', ' DB-2-1INT-SM ', 'DB-5-SM']) assert.equal(esTipologiaDbSm(pref), true, pref);
   for (const pref of ['DB', 'UDB', 'UDV', 'DB-2S', '', null]) assert.equal(esTipologiaDbSm(pref), false, String(pref));
   assert.equal(permiteTipologiaDb('DB-2S-SM'), false);
 });
 
-test('agrupa las tres tipologias DB-SM-FE como familia independiente', () => {
-  assert.deepEqual(DB_SM_FE_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE']);
-  for (const pref of ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE', 'db-3-sm-fe']) assert.equal(esTipologiaDbSmFe(pref), true, pref);
+test('agrupa las cuatro tipologias DB-SM-FE como familia independiente', () => {
+  assert.deepEqual(DB_SM_FE_TIPOLOGIAS.map((tipologia) => tipologia.pref), ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE']);
+  for (const pref of ['DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE', 'db-3-sm-fe', ' DB-2-1INT-SM-FE ', 'DB-5-SM-FE']) assert.equal(esTipologiaDbSmFe(pref), true, pref);
   for (const pref of ['DB', 'DB-2S-SM', 'B-FE', '', null]) assert.equal(esTipologiaDbSmFe(pref), false, String(pref));
+});
+
+test('agrupa dinamicamente las variantes DB-SM-FE-SF', () => {
+  const prefs = ['DB-2S-SM-FE-SF', 'DB-2-SM-FE-SF', 'DB-2-1INT-SM-FE-SF'];
+  for (const pref of prefs) assert.equal(esTipologiaDbSmFeSf(pref), true, pref);
+  for (const pref of ['DB-2-SM-FE', 'DB-2-SM-SF', 'DB-SM-FE-SF', '', null]) {
+    assert.equal(esTipologiaDbSmFeSf(pref), false, String(pref));
+  }
+  assert.deepEqual(
+    obtenerTipologiasDbSmFeSf(prefs.map((pref) => ({ pref }))).map((tipo) => tipo.pref),
+    ['DB-2-1INT-SM-FE-SF', 'DB-2-SM-FE-SF', 'DB-2S-SM-FE-SF'],
+  );
+});
+
+test('agrupa dinamicamente las variantes DB-SM-SF presentes y futuras', () => {
+  for (const pref of ['DB-2-SM-SF', 'DB-2S-SM-SF', 'DB-3-SM-SF', 'db-x-sm-sf']) {
+    assert.equal(esTipologiaDbSmSf(pref), true, pref);
+  }
+  for (const pref of ['DB-SM-SF', 'DB-2-SM', 'DB-2-SM-FE-SF', 'BFD-SM-SF', '', null]) {
+    assert.equal(esTipologiaDbSmSf(pref), false, String(pref));
+  }
+
+  const tipos = [
+    { id: 'b', pref: 'DB-2S-SM-SF' },
+    { id: 'x', pref: 'BFD-SM-SF' },
+    { id: 'a', pref: 'DB-2-SM-SF' },
+    { id: 'c', pref: 'DB-3-SM-SF' },
+  ];
+  assert.deepEqual(
+    obtenerTipologiasDbSmSf(tipos).map((tipo) => tipo.pref),
+    ['DB-2-SM-SF', 'DB-2S-SM-SF', 'DB-3-SM-SF'],
+  );
 });
 
 test('ordena el despiece de produccion y normaliza el shelf mal escrito', () => {
@@ -262,4 +376,17 @@ test('presenta los frentes de gaveta como alto por ancho una sola vez', () => {
     orientarPieza({ rol: 'frente', largoIn: 657.2 / 25.4, anchoIn: 173.9 / 25.4 }),
     { largoIn: 173.9 / 25.4, anchoIn: 657.2 / 25.4 },
   );
+});
+
+
+test('inferiores B incluyen cada dimensión no estándar antes de los sufijos', () => {
+  const base = { pref: 'BFD', largo: 45, alto: 76.2, prof: 60.96, unidad: 'cm' as const, sistema: 'metrico' as const };
+  assert.equal(codigoComercial(base), 'BFD45');
+  assert.equal(codigoComercial({ ...base, prof: 60.9 }), 'BFD45');
+  assert.equal(codigoComercial({ ...base, alto: 77, prof: 60 }), 'BFD457760');
+  assert.equal(codigoComercial({ ...base, alto: 77 }), 'BFD4577');
+  assert.equal(codigoComercial({ ...base, prof: 55 }), 'BFD4555');
+  assert.equal(codigoComercial({ ...base, pref: 'BFD-SM', alto: 77, prof: 60 }), 'BFD457760-SM');
+  assert.equal(codigoComercial({ ...base, largo: 24, alto: 31.5, prof: 25, unidad: 'in', sistema: 'imperial' }), 'BFD2431 1/225');
+  assert.equal(codigoComercial({ ...base, largo: 24, alto: 30, prof: 24, unidad: 'in', sistema: 'imperial' }), 'BFD24');
 });

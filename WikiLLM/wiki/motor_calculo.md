@@ -29,12 +29,59 @@ Este archivo actúa como puente entre la base de datos y el motor de cálculo. S
 3. Construye los objetos de parámetros que espera el `engine.ts` (resolviendo presets y overrides).
 4. Invoca `calcularMueble()` y devuelve el `Breakdown` al frontend.
 
-La configuración de proyecto `conFondo=false` transforma las plantillas antes
-de invocar el motor: toda pieza con rol `fondo` recibe cantidad cero y la
+La configuración `conFondo=false`, heredada inicialmente del proyecto pero
+editable por módulo desde el desplegable **Fondo** de `AddLineForm`, transforma las plantillas antes
+de invocar el motor: la pieza de respaldo cuyo nombre es `fondo` recibe cantidad cero y la
 profundidad de la pieza llamada `base` pasa a ser `P-TC`. `TC` proviene del
 espesor real del tablero seleccionado para caja (por ejemplo, caja de 15 mm →
-base con descuento de 15 mm). No modifica tapas, bases de gaveta ni las
-fórmulas almacenadas en Supabase.
+base con descuento de 15 mm). No modifica tapas, bases ni fondos de gaveta.
+
+Al guardar una línea inferior con `conFondo=false`, `cotizaciones.ts` invoca la
+función transaccional `cot_asegurar_tipologia_sin_fondo()`. Esta reutiliza la
+variante `*-SF` si ya existe o la crea una única vez bajo bloqueo asesor,
+copiando reglas, herrajes y piezas salvo el respaldo, y fijando la profundidad
+de la base en `P-TC`. La variante queda activa en `cot_tipos_mueble` y por ello
+puede seleccionarse posteriormente desde el Simulador. Una tipología ya
+terminada en `-SF` se devuelve tal cual y nunca genera `-SF-SF`.
+
+La resolución es reversible mediante `cot_resolver_tipologia_fondo()`. Al editar
+una línea `*-SF` y elegir **Con fondo**, se busca obligatoriamente la tipología
+base activa retirando solo el sufijo final `-SF` (`BFD-SM-SF` → `BFD-SM`). El
+UUID de la línea se reemplaza antes de cotizar y el recálculo reconstruye el
+código y la descripción sin `SF`. Si la tipología base no existe, el guardado
+falla explícitamente en lugar de conservar una variante incoherente.
+
+`codigoComercial()` añade el sufijo después del sistema de frente y antes del
+espesor: `BFD26-SM-SF` y `BFD26-SM-SF-15MM`. La regla se comparte entre alta,
+edición, recálculo, HDR y Simulador.
+
+**La bandera describe solo los módulos inferiores. Los muebles superiores siempre
+llevan fondo.** Antes la transformación se aplicaba a todo el catálogo, de modo
+que elegir "Sin fondo" dejaba también a un `W` sin respaldo y lo cotizaba de
+menos. La regla vive ahora en `ajustarPiezasSinFondo()` (`muebles.ts`) y se salta
+los superiores usando `esMuebleSuperior()`, **el mismo clasificador que reparte
+los materiales en el formulario**, para que la interfaz y el precio no puedan
+discrepar sobre qué es un superior.
+
+Los elementos planos `F`, `PN` y `TK` tampoco admiten `SF`: son piezas únicas y
+no poseen respaldo ni base estructural que transformar. `DFE` comparte esta
+invariancia: su despiece no cambia por la configuración de fondo del proyecto y
+su código nunca debe recibir `-SF`. La migración
+`0217_elementos_planos_sin_variante_sf.sql` hace que el resolver retorne siempre
+la tipología base, migra líneas accidentales `F-SF`/`PN-SF`/`TK-SF`, desactiva
+esas variantes y recompone sus códigos de grupo. La UI fuerza “Con fondo” y el
+generador comercial omite `-SF` como defensa adicional. La migración `0219`
+extiende el saneamiento a `DFE-SF` y vuelve a cubrir cualquier `F-SF` residual.
+
+Está en `muebles.ts` y no en `cotizar.ts` a propósito: aquel importa
+`server-only` y no puede cargarse desde una prueba, y esta regla afecta al
+precio, así que necesita una. La cubre `tests/muebles.test.ts`.
+
+En consecuencia, el formulario de nueva cotización deshabilita **solo** el campo
+*Tablero fondo* de módulos inferiores al elegir "Sin fondo"; el de superiores
+sigue activo porque ese tablero sí se consume. Es presentación únicamente: el
+valor del preset no se borra, de modo que volver a "Con fondo" recupera la
+selección anterior.
 
 El simulador combinado llama `cotizarGrupoConsolidado()` mediante una Server Action con la lista completa de `CotizarInput`. La validación ocurre antes de confirmar un módulo, por lo que una incompatibilidad no altera la última lista ni el último resultado válidos.
 

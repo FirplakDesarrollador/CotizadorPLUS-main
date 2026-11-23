@@ -1643,6 +1643,1683 @@ La separacion vertical entre columnas (`border-left`) se movio al media query: a
 
 Verificado contra el CSS que sirve el servidor de desarrollo, no solo en el fuente: `.cotizaciones-main-grid`, el `@media (min-width: 1300px)` y `.max-w-[1600px] { max-width: 1600px }` estan en la hoja compilada. Build y compuerta de calidad limpios.
 
+## [2026-10-06] ingest | Plan del optimizador de corte
+
+Se documentó el plan de desarrollo en docs/plan_optimizador_corte.md y una página resumen en la wiki. Sin cambios de código.
+
+## [2026-10-07] update | Condiciones de planta del optimizador de corte
+
+Se registraron los parámetros de la seccionadora Holz-Her, refilado, sobrantes, formatos, veta y criterio de optimización.
+
+## [2026-10-07] update | Pestaña Optimizador (fase 1: datos de entrada)
+
+Nueva ruta /optimizador con proyecto desde cotización, resumen por material, lista de corte, piezas por día y días de producción, y parámetros de planta editables (migración 0180 aplicada). Gate de calidad y build en verde.
+
+## [2026-10-08] update | "Sin fondo" deshabilita los dos campos de Tablero fondo
+
+Al elegir **Sin fondo** en la configuracion de proyecto, los campos *Tablero fondo* seguian habilitados aunque el tablero que se escogiera ahi no se fuera a consumir.
+
+**Se deshabilitan los dos, no uno.** `conFondo=false` pone en cantidad cero **toda** pieza con rol `fondo` (`cotizar.ts`), sin distinguir inferiores de superiores, asi que tanto el campo de "Modulos inferiores (B y V)" como el de "Muebles superiores (W y TW)" quedan sin efecto. Verificado en el motor antes de tocar la UI.
+
+**Alcance acotado**: solo `NuevoCotizacionForm` tiene el radio junto a los campos. `ProjectConfigPanel` y `AddLineForm` tienen *Tablero fondo* pero no el selector de configuracion, asi que no habia nada que deshabilitar ahi.
+
+`Combobox` no soportaba `disabled`; se le anadio. El estado abierto pasa a derivarse (`open && !disabled`) en lugar de guardarse, de modo que si el campo se deshabilita con la lista desplegada esta se cierra sola, sin necesitar un efecto. La etiqueta tambien se atenua para que se lea que el campo no aplica.
+
+**Es solo presentacion**: el valor del preset no se borra, asi que volver a "Con fondo" recupera la seleccion anterior.
+
+`quality:gate` en exit 0 (35 suites, sin regresion frente al baseline) y `quality:learn` sin hallazgos en ninguna severidad.
+
+## [2026-10-08] fix | "Sin fondo" ya no deja sin respaldo a los muebles superiores
+
+Correccion de la entrada anterior, que estaba equivocada en el alcance. El usuario precisa que **los muebles superiores SIEMPRE llevan fondo**: la opcion "Sin fondo" del proyecto describe los modulos inferiores.
+
+**Era un defecto de precio, no solo de interfaz.** `conFondo=false` anulaba **toda** pieza con rol `fondo` sin distinguir familia, de modo que elegir esa opcion dejaba un `W` sin respaldo y lo cotizaba de menos. Nadie lo cubria: no habia un solo test sobre `conFondo` en toda la suite.
+
+**La regla se movio de `cotizar.ts` a `ajustarPiezasSinFondo()` en `muebles.ts`.** No es un capricho de organizacion: `cotizar.ts` importa `server-only` y **no se puede cargar desde una prueba** —el intento falla con "This module cannot be imported from a Client Component module"—, que es exactamente por lo que esta regla llevaba tanto sin cubrir. `muebles.ts` es el modulo de dominio seguro para cliente y ya lo usan otros tests.
+
+El guardia usa `esMuebleSuperior()`, **el mismo clasificador que reparte los materiales en el formulario**. Eso importa: si la UI y el motor divergieran sobre que es un superior, el formulario pediria un tablero que el precio no consume, o al reves. `esMuebleSuperior` lee la primera B o W del prefijo, asi que `WBL` es superior y `BBL` inferior, con `TW*` como excepcion explicita.
+
+**En la interfaz** queda deshabilitado solo el campo *Tablero fondo* de modulos inferiores; el de superiores sigue activo. El texto de ayuda del selector ahora dice a quien aplica.
+
+**Cobertura**: `tests/muebles.test.ts`, 12 casos. Cubre los bordes de `esMuebleSuperior` (primera letra, excepcion TW, nulo/vacio/minusculas) y la regla de fondo (superior conserva, inferior pierde, `conFondo` sin definir se trata como "Con fondo", y la base solo se recalcula en el eje donde aparece la profundidad). Comprobado que 2 de los casos fallan si se quita el guardia.
+
+`quality:gate` en exit 0 (36 suites) y `quality:learn` **sin hallazgos HIGH**. Queda un MED: "cambio en `cotizar.ts` sin `tests/cotizar.test.ts`". **Justificacion tecnica**: ese modulo no es cargable desde un test por su `server-only`, y es justamente la razon de haber extraido la logica a un modulo que si lo es; cubrirlo exigiria un entorno de servidor de Next, no una prueba unitaria.
+
+## [2026-10-08] update | La TRM solo se edita con moneda USD, sin perder el valor
+
+A peticion del usuario, al elegir **COP** el campo *TRM* deja de ser editable. Aplicado en los dos sitios donde conviven ambos controles: el formulario de nueva cotizacion y la cabecera del proyecto (`ProyectoHeader`).
+
+**Se usa `readOnly`, no `disabled`, y la diferencia no es cosmetica.** Un `<input disabled>` **no se envia con el formulario**: `crearCotizacionAction` hace `Number(formData.get('trm') || 4200)`, de modo que deshabilitarlo guardaria el proyecto con TRM **4200** en lugar de la que el usuario tuviera, cambiando todos los totales en USD sin avisar. `readOnly` bloquea la edicion y conserva el dato.
+
+**Y el dato sigue haciendo falta aunque la moneda sea COP.** El motor calcula siempre en COP y divide por la TRM para obtener los USD (`precioUsd = precioCop / inp.trm` en `engine.ts`), y el listado de cotizaciones muestra **ambas** columnas, Total USD y Total COP, para toda cotizacion. Anular el valor habria vaciado o disparado esa columna.
+
+Se anade un aviso bajo el par de campos explicando por que el valor se conserva, mas `aria-disabled` y `title` para que la razon tambien llegue por lectores de pantalla y al pasar el cursor.
+
+**Sin prueba automatizada, y es deliberado**: la regla es una condicion en el JSX (`moneda === 'COP'`), no una funcion con logica propia, y el repositorio no tiene infraestructura de pruebas de componentes —ni `@testing-library` ni entorno DOM—. Montarla para este caso no se justifica; el riesgo real que tenia este cambio era el del envio del formulario, y se evito por diseño, no por logica que se pueda afirmar en un test.
+
+`quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH (persiste el MED de `cotizar.ts`, ya justificado en la entrada anterior). Build y typecheck limpios.
+
+## [2026-10-09] update | Las lineas de filler se describen FILLER, no F
+
+La descripcion de una linea arranca con su prefijo, de modo que un filler quedaba como `F 6x36x24 in`. Produccion lo lee escrito: **FILLER**. El codigo del modulo (`F636`) no cambia; solo la descripcion.
+
+La regla vive en `etiquetaDescripcion()` (`muebles.ts`), junto al resto de helpers de dominio y, como aquel modulo no importa `server-only`, con prueba propia. `construirFilaLinea()` la usa, y como es el unico sitio donde se arma `descripcion_es`, cubre tanto el alta de una linea como el recalculo masivo.
+
+**Compara contra las letras iniciales, no contra el valor entero.** `prefLabel` llega como codigo completo al agregar la linea (`F636`) y como prefijo base tras el primer recalculo (`F`), y ambos deben dar FILLER; a la vez, un prefijo distinto que empiece por F no debe arrastrarse. Hoy `F` es la unica tipologia de categoria `filler` del catalogo, verificado antes de escribir la regla.
+
+**Backfill**: `0181_descripcion_filler.sql` pone al dia las lineas ya guardadas, que si no conservarian la forma vieja hasta recalcular su cotizacion. 17 lineas en 5 cotizaciones, todas con `pref = 'F'`. Idempotente, con un `raise` que verifica que no quede ninguna. Ya aplicada en Supabase: 17/17, 0 pendientes.
+
+**Hallazgo adjunto, NO corregido**: la descripcion de un filler sigue diciendo "1 puerta(s) · 2 entrepaño(s)". El tipo `F` tiene **una sola pieza** y su unica regla propia es `n_patas=0`; esos valores los hereda de las reglas **globales** de `n_puertas` y `n_entrepanos`, que aplican a todo tipo sin excepcion. Para un panel de relleno no significan nada. Queda anotado para decidir si se suprimen esos sufijos cuando la tipologia no tiene puertas ni entrepaños reales.
+
+`tests/muebles.test.ts` sube a 16 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.
+
+## [2026-10-09] fix | DB-3 lleva tres pares de barra, no cero
+
+El selector de tipologia DB mostraba "DB-3 · 3 cajones iguales · **sin barras**". El usuario precisa que deben ser tres pares.
+
+**No era un error de texto, sino del dato.** `DB_TIPOLOGIAS` tenia `nb: 0` para DB-3, y ese campo alimenta el override `n_barras` del motor, que a su vez fija la cantidad del herraje `BARRAEST` (9.800 COP cada una). La descripcion decia la verdad: el modulo se cotizaba **sin barras estabilizadoras**. Cambiar solo la etiqueta la habria vuelto mentira.
+
+**El catalogo confirma que 3 es lo correcto.** La regla documentada es que las barras van en los cajones grandes. Cruzando `nb` contra la cantidad de `trasero_gaveta_grande` que el catalogo da a cada configuracion:
+
+| Tipologia | Cajones | Grandes | `nb` antes | Segun la regla |
+| --- | ---: | ---: | ---: | ---: |
+| DB-1S | 3 | 2 | 2 | 2 |
+| DB-2S | 3 | 1 | 1 | 1 |
+| DB-2 | 2 | 2 | 2 | 2 |
+| **DB-3** | 3 | **3** | **0** | **3** |
+| DB-4 | 4 | 0 | 0 | 0 |
+| DB2-1OP | 3 | 3 | 1 | 3 |
+
+DB-4 va bien: sus cuatro cajones son **pequenos** (el catalogo le da cuatro `trasero_gaveta_pequena` y ningun grande), asi que 0 barras es correcto y su "sin barras" se queda.
+
+**Segunda discrepancia, NO corregida**: `DB2-1OP` tiene 1 par donde la cuenta de grandes daria 3. Lleva un cajon oculto y no se sabe si eso cambia el conteo, asi que no se asume una respuesta; el test la excluye explicitamente en vez de taparla.
+
+**Cobertura**: `tests/muebles.test.ts` sube a 20 casos. El principal no fija un numero suelto sino la **regla** —`nb` igual a la cantidad de cajones grandes— de modo que una tipologia nueva que la incumpla se detecta sola. Otro verifica que la descripcion de cada entrada concuerde con su `nb`, que es justo lo que habia fallado aqui.
+
+**Las lineas ya guardadas NO se tocaron.** Hay 3 lineas DB-3 en 2 cotizaciones, con `n_barras` persistido en sus overrides; conservan su valor hasta que se reediten. Una de ellas pertenece a "Prueba Uno", en estado **enviada**: recotizarla por cuenta propia cambiaria el precio de algo ya entregado. Queda a decision del usuario.
+
+`quality:gate` en exit 0, `quality:learn` sin hallazgos HIGH ni MED. Build y typecheck limpios.
+
+## [2026-10-09] update | F, PN y TK se describen por su nombre y sin contadores
+
+Los tres son elementos de **una sola pieza** y cada uno es el unico de su categoria en el catalogo (`filler`, `panel`, `zocalo`). Su descripcion arrastraba `· N puerta(s)` y `· N entrepaño(s)`, que salen de reglas **globales** de `n_puertas`/`n_entrepanos` —aplican a todo tipo sin excepcion— y no significan nada para un relleno, un panel o un zocalo.
+
+| Antes | Ahora |
+| --- | --- |
+| `F 6x36x24 in · 1 puerta(s) · 2 entrepaño(s)` | `FILLER 6x36x24 in` |
+| `PN 24x86x18 in · 2 puerta(s) · 3 entrepaño(s)` | `PANEL 24x86x18 in` |
+| `TK 4.5x96x0.75 in · 1 puerta(s) · 3 entrepaño(s)` | `TOEKICK 4.5x96x0.75 in` |
+
+**Una sola tabla gobierna las dos cosas**, a proposito: `ELEMENTOS_PLANOS` en `muebles.ts` define con que texto empieza la descripcion (`etiquetaDescripcion`) y que esta no lleve contadores (`esElementoPlano`). Asi no pueden divergir, que es como se llego al estado anterior. Las tres etiquetas comparten grafia: mayusculas, sin parentesis ni acentos.
+
+La comparacion es contra **las letras iniciales** de `prefLabel`, no contra el valor entero: ese campo es el codigo completo al agregar la linea (`TK5 1/496`) y el prefijo base tras el primer recalculo (`TK`), y ambos deben resolver; a la vez, `FPK` no cae en la regla de `F` ni `PCFD` en la de `PN`.
+
+**Backfill**: `0182_descripcion_elementos_planos.sql`, sobre 36 lineas (18 F, 13 PN, 5 TK). Completa la `0181`, que habia puesto FILLER pero dejado los contadores y no cubria PN ni TK. **Reconstruye la descripcion desde las columnas** `largo`/`alto`/`prof`/`unidad_dim` en lugar de parsear el texto: es exactamente como la arma `construirFilaLinea()` y no depende de si lo guardado empieza por el prefijo base o por el codigo completo. Solo descripcion: no toca precio, cantidades ni codigo de modulo. Idempotente, con un `raise` que lo verifica. Ya aplicada: 0 lineas con contadores.
+
+`tests/muebles.test.ts` sube a 22 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.
+
+## [2026-10-09] update | La linea U y Sink Vanity cargan 28,75" de alto por defecto
+
+Al elegir una de estas tipologias, el campo **Alto** se rellena con 28,75 pulgadas. Se aplica en los dos formularios donde se arma un modulo: el Simulador y el de agregar linea a una cotizacion.
+
+**Diez tipologias**, definidas en `PREFS_ALTO_LINEA_U` (`muebles.ts`): `UB`, `UB-FE`, `UBFD`, `UDB`, `UDV`, `USVFD`, `UV`, `UVFD`, `SV` y `SVFD`.
+
+**La lista es explicita y no una regla sobre el prefijo**, por dos razones que se verificaron contra el catalogo:
+
+- `UW` empieza por U pero es de **categoria superior**, y 28,75" es alto de mueble inferior. Una regla "empieza por U" lo habria arrastrado.
+- `SV` y `SVFD` **no** empiezan por U —son Sink Vanity, categoria vanity— pero pertenecen a la misma familia de alto. El usuario los nombro explicitamente.
+
+Quedaron fuera `SBFD`, `SB-SM` y `SDB`: empiezan por S y son inferiores, pero no se nombraron y no hay dato que respalde incluirlos. Al anadir una tipologia de esta familia hay que agregarla a la lista a proposito.
+
+**El alto se carga, no se fija**: el campo sigue editable, igual que la profundidad de 12" que `W` ya cargaba. Es una comodidad, no una restriccion, de modo que se puede seguir cotizando otra altura.
+
+**Cobertura**: `tests/muebles.test.ts` sube a 28 casos. Fijan los diez prefijos, la exclusion de `UW`, que el resto del catalogo no reciba nada, la tolerancia a minusculas/nulo, y que la coincidencia sea exacta (`UV` si, `U` y `UVX` no). Uno mas ata las conversiones por unidad que `AddLineForm` escribe a mano —73,025 cm y 730,25 mm— al mismo valor en pulgadas, para que no puedan derivar.
+
+`quality:gate` en exit 0 y `quality:learn` **sin hallazgos en ninguna severidad**. Build y typecheck limpios.
+
+## [2026-10-09] update | Alto por defecto de los muebles inferiores: 30", y 28,75" la linea U
+
+Completa la entrada anterior. `altoPorDefectoIn()` pasa a recibir tambien la **categoria** del tipo y resuelve tres reglas, en este orden:
+
+1. Linea U y Sink Vanity (10 prefijos) -> **28,75"**
+2. Torres y alacenas -> **sin valor**
+3. Cualquier otra de categoria `inferior` -> **30"**
+
+**El orden no es casual.** Los inferiores de la linea U (`UB`, `UB-FE`, `UBFD`, `UDB`) son de categoria `inferior`: si la regla general se evaluara primero, recibirian 30" en vez de 28,75". Hay un test dedicado a esa prioridad.
+
+**Las torres quedan fuera a proposito.** `AL` (alacena), `PC` y `PCFD` (torres) y `OVPC` (alacena para horno) estan clasificadas como `inferior` en el catalogo, pero se arman a la altura de un mueble alto. Ponerles 30" habria sido peor que no ponerles nada, asi que se quedan sin valor por defecto. La unica clasificacion de "torre" que existia estaba en un helper de `tests/visualizacion.test.ts`; ahora vive en `muebles.ts` como `PREFS_TORRE`.
+
+**Deuda anotada**: las vanities fuera de la linea U —`V`, `DV`, `DVE`, `V-FE`, `VFD`, `VPC`— no reciben alto por defecto. Son categoria `vanity` y no se nombraron al definir la regla; no se les asigna una altura sin dato que la respalde. Hay un test que fija ese comportamiento para que sea una decision visible y no un olvido.
+
+`AddLineForm` no declaraba `categoria` en su tipo local aunque `getCotizadorData()` si la trae —ambas pantallas usan ese mismo cargador—, asi que bastó con ampliar el tipo. Su conversion por unidad pasa a derivarse del valor en pulgadas en lugar de escribirse a mano, que con dos alturas distintas ya no era sostenible.
+
+`tests/muebles.test.ts` sube a 30 casos. `quality:gate` en exit 0 y `quality:learn` **sin hallazgos en ninguna severidad**.
+
+## [2026-10-09] update | El selector de tipologia se rotula con el tipo elegido, no siempre "DB"
+
+El selector lo comparten tres tipos (`PREFS_CON_TIPOLOGIA_DB`: `DB`, `UDB`, `UDV`), pero se rotulaba siempre "Tipología DB" y ofrecia `DB-1S`, `DB-2S`… incluso con un `UDV` seleccionado. Ahora el rotulo y las opciones siguen al tipo: un UDV ofrece **`UDV-1S`**, **`UDV-2S`**, **`UDV2-1OP`**, y el campo se titula "Tipología UDV".
+
+**La clave NO cambia, y es lo importante del cambio.** `DB-1S` es el identificador que se persiste en `config.dbTipo` y del que sale el sufijo del codigo comercial (`DB-1S` -> `-1S`, que produce `UDV36-1S`). Tocarla habria roto las lineas ya guardadas y el codigo de modulo. `etiquetaTipologiaDb()` transforma **solo** lo que se muestra; el `value` del `<option>` sigue siendo la clave original.
+
+Aplicado en los dos formularios: Simulador y agregar linea.
+
+**Cobertura**: cinco casos en `tests/muebles.test.ts`, que sube a 35. Uno recorre `PREFS_CON_TIPOLOGIA_DB` x `DB_TIPOLOGIAS` y exige que toda combinacion empiece por su prefijo, de modo que si se anade un cuarto tipo al selector su rotulo sale solo y queda cubierto. Otros fijan que un `DB` se quede igual, que sin tipo elegido la clave vuelva intacta y que la sustitucion sea solo del `DB` inicial.
+
+`quality:gate` en exit 0 y `quality:learn` sin hallazgos en ninguna severidad.
+
+## [2026-10-09] fix | La descripcion de una linea cuenta los entrepanos del despiece, no la variable de regla
+
+El usuario reporta que la cantidad de entrepanos en las descripciones de la pestana Cotizaciones no cuadra. Se evaluaron los **81 tipos activos** con el motor real sobre nueve juegos de medidas, comparando lo que decia la descripcion contra las piezas que se cortan.
+
+**No cuadraba en 47 de los 81.** La descripcion usaba `res.vars.n_entrepanos`, que no describe el mueble: es una **regla global por altura** (`A<=16`->0, `A<=24`->1, `A<=36`->2, resto 3) que aplica a todo tipo. Una tipologia la usa solo si su pieza `entrepano` la declara en `formula_cantidad`, y muchas no lo hacen.
+
+| Tipo | Decia | Tiene | Por que |
+| --- | ---: | ---: | --- |
+| `B`, `BFD` | 2 | **1** | su entrepano es `formula_cantidad: '1'`, fijo |
+| `SBFD`, `BOV`, `BT`, `UVFD` | 2-3 | **0** | no tienen la pieza |
+| `AL` | 2 | **5** | alacena |
+| `WPC` | 2 | **6** | torre |
+| `UW` | 0 | **1** | lleva `entrepano_fijo`, que la variable ignora |
+| `WLD` | 2 | 2 | **correcto**: su pieza si declara `n_entrepanos` |
+
+**36 tipos no tienen pieza de entrepano y 25 de ellos igual anunciaban 2 o 3.** `WLD` es la excepcion que explicaba la confusion: sus filas si cuadraban, lo que hacia parecer que el contador funcionaba.
+
+**Correccion**: `contarEntrepanos()` (`muebles.ts`) suma las piezas `entrepano*` del despiece recien calculado. Verificado tras el cambio: **0 discrepancias en los 81 tipos**. Cuenta tambien `entrepano_fijo` (UW, BMW-1, BOMH-1 y sus FE), que es una pieza mas de la hoja de corte. El contador se omite cuando es cero, en vez de anunciar "0 entrepano(s)".
+
+**Deuda detectada y NO corregida**: el mismo defecto afecta a `n_puertas` (**45 tipos**) y `n_cajones` (**12 tipos**). No se tocaron porque, a diferencia de los entrepanos, "que pieza es una puerta" no es evidente —el motor usa el mismo nombre `frente` para una puerta y para la cara de una gaveta— y definirlo bien es su propio analisis.
+
+**Las lineas guardadas** conservan el texto anterior hasta que se edite la linea o se recalcule la cotizacion. No se hizo migracion: aqui el valor correcto no se puede derivar en SQL, hay que correr el motor por linea.
+
+`tests/muebles.test.ts` sube a 41 casos. Documentado en [descripcion_linea_vs_despiece.md](wiki/descripcion_linea_vs_despiece.md). `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH.
+
+## [2026-10-09] fix | La propuesta FIRPLAK deja de volcar la configuracion interna del proyecto
+
+El bloque **"Materiales configurados en el proyecto"** del PDF mostraba un volcado crudo de `config_default`:
+
+```
+margen: 60
+unidad: in
+perfilId: d479ef4b-21e3-457b-95b1-8c4f31156a8b
+cantoCaja: 19x0,45
+cantoFrentes: 22x1
+```
+
+Lo generaba `imprimir/page.tsx` recorriendo las claves de la configuracion y quedandose con las 16 primeras que fueran texto o numero. No es informacion de cliente: son claves internas, un identificador tecnico y el margen comercial, que **no deberia salir en una propuesta**.
+
+**El bloque se conserva y pasa a ser editable.** `projectMaterials` deja de calcularse y se convierte en un campo mas de `FirplakTemplate`, vacio por defecto y con su `<textarea>` en "Editar informacion de la propuesta", a la espera del contenido definitivo. Mientras este vacio, la propuesta muestra el texto de respaldo que ya existia ("Los materiales se detallan en los modulos de la cotizacion").
+
+**Sin migracion**: `normalizarFirplakTemplate()` fusiona los valores por defecto sobre lo guardado, de modo que las dos cotizaciones que ya tienen plantilla leen el campo como cadena vacia. Verificado en la base antes de decidirlo.
+
+De paso se elimina el `const config` de `imprimir/page.tsx`, que quedaba sin uso.
+
+`quality:gate` en exit 0, build y typecheck limpios. Las 4 advertencias de lint que quedan en `FirplakPrintEditor.tsx` son `no-img-element` preexistentes del release v1.0.3, ajenas a este cambio.
+
+## [2026-10-09] update | La propuesta FIRPLAK nombra el proveedor de cada tablero
+
+Las tablas de especificaciones de muebles superiores e inferiores decian el material pero no de quien era. Ahora cada fila lleva el proveedor del tablero realmente seleccionado en el proyecto: **ECOFORT**, **PRIMADERA**, **DURATEX**, **CHINO**, etc.
+
+```
+Tablero    Tablero STANDARD · ECOFORT
+Espaldar   MDF 5.5 mm, blanco · PRIMADERA
+Caja       Tablero 15 mm, canto 0.45 mm, blanco · ECOFORT
+Puertas    Puerta plana 18 mm... · ECOFORT
+Rellenos   18 mm · ECOFORT
+```
+
+**El texto de la fila sigue viniendo de la plantilla** (editable); lo que se añade es el proveedor, que sale del catalogo. Los 80 tableros activos tienen proveedor registrado, verificado antes de implementarlo.
+
+**El mapeo de fila a rol se acordo con el usuario**, porque no era evidente: "Tablero" y "Caja" toman el tablero de **caja**, "Puertas" y "Rellenos/paneles y zocalos" el de **frente**, y "Espaldar" el de **fondo**. La fila "Tablero" no corresponde a ningun rol —su texto es "Tablero STANDARD"/"Tablero RH", una linea de producto— y se decidio darle el de caja por ser el tablero principal.
+
+**Detalle que se corrigio sobre la marcha**: con la configuracion "Sin fondo", los muebles inferiores no llevan espaldar, de modo que su fila habria dicho "Sin espaldar · PRIMADERA", anunciando el proveedor de una pieza que no existe. Se ata a la bandera `conFondo`: los inferiores pierden el proveedor y **los superiores lo conservan**, porque siempre llevan fondo (ver `ajustarPiezasSinFondo`).
+
+Si un proyecto no trae presets, o un tablero no tiene proveedor, la fila se renderiza como antes: `conProveedor()` devuelve el texto intacto en vez de dejar un separador huerfano.
+
+**Mapeo de calidad**: `quality:learn` señalo que `firplak-template.ts` no estaba en ningun lane del manifiesto. Se añadio —junto con `cema-template.ts`, que tenia el mismo hueco— a `lane:pricing-db`, el que ya cubre `cotizaciones.ts`, con su suite asociada.
+
+`tests/firplak-template.test.ts`, 7 casos. `quality:gate` en exit 0 y `quality:learn` sin hallazgos HIGH; persiste el MED de `cotizaciones.ts`, ya justificado (su `server-only` impide cargarlo desde una prueba unitaria).
+
+## [2026-10-09] update | La forma de pago de la propuesta FIRPLAK se redacta completa
+
+El recuadro **FORMA DE PAGO** del resumen decia `50% / 50%`. Ahora dice **"50% de anticipo y 50% antes del despacho"**, que es la redaccion que la propia propuesta ya usaba mas abajo, en la lista de terminos.
+
+**Se extrajo a `formaDePago()`** (`firplak-template.ts`) porque la frase aparece en dos sitios —el recuadro y los terminos— y escribirla dos veces invita a que acaben diciendo cosas distintas. Sigue los porcentajes de la plantilla, que son editables.
+
+**Ajuste de maquetacion necesario**: el recuadro es uno de tres en una rejilla, junto a "30 dias" y "90 dias", compuestos en `text-lg`. Una frase larga en ese cuerpo desbordaba su tercio, asi que la casilla de pago se compone en `text-[11px]` con interlineado ajustado, y las tres pasan a `flex` con el valor centrado para que conserven la misma altura pese al texto de distinto tamano.
+
+`tests/firplak-template.test.ts` sube a 9 casos. `quality:gate` en exit 0, build y typecheck limpios.
+
+## [2026-10-09] update | Las tres casillas del resumen FIRPLAK comparten tipografia y cuerpo
+
+VIGENCIA, FORMA DE PAGO y PLAZO ESTIMADO quedan con el mismo `<b>` y el mismo `text-lg`, en negrita. La casilla de pago habia quedado en `text-[11px]` al redactarse completa, y se veia de otra familia aunque no lo fuera.
+
+**No habia diferencia de fuente**, solo de tamano: ninguna casilla declara familia propia, las tres heredan la del `body` (`Arial, Helvetica, sans-serif`). Verificado en el componente y en `globals.css`.
+
+**Por que `text-lg` y no un cuerpo menor**: calculado el ancho util de cada columna —8,1in de pagina menos los margenes, entre tres, menos el `p-3`: unos **203 px**— la frase "50% de anticipo y 50% antes del despacho" ocupa **dos lineas tanto a `text-base` como a `text-lg`**. Achicarla no ahorraba un renglon, asi que se usa el cuerpo mayor, que ademas es el que ya tenian las otras dos casillas: no se degrada ninguna para igualar.
+
+El `flex` con el valor centrado, que se habia introducido para el texto de distinto tamano, se conserva: ahora sirve para que las tres mantengan la misma altura pese a que la de pago ocupe dos renglones.
+
+`quality:gate` en exit 0, build y typecheck limpios.
+
+## [2026-10-09] ingest | Boton "Agregar herrajes": lineas de material suelto en una cotizacion
+
+Nuevo boton junto a "+ Agregar modulo", con su misma estetica, que permite cobrar un **tablero, canto o herraje sin pasar por un modulo**. El catalogo que ofrece es el de Materiales-Parametros (`cot_tableros`, `cot_cantos`, `cot_herrajes`, solo activos).
+
+**Dos decisiones se acordaron con el usuario** porque afectaban al precio y no se podian inferir:
+
+- **Cantidad en la unidad natural de cada catalogo**: tablero en m2, canto en metros lineales, herraje en unidades. Su tarifa ya esta en esa unidad, asi que no hay conversion que inventar.
+- **Margen segun lo que se agregue**: herraje con `margen_herraje`, tablero y canto con `margen_muebles`, igual que dentro de un modulo. Se aplica con la misma cadena que `engine.ts` —`costo / (1 - margen)`— y el descuento del proyecto despues, solo sobre el USD.
+
+**Lo mas delicado fue el recalculo, no el precio.** Una linea sin `tipo_mueble_id` pasada por el motor lanza "Tipo de mueble no encontrado", y **todas** las rutas de recalculo (editar, agrupar, mover, recalcular la cotizacion entera) pasan por `recalcularGrupo()`: una sola linea de material habria tumbado el recalculo completo de la cotizacion. `grupoSeSaltaElMotor()` lo evita, comprobando con `some` y no con `every` para fallar del lado seguro si alguna quedara mezclada con modulos. Como contrapartida, el precio de una linea de material **no se recalcula**: queda fijado al agregarla.
+
+**Verificado en la base antes de insertar**: `tipo_mueble_id` es nullable, su clave foranea no aplica sobre nulos y el `CHECK` de `unidad_dim` acepta el valor usado. Ninguna de las 153 lineas existentes usaba ese camino.
+
+La logica vive en `materiales-linea.ts` y no en `cotizaciones.ts` para poder probarse; aquel solo tiene el acceso a datos. El formulario pide los catalogos con una accion al montarse en vez de enhebrarlos como props por toda la jerarquia.
+
+**`quality:learn` deja un HIGH con justificacion documentada**: `cotizaciones.ts` cambio 112 lineas sin suite propia. Toda su logica se extrajo ya al modulo probado; lo que queda es acceso a datos, y el archivo **no es importable desde un test** —empieza con `import 'server-only'` y el intento falla, comprobado—. Cubrirlo exigiria pruebas de integracion contra Supabase, que el repositorio no tiene.
+
+`tests/materiales-linea.test.ts`, 15 casos. `quality:gate` en exit 0, build y typecheck limpios. **Sin verificar en pantalla**: la cotizacion esta tras login y no hay credenciales. Documentado en [lineas_material_suelto.md](wiki/lineas_material_suelto.md).
+
+## [2026-10-09] fix | El selector de herrajes salia vacio: columna mal nombrada y error tragado
+
+El formulario de "Agregar herrajes" mostraba **"Herraje · 0 en catalogo"** aunque la tabla tiene 19 activos. Los tableros y los cantos si cargaban.
+
+**La consulta pedia `cot_herrajes.descripcion`, columna que no existe**: la tabla la llama `nombre`. Supabase devolvia error, el codigo hacia `data ?? []` y el resultado era indistinguible de un catalogo vacio de verdad.
+
+**El defecto de fondo era tragarse el error**, no el nombre de la columna. `getMaterialesDisponibles()` ahora lanza indicando que catalogo fallo y por que, en vez de devolver una lista vacia que parece un dato legitimo.
+
+Se ofrecen los **19 activos**, incluidos los 5 de categoria `consumible` (tarugo, soporte metalico, grapas, carton, etiqueta): tambien se cobran sueltos, y filtrarlos habria sido una decision que nadie pidio. La categoria se muestra en la etiqueta y entra en el texto de busqueda, asi que escribir "riel" encuentra los seis rieles sin saberse los codigos. El proveedor hace lo mismo en los tableros.
+
+`quality:gate` en exit 0, build y typecheck limpios. Los 6 errores de lint de `cotizaciones.ts` siguen siendo los `no-explicit-any` preexistentes del release v1.0.3.
+
+## [2026-10-09] update | El boton pasa a llamarse "Agregar herrajes/otros"
+
+Renombrado a peticion del usuario: el selector ofrece tableros y cantos ademas de herrajes, y el nombre anterior sugeria que solo lo segundo. Se actualiza tambien la mencion en [lineas_material_suelto.md](wiki/lineas_material_suelto.md) para que la documentacion no quede desfasada.
+
+Solo la etiqueta del boton. El titulo del formulario ya decia "Agregar herrajes y materiales" y se deja como estaba.
+
+## [2026-10-14] update | Plan de corte por dia: que modulos y cuantas unidades por jornada
+
+La pestana Optimizador ya calculaba dias a partir de "piezas por dia", pero solo mostraba el
+conteo de piezas por banda (`Dia 1: 120`) sin decir que cortar. Nuevo `src/lib/corte/plan-diario.ts`
+(`planDiarioDeCorte`): dias de corte y, por cada dia, los modulos con sus unidades y piezas.
+
+Reglas elegidas por el usuario: agrupado por material (primero el tablero con mas volumen, orden de
+la cotizacion dentro de cada material) y las unidades de un modulo se pueden partir entre dos dias.
+El ritmo queda en 0 en `cot_parametros.optimizador` por decision del usuario, asi que la pantalla
+muestra el plan solo cuando el escriba un numero.
+
+Se retira `repartoDiario` de `config.ts` y `reparto` de `ListaCorte`: tener dos calculos de dias
+—la division de piezas y el reparto real de modulos— daba numeros distintos para lo mismo. El KPI
+pasa a llamarse "Dias de corte" y sale del plan, con el minimo teorico como detalle cuando difiere.
+
+Detalle en [optimizador_corte.md](wiki/optimizador_corte.md). Pruebas: `tests/plan-diario-corte.test.ts`
+(14 casos) en `lane:cutting`. quality:gate en exit 0, build limpio, quality:learn sin hallazgos HIGH.
+Sin verificar en pantalla: /optimizador es solo admin y no hay credenciales en la sesion.
+
+## [2026-10-14] ingest | Esquemas de corte por material: acomodo real, D% y numero de tableros
+
+Fase 2 del plan (`docs/plan_optimizador_corte.md`). Nuevo `src/lib/corte/guillotina.ts`: acomoda las
+piezas de cada material en su lamina y devuelve el esquema, el desperdicio, los m2 y el numero de
+tableros. El boton "Optimizar corte" de la pestana, que estaba deshabilitado, ya corre; los esquemas
+se dibujan en SVG en `src/app/optimizador/EsquemasCorte.tsx`, con un color y un numero por medida,
+los sobrantes marcados segun lleguen al minimo de planta, y las laminas de igual acomodo agrupadas
+en patrones ("2 de 2440 x 1830"), que son las que se cortan juntas en la pila.
+
+Acomodo por franjas, como corta la seccionadora. Se prueban 20 combinaciones (5 ordenes x reparto
+global/secuencial x franja nueva baja/alta) y gana la de menos tableros. La politica de alto de
+franja nueva fue la que mas bajo el desperdicio: una caja de cocina tipica paso de 6 tableros a 5, y
+fondos y frentes bajaron al minimo teorico.
+
+Defecto encontrado por una prueba y corregido: `girada` se medIa contra la orientacion con la que la
+heuristica empezaba a probar, no contra el despiece, asi que una pieza puesta de canto salia como "no
+girada" y se cortaria al reves.
+
+Queda pendiente la secuencia y el numero de cortes, el inventario de sobrantes y la validacion con
+planta (fase 3). El acomodo no es optimo: en proyectos variados queda sobre el 15 % de la meta y se
+informa junto al minimo teorico en vez de disimularlo.
+
+Detalle en [optimizador_corte.md](wiki/optimizador_corte.md). Pruebas: `tests/guillotina.test.ts`
+(17 casos) en `lane:cutting`. quality:gate exit 0, build limpio, quality:learn sin hallazgos HIGH.
+Sin verificar en pantalla: /optimizador es solo admin y no hay credenciales en la sesion.
+
+## [2026-10-14] ingest | Corte dia por dia: esquemas, cortes y resumen consolidado
+
+Cierra la fase 2 del plan. Dos modulos nuevos:
+
+- `src/lib/corte/secuencia.ts`: cuenta los cortes de una lamina acomodada, por nivel (refilado,
+  franja, piezas, recorte) y por pasada de la seccionadora, de modo que las laminas de un mismo
+  patron que entran en una pila cuestan un solo juego de cortes. Es un modelo de la secuencia, no
+  una medicion: los niveles de la Holz-Her siguen pendientes con planta.
+- `src/lib/corte/plan-corte.ts`: cruza el reparto diario con el acomodo. Por cada dia devuelve los
+  modulos y unidades, el esquema de cada material, tableros, m2, desperdicio y cortes; mas el
+  consolidado, el desglose por material y el mismo proyecto cortado de una sola vez.
+
+Lo importante del resumen: **cortar por dia gasta mas tablero que cortar todo junto**, porque las
+piezas de dias distintos no comparten lamina. En un proyecto de prueba de 15 modulos a 40 piezas/dia
+son 16 tableros y 31,6 % contra 15 tableros y 26,8 %. La pantalla muestra las dos cifras y la
+diferencia en vez de dar solo una.
+
+La pestana pasa a mostrar los esquemas agrupados por dia, con un bloque de resumen al final: tabla
+por dia, tabla por material sumando los dias, y el desglose de cortes por nivel. Con el ritmo en 0 se
+muestra el proyecto completo y se pide el ritmo.
+
+Detalle en [optimizador_corte.md](wiki/optimizador_corte.md). Pruebas: `tests/secuencia-corte.test.ts`
+(11) y `tests/plan-corte.test.ts` (10) en `lane:cutting`. quality:gate exit 0 con 42 suites, build
+limpio, quality:learn sin hallazgos HIGH. Sin verificar en pantalla: /optimizador es solo admin y no
+hay credenciales en la sesion.
+
+## [2026-10-14] update | Cada esquema dice de que material y de que dia es
+
+El acomodo ya calculaba un esquema por material en cada dia —el dia 3 de la corrida de prueba toca 5
+materiales y 6 tableros, cada uno con su lamina—, pero en pantalla habia que recorrer todos los
+dibujos para saber que tableros entraban en la jornada. Tres cambios de presentacion:
+
+- La cabecera del dia dice cuantos materiales toca.
+- Antes de los esquemas va una **tabla de materiales del dia**: lamina, tableros, cuantos esquemas,
+  m2, netos, desperdicio y cortes, con el total de la jornada.
+- Cada seccion de material y cada lamina se rotulan con el dia y el material, para que una tarjeta
+  suelta se entienda sola al imprimir o al bajar la pagina.
+
+Sin cambios de calculo. quality:gate exit 0, build limpio.
+
+## [2026-10-14] update | Listado de muebles por dia, antes de los esquemas
+
+La lista de modulos iba en una sola linea de la cabecera del dia y con diez modulos se cortaba sin
+poder leerse (visto en captura del usuario). Pasa a ser una tabla propia antes de los esquemas:
+codigo, cocina, tablero principal, unidades y piezas, con el total de la jornada y la marca (parte)
+para los muebles que se cortan tambien en otro dia. La cabecera queda con el conteo.
+
+`CorteDia.modulos` ahora arrastra `piezas`, `material` y `partido`, que ya venian del reparto diario
+y se estaban descartando al componer el plan.
+
+Verificado que los esquemas por material/color ya salian en cada dia: en una corrida de prueba con
+los tres tableros del usuario (PRIRH15ARTICO caja, PRIRH15COLOR CONSTRUCTOR frentes, PRIRH6ARTICO
+fondo) los tres aparecen con su esquema en los tres dias.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-14] update | Busqueda de combinaciones y veredicto de la meta del 15 %
+
+El optimizador deja de ser 20 heuristicas fijas y pasa a buscar: tras las deterministas, arranques
+aleatorios con orientacion, clave de orden con ruido, modo y politica de franja al azar, hasta
+agotar `iteraciones` (2000), `tiempoMaxMs` (150 por material) o 300 arranques sin mejorar. Para en
+seco al tocar el minimo teorico. El azar va sembrado con una semilla derivada del problema, asi que
+la misma entrada sigue dando el mismo plan.
+
+Medido, y es lo importante: con volumen **la meta del 15 % si se cumple** (proyecto de 12 tipos de
+modulo: 13,6 % cortado todo junto). Lo que la rompe es partir la produccion en dias: 17,2 % con 2
+dias y 22,2 % con 5. La pantalla ahora da el veredicto y lo explica.
+
+Tambien se marca `metaInalcanzable` por material: el desperdicio es un escalon, no una curva —las
+laminas se compran enteras— asi que cuando ni el minimo teorico baja de la meta no es el acomodo,
+es el volumen, y la salida es agrupar mas muebles de ese material en la misma corrida.
+
+Honesto sobre el limite: en material mixto de poco volumen, 20 000 iteraciones no mejoran las 5
+laminas contra un minimo teorico de 4; eso pide mas niveles de corte en la maquina, no mas
+iteraciones. Detalle en [optimizador_corte.md](wiki/optimizador_corte.md).
+
+Nuevas llaves de config `iteraciones` y `tiempoMaxMs`, editables en los parametros de planta. No
+hacen falta migraciones: `normalizarConfig` rellena las que falten. Pruebas: 7 casos nuevos en
+`tests/guillotina.test.ts` (24 en total). quality:gate exit 0 con 42 suites, build limpio,
+quality:learn sin hallazgos HIGH.
+
+## [2026-10-14] update | El informe reporta cuantas combinaciones se evaluaron
+
+A peticion del usuario: el resumen del plan de corte muestra ahora las combinaciones de acomodo
+evaluadas, en el KPI del consolidado, como columna en la tabla por dia y en la tabla por material,
+mas las del proyecto cortado de una sola vez. `TotalesCorte` y `FilaMaterial` arrastran
+`iteraciones`, que ya venia por material desde `optimizarMaterial`.
+
+Con una nota de lectura en la propia pantalla: un material que llega al minimo teorico para la
+busqueda de inmediato, asi que 20 combinaciones ahi valen mas que 960 en otro. Un numero bajo
+significa "ya estaba optimo", no "se busco poco".
+
+Prueba nueva en `tests/plan-corte.test.ts`: el consolidado es la suma de lo que probo cada material
+de cada dia, y cuadra con el desglose por material. quality:gate exit 0, build limpio.
+
+## [2026-10-14] ingest | Análisis del reparto de muebles por día del optimizador
+
+Prototipo de búsqueda de muebles completos entre días (40 → 34 tableros en el proyecto de referencia), cota de 14,8 % con corte diario de los tres materiales y prompt de implementación para Antigravity.
+
+## [2026-10-14] update | Prompt de reparto por días ajustado a máximo de iteraciones
+
+Se midió la escala de la búsqueda (pequeño y grande) y se reescribió docs/prompt_antigravity_reparto_dias.md: presupuesto por tiempo, workers en paralelo, caché de dos niveles, vecindarios dirigidos, enumeración exacta y guardado del plan.
+
+## [2026-10-14] ingest | Busqueda del reparto de muebles entre dias
+
+Nuevo `src/lib/corte/reparto.ts`: recocido simulado sobre la matriz dias x lineas, con evaluacion
+incremental, cache por firma de dia, recalentamiento y parada por cota. `planDeCorte` lo usa en vez
+del reparto codicioso de `plan-diario.ts`, que queda como vista previa instantanea.
+
+Medido: proyecto pequeno 44 -> 40 tableros (27,3 % -> 20,1 %); grande 253 -> 247 (23,9 % -> 22,3 %).
+Mas presupuesto siempre mejoro.
+
+Defecto corregido: `grupo_id` no llegaba al optimizador y un grupo fisico se podia partir entre
+dias. Como sus piezas compartidas se redondean por dia, partir un grupo de 2 unidades daba 4
+laterales donde el despiece pide 3. Verificado antes de corregir.
+
+Segundo defecto, encontrado por una prueba nueva: `num()` en `config.ts` convertia `null` y cadena
+vacia en 0 en vez de tomar el defecto, asi que una llave vacia en la base dejaba el disco en 0 mm o
+la busqueda apagada. Afectaba a todas las llaves numericas, no solo a las nuevas.
+
+Llaves nuevas: `toleranciaRitmoPct` (D4), `diasExtraPermitidos` (D5), `repartoTiempoMs`. Sin
+migracion: `normalizarConfig` rellena las que falten. Pruebas movidas a `tests/config.test.ts` (5
+casos) para cerrar el hallazgo HIGH de cobertura, mas `tests/optimizador-reparto.test.ts` (19).
+
+Falta del prompt: interfaz con modos y progreso, workers, rendimiento (~300 mov/s contra 10 000/s),
+vecindarios dirigidos, enumeracion exacta y persistencia del plan. Detalle en
+[optimizador_corte.md](wiki/optimizador_corte.md). quality:gate exit 0, build limpio, quality:learn
+sin HIGH.
+
+## [2026-10-14] update | Los dias del plan se pliegan
+
+Con 10 dias y varios modulos cada uno, la tabla plana del "Plan de corte por dia" no se podia leer
+(captura del usuario: 10 dias, 26 lineas, filas encadenadas con rowSpan). Cada dia pasa a ser una
+fila plegable: cabecera con piezas, libre, cuantos modulos, unidades y materiales, y al abrirla la
+tabla de modulos. Boton "Desplegar / Plegar todos los dias".
+
+Lo mismo en los bloques de dia de los esquemas de corte (`EsquemasCorte.tsx`), que traen tres tablas
+y un dibujo por lamina: la cabecera queda siempre visible con los totales y el cuerpo se pliega.
+Abiertos por defecto, para no esconder lo que ya se veia.
+
+Solo presentacion. quality:gate exit 0, build limpio.
+
+## [2026-10-14] update | La busqueda de reparto corre cuatro veces mas rapido
+
+Perfilado: `evaluarDia` era el 98 % del tiempo (5,07 ms de acomodo contra 0,097 ms de lista). Dos
+cambios: `heuristicasMax: 4` durante la busqueda (el plan final sigue con las 20) y filtro por cota
+antes de acomodar (`cotaDia`: area con sierra contra area util, 50 veces mas barato).
+
+Resultado: proyecto grande 247 -> **242 tableros** (22,3 % -> 20,7 %) en los mismos 20 s; el pequeno
+llega a 40 tableros a los 5 s en vez de a los 20. De ~300 a ~1 300 movimientos/s en el pequeno y
+~750 en el grande. Sigue lejos de los 10 000/s del prompt: falta cache por dia-material y workers.
+
+Corregido de paso: la cota que se informaba se calculaba con el acomodo rapido y salia inflada.
+Ahora sale del proyecto cortado de una sola vez, que ya se acomoda con la configuracion completa.
+
+Prueba nueva: el filtro poda, no cuesta mas evaluaciones y no degrada el resultado. quality:gate
+exit 0, build limpio, quality:learn sin HIGH.
+
+## [2026-10-14] update | Modulos del proyecto: agrupados por cocina y referencia, y plegables
+
+La lista de la seccion 1 era una fila por linea de cotizacion: en el proyecto del usuario, 26 filas
+con referencias repetidas (dos W3642, dos W2642, dos TK4 1/296) que habia que sumar a ojo.
+
+Ahora se agrupa en dos niveles plegables: cocina y, dentro, referencia. Se juntan las lineas con el
+mismo codigo **y el mismo despiece**; si dos lineas con igual codigo dan distintas piezas por modulo
+es que su configuracion difiere y mezclarlas esconderia esa diferencia, asi que quedan separadas.
+Cuando una referencia viene de varias lineas se anota ("2 lineas").
+
+La cabecera resume sin desplegar: cocinas, referencias, lineas, unidades y piezas. Plegada por
+defecto, que es el punto; las cocinas se ordenan por volumen de piezas.
+
+Solo presentacion. quality:gate exit 0, build limpio.
+
+## [2026-10-14] ingest | Repositorios de optimización de corte y medición contra packingsolver
+
+Se analizaron 7 repositorios y se midió packingsolver con las mismas piezas: −1 lámina en el proyecto pequeño y −4 en el grande. Informe y plan en docs/informe_repositorios_optimizador_corte.md.
+
+## [2026-10-14] update | Optimizador: columnas, mochila, orientación, worker y reparto activo
+
+Acomodo con columnas apiladas, mochila por franja, dos orientaciones y corrección de valores: iguala a packingsolver (30 y 175 láminas). Se corrigió que la búsqueda del reparto no corría; ahora corre en un Web Worker con presupuesto editable. Gate en verde, sin hallazgos HIGH.
+
+## [2026-10-15] update | Los tips arrancan apagados y el boton muestra su estado
+
+El usuario pidio que el boton Tips quede **inactivo** por defecto al abrir la app. El defecto era
+`true`, asi que ahora `TIPS_ACTIVOS_POR_DEFECTO = false`.
+
+De paso se arreglo lo que impedia darse cuenta del estado: el boton se veia igual encendido que
+apagado —solo cambiaba el emoji— y los tips solo aparecen al pasar el mouse por un campo.
+
+- `TooltipToggle` se ve oscuro cuando esta activo y delineado cuando no, con `aria-pressed`.
+- `useTooltips` pasa a `useSyncExternalStore`, el patron para un estado que vive fuera de React y lo
+  cambia un boton desde cualquier pantalla. De paso quita un error de ESLint que introdujo un primer
+  intento con setState dentro de un efecto.
+- El modulo expone `TIPS_ACTIVOS_POR_DEFECTO`, `tooltipsActivos()`, `suscribirTooltips()` y
+  `resetTooltips()`, lo que permite probarlo sin montar React.
+
+La preferencia **no se guarda**: encenderlos vale para la sesion en curso y cada carga de la app
+parte del defecto.
+
+`tests/tooltips.test.ts` (4 casos) en `lane:frontend`. quality:gate exit 0, build limpio.
+
+## [2026-10-15] fix | El desplegable de cotizaciones abria filtrado a la ya elegida
+
+Al enfocar el buscador, `Combobox` rellenaba el texto con la etiqueta de la opcion seleccionada, asi
+que la lista quedaba filtrada a esa sola y parecia que no hubiera mas cotizaciones. Ahora abre con el
+texto vacio: sale la lista completa, y la eleccion se sigue viendo en el placeholder. Afecta a todos
+los desplegables de la app (tipo de mueble, materiales, cotizaciones).
+
+El filtro se extrajo a `src/lib/combobox-filtro.ts` para poder probarlo: el componente necesita DOM
+y las pruebas corren con `node:test` sin navegador. De paso ahora exige **todas las palabras en
+cualquier orden**, no la frase entera, asi que "boynton coastland" encuentra la cotizacion aunque el
+cliente vaya despues del nombre en la etiqueta.
+
+Verificado contra la base: hay 2 cotizaciones ("26084- BH Boynton GS BLDG B" y "Carolina Sunset -
+Cocinas"), las dos sin codigo, y `listarCotizaciones()` no las limita. El desplegable las muestra.
+
+`tests/combobox-filtro.test.ts` (8 casos) en `lane:frontend`. quality:gate exit 0, build limpio.
+
+## [2026-10-16] fix | Desagrupar un grupo de 3 o mas modulos reventaba con duplicate key
+
+Error reportado: `duplicate key value violates unique constraint
+"cot_grupos_modulos_cocina_id_orden_key"` al desagrupar el grupo `B22.SBFD36.B14`.
+
+Causa: `desagruparGrupo` crea un grupo nuevo por cada linea a partir de la segunda, **dentro de un
+bucle**, y lo insertaba con `orden: 99999` **fijo**. Con dos lineas funcionaba; con tres o mas, el
+segundo insert chocaba contra el primero. La tabla tiene unica `(cocina_id, orden)`.
+
+Mismo defecto latente en los otros cuatro sitios que insertan grupos: usaban `orden: groupCount ?? 0`,
+que solo es libre si los ordenes son 0..n-1 sin huecos. Basta un grupo borrado para que choque.
+
+Los cinco pasan a `max(orden) + 1` (`ordenParaGrupoNuevo`), que no colisiona haya huecos o no.
+`normalizarGrupos` sigue renumerando a 0..n-1 despues, asi que el valor exacto da igual.
+
+La regla se extrajo a `src/lib/grupos-orden.ts` para poder probarla: `cotizaciones.ts` importa
+`server-only` y no se carga desde un test. `tests/grupos-orden.test.ts` (5 casos) en
+`lane:pricing-db`, incluido el que reproduce el bucle de desagrupar.
+
+Base verificada: no quedan residuos (grupos con orden >= 10000, grupos vacios ni cocinas con huecos
+en el orden). El 99999 que se vio en una consulta era transitorio, de la operacion fallida.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] feat | Materiales por familia: Closet/Walk in Closet y Banos/Auxiliares
+
+Dos bloques nuevos de materiales en la creacion de la cotizacion, junto a inferiores y superiores.
+`FamiliaMaterial` pasa de dos valores a cuatro, con `ETIQUETA_FAMILIA` y `CLAVE_CONFIG_FAMILIA` como
+unica fuente: los consumidores dejan de repetir ternarios 'superior' ? ... : ...
+
+- **Closet/Walk in Closet**: tableros y cantos, **sin selector de herrajes** por decision del
+  usuario; los de closet se cargan desde la cotizacion, modulo por modulo. La configuracion guarda
+  `herrajesExcl: []`.
+- **Banos/Auxiliares**: tableros, cantos y herrajes. Son los 13 vanities del catalogo (categoria
+  `vanity`), que hasta ahora se cotizaban con el tablero de inferiores. Decidido con el usuario: las
+  cotizaciones existentes **tomaran el bloque nuevo al recalcular**.
+- El titulo de inferiores pasa de "(B y V)" a "(B)": los vanities ya no van ahi.
+
+Closet apunta de momento a los 4 tipos que el catalogo marca con categoria `closet` (CC, CLV, DFE,
+WCC), **pendiente de la lista de prefijos que dara el usuario**. `WCC` lleva W, asi que sin la tabla
+caeria en superiores: por eso closet y banos se evaluan antes que la regla de la primera B o W.
+
+`herrajesPorFamilia` deja de usar su propio regex `^(B|V)` y llama a `familiaMaterialPorPrefijo`:
+una sola clasificacion para toda la app.
+
+Las cotizaciones sin los bloques nuevos caen en inferiores, como antes. Pruebas: 5 casos en
+`tests/muebles.test.ts` (46 en total). quality:gate exit 0, build limpio.
+
+Falta: los dos bloques en `ProjectConfigPanel` (edicion de una cotizacion ya creada), que hoy solo
+muestra inferiores y superiores aunque el tipo ya acepte los cuatro.
+
+## [2026-10-16] update | Closet y Banos arrancan apagados, con boton para incluirlos
+
+Los dos bloques nuevos se activan por proyecto. Arrancan **apagados**: la mayoria de los proyectos
+son de cocina y no llevan closet ni banos, y tener cuatro bloques de materiales abiertos obliga a
+revisar configuracion que no se va a usar.
+
+Cada bloque lleva en su cabecera un boton **Incluir / Incluido** (oscuro cuando esta activo, igual
+que el resto de controles activos de la app). Apagado: todos los campos del bloque quedan
+deshabilitados y el texto del pie explica que pasa si se deja asi.
+
+Lo importante es que **un bloque apagado no se guarda en la configuracion**. Sin
+`materialesCloset` ni `materialesBanos`, esos modulos caen en inferiores por el mismo fallback que
+ya usaban las cotizaciones anteriores: apagar no inventa un material vacio, deja el de antes.
+
+Solo el formulario de creacion. quality:gate exit 0, build limpio.
+
+## [2026-10-16] style | La propuesta FIRPLAK dice "TIEMPO DE ENTREGA"
+
+La tercera casilla del resumen decia PLAZO ESTIMADO. Cambiada a TIEMPO DE ENTREGA a peticion del
+usuario. El campo del editor que la alimenta pasa de "Plazo (dias)" a "Tiempo de entrega (dias)",
+para que quien lo busque lo encuentre con el nombre que ve en el PDF.
+
+Solo la plantilla FIRPLAK: la de CEMA conserva su propio texto. El dato (`leadTimeDays`) no cambia,
+asi que las cotizaciones ya guardadas siguen igual.
+
+## [2026-10-16] feat | La propuesta FIRPLAK discrimina closet y banos
+
+La pagina de especificaciones tenia dos bloques, "Muebles superiores" y "Muebles inferiores". Ahora
+son cuatro y los dos primeros dicen **cocina**, para que no se confundan con los nuevos:
+
+- Muebles superiores cocina
+- Muebles inferiores cocina
+- Closet / Walk in closet
+- Banos / Auxiliares
+
+Los dos ultimos **solo se imprimen si el proyecto configuro esa familia**. El criterio es la
+presencia de la llave en `ProveedoresPropuesta`: `closet` y `banos` son opcionales a proposito, y
+`page.tsx` solo las arma cuando `config_default` trae `materialesCloset` o `materialesBanos` (los
+bloques que el usuario activa con el boton "Incluir"). Un proyecto de cocina sola imprime la misma
+propuesta de siempre, sin tablas vacias.
+
+Cada bloque trae sus cinco filas con el proveedor del tablero correspondiente, igual que los
+existentes: Tablero y Caja del tablero de caja, Puertas y el ultimo del de frente, Espaldar del de
+fondo. En closet la ultima fila es "Entrepanos, barras y divisiones" en vez de "Rellenos, paneles y
+zocalos".
+
+El titulo de la pagina pasa de "Especificaciones de cocina" a "Especificaciones", que ya no es solo
+de cocina. Diez campos nuevos en la plantilla (`closetBoard`...`bathPanels`) con sus textos por
+defecto y sus campos en el editor; `normalizarFirplakTemplate` los completa en las cotizaciones
+guardadas antes de que existieran.
+
+4 pruebas nuevas en `tests/firplak-template.test.ts` (13 en total). quality:gate exit 0, build limpio.
+
+## [2026-10-16] fix | La cotizacion en COP se mostraba y se imprimia en dolares
+
+Reportado sobre la cotizacion "camila", que **ya tiene `moneda: 'COP'` en la base** (verificado) y
+aun asi mostraba 288,90 USD como cifra grande y 924.449 COP debajo, y exportaba la propuesta en
+dolares. Dos sitios ignoraban la moneda del proyecto:
+
+- `ProyectoHeader`: la cifra grande era siempre `fmtUSD(total_usd)`. Ahora manda `cab.moneda`: en un
+  proyecto en COP la grande es la que el cliente va a pagar y el dolar queda debajo como referencia.
+- Propuesta FIRPLAK: `money()` formateaba siempre en dolares y `FirplakProposalData` solo llevaba
+  valores USD. Ahora lleva tambien los COP y la moneda, y la propuesta imprime la que corresponda.
+
+El valor en pesos **sale de cada linea**, no de multiplicar el dolar por la TRM: con TRM 3.200 eso
+daria 924.480 contra los 924.449 reales, porque cada modulo ya se redondeo. Hay una prueba que fija
+la diferencia.
+
+El Excel y la impresion del listado interno ya respetaban las casillas de columna USD/COP del
+detalle; eso no se toco. Las casillas siguen controlando **que columnas** se ven, y la moneda del
+proyecto controla **en que moneda** se cotiza: son cosas distintas y ahora cada una hace la suya.
+
+`importePropuesta` y `formatearImporte` viven en `firplak-template.ts` para poder probarlos.
+3 pruebas nuevas (16 en total). quality:gate exit 0, build limpio.
+
+## [2026-10-16] update | El total del encabezado sigue las casillas de moneda
+
+Complementa el arreglo anterior. El encabezado ya respetaba la moneda del proyecto, pero seguia
+mostrando las dos cifras aunque en las columnas se hubiera destildado una. Ahora:
+
+| Casillas | Encabezado |
+| --- | --- |
+| Solo COP | solo pesos |
+| Solo USD | solo dolares |
+| Las dos | primero la moneda del proyecto, la otra debajo |
+
+Marcar unicamente pesos y seguir viendo dolares arriba era contradecir lo que se pidio. Con las dos
+marcadas manda la moneda del proyecto, que es en la que se cotiza.
+
+La regla vive en `src/lib/monedas-visibles.ts` para poder probarla, y `ProyectoHeader` la recibe
+como prop opcional: sin ella se comporta como antes, con las dos monedas. 5 casos en
+`tests/monedas-visibles.test.ts`, incluido que nunca repita una moneda ni deje el encabezado en
+blanco. quality:gate exit 0, build limpio.
+
+## [2026-10-16] fix | El resumen de la propuesta dice solo "Muebles"
+
+La columna Descripcion estaba fija en "Muebles de cocina", asi que un area llamada "Closet" salia
+igualmente como cocina. Decision del usuario tras probar dos alternativas: la celda dice solo
+**"Muebles"**, porque el tipo ya lo dice la columna Area, que esta justo al lado.
+
+En el camino se probo derivar el texto de los modulos del area y luego componerlo con el nombre del
+area; ninguna quedo. El modulo `src/lib/descripcion-area.ts` y su prueba se **eliminaron** en vez de
+dejarlos sin uso.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] feat | IVA del 19% en las cotizaciones en pesos
+
+Las cotizaciones en COP liquidan el IVA colombiano en la propuesta PDF y en el Excel:
+
+```
+TOTAL ANTES DE IVA        $ 924.449
+IVA 19%                   $ 175.645
+TOTAL CON IVA INCLUIDO  $ 1.100.094
+```
+
+**Solo en pesos.** Una venta en dolares es exportacion y sale sin IVA, asi que la regla cuelga de la
+moneda del proyecto (`aplicaIva`) y no de un interruptor aparte que alguien pueda dejar mal puesto.
+En USD la propuesta sigue diciendo TOTAL a secas, como antes.
+
+En el Excel el IVA se liquida sobre la columna **c/H COP**, que es la que se le factura al cliente.
+Si esa columna no se exporto —porque se destildo en el detalle— la fila se omite en vez de salir en
+cero, y el TOTAL conserva su nombre de siempre.
+
+`src/lib/iva.ts` con la tarifa, el calculo y la etiqueta; la tarifa es parametro con 19 % por
+defecto, por si alguna linea quedara exenta. 6 casos en `tests/iva.test.ts`, incluidos los de base
+invalida o negativa, que no pueden producir NaN ni IVA a favor.
+
+Pendiente de confirmar: si alguna linea del catalogo esta excluida o exenta, hoy todo va al 19 %.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] fix | La propuesta listaba herrajes que la cotizacion no incluye
+
+La pagina "Herrajes incluidos" traia una lista **fija** de diez renglones —bisagras, correderas,
+patas, soportes, manijas, gola, sistema elevable, platero, zocalo, papelera— con "N/A" en los que no
+aplicaban, mas seis fotos de catalogo. Eso le anuncia al cliente herrajes que su proyecto no lleva y
+esconde los que si.
+
+Ahora la lista sale del **despiece de cada modulo** (`breakdown.herrajes`), sumando por referencia y
+multiplicando por las unidades de la linea y por las veces que se repite el area. La descripcion
+viene de `cot_herrajes.nombre`, no de un texto escrito a mano en la plantilla.
+
+Comprobado contra la cotizacion "camila": lista 4 renglones —bisagra par (4), manija 415 (4), pata
+ajustable (8) y tornillo 8 5/8 (32)— en vez de los diez de antes con seis N/A.
+
+Las **imagenes se eliminaron** de la propuesta, a peticion del usuario. Tambien salieron los diez
+campos de texto de herrajes de `FirplakTemplate` y del editor: ya no alimentan nada y dejarlos
+editables haria creer que cambian la propuesta.
+
+El mismo rol con dos referencias son dos renglones, porque al cliente se le entregan las dos. Un
+codigo sin registro en el catalogo se imprime sin descripcion en vez de con un texto inventado. Si
+los muebles no llevan herrajes, la pagina lo dice en vez de mostrar una tabla vacia.
+
+`src/lib/herrajes-propuesta.ts` con 11 casos en `tests/herrajes-propuesta.test.ts`.
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] update | La propuesta pierde el bloque de materiales del proyecto y las fotos de embalaje
+
+A peticion del usuario:
+
+- Fuera el bloque **"Materiales configurados en el proyecto"** de la pagina de especificaciones. El
+  campo `projectMaterials` sale de `FirplakTemplate` y del editor: nunca llego a tener contenido
+  definitivo y las cuatro tablas de especificaciones ya dicen los materiales.
+- Fuera las **dos fotos de embalaje** de la pagina de condiciones. Queda el texto de Embalaje y los
+  terminos, que es lo que se lee.
+
+Con esto la propuesta ya no usa ninguna imagen salvo el logo. Los archivos siguen en
+`public/firplak-template/` (las 6 de herrajes y las 2 de embalaje) por si se quieren recuperar; no
+se borraron sin pedirlo.
+
+**Defecto encontrado por una prueba**: `normalizarFirplakTemplate` era un spread y arrastraba las
+claves retiradas del JSON guardado, asi que los campos de herrajes y `projectMaterials` se iban a
+seguir acumulando en la base para siempre. Ahora se queda solo con las llaves conocidas y lo
+retirado se va en el proximo guardado, sin migracion.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] feat | Termino de tiempo de entrega en la propuesta
+
+Nuevo punto en Terminos y condiciones, despues del de pago:
+
+> Tiempo de entrega: noventa (90) dias calendario a partir de la confirmacion del anticipo.
+
+El numero **no va escrito a mano**: sale de `leadTimeDays`, que se edita en la plantilla y ya
+alimenta la casilla TIEMPO DE ENTREGA del resumen. Si el plazo cambia a 45, el termino dice
+"cuarenta y cinco (45)".
+
+Para eso se escribio `src/lib/numero-en-letras.ts`: numeros de 0 a 999 en letras, con los casos
+irregulares del espanol (quince, dieciseis, veintidos, treinta y uno, cien contra ciento,
+quinientos, setecientos, novecientos). Fuera de rango devuelve el digito en vez de una frase
+inventada; un plazo de mas de mil dias no existe. 6 casos en `tests/numero-en-letras.test.ts`.
+
+La convencion de letras mas cifra es la de los documentos comerciales en Colombia: evita que un
+digito mal leido cambie el compromiso.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] feat | La programacion de modulos va separada por bloques con su total
+
+La pagina era una lista plana de SKU. Ahora se separa en **Muebles, Paneles, Filler y Herrajes**,
+cada uno con su titulo y con el total de unidades al final del bloque, que es lo que se lee de esa
+pagina y antes habia que sumar a mano.
+
+Clasificacion por el prefijo del modulo: `PN` a Paneles, `F` a Filler, lo demas a Muebles. Se
+comparan las **letras iniciales**, no un `startsWith`, para que `FPK` no caiga en Filler ni `PCFD`
+en Paneles. Una linea sin prefijo es material suelto —lo que se agrega con "Agregar
+herrajes/otros"— y va al bloque de Herrajes.
+
+Los zocalos (`TK`) quedan en Muebles: el usuario pidio cuatro bloques y no se inventa un quinto.
+Un bloque sin filas no se imprime, en vez de salir en cero.
+
+`src/lib/grupos-programacion.ts` con 9 casos en `tests/grupos-programacion.test.ts`.
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] update | Los terminos suben a la primera pagina y la propuesta baja a 4 hojas
+
+A peticion del usuario, en la primera pagina las tres casillas (VIGENCIA, FORMA DE PAGO, TIEMPO DE
+ENTREGA) y la linea de alcance de entrega dejan su sitio a **Terminos y condiciones**, que estaba al
+final del documento.
+
+No se pierde informacion: vigencia, forma de pago y tiempo de entrega ya eran puntos de esa lista
+—decian lo mismo que las casillas— y el alcance de entrega se agrego como punto propio para no
+dejarlo fuera del documento.
+
+El texto de embalaje pasa a ser un punto mas de la lista, como se pidio. Con eso la pagina
+"Embalaje y condiciones" se queda sin contenido y **se elimina**: la propuesta pasa de 5 hojas a 4
+(Cotizacion, Especificaciones, Herrajes incluidos, Programacion de modulos). El campo de notas de
+embalaje sigue editable en la plantilla.
+
+quality:gate exit 0, build limpio.
+
+## [2026-10-16] fix | La propuesta y el Excel siguen la moneda elegida, y el IVA con ella
+
+El IVA ya se liquidaba solo en pesos, pero la moneda del documento salia de `cabecera.moneda` y no
+de lo que se elige en el detalle. Si se destildaba COP y se imprimia, la propuesta seguia saliendo
+en pesos y con IVA.
+
+Ahora los tres —encabezado, propuesta y Excel— usan **la misma regla**, `monedasVisibles`: manda lo
+marcado en las casillas y, con las dos marcadas o sin casillas en la URL, la moneda del proyecto.
+Las casillas ya viajaban en el enlace de Imprimir / PDF y en el de Exportar Excel; la propuesta las
+estaba ignorando.
+
+Consecuencia, que es lo que se pidio:
+
+| Moneda del documento | Pie del resumen |
+| --- | --- |
+| USD | una sola fila: **TOTAL** |
+| COP | TOTAL ANTES DE IVA · IVA 19% · TOTAL CON IVA INCLUIDO |
+
+4 casos nuevos en `tests/iva.test.ts` que fijan la combinacion completa, incluido elegir dolares en
+un proyecto en pesos (sin IVA) y al reves. quality:gate exit 0, build limpio.
+
+## [2026-10-19] update | Se toleran atributos de extensiones en el nodo HTML durante la hidratación
+
+El layout raíz aplica `suppressHydrationWarning` tanto a `<html>` como a `<body>` para evitar el
+overlay de React cuando una extensión modifica esos nodos antes de la hidratación, sin ocultar
+inconsistencias dentro del árbol de la aplicación.
+
+## [2026-10-19] update | BOV y todas las carcazas lineales admiten agrupación física
+
+La migración `0183_agrupacion_carcazas_lineales.sql` habilita 26 familias
+lineales verificadas y mantiene excluidos esquineros, paneles, zócalos y piezas
+sueltas. Los laterales se comparten; base y tapa se fusionan solo si son
+homologables. `BOV` conserva rails y frente locales. El motor homologa reglas
+continuas existentes con nuevas reglas opcionales y ajusta piezas locales aun
+cuando el ancho se expresa en `formula_ancho` por estar giradas.
+
+## [2026-10-19] update | Migración 0183 aplicada y verificada en Supabase
+
+Se aplicó `0183_agrupacion_carcazas_lineales.sql` al proyecto configurado. La
+verificación posterior confirmó `26/26` familias con agrupación habilitada y,
+para `BOV`, lateral compartido y base continua opcional con `LG-(2*TC)`.
+
+## [2026-10-19] update | Selector Fondo por módulo en cotizaciones
+
+`AddLineForm` incorpora en creación y edición el desplegable **Fondo** con las
+opciones **Con fondo** y **Sin fondo**. La selección se guarda en
+`cot_cotizacion_lineas.config.conFondo` y recalcula despiece, costo y precio;
+los muebles superiores permanecen forzados a **Con fondo**.
+
+## [2026-10-19] ingest | Tipologías abiertas BFD y SBFD
+
+La migración `0184_tipologias_abiertas_bfd_sbfd.sql` crea `OBFD`, `OBFD-SM`,
+`OSBFD` y `OSBFD-SM`. Cada versión conserva metadatos, piezas estructurales,
+reglas y herrajes de su fuente, pero elimina las piezas con rol `frente`; sus
+nombres y descripciones visibles aclaran que son muebles sin puertas.
+
+## [2026-10-19] update | Migración 0184 aplicada y verificada en Supabase
+
+Se aplicó la migración al proyecto configurado. La consulta posterior confirmó
+los cuatro tipos activos, cero piezas de `frente` en cada destino y paridad con
+la fuente en piezas no frontales, reglas y herrajes.
+
+## [2026-10-19] update | Módulos sin puertas excluyen manijas y bisagras
+
+El motor ahora deriva la existencia de puertas desde el despiece efectivo y
+omite `manija` y `bisagra` cuando no existe ningún frente. La migración `0185`
+retira esos roles de `OBFD`, `OBFD-SM`, `OSBFD` y `OSBFD-SM`, conservando los
+herrajes estructurales.
+
+## [2026-10-19] update | Tipologías SF bajo demanda y sufijo comercial
+
+Cotizaciones agrega `-SF` al código de módulos inferiores sin respaldo,
+después de `-SM` y antes de `-15MM`/`-18MM`. La migración `0186` instala una
+función autenticada e idempotente que crea la tipología `*-SF` solo cuando no
+existe, omite únicamente el respaldo `fondo`, ajusta la base a `P-TC` y deja el
+nuevo tipo disponible en Simulador. `fondo_gaveta` se conserva.
+
+## [2026-10-19] update | Con fondo revierte la tipología SF
+
+La migración `0187` instala una resolución bidireccional: **Sin fondo** crea o
+reutiliza `*-SF`, mientras **Con fondo** reemplaza una variante SF por su tipo
+base activo. Edición y alta resuelven el UUID antes de cotizar; el recálculo
+elimina `SF` del código y restaura nombre, descripción y despiece con respaldo.
+
+## [2026-10-19] update | Familia dinámica DB-SM-SF
+
+Simulador y Cotizaciones agrupan las variantes `DB-<variante>-SM-SF` bajo la
+tipología general `DB-SM-SF`, con selector interno y detección automática de
+nuevas variantes. Elegir la familia en Cotizaciones fuerza el estado sin fondo.
+
+## [2026-10-19] update | DB-SM agrupada en Cotizaciones
+
+El selector principal de muebles en Cotizaciones agrupa `DB-2S-SM`,
+`DB-2-SM` y `DB-3-SM` bajo `DB-SM`, igual que el Simulador. Las variantes se
+eligen únicamente desde el selector secundario de la familia.
+
+## [2026-10-19] update | Tipología DB-2-1INT-SM
+
+La migración `0188` crea la variante DB-SM de dos frentes exteriores y una
+gaveta interior según la hoja DB22-2+INT SM. Reproduce las medidas de carcasa,
+tres cajas, frentes y respaldo; usa tres rieles, una Gola y un par de barras.
+Queda activa en Supabase y disponible dentro de la familia `DB-SM` en
+Simulador y Cotizaciones.
+
+## [2026-10-19] update | Canto 22x1 en DB-2-1INT-SM
+
+## [2026-10-19] update | Gaveta interior de DB-2-1INT-SM ubicada completamente debajo de gola_madera con reveal de 3,2 mm
+
+## [2026-10-19] update | Creación de DB-2-1INT-SM-FE con dos cajas grandes, una interior pequeña y retiro visual de 70 mm
+
+## [2026-10-19] update | DB-2-1INT-SM-FE corregida a caja pequeña en gaveta superior exterior e interior, con una sola caja grande inferior
+
+La migración `0189` habilita el calibre de canto en los frentes exterior e
+interior. El motor ahora contabiliza las cuatro aristas de cada pieza y muestra
+el consumo `22x1` cuando corresponde al material y configuración del frente.
+
+## [2026-10-19] update | Alineación del trasero pequeño con la caja superior de DB-2-1INT-SM-FE en la visualización lateral
+
+## [2026-10-19] update | Gaveta interior de DB-2-1INT-SM-FE desplazada hasta tocar internamente el frente exterior superior
+
+## [2026-10-19] update | Desactivación de S, SA, SBAS, SLOC y SMO en los catálogos de Simulador y Cotizaciones
+
+## [2026-10-19] update | Desactivación de AL en los catálogos de Simulador y Cotizaciones
+
+## [2026-10-19] update | Precios editables de tablero aislados por cotización, con recálculo de sus muebles sin modificar el catálogo global
+## [2026-10-19] update | Clasificación por convención de las variantes DB-SM y DB-SM-FE dentro de sus familias en Simulador y Cotizaciones.
+
+## [2026-10-20] update | Desactivación de F, OILVP e ILVP en los catálogos de Simulador y Cotizaciones
+
+## [2026-10-20] update | Exclusión defensiva de F, OILVP e ILVP en el catálogo compartido ante bases pendientes de migración
+
+## [2026-10-20] update | Desactivación de tipologías legacy adicionales y retiro selectivo de variantes IC en Simulador y Cotizaciones
+
+## [2026-10-20] update | Reactivación de BFD y conservación de su alias métrico IP por compartir la misma fila de catálogo
+
+## [2026-10-20] ingest | Creación de SBFD-SMG desde hoja de corte e IGES, con código SMG18 para caja de 18 mm
+
+## [2026-10-20] update | Corrección visual del riel delantero SBFD-SMG a posición horizontal superior según vista lateral del IGES
+
+## [2026-10-20] update | SBFD-SMG adopta la base estándar de SBFD y agrega fondo de 6 mm al despiece y la visualización
+
+## [2026-10-20] update | Visualización del mecanizado frontal superior de 27 × 73 mm en ambos laterales SBFD-SMG
+
+## [2026-10-20] update | Refuerzo delantero SBFD-SMG retirado 27 mm hacia el fondo para alinearlo con el mecanizado de gola
+
+## [2026-10-20] ingest | Creación de BFD-SMG desde hoja BFD24-SMG, con entrepaño, fondo, mecanizado 27 × 73 mm y código SMG18
+
+## [2026-10-20] update | Reactivación de la tipología F en Simulador y Cotizaciones, incluida su retirada de la exclusión defensiva
+
+## [2026-10-20] update | Reactivación de todas las filas y configuraciones DB/IC en Simulador y Cotizaciones
+
+## [2026-10-20] update | Nombre visible DB2-1OP actualizado a DB-2-1INT sin cambiar su clave ni comportamiento
+
+## [2026-10-20] update | Anotaciones por mueble en Cotizaciones, persistentes por versión y visibles en pantalla, impresión y Excel
+
+## [2026-10-20] update | Migración 0205 aplicada en Supabase y anotaciones alineadas junto a descripción y medidas
+
+## [2026-10-20] update | Comentarios internos append-only por versión con alertas para estados Enviada y Aprobada, excluidos de impresión
+
+## [2026-10-20] update | Nombre visible elegido al ingresar y columna Cotizado por basada en la autoría real de cada cotización
+## [2026-10-20] update | Nombre del usuario mostrado sobre el correo en el menú de sesión
+
+## [2026-10-20] update | Familias de materiales opcionales y tableros separados para frente, filler, panel y zócalo en Cotizaciones
+
+## [2026-10-20] update | Filler, Panel y Zócalo vuelven a compartir el tablero de frente, sin selectores independientes
+
+## [2026-10-20] update | Descripciones visibles W-SM, W-SM-LOC y W-SM-PUSH actualizadas a Sin Manija
+
+## [2026-10-20] update | Edición de materiales desplegada debajo de la fila seleccionada en Materiales-Parámetros
+
+## [2026-10-20] update | Cálculos automáticos de área y precio por m² en el catálogo de tableros, con fallback manual y pruebas unitarias.
+
+## [2026-10-20] update | Mejora de UX en tabla de catálogos: scroll horizontal visible, primera columna sticky con acciones, editor inline adaptado sin scroll y alineación tipográfica
+
+## [2026-10-20] update | Ampliación de la columna Código en la tabla de catálogos para visibilidad completa del identificador sin truncamiento
+
+## [2026-10-21] update | Fondos separados por diferencias de altura y bases incompatibles independientes en grupos de muebles superiores
+
+## [2026-10-21] update | Alineación superior, tapa continua y refuerzos traseros apilados en muebles superiores agrupados
+
+## [2026-10-21] ingest | Nueva tipología W-MO-HOOD basada en UW con medidas MO/HOOD, base extendida y montaje visual paramétrico
+
+## [2026-10-21] update | Migración W-MO-HOOD aplicada, registrada y verificada en Supabase; se agregó un ejecutor reutilizable de migraciones
+
+## [2026-10-21] update | Montaje W-MO-HOOD corregido: base extendida al frente, fondo hasta la base, entrepaños según vano superior, refuerzo inferior sobre base y fijo alineado al frente
+
+## [2026-10-21] update | Campos MO y HOOD visibles en la fila principal de medidas de Cotizaciones para W-MO-HOOD
+
+## [2026-10-21] update | Activación robusta y ubicación visible de MO/HOOD en el Simulador publicado para W-MO-HOOD
+## [2026-10-21] ingest | Familia DB-SMG de doce cajoneras con variantes base, Full Extension y sin fondo, selector único, códigos SMG18 y mecanizado lateral 27 × 73 mm
+
+## [2026-10-21] update | DB-SMG reorganizada en tres familias independientes de selector: base, Full Extension y sin fondo, conservando las doce tipologías e IDs existentes
+
+## [2026-10-21] update | DB-SMG ajusta un único refuerzo delantero horizontal a 27 mm y dos mecanizados laterales 27 × 73 mm según el nivel de gavetas
+
+## [2026-10-21] update | DB-2-1INT-SMG posiciona el segundo mecanizado entre los frentes exteriores e ignora la gaveta interior
+
+## [2026-10-21] update | DB-2-1INT-SMG eleva el mecanizado para dejar su borde superior inmediatamente debajo de la base_gaveta
+
+## [2026-10-22] update | Los nombres comerciales de todos los muebles superiores incluyen la profundidad en Simulador y Cotizaciones
+
+## [2026-10-22] update | Migración retroactiva para agregar profundidad a nombres superiores de cotizaciones existentes y recomponer códigos de grupo
+
+## [2026-10-22] update | Recomposición posterior de codigo_grupo tras detectar que el CTE de 0215 leía la instantánea previa de las líneas
+
+## [2026-10-22] update | F, PN y TK dejan de generar variantes SF; líneas históricas migradas a sus tipologías planas base
+
+## [2026-10-22] ingest | TK paramétrico en PC/PCFD/VPC, puertas divididas en PC/VPC y nueva tipología PCFD-MO
+## [2026-10-22] update | Se hizo invariante al fondo la tipología DFE: no genera sufijo SF y las líneas DFE-SF/F-SF se normalizan a su tipología base.
+
+## [2026-10-23] update | PC corta cuatro entrepaños ajustables más el fijo incluido en base_tapa y visualiza correctamente las puertas superiores e inferiores según TK, PUERTA_SUP y RV.
+
+## [2026-10-23] update | Se verificó en Supabase que PC conservaba cantidad literal 5 y se corrigió el despiece activo a cantidad literal 4 para los entrepaños ajustables.
+
+## [2026-10-23] update | PCFD usa tres base_tapa_division (base, fijo y tapa), descuenta el fijo de los entrepaños móviles y lo representa delante del fondo.
+
+## [2026-10-23] update | PCFD-MO incorpora PUERTA_SUP, define MO como vano libre entre dos fijos de material de frente y posiciona las puertas por referencia a esos fijos.
+
+## [2026-10-23] update | PCFD-MO conserva 732 mm como largo de los fijos pese a usar material de frente y distribuye dos entrepaños móviles abajo y uno arriba.
+
+## [2026-10-23] update | El ancho de base_tapa y entrepano_fijo de PCFD-MO descuenta 18 mm y el espesor real TB del fondo.
+## [2026-10-23] update | Los códigos de PC, PCFD, PCFD-MO, VPC y OVPC incluyen alto, profundidad y el TK asignado como sufijo separado; OVPC ahora solicita TK.
+
+## [2026-10-23] update | El TK de los códigos métricos conserva la medida escrita y elimina residuos decimales producidos por convertir cm a pulgadas y regresar a cm.
+
+## [2026-10-26] update | Las variantes DB-SM-FE-SF se consolidan en una sola tipología visible con selector interno en Simulador, Cotizaciones y HDR.
+
+## [2026-10-27] update | Los gaveteros DFE incluyen alto y profundidad en su código comercial (Simulador, Cotizaciones y BD histórica via migración 0226).
+
+## [2026-10-27] update | PCFD-SF se retira y normaliza a PCFD; PCFD incluye largo, alto, profundidad y el TK asignado al final, y PC/PCFD/PCFD-MO/OVPC dejan de inyectar un TK predeterminado.
+
+## [2026-10-28] update | Nombre del PDF de cotización con proyecto y fecha de generación
+
+Se unifica el título de impresión de las plantillas general, CEMA y FIRPLAK como `Cotización Nombre del proyecto AAAA-MM-DD`, con limpieza de caracteres de archivo y actualización de fecha al imprimir.
+
+## [2026-10-29] update | Herrajes/otros, materiales por área closet y doble verificación de PDF
+
+Los adicionales se excluyen de muebles y programación de las tres plantillas y se detallan con cantidades, unidades y valores. Las especificaciones proceden de Características del proyecto y catálogo. Un área con closet tiene prioridad sobre el prefijo del módulo. Se sincronizaron 201 módulos de las 7 cotizaciones existentes, con respaldo previo, recálculo de 199 grupos y auditoría posterior sin diferencias de materiales ni totales. Supabase registra la migración 0228 y la clasificación de las 51 líneas históricas. Se guardan reglas en AGENTS.md y el protocolo en wiki/protocolo_pdf_cotizaciones.md: dos PDF independientes por proyecto (KUNDARA y Milán), comparación de texto, revisión renderizada, límites y validación de 83 archivos de pruebas.
+
+## [2026-10-29] update | Propagación visible de materiales globales y preparación de integración
+
+Se serializa el guardado de Características para impedir que peticiones anteriores sobrescriban cambios posteriores; se muestran progreso y errores. El editor abierto refleja el preset y los cantos guardados tras la actualización y la etiqueta de materiales globales solo confirma coincidencias reales. Se invalida también la vista imprimible. Se añaden pruebas de guardado concurrente e inmutable y el protocolo exige dos cambios reales desde la interfaz sobre PN, F, W y DFE de una sección closet. Validación exhaustiva: 84 archivos de pruebas.
+
+## [2026-10-30] ingest | Dashboard de cotizaciones y campos país/ciudad
+
+Se agrega la migración aditiva 0229 (país obligatorio con Colombia para el histórico, ciudad opcional e índices), edición independiente de ubicación y la ruta /cotizaciones/dashboard. La vista y los RPC SECURITY INVOKER preservan RLS; los mismos filtros alimentan agregados, tabla paginada y CSV. Se implementan KPIs y gráficas SVG propias sin dependencias nuevas, filtros en URL, orden, paginación, estados de carga/vacío/error y exportación UTF-8 para Excel. La arquitectura, semántica y pruebas se documentan en wiki/dashboard_cotizaciones.md. No se modifican archivos de PDF, variantes isazaale ni fuentes raw.
+
+## [2026-10-30] update | Agrupación física de muebles SMG
+
+Habilitadas BFD-SMG/SBFD-SMG y variantes -SF mediante 0230, aplicada en Supabase.
+Se conservan las reglas físicas y los mecanizados. Corregida la paginación del
+catálogo precompilado para recuperar las 1.013 piezas. Auditoría de 18 variantes
+y 18 cruces, pruebas de regresión y documentación en plan_agrupacion_modulos.md.
+## [2026-10-30] update | Sufijos de espesor y SMG15 en cotizaciones
+
+Reutilizada la regla de espesores comunes de caja/frente para añadir SMG15.
+Auditadas 9 cotizaciones; actualizados 40 códigos y 25 grupos de MALECÓN 72,
+con respaldo y transacción, conservando precios y materiales. Documentación
+en codificacion_comercial_modulos.md y páginas de las familias SMG.
+
+## [2026-10-30] ingest | Análisis TW/W-SM-HOOD y preparación del campo HOOD
+
+Analizado TW-SM-HOOD.iges y sus once sólidos. Preparados campo, persistencia,
+validación y cantidad de puertas; pendientes las aclaraciones de frente falso
+variable/fijo y fondo de tabla/IGES antes de registrar las tipologías.
+
+## [2026-10-30] update | TW/W-SM-HOOD con HOOD y FREE confirmados
+
+Aplicada 0231 en Supabase. Carcasa=Alto−HOOD, frente falso=HOOD−FREE; FREE
+representa la parte visible del extractor. Fondo según tabla. TW una puerta y
+W dos. Campo y validación en simulador/cotizaciones, persistencia e historial.
+Documentación definitiva en tw_w_sm_hood.md; pruebas de motor, montaje y unidades.
+
+## [2026-10-30] update | Corrige trim de medidas ausentes en Simulador
+
+Normalización de todas las medidas del estado guardado y módulos combinados,
+incluida hidratación de la misma versión y Fast Refresh; almacenamiento versión 9.
+parseMedida acepta null/undefined como incompleto (NaN), sin inventar cero ni
+eliminar módulos. Nuevas regresiones de recuperación e historial y parser.
+Documentado en arquitectura_frontend.md y actualizada la versión en tw_w_sm_hood.md.
+
+## [2026-10-30] update | Extensión del frente falso HOOD bajo las puertas
+
+Aplicada 0232 para TW/W-SM-HOOD. Se suman 145,95 mm al alto HOOD−FREE y se
+conserva el borde inferior: separación exacta de 30 mm con las puertas.
+Actualizados visualización, madera, canto y precio; el tramo superior existe
+incluso si FREE=HOOD. No había líneas persistidas de estas familias al auditar.
+Regresiones de separación, cantidad, IGES original y aumento de materiales/costo.
+
+## [2026-10-30] update | Retira explicación de fórmulas HOOD/FREE
+
+Retirada la línea de fórmulas bajo HOOD/FREE en Simulador y formulario de
+cotización, a petición del usuario. Se conservan las aclaraciones breves de
+cada campo. Las reglas de cálculo y montaje siguen documentadas en tw_w_sm_hood.md.
+
+## [2026-10-30] update | Mayúscula inicial en aclaración FREE
+
+La aclaración y el título del campo FREE muestran «Parte visible del extractor»
+con P mayúscula en Simulador y formulario de cotizaciones.
+
+## [2026-10-30] ingest | Copiar sección completa de cotización
+
+Icono de copiar junto a eliminar; copia adyacente con sufijo -copia y renombrado
+habitual. Aplicada 0233 con RPC atómica y RLS, nuevos IDs y remapeo de grupos,
+conservando información y precios. Pruebas de datos, permisos, rollback, UI y PDF.
+Documentación en copiar_seccion_cotizacion.md.
+
+## [2026-10-30] update | HOOD con 46 tarugos de armado
+
+Aplicada 0234 para TW/W-SM-HOOD: entrepaño fijo 8, frente falso 10, gola 4 y
+refuerzos traseros 4 por pieza; base/tapa 8 cada una. Total individual 46 y
+costo por catálogo, manteniendo reglas de agrupación y modos de frentes.
+No había cotizaciones históricas con estas tipologías al auditar. Documentado
+y cubierto por regresiones en tw_w_sm_hood.md y pruebas HOOD.
+
+## [2026-11-03] update | Adicionales del PDF agrupados y sin precios en el detalle
+
+HerrajesOtrosPdf suma cantidades por referencia y unidad entre áreas, conserva las áreas de origen y elimina las columnas monetarias y el subtotal de esta tabla. Los importes del resumen general permanecen intactos. Regresión de cantidades, fracciones, repeticiones, monedas e inmutabilidad; auditoría estricta de las 10 cotizaciones sin errores. Dos generaciones independientes de Casa Poro, KUNDARA y Milán con texto idéntico y páginas renderizadas revisadas. Quality gate aprobado (91 suites); protocolo e índice actualizados. Sin cambios en WikiLLM/raw.
+
+## [2026-11-03] update | Caja y refuerzos de abiertos con el material global de frentes
+
+OBFD, OBFD-SM, OSBFD-SM y OW derivan caja/refuerzo del frente seleccionado, respetando familia y prioridad closet. Regla compartida por proyecto, preparador del motor y editor; especificaciones del PDF actualizadas. Aplicación histórica limitada a 7 OW de KUNDARA y las dos versiones de Casa Poro, con respaldo previo; las otras 355 líneas de esos proyectos quedaron intactas. Totales recalculados, auditoría estricta sin errores y segunda simulación sin pendientes. Gate aprobado con 92 suites y quality:learn sin HIGH. Detalles, importes y límites en materiales_tipologias_abiertas.md. Sin cambios en WikiLLM/raw.
+
+
+## [2026-11-04] update | Dimensiones variables B, materiales OW-MO y programación FIRPLAK opcional
+
+Reglas compartidas de nombres y materiales; interruptor persistido que elimina la programación del PDF. Gate 92 suites aprobado y learn sin HIGH. Dos generaciones independientes por estado en KUNDARA y Milán, con revisión de texto y páginas. Auditoría de solo lectura: cuatro módulos históricos pendientes de recálculo; no se modificaron sus datos. Detalle en [wiki](wiki/inferiores_b_ow_mo_programacion_pdf.md).
+
+
+## [2026-11-04] update | Aplicación histórica y verificación de pestañas
+
+Autorización explícita con respaldo: cuatro OW-MO sincronizados, 44 nombres de línea y 34 grupos actualizados. Auditoría estricta de 11 cotizaciones sin pendientes; importes de las 705 líneas conservados por la corrección final de nombres. Selectores del simulador y editor alineados con material efectivo; buscador HDR corregido; interruptor también en CEMA con renumeración. Detalle e impresión de todas las cotizaciones, pruebas de simulador/HDR/Optimizador y 12 PDF revisados en dos generaciones por estado. Incidencia de guardados posteriores de Condominio V y respaldos documentados. Gate 92 suites, exit 0; learn sin HIGH. [Evidencia y alcance](wiki/inferiores_b_ow_mo_programacion_pdf.md).
+
+
+## [2026-11-04] update | Fondo de color para OW y demás abiertos, consumo y precio reales
+
+Se extendió la regla de 6 mm del color del frente a OBFD, OBFD-SM, OSBFD-SM y OW, además de OW-MO. Selector derivado, validación de catálogo/espesor y especificación PDF. Guardado real de OW803030.4-SM15: PRIRH6CONSTRUCTOR, 0,248727 m2 y costo de fondo 7517,26 COP. Auditoría independiente de 28 abiertos con fondos correctos; se documentan tres diferencias concurrentes de caja/refuerzos en Condominio V, sin afirmar auditoría general limpia. Gate 92 suites, learn sin HIGH; seis PDF de dos generaciones revisados. [Evidencia, respaldo y límites](wiki/fondos_color_abiertos.md).
+
+
+## [2026-11-04] update | Orden personalizado de secciones completas de cotización
+
+Asa de arrastre y flechas en cocinas/closets/baños, guardado optimista con reversión de errores y RPC atómica con RLS (migración 0235 aplicada). Prueba SQL transaccional sin datos residuales; navegador con nueve secciones: arrastre, flechas, teclado, recarga y fallo de red. Las 67 líneas y los importes permanecen intactos; orden original restaurado al terminar. Dos PDF con texto idéntico y resumen en el orden elegido, renderizados y revisados. Gate 92 suites aprobado; learn sin HIGH. [Documentación y evidencia](wiki/orden_secciones_cotizacion.md).
+
+
+## [2026-11-04] update | Preparación de publicación LIz a DEV y main, y Supabase actualizado
+
+Migración 0235 aplicada y registrada mediante Management API; prueba SQL transaccional aprobada. Suite completa de release: 92 suites, exit 0. Sincronización limitada con respaldo de tres OW-MO de Condominio V y corrección de 14 códigos posteriores en Condominio V/ELEVEN. Auditoría estricta de las 11 cotizaciones: cero diferencias y errores; auditoría de códigos: cero pendientes. Evidencia y nombres de respaldo en [fondos](wiki/fondos_color_abiertos.md) y [orden de secciones](wiki/orden_secciones_cotizacion.md).
+
+
+## [2026-11-04] update | DB-FE principal con seis variantes internas y riel Full Extension
+
+Migración 0236 aplicada y registrada: copia de DB sin alterar su carcasa/frentes, cajas de madera FE con laterales de 500 mm, fondo de gaveta de 492 mm y riel RIELFE500 por gaveta, sin barras ni Gola. Selector interno en cotizaciones, simulador y HDR; normalización compartida de guardado/cálculo y códigos de variante antes de FE. 93 suites aprobadas, learn sin HIGH, catálogo verificado en SQL; alta/edición real de seis variantes y dos PDF revisados en cotización temporal eliminada al terminar. Se documenta un descuadre general ajeno en Condominio V, sin modificar sus líneas. [Reglas y evidencia](wiki/db_fe.md).
+
+
+## [2026-11-04] update | Preparación de publicación DB-FE a DEV y main
+
+Verificada migración 0236 registrada en Supabase, DB-FE activa/agrupable con 18 piezas y RIELFE500; prueba SQL aprobada. Suite completa de release: 93 suites, exit 0. Auditoría estricta posterior de 11 cotizaciones: cero diferencias y errores, sin reaplicar ni modificar sus importes. Se preparan todos los cambios de tipología, selectores, persistencia, visualización, pruebas y wiki para el flujo LIz a DEV a main solicitado. [Evidencia DB-FE](wiki/db_fe.md).
+
+## [2026-11-05] update | Preferencias de herrajes persistentes y patas/tornillos BOV
+
+Corregida la pérdida de activación/exclusiones al reconstruir módulos y cambiar TRM; el editor conserva una selección sin exclusiones frente a los defaults del proyecto. Incorporadas plantillas BOV/BOV-SF con PATA10AJUST y TORNILLO858, con autorización y respaldo previo; recalculados 18 grupos de seis proyectos. Dos auditorías de 11 cotizaciones/814 módulos y contraste estricto de herrajes, precios, materiales y totales sin diferencias. Caso DB65 de Condominio V verificado con tres guardados y recargas en una copia temporal eliminada: excluir/incluir/excluir rieles y barras produce precios reversibles; el original mantiene su selección por decisión del usuario. Once vistas de impresión abiertas; 14 PDF (dos por proyecto con BOV y Milán Closet), texto idéntico entre pasadas, totales y cantidades contrastados con consulta independiente, páginas renderizadas revisadas. Quality gate: 93 suites, exit 0; learn sin HIGH. [Contrato, respaldos, importes y límites](wiki/preferencias_herrajes_bov.md).
+
+## [2026-11-05] update | Registro Supabase y preparación de publicación de herrajes
+
+Migración 0237 aplicada y registrada mediante Management API con versión 20261105160555, sin duplicar las plantillas existentes ni modificar selecciones de cotizaciones. Ambas auditorías estrictas posteriores aprobadas: 11 cotizaciones, 814 módulos, 18 BOV; cero diferencias de herrajes/precios y cero errores de materiales, grupos o conciliación. Se prepara el commit de todos los cambios y la promoción autorizada LIz → DEV → main, con retorno final a LIz. [Evidencia](wiki/preferencias_herrajes_bov.md).
+
+## [2026-11-05] ingest | Módulo Pipeline CEFI, form de registro y dashboard unificado
+
+Fases secuenciales con respaldo y conteos constantes (11 cotizaciones: 7 borrador y 4 enviada). Migraciones aditivas 0238–0241: catálogo de siete estados, cot_pipeline con RLS, vínculo atómico y RPC invoker. Registro de 26 campos, tabla/drawer editable, preselección limitada, sincronización hacia adelante y dashboard único en ?vista=dashboard con 301 de compatibilidad. Importación autorizada de 437 registros y 7 filas vacías omitidas; segunda corrida insertó cero. Se preservan las 39 columnas originales, datos incompletos y tipo Excel/TEOWIN/Plus; tasas auxiliares no asignadas a oportunidades. Dos fechas textuales se resolvieron con confirmación expresa antes de insertar. Pruebas de RLS, interfaz, filtros, CSV y responsive aprobadas; fixtures transaccionales o propios de Pipeline, sin UPDATE/DELETE de cotizaciones existentes. [Arquitectura, decisiones, riesgos y evidencia](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-05] update | Botones de vistas sobre la tarjeta de cotizaciones
+
+Registro, Pipeline y Dashboard se separan de Guía/Tips y pasan a una fila propia en la columna derecha, inmediatamente encima del listado. Tamaño visual aumentado un 0,5 % (scale 1.005). Las vistas de ancho completo conservan la navegación junto a Volver. Cambio solo de distribución visual; no altera datos ni cálculos. [Navegación Pipeline](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-05] update | Preparación de publicación Pipeline CEFI y navegación
+
+Promoción autorizada de todos los cambios LIz → DEV → main con retorno a LIz. Migraciones 0238–0241 verificadas mediante apply-migration: ya registradas, sin reaplicación. Preflight de importación: 437 históricos existentes, cero pendientes y siete vacías omitidas; las 11 cotizaciones conservan siete borrador y cuatro enviadas. Se incluye el PDF de referencia intacto y se conservan los respaldos y el Excel fuera de Git. Suite completa requerida antes de crear el commit. [Evidencia de arquitectura y publicación](wiki/pipeline_cotizaciones.md).
+## [2026-11-05] update | Referencias navegables y datos desconocidos en Pipeline
+
+Código muestra la referencia PLUS y abre su cotización; el origen histórico permanece conservado. Migración 0242 aplicada, 374 nombres normalizados y ocho relaciones verificadas, sin alterar las 11 cotizaciones. Registro exige valor o elección explícita Desconocido en campos habilitados. Pruebas de navegación y registro temporal aprobadas; gate con 103 archivos sin regresiones. [Detalles](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-05] update | Relaciones Pipeline confirmadas por el usuario
+
+Satori cocinas se vincula a 26080 DYCO Satori y ELEVEN Apto modelo a 26053 Eleven Showroom. Condominio V queda sin relación. Total: diez vínculos de 437 oportunidades; aplicación con respaldo y comparación de las 11 cotizaciones sin cambios. [Pipeline](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-05] update | Condominio V vinculado por identificación del usuario
+
+La oportunidad 26041 Ramstack - CONDOS V de Costa Rica se relaciona con Condominio V. Total: once vínculos. Se conserva respaldo y se comprueba que las once cotizaciones permanecen intactas. [Pipeline](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-05] update | Publicación de referencias Pipeline y opción Desconocido
+
+Promoción autorizada LIz → DEV → main, con retorno a LIz. Migración 0242 verificada en Supabase sin reaplicación; once relaciones confirmadas y cotizaciones intactas. Incluye referencias compartidas con impresión, registro explícito de datos desconocidos, sincronizador con respaldo y pruebas de regresión. Validación completa y auditoría consultiva antes del commit. [Pipeline](wiki/pipeline_cotizaciones.md).
+
+## [2026-11-06] update | Tablero Gaveta de 15 mm y herrajes elegibles en DB
+
+Migración 0243 aplicada; 12 cotizaciones configuradas y 39 módulos DB recalculados con respaldo previo y equivalencias confirmadas. Selectores de material de 15 mm, riel y barra con referencias reales, persistencia por módulo y excepción FE conservada. Auditorías de materiales, precios y totales sin diferencias; pruebas de interfaz y doble generación PDF verificadas. [Detalles y alcance](wiki/tablero_gaveta_db.md).
+
+## [2026-11-06] update | Publicación de Tablero Gaveta y selección de herrajes DB
+
+Promoción autorizada LIz → DEV → main con retorno a LIz. Migración 0243 verificada en Supabase sin reaplicación y auditoría de 12 cotizaciones, 39 módulos y 68 plantillas sin errores. Publicación sujeta a suite completa y learn estricto sin HIGH. [Detalle](wiki/tablero_gaveta_db.md).
+## [2026-11-06] update | Guardados y Excel del optimizador
+
+Implementación en feat/optimizador-guardar-exportar con migración 0244 aplicada, snapshot completo, autor/fecha de BD, RLS compartida y exportación Excel con PNG y coordenadas. Excepción de proxy y mapa de calidad autorizados; se conserva 1 MB con preflight UTF-8 de 900 KB. QA de dos guardados, restauración, cambios de parámetros, permisos con vendedor/admin y POST 403 completado. Excel real abierto normalmente con ocho imágenes visibles; parámetros restaurados y datos temporales eliminados. [Estado y arquitectura](wiki/optimizador_corte.md).
+## [2026-11-06] update | Guardado de optimizaciones grandes mediante compresión sin pérdida
+
+Se comprime únicamente el transporte de las corridas mayores de 900 KB, manteniendo el límite de Server Actions de 1 MB. La BD conserva el JSON completo. Se verificó Prueba Optimizador: 1.102.022 bytes enviados en 87.443 bytes, igualdad con la fila guardada y recarga idéntica. Regresiones de compatibilidad y expansión máxima; sin cambios en cotizaciones, motor, esquema ni dependencias. [Detalle](wiki/optimizador_corte.md).
+## [2026-11-06] update | Prueba integral de botones y exportación de 129 esquemas
+
+Guardado, carga, exportación, cancelar/confirmar borrado, estados inválidos, parámetros y permisos verificados con el original y copias temporales. Límite ampliado a 150 imágenes por autorización del usuario, conservando 6 MB mediante resolución PNG adaptativa. Excel real abierto con 8 hojas, 129 imágenes visibles y 258 tablas; original intacto, parámetros restaurados y QA limpio. [Evidencia y límites](wiki/optimizador_corte.md).
+
+## [2026-11-06] update | Entrepaños por profundidad, canto de frente en abiertos, persistencia individual y códigos DB
+
+Se aplicó la migración 0245, se protegieron diferencias por línea frente a los globales y se añadieron regresiones y verificación de guardado/recarga. Véase [reglas y evidencia](wiki/reglas_fabricacion_y_edicion_individual.md).
+
+El usuario confirmó separación automática del mueble editado cuando cambian características compartidas. Se implementó y probó la separación de A2, con persistencia tras recarga, globales y otros muebles intactos, validación previa a escrituras y conciliación de ambos grupos. Gate final: 116 archivos / 717 pruebas, exit 0; learn estricto sin HIGH. Auditoría estricta de 12 cotizaciones y conciliación de códigos sin pendientes; cuatro PDF y HDR verificados en navegador.
+
+## [2026-11-06] update | Identificadores únicos y colores independientes en HDR de más de 26 piezas
+
+Se sustituyó el reinicio A-Z por la secuencia A-Z/AA/AB compartida con indiceALetras. Regresión del componente real con 703 piezas; Chrome con 34 filas, colores A/AA independientes, consola limpia y PDF exportado y renderizado. Véase [reglas de HDR](wiki/reglas_fabricacion_y_edicion_individual.md).
+
+## [2026-11-06] update | Orden uniforme de piezas en todas las HDR y secuencia estable de gavetas
+
+La presentación sigue base, tapa, laterales, refuerzos, entrepaños, puertas y respaldo. Las piezas de gaveta mantienen su orden relativo original; no cambian geometría, cantidades, costos ni plantillas. Regresiones y pruebas de navegador en W-SM-PUSH, BFD y DB-FE; véase [reglas de HDR](wiki/reglas_fabricacion_y_edicion_individual.md).
+
+## [2026-11-06] update | Frentes DB-2S SM y SMG con dos espacios de gola de 30 mm
+
+Regla confirmada: inferior=(alto−60)/2; superior y central=inferior/2−3,2. Migración 0246, cálculo compartido y visualización actualizados; 13 módulos recalculados con respaldo, materiales/cantos/herrajes conservados y gola activada únicamente en el DB72 autorizado. Véase [frentes DB-2S](wiki/frentes_db_2s_gola.md).
+
+## [2026-11-06] update | Nombres coherentes por dimensiones, PN con notas y espesor del frente
+
+Se completaron dimensiones no estándar, se simplificó PN, se reconstruyen nombres históricos en lectura y se preservan códigos/grupos/exportaciones. Migración 0247 y reparación atómica con respaldo; comparación de 1.042 líneas sin cambios fuera de nombres y matriz de 756 combinaciones. El PDF explicita materiales individuales. Véase [nombres comerciales](wiki/nombres_comerciales_modulos.md).
+
+## [2026-11-06] update | Exclusión de artículos de "Agregar herrajes" en HDR y Optimizador
+
+Se implementó el filtro canónico `esModuloLinea()` en `src/lib/materiales-linea.ts` y se aplicó en `modulosDeCotizacionAction()` (`src/app/hdr/actions.ts`), fuente compartida para `/hdr` y `/optimizador` (`proyectoDesdeCotizacionAction()` en `src/app/optimizador/actions.ts`). Los artículos de material suelto agregados desde "+ Agregar herrajes/otros" (herrajes, cantos, tableros con `tipo_mueble_id: null` o `clasificacionPdf: 'herrajes_otros'`) quedan totalmente excluidos al seleccionar una cotización en ambas vistas. Se eliminan los falsos errores de tipología no encontrada en HDR y Optimizador, asegurando que solo se presenten y optimicen módulos reales. Pruebas unitarias en `tests/materiales-linea.test.ts` y `tests/hdr-optimizador-modulos-filtro.test.ts`. Gate y learn en verde. Véase [líneas de material suelto](wiki/lineas_material_suelto.md).
+
+## [2026-11-06] update | Continuación de Antigravity: puertas, ejes y cantos
+
+Migración 0248 idempotente, normalización compartida y recálculo atómico con respaldo de doce cotizaciones/793 grupos. Se preservaron las 1.045 líneas y 220 adicionales; única selección corregida: BFD de 43 cm con una puerta. PC de 84 cm conserva cuatro por confirmación del usuario. Comparación estricta de configuración y segunda corrida sin pendientes; navegador HDR/optimizador y dos PDF independientes verificados. Véase [puertas y cantos](wiki/puertas_cantos_orientacion.md).
+
+## [2026-11-07] update | HDR consolidada, Excel continuo y correcciones de puertas/DB-FE
+
+Se eliminan áreas/sufijos de rol de los títulos y piezas, se consolidan muebles equivalentes con cantidades totales editables y se exporta Excel continuo con valores editados. Migración 0249: cantidad física BFD/SBFD-SMG según regla, dos largos de canto en pieza cajón DB sin FE y tablero caja para gavetas DB-FE. Doce cotizaciones/805 grupos recalculados con respaldo y segunda corrida sin pendientes. Véase [HDR consolidada](wiki/hdr_excel_consolidado.md).
+
+## [2026-11-07] update | Materiales de 4,5/5,5/6/9 mm sin canto
+
+Regla por espesor real en el motor, prevalente sobre overrides, sin calibre/aristas/consumo/costo; defensa en HDR/Excel y sincronización de resultados restaurados. Caché v13 conserva entradas. Doce cotizaciones/805 grupos recalculados con respaldo: 1.054 líneas, geometría/materiales/herrajes intactos y segunda corrida sin pendientes. WLD verificado en navegador, Excel y PDF; véase [cantos por espesor](wiki/cantos_por_espesor.md).
+
+## [2026-11-07] update | BOV interno sin holguras y variante BOV-SMG
+
+Migración 0250 crea el clon, conserva herrajes/carcasa y deja 73 mm superiores exactos en el frente. BOV/BOV-SF reciben frente interno y base P-TR. Cuatro registros de Condominio V (24 unidades) convertidos a BOV-SMG, con respaldo y recálculo. Comparación estricta de selecciones/herrajes y auditoría de grupos BOV sin pendientes; HDR, Excel, selectores y dos PDF verificados. Véase [BOV interno y SMG](wiki/bov_frente_interno_smg.md).
+
+## [2026-11-07] update | Frentes 2S SM/SMG con luz 1,6 mm, gavetas FE por profundidad y material real, clones SVFDH y códigos PN/F según tablero
+
+Migración 0251; se conserva temporalmente RIELFE500 en todos los largos por decisión del usuario.
+
+## [2026-11-07] update | Fondos de gaveta DB-FE y variantes con el mismo tablero y espesor del respaldo
+
+Migración 0252 y normalización compartida, conservación del fondo de cajón en SF, consumo por rol fondo y caché del simulador v16.
+
+## [2026-11-07] update | Refuerzo delantero de 80 mm en SVFDH-SMG y SVFDH-SMG-SF
+
+Migración 0253, normalización compartida y caché v17.
+
+## [2026-11-07] update | Publicación de reglas de fabricación, HDR Excel y tipologías LIz a DEV y main
+
+Validación de publicación: compilación de producción y quality:gate:full aprobados (126 suites, 766 pruebas). Supabase confirma migraciones 0248–0253 aplicadas. Auditoría de doce cotizaciones: cero diferencias y errores. Se conserva la deuda del baseline.
+
+## [2026-11-07] update | Precarga editable del proyecto y colores heredados sin vacíos en HDR
+
+Campo común de proyecto desde la cotización; edición individual por mueble y pieza, valores de color no vacíos y exportación coherente.
+
+Publicación solicitada LIz → DEV → main: compilación y gate completo aprobados con 768 pruebas; revisión de Excel/PDF e integridad de cotizaciones sin errores. Supabase verificado, sin cambios de esquema necesarios.
+
+## [2026-11-07] update | Exportación HDR a carpeta de proyecto y auditoría de referencias repetidas
+
+Carpeta nativa con autorización del navegador, ZIP alternativo y nombres únicos. Decisiones recibidas: conservar notas distintas, una HDR por grupo físico, correcciones PRIST y exclusión de patas autorizadas.
+
+## [2026-11-07] update | HDR por grupo físico, consolidación estricta y correcciones confirmadas
+
+Conservación de notas distintas, trazabilidad de 837 líneas, 231688 piezas conciliadas y 37 registros autorizados actualizados en Condominio V. Excel/PDF completos y sin columnas recortadas; se conserva la configuración de campanas de MALECÓN.
+
+Validación para publicación LIz → DEV → main: build y gate completo aprobados con 776 pruebas; learn sin HIGH. Exportaciones revisadas e integridad de datos comprobada. Supabase actualizado según las decisiones del usuario; sin migración de esquema necesaria.
+
+## [2026-11-09] ingest | Sección Consumos en la página HDR
+
+Buscador de muebles dentro de la cotización cargada, campo de desperdicio aplicado solo al tablero sobre la medida neta (0–100%) y consumo por mueble en m² de tablero y metro lineal de canto con conteo de piezas. Lógica pura en `src/app/hdr/consumos.ts`, componente `HdrConsumos.tsx` montado en `HdrBuscador.tsx` y ocho pruebas en `tests/hdr-consumos.test.ts` (reconciliación del desglose del motor contra las filas de `construirFilas`), mapeadas a `lane:frontend` en `quality/manifest.json`. Compilación de producción y `quality:gate` aprobados (exit 0); sin cambios en motor, PDF, Excel ni optimizador.
+
+## [2026-11-09] update | Consumos por material y calibre con selector de cotización propio
+
+El consumo deja de ser una cifra única: `ConsumoMueble` expone `materiales[]` (una entrada por código de tablero, agrupando roles que comparten código) y `cantos[]` (una entrada por calibre), ambos ordenados y con su propia línea en la celda. La sección gana su propio `Combobox` de cotización, independiente del de «Generar desde una cotización guardada», con su estado, su carga y su vaciado, y muestra el recuento de `muebles · unidades · piezas` del subconjunto listado. `HdrBuscador` ahora solo pasa `cotizaciones`. Pruebas actualizadas a nueve (discriminación, ausencia de campos lumped, multiplicación por cantidad en cada entrada); `quality:gate` y build aprobados.
+
+## [2026-11-09] update | Cantidad de Consumos editable y con valor por defecto 1
+
+La columna Cantidad pasa a ser un input por fila claveado por `lineaId` que **arranca siempre en 1**, nunca en la cantidad de la cotización; esa cifra queda solo en `ConsumoMueble.cantidadCotizacion` (cantidad × repeticiones) como `title` del input. `parseCantidad()` (nueva, pura) vuelve a 1 ante vacío, texto o negativo y acepta coma decimal, y `calcularConsumos()` recibe el mapa de cantidades con `?? 1` como respaldo. El input es `type="text" inputMode="decimal"` para que la coma local no lo vacíe, y `onBlur` normaliza el texto visible. El recuento de unidades suma las cantidades editadas. Once pruebas en total: `quality:gate` y build aprobados.
+## [2026-11-09] update | Validación de entrepaños guardados frente a reglas en HDR
+
+Se diagnosticó W96.27867-SM-PUSH: un override persistido de 1 prevalece sobre las reglas actuales de 2. Se añadió validación por módulo/grupo, avisos y confirmación antes de exportar PDF/Excel, preservando excepciones manuales. El encabezado cuenta piezas reales. Auditoría de solo lectura: 837 módulos, 14 discrepancias en cuatro proyectos y cero errores de cálculo. Ver [validación HDR](wiki/hdr_validacion_entrepanos.md) para alcance, evidencia y límites; no se alteraron cotizaciones, precios ni fuentes raw.
+
+## [2026-11-09] update | Consumos reconciliado con la tabla Materiales del Simulador
+
+Se contrasto Consumos contra la tabla «Materiales» del Simulador sobre el modulo real `W96.27867-SM-PUSH` (Condominio V) corriendo el motor contra la base. Ambos calculos eran aritmeticamente correctos; la diferencia era de criterio en dos puntos. (1) **Agrupacion**: Consumos fusionaba por codigo y mostraba `PRIRH15CONSTRUCTOR 4,135` en una sola linea, mientras el Simulador lista Caja (2,638) y Refuerzo (1,497) por separado; ahora `ConsumoMueble.materiales[]` lleva `rol` + `codigo` y replica fila a fila el orden del motor. (2) **Consumibles**: se agrego `consumibles[]` desde `cantidadesConsumibles` (tarugos, soportes, carton, etiquetas) en unidades, con `fmtUnidad`. El campo de desperdicio conserva **0% por defecto** (medida neta); con 15% reproduce exactamente el `m2` con merma del Simulador. La prueba «Consumos cuadra fila a fila con la tabla Materiales del Simulador» fija el reconciliado. Trece pruebas: `quality:gate` y build aprobados.
+
+## [2026-11-09] update | Excel de consumos e instrucciones de producción en HDR
+
+Se añadió exportación Excel de consumos con fecha de Bogotá, orden alfabético y columnas numéricas por partida. Las HDR incorporan R17L/R20L/R16L/R19L en las piezas de carcasa solicitadas con fondo y los cuatro nombres R15L de FE, sin cambiar medidas ni otras columnas. Ver [instrucciones HDR](wiki/hdr_instrucciones_ranura.md) y [consumos](wiki/hdr_consumos.md).
+
+## [2026-11-09] update | Apertura L/R obligatoria en W-SM, WLD y WSM de una puerta
+
+Selección sin valor predeterminado en simulador y edición/creación de cotizaciones; validación del servidor, sufijo al final de la referencia, conservación al reabrir y bloqueo de HDR si falta. Se marcaron con respaldo 26 muebles existentes en ocho cotizaciones sin alterar precios, medidas ni cantidades. Auditoría posterior idempotente: cero cambios por aplicar. Ver [apertura de superiores](wiki/apertura_superiores_una_puerta.md).
+
+Verificación final de apertura L/R: quality:gate exit 0 con 132 suites, TypeScript y ESLint sin regresiones; quality:learn -- --strict con cero HIGH. La prueba HTTP autenticada de los avisos no se ejecutó: la revisión automática rechazó crear una sesión administrativa sin autorización explícita. Se solicitó esa autorización; revisión visual y doble generación de PDF pendientes.
+
+## [2026-11-09] update | Verificados los avisos L/R en las ocho cotizaciones afectadas
+
+El usuario autorizó explícitamente la sesión administrativa temporal sin envío de correo. La comprobación HTTP autenticada final verificó ocho respuestas 200 con el aviso L/R presente y sin indicadores de error de Next; 26 pendientes distribuidos en 2, 1, 8, 7, 4, 1, 2 y 1. Se cerraron ambas sesiones QA, incluida la primera tras corregir una lectura UTF-16 fuera del bloque de limpieza; consulta posterior: cero sesiones QA abiertas. No se modificaron cotizaciones ni precios durante la prueba. Evidencia en `.tmp/mano-puerta-http.json` y [documentación de apertura](wiki/apertura_superiores_una_puerta.md). Revisión visual e impresión PDF siguen fuera de esta evidencia HTTP.
+
+## [2026-11-09] update | Preparación de publicación de consumos, HDR y apertura L/R
+
+Publicación LIz → DEV → main solicitada por el usuario. Gate exhaustivo aprobado con 132 suites, build de producción aprobado y auditoría consultiva sin HIGH. Supabase verificado hasta migración 0253; sincronizador L/R ejecutado sobre 1066 líneas con cero cambios pendientes de aplicar y sin modificar precios, medidas ni cantidades. Se conservan documentados los límites de revisión visual y doble PDF. Ver [apertura L/R](wiki/apertura_superiores_una_puerta.md).
+
+## [2026-11-09] update | HDR reorganizada con Buscar/Crear y Seguimiento Excel
+
+Orden HDR, Consumos, Seguimiento y Buscar/Crear. Nuevo buscador de nombres completos/parciales en cotizaciones con selección de HDR y preservación de grupos físicos; el formulario existente usa Crear. Seguimiento descarga dos hojas, Seguimiento y Códigos, con nombres exactos únicos, sin cantidades, separados en inferiores, superiores, baños, clósets, fillers y paneles. Campos manuales vacíos según aclaración del usuario; no se copian los datos de las imágenes. Ver [Buscar/Crear y Seguimiento](wiki/hdr_buscar_seguimiento.md) para reglas, pruebas y límites.
+
+Verificación de Buscar/Crear y Seguimiento: quality:gate exit 0 con 133 suites, TypeScript y ESLint sin regresiones; build de producción exit 0 y quality:learn -- --strict sin HIGH. Las pruebas reabren el XLSX y renderizan el HTML de la pantalla. Sin cambios en datos de cotizaciones o Supabase; los límites de prueba visual permanecen documentados.
+
+## [2026-11-09] update | Responsables y casillas verdes nativas en Seguimiento
+
+Asignados los bloques de responsables B:G Angie/Lizeth, H:K Elias, L:R Mariana/Liz/Angie/Elias y S Angie/Liz según la referencia del usuario. Las actividades de cada mueble incorporan casillas nativas MS-XLSX en verde, centradas y desmarcadas; se sustituyó la selección de símbolos por controles de celda sin macros. La hoja Códigos conserva sus campos manuales vacíos y no recibe casillas. Pruebas del archivo final validan estilos, controles, responsables y conservación exacta del XML de Códigos. Ver [Seguimiento](wiki/hdr_buscar_seguimiento.md).
+
+## [2026-11-10] update | Seguimiento con actividades vacias para marcado manual
+
+Se retiran las casillas que Excel mostraba como FALSO; se conservan responsables, nombres y formato. La prueba del archivo descargado exige celdas vacias sin booleanos ni controles.
+
+## [2026-11-10] update | Publicacion de Buscar/Crear y Seguimiento
+
+Preparada la promocion LIz a DEV y main de la busqueda HDR y el Excel de Seguimiento con responsables y actividades vacias. Supabase consultado: migracion 0253 registrada, sin cambios de esquema ni migraciones nuevas en esta entrega. Build de produccion aprobado; validacion completa y recibos en `.tmp/publicar-seguimiento-*`.
+
+## [2026-11-10] update | Instruccion R13L en cajones FE
+
+Se sustituye R15L por R13L solo en los cuatro nombres exactos de laterales y contraparche de gavetas FE. Se conservan las instrucciones de carcasa y todas las columnas de medidas, cantidades y cantos. Se actualiza la regresion existente para comprobar los textos solicitados y las exclusiones.
+
+## [2026-11-10] update | BOV-SMG incluye los 24 tarugos del STEP
+
+Se revalida la fuente STEP: seis paneles y 24 instancias de Tarugo 8x30mm. El simulador dibuja sus posiciones y la HDR los lista individualmente, adem?s de los seis paneles. Se registran la fuente de coordenadas y los casos de regresi?n.
+
+## [2026-11-10] update | BOV-SMG HDR excluye tarugos e incluye refuerzo delantero
+La HDR deja de listar tarugos como piezas de corte y conserva el refuerzo delantero de BOV-SMG con nombre RAIL DELANTERO. Las posiciones de tarugos permanecen en el simulador para reflejar el ensamble STEP.
+
+## [2026-11-10] update | BOV-SMG(SF) refuerzo vertical sin tarugos visibles
+Se excluyen los tarugos de la visualización BOV-SMG y BOV-SMG-SF. El refuerzo delantero queda como pieza vertical de tablero de refuerzo, con alto A-2*TC, ancho 80 mm, centrado entre laterales y a 27 mm del frente; se conserva en HDR.
+
+## [2026-11-11] update | BOV-SMG suma tarugos, cantos y consumo del refuerzo delantero
+En BOV-SMG y BOV-SMG-SF el refuerzo delantero conserva tablero de caja, suma cuatro tarugos (dos por lado), lleva dos cantos largos de color y queda visible en azul. Se verifica su despiece, área de material, consumibles y HDR.
+
+## [2026-11-11] update | Crear BOV-SMG-SF y alinear canto con el eje largo
+Se crea BOV-SMG-SF desde BOV-SF con frente interno de 73 mm, plantilla, reglas y herrajes heredados. El refuerzo se guarda con `formula_largo=A-2*TC`, para que los dos cantos largos de color y las medidas de HDR usen su dimensión mayor.
+
+## [2026-11-11] update | Corregir largo del rail delantero BOV-SMG
+El rail delantero ahora calcula su largo con `L-2*TC` (Largo del módulo menos dos calibres de caja) en BOV-SMG y BOV-SMG-SF. El ancho se mantiene en 80 mm.
+## [2026-11-11] update | Registro CEFI con tablero por producto y campos opcionales
+
+El punto 7 captura tipo de tablero por cada producto seleccionado; el punto 14 limita zócalo a madera o PVC; se retira margen adicional. Tarifa se activa solo para USA/Estados Unidos y es opcional. Los campos permiten vacío y el envío incompleto requiere confirmación del usuario. Se actualiza la validación de servidor y sus regresiones.
+
+## [2026-11-11] update | Renumerar puntos del formulario CEFI
+
+Al retirar el punto 15, los campos siguientes se renumeran consecutivamente: Tarifa pasa a punto 15 y Estimador termina en punto 25. Las claves de persistencia no cambian.
+## [2026-11-11] update | Retirar rail delantero de BOV-SMG y BOV-SMG-SF
+
+La regla de fabricación excluye `refuerzo_delantero` en ambas tipologías, por lo que desaparece del simulador, despiece, HDR y consumos, junto con sus cuatro tarugos asociados. Se conservan los seis paneles del STEP y los refuerzos traseros. La migración 0259 retira la fila del catálogo y corrige la descripción de BOV-SMG-SF.
+## [2026-11-11] update | Orden de piezas HDR para DB-FE
+
+DB-FE presenta cada pieza por separado en secuencia de producción; agrupa visualmente traseros de gaveta como `TRASERO GAV`, prioriza la pieza menor cuando coincide el nombre y conserva letras individuales. La exportación Excel comparte el mismo orden que la HDR.
+## [2026-11-11] update | Orden HDR para todas las variantes DB con FE
+
+La regla de presentación HDR y el nombre `TRASERO GAV` ahora cubren tipologías DB terminadas en `-FE` y `-FE-SF`, incluidas las cajoneras DB-SM-FE-SF. Se agregaron regresiones para las variantes principales y se mantiene el orden de dimensiones, medidas y demás piezas.
+## [2026-11-11] update | Prefijo HRJ y nombres de exportación de HDR
+
+La generación desde cotización añade un switch para prefijar `HRJ` a los nombres de mueble. PDF y Excel se guardan sin anteponer `HDR_`; las exportaciones individuales Excel toman el nombre del mueble. Se conservan carpetas de proyecto y se evita duplicar HRJ.
+## [2026-11-11] update | Excluir PN, F y TK del prefijo HRJ
+
+El switch HRJ omite el prefijo para los muebles de tipología PN, F y TK, aunque esté activado. Se agregaron casos de regresión para las tres familias.
+
+## [2026-11-11] update | Guías, valores privados y estado En desarrollo
+
+Se centraliza Guía/Tips en el encabezado con contenido contextual, se agrega el resumen de costos, precios, utilidad y margen oculto en impresión, se incorpora En desarrollo al Pipeline con envío Resend a administradores y se permite agrupar módulos con materiales/cantos distintos conservando locales las piezas incompatibles.
+
+## [2026-11-12] update | PC: fijo en junta de puertas y distribución interna
+
+Se corrige el montaje PC para seguir PUERTA_SUP y contar el fijo en la regla superior. Regresiones para 15, 24, 36 y 40 pulgadas. Variantes SM/SMG y catálogo pendientes de aclaración de cotas; no se aplicaron migraciones ni cambios a cotizaciones existentes.
+
+## [2026-11-12] update | Copias PC, BMW y BOMH SM/SMG y catálogo
+
+Aplicadas y registradas migraciones 0261/0262 tras ensayo revertido y respaldo del catálogo. Doce copias SM/SMG, renombre PC-MO/PC-MO-SF y retiro de BBL y selector BBLFD-SM-SF. Reglas y piezas originales contrastadas contra catálogo aplicado, golas 80 mm, referencias de 25/21 mm a cara inferior y mecanizados 27 x 73 mm. Documentado límite BMW-1-FE-SM en 18 mm y los dos errores de datos anteriores de la auditoría; cero diferencias de materiales. Calidad: 135 suites aprobadas y quality:learn sin HIGH.
+
+## [2026-11-12] update | Verificación de tipologías SM/SMG y PDF
+
+Doce variantes calculadas y guardadas desde UI; BBLFD-SF conserva Door y mano L/R en el código. Se verificaron seis PDF en dos pasadas independientes: temporal con doce variantes (4 páginas), KUNDARA (10) y Casa A/Closet (6), con textos idénticos y páginas renderizadas revisadas. Total de prueba conciliado contra líneas guardadas; sesiones y cotizaciones temporales eliminadas. Chrome local sin errores, escritorio y móvil. Quality gate exit 0 (135 suites); learn sin HIGH.
+
+## [2026-11-12] update | Correcciones de fijos, gavetas FE/Tandem y laterales SMG
+
+Aplicada y registrada la migración 0263 tras respaldo y ensayo revertido:
+54 piezas corregidas, sin cambios de tipos, reglas ni herrajes. Los fijos
+copian largo, profundidad y descuentos de sus bases; se exceptúan de la regla
+de entrepaños móviles. Refuerzos delanteros con largo de base por 80 mm.
+BMW/BOMH FE con caja pequeña y profundidad DB-FE por tramos 500/450/350 mm;
+BOMH Tandem con trasero de 68 mm. Frentes superiores BOMH entre la cara
+superior del fijo y la cara inferior del refuerzo superior. Corregida la
+esquina superior del contorno SMG conservando el mecanizado 27×73 mm.
+
+Verificadas las doce variantes en cálculo y persistencia real. Los dos
+polígonos SVG de cada variante SMG tienen todas las aristas rectas. Seis PDF
+en dos generaciones independientes (prueba 4 páginas, KUNDARA 10 y Casa A 6),
+textos coincidentes y total de prueba COP 8.102.117,13 conciliado contra líneas.
+Sesiones y cotización temporal eliminadas. Calidad: 135 suites aprobadas;
+learn con cero HIGH. Las auditorías antes/después conservan cero diferencias
+de materiales y los dos errores anteriores de Satori/Bosketo.
+
+Tras la verificación se descargó origin/main y se avanzó LIz por fast-forward
+de ba070f9 a d20048d. Los 53 commits nuevos tenían idéntico árbol de archivos;
+se conservaron los cambios locales sin stash, conflictos ni sobrescritura.
+
+## [2026-11-12] update | Previsualización del recálculo de dos líneas PC-MO
+
+La lectura final encontró un PC-MO-SF en Bosketo y un PC-MO en KUNDARA con el
+despiece anterior. Se preparó una simulación de solo lectura: profundidad del
+fijo 511,9→526 mm y 411,9→426 mm, respectivamente. Precio de línea propuesto
+COP 713.691,89 y COP 877.597,98; cambios de total antes de IVA de +30.650,20 y
++68.948,94 COP al incluir repeticiones de área. La revisión automática rechazó
+la escritura de estos grupos y totales por requerir autorización financiera
+expresa. Las dos cotizaciones permanecen sin cambios; el recálculo está
+pendiente de aprobación del usuario. La corrección del catálogo, la revisión
+de geometría y la actualización local desde main sí quedaron completadas.
+
+## [2026-11-12] update | Recálculo autorizado de PC-MO en Bosketo y KUNDARA
+
+Tras la autorización expresa del usuario se respaldaron las cabeceras, áreas,
+grupos y líneas de ambos proyectos en el directorio temporal del sistema
+(`cotizador-fijos-pc-mo-0263-1794508359183.json`). Se recalcularon únicamente los
+dos grupos de una línea cada uno y se actualizaron los totales de sus áreas y
+cabeceras. Las cotas de los fijos igualan sus bases; cantidades, materiales y
+todas las demás líneas se verificaron idénticos al respaldo.
+
+Los precios coinciden con la previsualización aprobada: Bosketo
+712.159,38→713.691,89 COP por línea, total de proyecto +30.650,20 COP;
+KUNDARA 875.570,07→877.597,98 COP por línea, total de proyecto +68.948,94 COP.
+Totales actuales antes de IVA: Bosketo 156.717.077,37 COP y KUNDARA
+1.585.637.028,82 COP. Informe en `.tmp/pc-correcciones-sincronizacion.json`.
+
+Verificadas las vistas recargadas y dos PDF independientes por proyecto
+(Bosketo 6 páginas, KUNDARA 10), con textos idénticos por par, códigos nuevos,
+totales conciliados y revisión de páginas renderizadas. Chrome local sin
+errores; sesión temporal cerrada. Quality gate aprobado con 135 suites. La
+auditoría mantiene cero diferencias de materiales y los dos errores de datos
+anteriores de Satori y del hueco de horno de Bosketo, fuera de los dos grupos.
+
+## [2026-11-12] update | Sincronización de Supabase para publicación
+
+Se verificó el historial de las cuatro migraciones locales 0260–0263.
+Las tres migraciones de PC/BMW/BOMH ya estaban registradas. La 0260 estaba
+pendiente y sus checks todavía excluían En desarrollo; se aplicó y registró
+como `pipeline_en_desarrollo`, versión `20261112183818`. No se cambiaron
+estados de cotizaciones ni registros de Pipeline y no se enviaron correos.
+Este esquema acompaña la publicación solicitada de todos los cambios locales
+de ayuda, valores, agrupación, HDR y tipologías mediante LIz → DEV → main.
+
+## [2026-11-12] update | Publicación de cambios por LIz, DEV y main
+
+Se validó `quality:plan` (lane transversal, 135 suites) y `quality:gate`
+terminó con exit 0 sin regresiones. Se confirmó en Supabase el historial de
+migraciones `pc_bmw_bomh_sm_smg`, `nombres_copias_pc_bmw_bomh`,
+`corregir_fijos_gavetas_bomh` y `pipeline_en_desarrollo` (0260–0263), sin
+reaplicar ninguna.
+
+Los 53 archivos locales se publicaron en el commit `fb6ae21` de LIz y se
+promovieron por avance rápido a DEV y main. Las tres ramas locales y sus
+remotos quedaron en `fb6ae21`, con árbol de trabajo limpio y sin conflictos.
+
+## [2026-11-12] update | Optimizador separa Muebles, Paneles y Fillers y cuenta repeticiones de área
+
+Migración 0264 (aplicada; creada como 0260): `cot_tipos_mueble.grupo_optimizador` desde `margen_key`, con trigger para tipos nuevos. `proyectoDesdeCotizacionAction` multiplica por la cantidad del área (antes Condominio V daba 476 unidades; ahora 444 muebles, 2.058 paneles y 366 fillers), deja visibles las líneas que no calculan y separa por grupo y medidas. Ver [optimizador_corte](wiki/optimizador_corte.md).
+
+## [2026-11-12] update | Optimizador discrimina Zócalos (TK) y suma piezas por grupo
+
+Migración 0265 (aplicada; creada como 0261): grupo `zocalo` para TK. Tarjetas con piezas de Muebles, Paneles, Fillers y Zócalos y total de piezas; Excel con unidades y piezas por grupo. Ver [optimizador_corte](wiki/optimizador_corte.md).
+
+## [2026-11-13] update | Renumeración de migraciones del optimizador a 0264/0265
+
+Al integrar DEV, `0260_tipos_grupo_optimizador` y `0261_tipos_grupo_optimizador_zocalo` chocaban con `0260_pipeline_en_desarrollo` y `0261_pc_bmw_bomh_sm_smg`. Se renombraron a `0264` y `0265`. Ya estaban aplicadas en Supabase; el cambio solo afecta el nombre del archivo. Ver [optimizador_corte](wiki/optimizador_corte.md).
+
+## [2026-11-13] update | SBFD se reactiva como copia sin gola de SBFD-SM
+
+`SBFD` existía en el catálogo pero estaba inactiva desde la migración `0194`,
+que retiró `F`, `OILVP` e `ILVP` (los alias métricos de `OSBFD` y `SBFD`).
+La migración `0266_sbfd_sin_gola_refuerzo_128.sql`, registrada como
+`sbfd_sin_gola_refuerzo_128` (versión `20261113161935`), reactiva esa misma
+fila conservando `id`, `pref = SBFD` y `pref_metrico = ILVP` para no romper
+referencias históricas, y reemplaza su configuración por una copia curada de
+`SBFD-SM`. `SBFD-SM` queda intacta.
+
+**Diferencias de la copia:** se retira la pieza `gola_madera` (seis piezas en
+total); el refuerzo delantero pasa de 80 mm a `128/25.4` y se monta en
+`y = 0`, es decir, inmediatamente detrás de la cara posterior de los frentes
+en vez de a 20 mm; la puerta pasa de `A-30/25.4` a `A-RV` (reveal de 3,2 mm
+desde arriba). Sin gola, la puerta vuelve a llevar manija `MANIJA415`
+(`n_puertas + n_cajones`). Se conservan las reglas copiadas: `gola = 0`,
+`n_cajones = 0`, `n_entrepanos = 0`, `n_puertas` (1 si `L < 24`, 2 si
+`L >= 24`) y `n_patas` (4, 5 si `L > 36`). El motor solo normaliza los
+`refuerzo*` cuando miden ~80 mm (±0,05), así que los 128 mm no se alteran.
+
+**Despiece de referencia `SBFD 30 × 30 × 24`** (caja 15 mm, frente 18 mm):
+base 732,0 × 585,6; laterales 762,0 × 609,6; refuerzo delantero 732,0 × 128,0;
+refuerzos traseros 732,0 × 80,0; puertas 377,8 × 758,8; fondo 760,0 × 746,0.
+
+**Catálogo cotizable:** `SBFD` también se filtraba por su alias métrico
+`ILVP` en `TIPOLOGIAS_NO_COTIZABLES` (`src/lib/cotizar.ts`). Se retiró
+`ILVP` de esa lista defensiva para que la fila reactivada aparezca en
+Simulador y Cotizaciones; `OILVP` (alias de `OSBFD`) sigue excluido.
+
+**Verificación:** respaldo previo en `.tmp/backup-sbfd-0264.json`, ensayo
+completo en transacción revertida y guardas en la migración (seis piezas, sin
+`gola_madera`, refuerzo de 128 mm con `y = 0`, puerta `A-RV`, manija y
+`n_entrepanos = 0`). `tests/sbfd.test.ts` cubre el despiece, las manijas, la
+ausencia de gola y la posición del refuerzo contra la cara posterior de la
+puerta; `tests/tipologias-inactivas.test.ts` refleja que `ILVP` deja de estar
+excluido. El archivo se renumeró de `0264` a `0266` para no colisionar con las
+migraciones del optimizador que llegaron a DEV como `0264`/`0265`; la versión
+registrada en Supabase (`20261113161935`) no cambia. El cambio se publicó desde
+`LIz` a `DEV` y luego a `main`.
+## [2026-11-13] update | PDF FIRPLAK: se quita la fila de herrajes adicionales del resumen
+
+El pie del resumen comercial de la plantilla FIRPLAK ya no imprime “Herrajes / otros adicionales (ver detalle)”; queda el subtotal de muebles y el total. La sección de herrajes/otros y el cálculo del total no cambian. Ver [plantilla_propuesta_firplak](wiki/plantilla_propuesta_firplak.md).
+
+## [2026-11-13] ingest | Botón Print / PDF (English) y propuesta en inglés
+
+Nuevo botón junto a Imprimir / PDF que abre la impresión con `lang=en`. `src/lib/propuesta-ingles.ts` reúne el glosario de ebanistería, la traducción de descripciones, anotaciones, herrajes y especificaciones, y los números en palabras. FIRPLAK traduce todos sus textos y guarda textos editables en inglés (`*En`) en `plantilla_firplak` sin migración; la plantilla general y los bloques compartidos de CEMA también se traducen. Pruebas en `tests/propuesta-ingles.test.ts`. Ver [propuesta_ingles](wiki/propuesta_ingles.md).
+
+## [2026-11-13] update | HDR: la instrucción de ranura se limita a W y OW
+
+`nombreConInstruccion` en `src/app/hdr/datosHdr.ts` ya no añade `R17L`/`R20L` a las piezas de carcasa de los muebles inferiores. El sufijo `R16L` (15 mm) o `R19L` (18 mm) se imprime solo cuando la tipología empieza por `W` u `OW`, además de exigir fondo real y espesor 15/18 mm. Los superiores `TW`/`UW` tampoco reciben la instrucción. Se actualizan `tests/hdr-orden.test.ts` y `tests/hdr-grupos-fisicos.test.ts`, y la página [instrucciones HDR](wiki/hdr_instrucciones_ranura.md). El cambio queda primero en la rama `LIz`, sin promover a DEV ni main.
+
+## [2026-11-13] update | HDR: R17L/R20L se conserva solo en los laterales inferiores
+
+Se ajusta la regla anterior: los muebles inferiores vuelven a mostrar `R17L` (15 mm) o `R20L` (18 mm) en los laterales, pero no en BASE ni TAPA. Los muebles `W`/`OW` conservan `R16L`/`R19L` en base, tapa y laterales; `TW`, `UW`, closet y baños siguen sin instrucción. Se actualizan `tests/hdr-orden.test.ts` y `tests/hdr-grupos-fisicos.test.ts`, y la página [instrucciones HDR](wiki/hdr_instrucciones_ranura.md). El cambio sigue primero en `LIz`.
+
+## [2026-11-13] update | Aviso de nueva versión para quienes usan la aplicación
+
+Se agrega `src/components/AvisoActualizacion.tsx`, montado en `src/app/layout.tsx`, con la barra «Hola, existe una nueva versión, por favor actualiza». Incluye un botón para recargar la página y un cierre que recuerda la decisión en `localStorage`; el aviso no toca datos ni sesiones. Ver [aviso de nueva versión](wiki/aviso_actualizacion.md).
+
+## [2026-11-13] update | HDR: interruptor HRJ en Buscar/Crear
+
+La sección Buscar/Crear incorpora un switch **Prefijo HRJ** independiente del de la generación desde cotización. Antepone `HRJ ` al nombre mostrado y exportado (PDF y Excel) del mueble buscado y del creado manualmente, excepto PN/F/TK y sin duplicar el prefijo. Se extrae `prefijarHrj` en `datosHdr.ts` y se actualizan `HdrBuscarGuardados`, `HdrBuscador` y `tests/hdr-buscar-seguimiento.test.ts`. Ver [HDR Buscar/Crear](wiki/hdr_buscar_seguimiento.md) y [HDR y Excel](wiki/hdr_excel_consolidado.md). El cambio queda primero en `LIz`.
+
+## [2026-11-18] update | Entregas parciales e Incoterm en cotizaciones
+
+Ver [Entrega e Incoterm en cotizaciones](wiki/entrega_cotizaciones.md).
+
+## [2026-11-18] update | Carga útil de contenedores de 20 y 40 pies
+
+Se configuran 28.280 kg y 26.730 kg para entregas parciales y totales.
+
+## [2026-11-18] update | Ajuste de cargas utiles para entregas
+
+Se fijan 15.000 kg para 20 pies y 22.000 kg para 40 pies.
+
+## [2026-11-18] update | Migracion de Entrega en Supabase
+
+Migracion 0267 registrada. Escritura verificada con rollback y calculo de entregas con datos de Kundara Campestre.
+
+## [2026-11-18] update | Modulos por entrega parcial con una sola area
+
+Se asignan lineas completas por ID y se recalculan las unidades, el peso y los contenedores de cada parcial.
+
+## [2026-11-18] update | Transporte DDP y PDF CEMA por idioma
+
+DDP permite sumar transporte manual y activar los porcentajes de parametros. CEMA localiza la propuesta y conserva los campos comerciales por idioma.
+
+## [2026-11-19] update | Colores por rol y ajuste vertical en HDR
+
+La generacion desde cotizacion propaga los cuatro colores a las piezas y ajusta los textos de la tarjeta para PDF y Excel.
+
+## [2026-11-19] update | Cantidad sin precarga en HDR
+
+La cantidad de cada tarjeta comienza vacia y se ingresa manualmente.
+
+## [2026-11-19] update | Largo HDR para PN80240 y PN82240
+
+La pieza panel muestra 2352 mm en Largo para ambas referencias.
+
+## [2026-11-19] update | Regla de bisagras por alto de puerta
+
+Se usa el alto efectivo por hoja y se conservan las unidades de cobro del catalogo. Ver [Bisagras por alto de puerta](wiki/bisagras_por_altura.md).
+
+## [2026-11-20] update | Canto de color en los anchos de la base OW-MO en HDR
+
+La hoja de ruta y su Excel indican dos anchos con canto Color para la base de OW-MO y OW-MO-SF, también en grupos.
+
+## [2026-11-20] update | Profundidad completa de la base DB-FE-SF
+
+Auditoría de Condominio V: 13 líneas, 132 módulos y 338 filas de HDR. La base usa P completo, de 425 a 440 mm de profundidad, y las demás medidas coinciden.
+
+## [2026-11-20] update | Enchapes blancos en los laterales de gaveta FE
+
+La HDR y su Excel indican dos largos y dos anchos en Blanco por lateral de gaveta FE, incluso en grupos mixtos.
+
+## [2026-11-20] update | Canto ancho Color en F, PN y TK de menos de 100 mm
+
+La HDR y sus exportaciones muestran cero en Canto ancho Color para anchos orientados menores de 100 mm.
+
+## [2026-11-20] update | Selección de HDR de cotización para PDF
+
+Cada hoja disponible tiene casilla de inclusión. El PDF exporta solo las seleccionadas, con contador y acciones de selección masiva.
+
+## [2026-11-20] update | Instalación por zona y reparto de entregas parciales
+
+Tarifas USD por zona, cálculos de instalación, asignación parcial por unidades de línea y detalle de contenedores en el PDF.
+
+## [2026-11-20] update | Parámetros avanzados históricos ocultos
+
+El formulario conserva Desperdicio madera y omite los tres parámetros históricos del bloque Avanzado.
+
+## [2026-11-20] update | Navegación de Diseño y consumos aproximados en Optimizador
+
+Cinco accesos en Diseño, tres espacios HDR con prefijo HRJ independiente, consumos de cotización consolidados y parámetros de planta plegables.
+
+## [2026-11-20] update | Corte con refilado y módulos completos
+
+El esquema incluye piezas de medida nominal igual al formato, explica el refilado y conserva cada línea y grupo físico en su jornada.
+
+## [2026-11-20] update | Restablecer el reparto por unidades en corte
+
+El optimizador vuelve a repartir líneas sueltas entre jornadas por unidades completas. Se conserva el refilado incluido para medidas nominales.
+
+## [2026-11-20] update | Acceso desde Diseño y publicación de Instalación
+
+HDR y Optimizador se abren desde Diseño. La migración 0268 inicializa las zonas de instalación sin sobrescribir tarifas.
 
 ## [2026-11-23] update | Sistema modular de calidad v2 y protocolo universal `/desplegar`
 Se actualizó el sistema modular de calidad a v2 con invocación universal `/desplegar` agnóstica de IDE/modelo: fuente canónica en `.agents/skills/desplegar/SKILL.md` y `AGENTS.md`, sincronización determinista sin symlinks (`skills:sync`, `skills:check`, `skills:validate`) hacia `.claude/skills/desplegar/SKILL.md`, `.agents/workflows/desplegar.md`, `.cursor/rules/desplegar.mdc`, `.agents/AGENTS.md`, `.cursor/rules/agents.mdc`, `CLAUDE.md` y `GEMINI.md`. Se amplió `quality/manifest.json` (v2.0.0 + `manifest.schema.json`) a 8 capacidades cubriendo todo `src/`, `db/migrations/**` y el harness; se añadieron `test:focused`, `quality:policy`, modo `quick`, estados verificables por etapa (`VERIFIED`/`FAILED`/`SKIPPED`/`NOT_CONFIGURED`), recibo `.tmp/quality/run-receipt.json`, reporte consultivo `.tmp/quality/learning-report.md`, flujo local `/desplegar release` (pre-sync `origin/DEV` → calidad completa → rama → `DEV` → `main` → Vercel, sin GitHub Actions) y nuevas suites en `tests/templates-propuesta.test.ts`, `tests/auth-middleware.test.ts` y `tests/quality-system.test.ts`. Ver [sistema_calidad_ratchet.md](wiki/sistema_calidad_ratchet.md).

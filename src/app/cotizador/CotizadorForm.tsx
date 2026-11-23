@@ -1,4 +1,10 @@
 'use client';
+import { puertasSegunReglas, requiereManoPuerta, type ManoPuerta } from '@/lib/mano-puerta';
+import type { Regla } from '@/lib/engine';
+import { usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from '@/lib/gavetas';
+import HerrajesGaveta from '@/components/HerrajesGaveta';
+import { usaHoodSm, validarHoodSm } from '@/lib/hood-sm';
+import { convertirExacto } from '@/lib/module-groups';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 import { cotizarGrupoAction } from './actions';
 import {
@@ -9,22 +15,22 @@ import {
   type SimuladorModuloValues,
 } from '@/store/simuladorStore';
 import type { CotizarGrupoResult, CotizarInput } from '@/lib/cotizar';
-import GuideButton from '@/components/GuideButton';
-import TooltipToggle from '@/components/TooltipToggle';
 import UndoRedoButtons from '@/components/UndoRedoButtons';
 import Campo from '@/components/Campo';
 import Combobox from '@/components/Combobox';
 import MuebleVisualizer from '@/components/MuebleVisualizer';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, orientarPieza, nombrePieza, ordenarPiezasDespiece, type SistemaFrente } from '@/lib/muebles';
 import { codigoComercial, codigoGrupo, parseMedida, type SistemaMedida } from '@/lib/module-groups';
+import { presetMaterialesTipologia, usaCajaMaterialFrente, usaFondoMaterialFrente } from '@/lib/materiales-proyecto';
+import { esPanel, nombrePanel, etiquetaTipoModulo } from '@/lib/nombres-modulos';
 
 // Conversión exacta entre unidades vía milímetros.
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
 const convertir = (v: number, de: 'in' | 'cm' | 'mm', a: 'in' | 'cm' | 'mm') =>
   Math.round((v * TO_MM[de]) / TO_MM[a] * 1e6) / 1e6;
 
-type Tipo = { id: string; pref: string; nombre_es: string | null; categoria: string | null; margen_key: string | null };
+type Tipo = { id: string; pref: string; reglasPuertas?: Regla[]; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria: string | null; margen_key: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null; precio_m2: number | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
@@ -32,9 +38,14 @@ type HerrajeTipo = { rol: string; codigo: string | null };
 const fmtCOP = (n: number) => n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', fondo: 'fondo' }
+const ROL_LABEL: Record<string, string> = { caja: 'caja', refuerzo: 'refuerzos', frente: 'frente', gaveta: 'Tablero Gaveta (15 mm)', fondo: 'fondo' }
 const DB_SM_GROUP_VALUE = '__DB_SM__';
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
+const DB_SM_FE_SF_GROUP_VALUE = '__DB_SM_FE_SF__';
+const DB_SM_SF_GROUP_VALUE = '__DB_SM_SF__';
+const DB_SMG_GROUP_VALUE = '__DB_SMG__';
+const DB_SMG_FE_GROUP_VALUE = '__DB_SMG_FE__';
+const DB_SMG_SF_GROUP_VALUE = '__DB_SMG_SF__';
 
 const getCantoMatch = (cantos: string[], target: string) =>
   cantos.find((c) => c.toLowerCase() === target.toLowerCase()) ??
@@ -44,16 +55,6 @@ const getCantoMatch = (cantos: string[], target: string) =>
 const subscribeHydration = () => () => {};
 const clientHydrationSnapshot = () => true;
 const serverHydrationSnapshot = () => false;
-
-const GUIA_SIMULADOR = [
-  { title: 'Simulador de muebles', description: 'Calcula un módulo individual o varios módulos fabricados como un solo mueble combinado.' },
-  { selector: '[data-tour="tipo"]', title: '1. Tipo de mueble', description: 'Elige el tipo (base, superior, vanity, torre…). Cada tipo tiene su despiece propio validado.' },
-  { selector: '[data-tour="dims"]', title: '2. Dimensiones', description: 'Ingresa Largo, Alto y Profundidad, y elige la unidad (pulgadas, cm o mm).' },
-  { selector: '[data-tour="tableros"]', title: '3. Tableros', description: 'Elige el material por rol: caja, refuerzos, frente y fondo. Define el costo de la madera.' },
-  { selector: '[data-tour="opciones"]', title: '4. Opciones', description: 'Ajusta puertas, cajones, modo de frentes y herrajes para este módulo.' },
-  { selector: '[data-tour="calcular"]', title: '5. Calcular o combinar', description: 'Calcula el conjunto actual o usa “+ Agregar módulo” para confirmar este y abrir el siguiente con la configuración heredada.' },
-  { selector: '[data-tour="resultado"]', title: '6. Resultado', description: 'Verás un solo precio y desglose consolidado para todo el mueble combinado.' },
-];
 
 export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, cantos }:
   { tipos: Tipo[]; tableros: Tablero[]; trmDefault: number; presetDefault: Record<string, string>; rolesByTipo: Record<string, string[]>; perfiles: Perfil[]; perfilDefaultId: string; herrajesByTipo: Record<string, HerrajeTipo[]>; cantos: string[] }) {
@@ -91,13 +92,15 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   // Validar que los códigos del store persisten contra los tableros disponibles.
   // Si un código fue eliminado del catálogo, usar el preset por defecto.
   const validCodes = new Set(tableros.map((t) => t.codigo));
-  const preset = (() => {
+  const presetSeleccionado = (() => {
     const stored = store.preset;
     if (!Object.keys(stored).length) return presetDefault;
     return Object.fromEntries(
       Object.entries(stored).map(([rol, cod]) => [rol, validCodes.has(cod) ? cod : (presetDefault[rol] ?? '')])
     );
   })();
+  const prefMaterial = tipos.find((t) => t.id === tipoId)?.pref;
+  const preset = presetMaterialesTipologia({ ...presetSeleccionado, gaveta: presetSeleccionado.gaveta || tableroGaveta15(presetSeleccionado.caja, tableros) }, prefMaterial);
   const setPreset = (v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => setStore({ preset: typeof v === 'function' ? v(preset) : v });
 
   const frenteBoardDefault = tableros.find((t) => t.codigo === preset.frente);
@@ -131,6 +134,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const setTrm = (v: number) => setStore({ trm: v });
   
   const npuertas = store.npuertas;
+  const manoPuerta = store.manoPuerta ?? '';
   const setNpuertas = (v: string) => setStore({ npuertas: v });
   
   const ncajones = store.ncajones;
@@ -141,6 +145,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   const zocalo = store.zocalo ?? '';
   const setZocalo = (v: string) => setStore({ zocalo: v });
+  const puertaSup = store.puertaSup ?? '';
+  const setPuertaSup = (v: string) => setStore({ puertaSup: v });
   
   const nbarras = store.nbarras;
   const setNbarras = (v: string) => setStore({ nbarras: v });
@@ -151,8 +157,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const pcfdConfig = store.pcfdConfig ?? '';
   const setPcfdConfig = (v: string) => setStore({ pcfdConfig: v });
 
-  const rielCodigo = store.rielCodigo ?? 'RIELTANDEM';
+  const rielCodigo = herrajesFijosDbFe(tipos.find(t => t.id === tipoId)?.pref) ? 'RIELFE500' : store.rielCodigo ?? '';
   const setRielCodigo = (v: string) => setStore({ rielCodigo: v });
+  const barraCodigo = store.barraCodigo ?? "";
+  const setBarraCodigo = (v: string) => setStore({ barraCodigo: v });
   
   const modoFrentes = store.modoFrentes;
   const setModoFrentes = (v: 'normal' | 'sin_frentes' | 'solo_frentes') => setStore({ modoFrentes: v });
@@ -168,6 +176,12 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const setHornoLargo = (v: string) => setStore({ hornoLargo: v });
   const hornoAlto = store.hornoAlto ?? '';
   const setHornoAlto = (v: string) => setStore({ hornoAlto: v });
+  const mo = store.mo ?? '';
+  const setMo = (v: string) => setStore({ mo: v });
+  const hood = store.hood ?? '';
+  const setHood = (v: string) => setStore({ hood: v });
+  const free = store.free ?? '';
+  const setFree = (v: string) => setStore({ free: v });
 
   const result = store.result;
 
@@ -178,7 +192,47 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     const options: { value: string; label: string }[] = [];
     let dbSmAgregado = false;
     let dbSmFeAgregado = false;
+    let dbSmFeSfAgregado = false;
+    let dbSmSfAgregado = false;
+    let dbSmgAgregado = false;
+    let dbSmgFeAgregado = false;
+    let dbSmgSfAgregado = false;
     for (const tipo of tipos) {
+      if (esTipologiaDbSmFeSf(tipo.pref)) {
+        if (!dbSmFeSfAgregado) {
+          options.push({ value: DB_SM_FE_SF_GROUP_VALUE, label: 'DB-SM-FE-SF — Cajoneras con Gola, riel Full Extension y sin fondo' });
+          dbSmFeSfAgregado = true;
+        }
+        continue;
+      }
+      if (esTipologiaDbSmGSf(tipo.pref)) {
+        if (!dbSmgSfAgregado) {
+          options.push({ value: DB_SMG_SF_GROUP_VALUE, label: 'DB-SMG-SF — Cajoneras con Gola metálica sin fondo' });
+          dbSmgSfAgregado = true;
+        }
+        continue;
+      }
+      if (esTipologiaDbSmGFe(tipo.pref)) {
+        if (!dbSmgFeAgregado) {
+          options.push({ value: DB_SMG_FE_GROUP_VALUE, label: 'DB-SMG-FE — Cajoneras con Gola metálica y riel Full Extension' });
+          dbSmgFeAgregado = true;
+        }
+        continue;
+      }
+      if (esTipologiaDbSmG(tipo.pref)) {
+        if (!dbSmgAgregado) {
+          options.push({ value: DB_SMG_GROUP_VALUE, label: 'DB-SMG — Cajoneras con Gola metálica' });
+          dbSmgAgregado = true;
+        }
+        continue;
+      }
+      if (esTipologiaDbSmSf(tipo.pref)) {
+        if (!dbSmSfAgregado) {
+          options.push({ value: DB_SM_SF_GROUP_VALUE, label: 'DB-SM-SF — Cajoneras con Gola sin fondo' });
+          dbSmSfAgregado = true;
+        }
+        continue;
+      }
       if (esTipologiaDbSmFe(tipo.pref)) {
         if (!dbSmFeAgregado) {
           options.push({ value: DB_SM_FE_GROUP_VALUE, label: 'DB-SM-FE — Cajoneras con Gola y riel Full Extension' });
@@ -193,7 +247,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         }
         continue;
       }
-      options.push({ value: tipo.id, label: ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM', 'BLS', 'BLS-RS-SM', 'BOMH-1', 'BOMH-1-FE'].includes(tipo.pref) ? (tipo.nombre_es ?? tipo.pref) : `${tipo.pref} — ${tipo.nombre_es ?? ''}` });
+      options.push({ value: tipo.id, label: etiquetaTipoModulo(tipo.pref, tipo.nombre_es) });
     }
     return options;
   }, [tipos]);
@@ -205,23 +259,60 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   if (!isMounted) return null;
 
-  const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
-  const tipoPref = tipos.find((t) => t.id === tipoId)?.pref ?? '';
+  const rolesBase = Array.from(new Set([...(rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo']).filter(rol => !esTipologiaDbFe(prefMaterial) || rol !== 'gaveta'), ...(usaTableroGaveta(prefMaterial) ? ['gaveta'] : [])]));
+  const roles = usaCajaMaterialFrente(prefMaterial) ? Array.from(new Set([...rolesBase, 'frente'])) : rolesBase;
+  const tipoActual = tipos.find((t) => t.id === tipoId);
+  const tipoPref = tipoActual?.pref ?? '';
   const usaTipologiaDb = permiteTipologiaDb(tipoPref);
   const usaTipologiaDbSm = esTipologiaDbSm(tipoPref);
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(tipoPref);
-  const tipoSelectorValue = usaTipologiaDbSm
+  const usaTipologiaDbSmFeSf = esTipologiaDbSmFeSf(tipoPref);
+  const usaTipologiaDbSmSf = esTipologiaDbSmSf(tipoPref);
+  const usaTipologiaDbSmg = esTipologiaDbSmG(tipoPref);
+  const usaTipologiaDbSmgFe = esTipologiaDbSmGFe(tipoPref);
+  const usaTipologiaDbSmgSf = esTipologiaDbSmGSf(tipoPref);
+  const tipologiasDbSmSf = obtenerTipologiasDbSmSf(tipos);
+  const tipologiasDbSmFeSf = obtenerTipologiasDbSmFeSf(tipos);
+  const tipologiasDbSmgSf = obtenerTipologiasDbSmGSf(tipos);
+  const tipoSelectorValue = usaTipologiaDbSmgSf
+    ? DB_SMG_SF_GROUP_VALUE
+    : usaTipologiaDbSmgFe
+      ? DB_SMG_FE_GROUP_VALUE
+      : usaTipologiaDbSmg
+        ? DB_SMG_GROUP_VALUE
+    : usaTipologiaDbSmFeSf
+    ? DB_SM_FE_SF_GROUP_VALUE
+    : usaTipologiaDbSm
     ? DB_SM_GROUP_VALUE
-    : usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
+    : usaTipologiaDbSmFe
+      ? DB_SM_FE_GROUP_VALUE
+      : usaTipologiaDbSmSf ? DB_SM_SF_GROUP_VALUE : tipoId;
   const esPCFD = tipoPref === 'PCFD';
+  const usaTk = usaTkTorre(tipoPref);
+  const usaPuertaSup = usaPuertaSupTorre(tipoPref);
+  const usaMoPcfd = usaMoTorre(tipoPref);
   const usaDoor = usaPuertaParametrica(tipoPref);
+  const puertasActuales = puertasSegunReglas(tipoActual?.reglasPuertas, { largo: parseMedida(largo), alto: parseMedida(alto), prof: parseMedida(prof), unidad }, npuertas === '' ? undefined : Number(npuertas));
+  const pideMano = requiereManoPuerta(tipoPref, puertasActuales);
   const usaHuecoHorno = usaHuecoHornoParametrico(tipoPref);
-  const usaRiel = (usaTipologiaDb && conHerrajes) || esPCFD;
+  const usaMoHood = [tipoActual?.pref, tipoActual?.pref_imperial, tipoActual?.pref_metrico].some(usaMedidasMoHood);
+  const usaHood = usaHoodSm(tipoActual?.pref);
+  const usaRiel = usaTableroGaveta(tipoPref) || (usaTipologiaDb && conHerrajes) || usaTipologiaDbSmFeSf || usaTipologiaDbSmg || usaTipologiaDbSmgFe || usaTipologiaDbSmgSf || esPCFD;
   function handleTipoChange(v: string) {
-    const tipoSeleccionado = v === DB_SM_GROUP_VALUE
+    const tipoSeleccionado = v === DB_SM_FE_SF_GROUP_VALUE
+      ? tipologiasDbSmFeSf[0]
+      : v === DB_SMG_SF_GROUP_VALUE
+      ? tipologiasDbSmgSf[0]
+      : v === DB_SMG_FE_GROUP_VALUE
+        ? tipos.find((tipo) => tipo.pref === DB_SMG_FE_TIPOLOGIAS[0].pref)
+        : v === DB_SMG_GROUP_VALUE
+      ? tipos.find((tipo) => tipo.pref === DB_SMG_TIPOLOGIAS[0].pref)
+      : v === DB_SM_GROUP_VALUE
       ? tipos.find((tipo) => tipo.pref === DB_SM_TIPOLOGIAS[0].pref)
       : v === DB_SM_FE_GROUP_VALUE
         ? tipos.find((tipo) => tipo.pref === DB_SM_FE_TIPOLOGIAS[0].pref)
+        : v === DB_SM_SF_GROUP_VALUE
+          ? tipologiasDbSmSf[0]
         : tipos.find((tipo) => tipo.id === v);
     if (!tipoSeleccionado) return;
     setTipoId(tipoSeleccionado.id);
@@ -233,12 +324,26 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     setNcajones('');
     setNentrepanos('');
     setZocalo('');
+    setPuertaSup('');
     setNbarras('');
     setDbTipo('');
-    setRielCodigo('RIELTANDEM');
+    setRielCodigo('');
+    setBarraCodigo('');
     setPcfdConfig('');
     setDoor('');
+    setFree('');
     setDoorHand('R');
+    if (usaMedidasMoHood(tipoSeleccionado.pref)) {
+      setMo(String(convertir(200, 'mm', unidad)));
+      setHood('0');
+    } else {
+      setMo('');
+      setHood('');
+    }
+    const tkPredeterminado = tkPredeterminadoTorre(tipoSeleccionado.pref);
+    if (tkPredeterminado != null) setZocalo(String(convertir(tkPredeterminado, 'in', unidad)));
+    if (usaPuertaSupTorre(tipoSeleccionado.pref)) setPuertaSup(String(convertir(30, 'in', unidad)));
+    if (usaMoTorre(tipoSeleccionado.pref)) setMo(String(convertir(20, 'in', unidad)));
     if (usaHuecoHornoParametrico(tipoSeleccionado.pref)) {
       setHornoLargo(String(convertir(219.2, 'mm', unidad)));
       setHornoAlto(String(convertir(153.2, 'mm', unidad)));
@@ -246,9 +351,19 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       setHornoLargo('');
       setHornoAlto('');
     }
+    // Alto por defecto segun la tipologia: 28,75" la linea U y Sink Vanity, 30"
+    // el resto de los inferiores. Se carga al elegir el tipo y queda editable,
+    // igual que la profundidad de W.
+    const altoDefecto = altoPorDefectoIn(tipoSeleccionado.pref, tipoSeleccionado.categoria);
+    if (altoDefecto != null) setAlto(String(convertir(altoDefecto, 'in', unidad)));
     if (tipoSeleccionado.pref === 'W') setProf(String(convertir(12, 'in', unidad)));
     if (tipoSeleccionado.pref === 'WSM') setProf(String(convertir(14, 'in', unidad)));
-    if (tipoSeleccionado.pref === 'F' || tipoSeleccionado.pref === 'DB') setSistemaFrente('manija');
+    if (tipoSeleccionado.pref === 'F' || (tipoSeleccionado.pref === 'DB' || esTipologiaDbFe(tipoSeleccionado.pref))) setSistemaFrente('manija');
+    if (esTipologiaDbSmFeSf(tipoSeleccionado.pref) || esTipologiaDbSmG(tipoSeleccionado.pref) || esTipologiaDbSmGFe(tipoSeleccionado.pref) || esTipologiaDbSmGSf(tipoSeleccionado.pref)) {
+      setSistemaFrente('gola');
+      setRielCodigo(herrajesFijosDbFe(tipoSeleccionado.pref) ? 'RIELFE500' : '');
+      setBarraCodigo('');
+    }
   }
   function aplicarDbSmTipo(pref: string) {
     const tipo = tipos.find((item) => item.pref === pref);
@@ -256,7 +371,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   }
   function aplicarDbTipo(k: string) {
     setDbTipo(k);
-    const t = DB_TIPOLOGIAS.find((x) => x.key === k);
+    const t = tipologiasDbParaPrefijo(tipoPref).find((x) => x.key === k);
     if (t) { setNcajones(String(t.nc)); setNbarras(String(t.nb)); }
   }
   function aplicarPcfdConfig(k: string) {
@@ -265,7 +380,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (!config) return;
     setNcajones(String(config.nc));
     setNentrepanos(String(config.ne));
-    setZocalo(String(config.zocalo));
+    setZocalo(String(convertir(config.zocalo, 'in', unidad)));
   }
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
   const toggleHerraje = (rol: string) => setStore({ herrajesExcl: herrajesExcl.includes(rol) ? herrajesExcl.filter((x) => x !== rol) : [...herrajesExcl, rol] });
@@ -278,6 +393,11 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (door !== '' && Number.isFinite(parseMedida(door))) setDoor(String(convertir(parseMedida(door), unidad, nu)));
     if (hornoLargo !== '' && Number.isFinite(parseMedida(hornoLargo))) setHornoLargo(String(convertir(parseMedida(hornoLargo), unidad, nu)));
     if (hornoAlto !== '' && Number.isFinite(parseMedida(hornoAlto))) setHornoAlto(String(convertir(parseMedida(hornoAlto), unidad, nu)));
+    if (mo !== '' && Number.isFinite(parseMedida(mo))) setMo(String(convertir(parseMedida(mo), unidad, nu)));
+    if (hood !== '' && Number.isFinite(parseMedida(hood))) setHood(String(usaHood ? convertirExacto(parseMedida(hood), unidad, nu) : convertir(parseMedida(hood), unidad, nu)));
+    if (free !== '' && Number.isFinite(parseMedida(free))) setFree(String(convertirExacto(parseMedida(free), unidad, nu)));
+    if (zocalo !== '' && Number.isFinite(parseMedida(zocalo))) setZocalo(String(convertir(parseMedida(zocalo), unidad, nu)));
+    if (puertaSup !== '' && Number.isFinite(parseMedida(puertaSup))) setPuertaSup(String(convertir(parseMedida(puertaSup), unidad, nu)));
     setUnidad(nu);
   }
 
@@ -295,13 +415,42 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   const dimensionesValidas = (values: Pick<SimuladorModuloValues, 'largo' | 'alto' | 'prof'>) =>
     [values.largo, values.alto, values.prof].every((value) => {
       const parsed = parseMedida(value);
-      return value.trim() !== '' && Number.isFinite(parsed) && parsed > 0;
+      return typeof value === 'string' && value.trim() !== '' && Number.isFinite(parsed) && parsed > 0;
     });
 
   function validarDimensionesActivas() {
-    if (dimensionesValidas({ largo, alto, prof })) return true;
-    setError('Completa Largo, Alto y Prof con valores mayores que cero.');
-    return false;
+    if (pideMano && !manoPuerta) { setError('Selecciona L o R para la apertura del mueble de una puerta.'); return false; }
+    if (usaTableroGaveta(prefMaterial) && conHerrajes && !herrajesFijosDbFe(prefMaterial) && ((!herrajesExcl.includes("riel") && !rielCodigo) || (!herrajesExcl.includes("barra") && Number(nbarras) > 0 && !barraCodigo))) { setError("Selecciona el tipo de riel y de barra que deseas incluir."); return false; }
+    if (usaHood) {
+      try { validarHoodSm(parseMedida(alto), hood.trim() === '' ? undefined : parseMedida(hood), free.trim() === '' ? undefined : parseMedida(free)); }
+      catch (error) { setError((error as Error).message); return false; }
+    }
+    if (!dimensionesValidas({ largo, alto, prof })) {
+      setError('Completa Largo, Alto y Prof con valores mayores que cero.');
+      return false;
+    }
+    if (usaMoHood) {
+      const moValue = parseMedida(mo);
+      const hoodValue = parseMedida(hood);
+      if (!(moValue > 0) || !(hoodValue >= 0) || moValue + hoodValue >= parseMedida(alto)) {
+        setError('MO debe ser mayor que cero, HOOD no puede ser negativo y su suma debe ser menor que el alto del mueble.');
+        return false;
+      }
+    }
+    const altoUtil = parseMedida(alto) - parseMedida(zocalo);
+    if (usaTk && (zocalo.trim() === '' || !(parseMedida(zocalo) >= 0) || !(altoUtil > 0))) {
+      setError('TK es obligatorio, debe ser mayor o igual a cero y menor que el alto.');
+      return false;
+    }
+    if (usaPuertaSup && (puertaSup.trim() === '' || !(parseMedida(puertaSup) > 0) || !(parseMedida(puertaSup) < altoUtil))) {
+      setError('PUERTA SUP es obligatoria y debe estar entre 0 y la altura útil del mueble.');
+      return false;
+    }
+    if (usaMoPcfd && (mo.trim() === '' || !(parseMedida(mo) > 0) || !(parseMedida(mo) < altoUtil))) {
+      setError('MO es obligatorio y debe ser menor que la altura útil del mueble.');
+      return false;
+    }
+    return true;
   }
 
   function inputFromModule(modulo: SimuladorModulo): CotizarInput {
@@ -309,15 +458,25 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     if (modulo.npuertas !== '') overrides.n_puertas = Number(modulo.npuertas);
     if (modulo.ncajones !== '') overrides.n_cajones = Number(modulo.ncajones);
     if (modulo.nentrepanos !== '') overrides.n_entrepanos = Number(modulo.nentrepanos);
-    if (modulo.zocalo !== '') overrides.zocalo = Number(modulo.zocalo);
+    if (modulo.zocalo !== '') overrides.zocalo = convertir(parseMedida(modulo.zocalo), unidad, 'in');
+    if (modulo.puertaSup !== '') overrides.PUERTA_SUP = convertir(parseMedida(modulo.puertaSup), unidad, 'in');
     if (modulo.nbarras !== '') overrides.n_barras = Number(modulo.nbarras);
     const pref = tipos.find((tipo) => tipo.id === modulo.tipoId)?.pref ?? '';
     if (usaHuecoHornoParametrico(pref)) {
       overrides.horno_largo = convertir(parseMedida(modulo.hornoLargo), unidad, 'in');
       overrides.horno_alto = convertir(parseMedida(modulo.hornoAlto), unidad, 'in');
     }
+    if (usaMoTorre(pref)) overrides.MO = convertir(parseMedida(modulo.mo), unidad, 'in');
+    if (usaMedidasMoHood(pref)) {
+      overrides.MO = convertir(parseMedida(modulo.mo), unidad, 'in');
+      overrides.HOOD = convertir(parseMedida(modulo.hood), unidad, 'in');
+    }
+    if (usaHoodSm(pref)) {
+      overrides.HOOD = convertirExacto(parseMedida(modulo.hood), unidad, 'in');
+      overrides.FREE = convertirExacto(parseMedida(modulo.free), unidad, 'in');
+    }
     if (permiteTipologiaDb(pref) && modulo.dbTipo) {
-      const dbT = DB_TIPOLOGIAS.find((x) => x.key === modulo.dbTipo);
+      const dbT = tipologiasDbParaPrefijo(pref).find((x) => x.key === modulo.dbTipo);
       overrides.n_cajones_pequenos = dbT?.npeq ?? 0;
       overrides.n_cajones_ocultos = dbT?.noculto ?? 0;
     }
@@ -325,8 +484,9 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
     // fórmulas de pieza y las reglas puedan reaccionar (ver migración 0028).
     // Las variantes DB-SM tienen Gola integrada: un selector heredado en
     // "manija" no puede desactivar sus dos golas ni alterar sus frentes.
-    const esDbSm = esTipologiaDbSm(pref) || esTipologiaDbSmFe(pref);
-    overrides.gola = esDbSm ? 1 : pref === 'DB' ? 0 : modulo.sistemaFrente === 'gola' ? 1 : 0;
+    const esDbSm = esTipologiaDbSm(pref) || esTipologiaDbSmFe(pref) || esTipologiaDbSmFeSf(pref) || esTipologiaDbSmSf(pref)
+      || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref);
+    overrides.gola = esDbSm ? 1 : (pref === 'DB' || esTipologiaDbFe(pref)) ? 0 : modulo.sistemaFrente === 'gola' ? 1 : 0;
     if (permiteRemovible(pref)) overrides.removible = modulo.removible ? 1 : 0;
     return {
       tipoId: modulo.tipoId,
@@ -335,6 +495,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       prof: parseMedida(modulo.prof),
       unidad,
       preset: modulo.preset,
+      dbTipo: permiteTipologiaDb(pref) ? modulo.dbTipo : undefined,
       conHerrajes: modulo.conHerrajes,
       trm,
       modoFrentes: modulo.modoFrentes,
@@ -342,9 +503,11 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       herrajesExcluidos: modulo.conHerrajes && modulo.herrajesExcl.length ? modulo.herrajesExcl : undefined,
       cantoFrentes: modulo.cantoFrentes || undefined,
       cantoCaja: modulo.cantoCaja || undefined,
-      rielCodigo: (permiteTipologiaDb(pref) || pref === 'PCFD') && modulo.rielCodigo ? modulo.rielCodigo : undefined,
+      barraCodigo: usaTableroGaveta(pref) && !herrajesFijosDbFe(pref) ? (modulo.barraCodigo ?? '') : undefined,
+      rielCodigo: (usaTableroGaveta(pref) || permiteTipologiaDb(pref) || esTipologiaDbSmFeSf(pref) || esTipologiaDbSmG(pref) || esTipologiaDbSmGFe(pref) || esTipologiaDbSmGSf(pref) || pref === 'PCFD') && modulo.rielCodigo ? (esTipologiaDbFe(pref) ? 'RIELFE500' : modulo.rielCodigo) : undefined,
       door: usaPuertaParametrica(pref) && modulo.door !== '' ? parseMedida(modulo.door) : undefined,
       doorHand: usaPuertaParametrica(pref) ? modulo.doorHand : undefined,
+      manoPuerta: modulo.manoPuerta || undefined,
     };
   }
 
@@ -533,14 +696,18 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
   // el código sigue la unidad con la que se está simulando.
   const sistemaCodigo: SistemaMedida = unidad === 'in' ? 'imperial' : 'metrico';
 
-  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'sistemaFrente' | 'dbTipo' | 'ncajones' | 'door' | 'doorHand'>) => {
+  const codigoDeValores = (valores: Pick<SimuladorModuloValues, 'tipoId' | 'largo' | 'alto' | 'prof' | 'zocalo' | 'sistemaFrente' | 'dbTipo' | 'ncajones' | 'door' | 'doorHand' | 'manoPuerta' | 'npuertas'> & { preset?: Record<string, string> }) => {
     const pref = tipos.find((item) => item.id === valores.tipoId)?.pref ?? '';
     if (!pref) return '';
+    const materiales = presetMaterialesTipologia(valores.preset ?? preset, pref);
     return codigoComercial({
+      manoPuerta: valores.manoPuerta || undefined,
+      nPuertas: puertasSegunReglas(tipos.find(t => t.id === valores.tipoId)?.reglasPuertas, { largo: parseMedida(valores.largo), alto: parseMedida(valores.alto), prof: parseMedida(valores.prof), unidad }, valores.npuertas === '' ? undefined : Number(valores.npuertas)),
       pref,
       largo: parseMedida(valores.largo),
       alto: parseMedida(valores.alto),
       prof: parseMedida(valores.prof),
+      zocaloIn: valores.zocalo === '' ? null : convertir(parseMedida(valores.zocalo), unidad, 'in'),
       unidad,
       sistema: sistemaCodigo,
       sistemaFrente: valores.sistemaFrente,
@@ -548,8 +715,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       pcfdCajones: pref === 'PCFD' ? Number(valores.ncajones) : null,
       door: usaPuertaParametrica(pref) && valores.door !== '' ? parseMedida(valores.door) : null,
       doorHand: usaPuertaParametrica(pref) ? valores.doorHand : null,
-      espesorCajaMm: tableros.find((tablero) => tablero.codigo === preset.caja)?.espesor_mm,
-      espesorFrenteMm: tableros.find((tablero) => tablero.codigo === preset.frente)?.espesor_mm,
+      espesorCajaMm: tableros.find((tablero) => tablero.codigo === materiales.caja)?.espesor_mm,
+      espesorFrenteMm: tableros.find((tablero) => tablero.codigo === materiales.frente)?.espesor_mm,
     });
   };
 
@@ -557,7 +724,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
 
   const codigoResultado = store.modulos.length > 0
     ? codigoGrupo(store.modulos.map(codigoDeValores).filter(Boolean))
-    : codigoDeValores({ tipoId, largo, alto, prof, sistemaFrente, dbTipo, ncajones, door, doorHand });
+    : codigoDeValores({ tipoId, largo, alto, prof, zocalo, sistemaFrente, dbTipo, ncajones, door, doorHand, manoPuerta, npuertas });
 
   const editingPosition = store.editingId
     ? store.modulos.findIndex((modulo) => modulo.id === store.editingId) + 1
@@ -605,6 +772,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
                     <div>
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Módulo {index + 1}</div>
                       <div className="font-semibold text-slate-900">{moduleTitle(modulo)}</div>
+                      {esPanel(tipos.find(t => t.id === modulo.tipoId)?.pref) && <div className="text-xs text-slate-600">{nombrePanel(modulo.anotaciones)}</div>}
                       <div className="text-xs text-slate-500">{modulo.largo} × {modulo.alto} × {modulo.prof} {unidad}</div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -657,8 +825,6 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
           </h2>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <UndoRedoButtons compact />
-            <GuideButton steps={GUIA_SIMULADOR} label="Guía" />
-            <TooltipToggle />
           </div>
         </div>
 
@@ -678,6 +844,35 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
             </select>
           </Field>
         </div>
+
+        {usaTk && (
+          <div className={`grid gap-2 items-end ${usaPuertaSup || usaMoPcfd ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <Field label="TK"><input type="text" required value={zocalo} onChange={(e) => setZocalo(e.target.value)} placeholder="0" className="inp" /></Field>
+            {usaPuertaSup && <Field label="PUERTA SUP"><input type="text" required value={puertaSup} onChange={(e) => setPuertaSup(e.target.value)} className="inp" /></Field>}
+            {usaMoPcfd && <Field label="MO"><input type="text" required value={mo} onChange={(e) => setMo(e.target.value)} className="inp" /></Field>}
+          </div>
+        )}
+
+        {usaHood && <div className="grid grid-cols-2 gap-2">
+          <Field label="HOOD">
+            <input type="text" required value={hood} onChange={(e) => setHood(e.target.value)} title="Medida total por debajo de la carcasa" className="inp" />
+            <p className="mt-1 text-xs text-slate-500">Medida total por debajo de la carcasa</p>
+          </Field>
+          <Field label="FREE">
+            <input type="text" required value={free} onChange={(e) => setFree(e.target.value)} title="Parte visible del extractor" className="inp" />
+            <p className="mt-1 text-xs text-slate-500">Parte visible del extractor</p>
+          </Field>
+        </div>}
+        {usaMoHood && (
+          <div className="grid grid-cols-2 gap-2 items-end">
+            <Field label="MO">
+              <input type="text" required value={mo} onChange={(e) => setMo(e.target.value)} placeholder={String(convertir(200, 'mm', unidad))} title="Distancia entre la base y el entrepaño fijo" className="inp" />
+            </Field>
+            <Field label="HOOD">
+              <input type="text" required value={hood} onChange={(e) => setHood(e.target.value)} placeholder="0" title="Distancia entre el final inferior del lateral y la base" className="inp" />
+            </Field>
+          </div>
+        )}
 
         {usaHuecoHorno && (
           <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 space-y-2">
@@ -722,6 +917,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
                 rendered.push(
                   <Field key="caja-refuerzo" label="caja / refuerzos">
                     <Combobox value={preset.caja ?? ''} options={tableroOptions}
+                      disabled={usaCajaMaterialFrente(prefMaterial)}
                       onChange={(v) => {
                         setPreset((p) => ({ ...p, caja: v, refuerzo: v }));
                         const b = tableros.find((t) => t.codigo === v);
@@ -735,6 +931,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
                 rendered.push(
                   <Field key={rol} label={ROL_LABEL[rol] ?? rol}>
                     <Combobox value={preset[rol] ?? ''} options={tableroOptions}
+                      disabled={rol === 'fondo' && usaFondoMaterialFrente(prefMaterial)}
                       onChange={(v) => {
                         setPreset((p) => ({ ...p, [rol]: v }));
                         if (rol === 'frente') {
@@ -753,7 +950,8 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
         </div>
 
         <div data-tour="opciones" className="grid grid-cols-2 gap-2 items-end">
-          <Field label="Nº puertas (override)"><input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
+          <Field label="Nº puertas (override)"><input type="number" placeholder="auto" disabled={usaHood} value={usaHood ? (tipoActual?.pref === 'TW-SM-HOOD' ? '1' : '2') : npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" /></Field>
+          {pideMano && <Field label="Apertura de la puerta (obligatoria)"><select required value={manoPuerta} onChange={e => setStore({ manoPuerta: e.target.value as ManoPuerta | '' })} className="inp"><option value="">Elige L o R</option><option value="L">L</option><option value="R">R</option></select></Field>}
           <Field label="Nº cajones (override)"><input type="number" min={0} step={1} placeholder="auto" value={ncajones} onChange={(e) => { setNcajones(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" /></Field>
           <Field label="Nº entrepaños (override)"><input type="number" min={0} step={1} placeholder="auto" value={nentrepanos} onChange={(e) => { setNentrepanos(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" /></Field>
           {esPCFD && (
@@ -764,12 +962,16 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               </select>
             </Field>
           )}
-          {esPCFD && <Field label="Zócalo TK (in)"><input type="number" min={0} step="any" placeholder="auto" value={zocalo} onChange={(e) => { setZocalo(e.target.value); setPcfdConfig(''); }} className="inp" /></Field>}
+          {/* El rótulo sigue al tipo elegido: un UDV ofrece `UDV-1S`, no `DB-1S`.
+              El `value` conserva la clave original, que es la que se persiste y
+              de la que sale el sufijo del código comercial. */}
           {usaTipologiaDb && (
-            <Field label="Tipología DB">
+            <Field label={`Tipología ${tipoPref || 'DB'}`}>
               <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
                 <option value="">— manual —</option>
-                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{t.key} · {t.desc}</option>)}
+                {tipologiasDbParaPrefijo(tipoPref).map((t) => (
+                  <option key={t.key} value={t.key} title={t.desc}>{etiquetaTipologiaDb(t.key, tipoPref)} · {t.desc}</option>
+                ))}
               </select>
             </Field>
           )}
@@ -795,22 +997,69 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
               </select>
             </Field>
           )}
-          {usaTipologiaDb && <Field label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></Field>}
-          {usaRiel && (
-            <Field label="Tipo de riel">
-              <select value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
-                {DB_RIELES.map((r) => (
-                  <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
+          {usaTipologiaDbSmFeSf && (
+            <Field label="Tipología DB-SM-FE-SF">
+              <select value={tipoPref} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {tipologiasDbSmFeSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>
+                    {tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola, Full Extension y sin fondo'}
+                  </option>
                 ))}
               </select>
             </Field>
           )}
+          {usaTipologiaDbSmSf && (
+            <Field label="Tipología DB-SM-SF">
+              <select value={tipoPref} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {tipologiasDbSmSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>
+                    {tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola sin fondo'}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {usaTipologiaDbSmg && (
+            <Field label="Tipología DB-SMG">
+              <select value={tipoPref} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {DB_SMG_TIPOLOGIAS.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>
+                    {tipologia.pref} · {tipologia.desc}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {usaTipologiaDbSmgFe && (
+            <Field label="Tipología DB-SMG-FE">
+              <select value={tipoPref} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {DB_SMG_FE_TIPOLOGIAS.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>
+                    {tipologia.pref} · {tipologia.desc}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {usaTipologiaDbSmgSf && (
+            <Field label="Tipología DB-SMG-SF">
+              <select value={tipoPref} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {tipologiasDbSmgSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>
+                    {tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola metálica sin fondo'}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {usaTipologiaDb && !esTipologiaDbFe(tipoPref) && <Field label="Nº barras (pares)"><input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" /></Field>}
+          {usaRiel && <HerrajesGaveta riel={rielCodigo} barra={barraCodigo} onRiel={setRielCodigo} onBarra={setBarraCodigo} fe={herrajesFijosDbFe(tipoPref)} />}
           <Field label="Frentes">
             <select value={modoFrentes} onChange={(e) => setModoFrentes(e.target.value as 'normal' | 'sin_frentes' | 'solo_frentes')} className="inp">
               <option value="normal">Completo</option><option value="sin_frentes">Sin frentes (open)</option><option value="solo_frentes">Solo kit de frentes</option>
             </select>
           </Field>
-          {tipoPref !== 'DB' && (
+          {tipoPref !== 'DB' && !esTipologiaDbFe(tipoPref) && (
             <Field label="Sistema de frente">
               <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
                 {SISTEMAS_FRENTE.map((s) => <option key={s.key} value={s.key} title={s.desc}>{s.label}</option>)}
@@ -833,13 +1082,14 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
             </select>
           </Field>
           <Field label="Canto caja">
-            <select value={cantoCaja} onChange={(e) => setCantoCaja(e.target.value)} className="inp">
+            <select value={usaCajaMaterialFrente(prefMaterial) ? cantoFrentes : cantoCaja} disabled={usaCajaMaterialFrente(prefMaterial)} title={usaCajaMaterialFrente(prefMaterial) ? 'Todas las piezas usan el canto de frente' : undefined} onChange={(e) => setCantoCaja(e.target.value)} className="inp">
               <option value="">Por defecto</option>
               {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </Field>
         </div>
 
+        {esPanel(prefMaterial) && <Field label="Notas del panel"><input value={store.anotaciones ?? ''} onChange={e => setStore({ anotaciones: e.target.value })} placeholder="Ej. lateral" className="inp" /></Field>}
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input
             type="checkbox"
@@ -851,10 +1101,10 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
           <div className="rounded-lg border border-slate-200 p-2.5">
             <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes incluidos (destilda para excluir)</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-              {herrajesTipo.map((h) => (
+              {herrajesTipo.filter(h => !herrajesFijosDbFe(tipoPref) || h.rol !== 'barra').map((h) => (
                 <label key={h.rol} className="flex items-center gap-1.5 text-sm text-slate-700 capitalize">
                   <input type="checkbox" checked={!herrajesExcl.includes(h.rol)} onChange={() => toggleHerraje(h.rol)} />
-                  {h.rol}{h.codigo ? <span className="text-slate-400 normal-case">· {h.codigo}</span> : null}
+                  {h.rol}{h.codigo ? <span className="text-slate-400 normal-case">· {h.rol === 'riel' ? (rielCodigo || 'Seleccionar riel') : h.rol === 'barra' ? (barraCodigo || 'Seleccionar barra') : h.codigo}</span> : null}
                 </label>
               ))}
             </div>
@@ -886,7 +1136,7 @@ export default function CotizadorForm({ tipos, tableros, trmDefault, presetDefau
       {/* ---- Resultado ---- */}
       <div data-tour="resultado" className="space-y-4">
         {!result && <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400">Ingresa los datos y calcula para ver el precio y el desglose.</div>}
-        {result && <ResultadoView result={result} codigo={codigoResultado} moneda={moneda} setMoneda={setMoneda} />}
+        {result && <ResultadoView result={result} codigo={codigoResultado} descripcion={esPanel(prefMaterial) && !store.modulos.length ? nombrePanel(store.anotaciones) : undefined} moneda={moneda} setMoneda={setMoneda} />}
       </div>
 
       <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.4rem .6rem;font-size:.875rem}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}`}</style>
@@ -899,8 +1149,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <Campo label={label} info={TIPS_COTIZADOR[label]}>{children}</Campo>;
 }
 
-function ResultadoView({ result, codigo, moneda, setMoneda }:
-  { result: CotizarGrupoResult; codigo: string; moneda: 'COP' | 'USD'; setMoneda: (m: 'COP' | 'USD') => void }) {
+function ResultadoView({ result, codigo, descripcion, moneda, setMoneda }:
+  { result: CotizarGrupoResult; codigo: string; descripcion?: string; moneda: 'COP' | 'USD'; setMoneda: (m: 'COP' | 'USD') => void }) {
   const precioSin = result.precioCop;
   const precioHerr = result.precioHerrajesCop;
   const precioCon = result.precioConHerrajesCop;
@@ -941,6 +1191,7 @@ function ResultadoView({ result, codigo, moneda, setMoneda }:
             <span className="inline-block rounded-md border border-slate-300 bg-slate-50 px-2 py-0.5 font-mono text-sm font-semibold tracking-wide text-slate-700" title="Código comercial del módulo">
               {codigo}
             </span>
+            {descripcion && <span className="ml-2 text-sm text-slate-700">{descripcion}</span>}
           </div>
         )}
         <p className="text-sm text-slate-500 mt-1">

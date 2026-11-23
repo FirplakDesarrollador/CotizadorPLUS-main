@@ -15,7 +15,7 @@ const piezas: Pieza[] = [
   { nombre:'frente',rol_tablero:'frente',formula_cantidad:'1',formula_largo:'door-RV',formula_ancho:'A-(30/25.4)',visualizacion:{version:1,funcion:'frente',plano:'XZ',intercambiar:false,confirmado:true} },
 ];
 
-function escena(manoDerecha:number){
+function escena(manoDerecha:number,pref='BBLFD-D-L/R-SM'){
   const calc:CalcInput={
     dims:{L:42,A:30,P:24},piezas,reglas:[],overrides:{door:17.875,mano_derecha:manoDerecha,gola:1,n_puertas:1},
     preset:{caja:'CAJA',refuerzo:'REF',frente:'FRENTE'},
@@ -23,10 +23,18 @@ function escena(manoDerecha:number){
     cantosByCalibre:new Proxy({}, {get:(_,key)=>({calibre:String(key),precio:1})}) as Record<string,Canto>,
     herrajesByCode:{},consumiblesBySelector:{},etiquetasUnd:0,usaCarton:false,margen:0,trm:1,desperdicio:0,
   };
-  const member:PreparedGroupMember={pref:'BBLFD-D-L/R-SM',permiteAgrupacion:false,calc};
+  const member:PreparedGroupMember={pref,permiteAgrupacion:false,calc};
   const group=calcularGrupoFisico([member]);
   return {scene:construirVisualizacion([member],group),despiece:group.lineas[0]};
 }
+
+test('BBLFD SM con identidad interna SF conserva el montaje L/R',()=>{
+  for(const mano of [0,1]) {
+    const con=escena(mano).scene.paneles;
+    const sin=escena(mano,'BBLFD-D-L/R-SM-SF').scene.paneles;
+    assert.deepEqual(sin.map(p=>[p.nombre,p.x,p.y,p.z,p.w,p.d,p.h]),con.map(p=>[p.nombre,p.x,p.y,p.z,p.w,p.d,p.h]));
+  }
+});
 
 for(const [mano,manoDerecha] of [['R',1],['L',0]] as const){
   test(`BBLFD-D-L/R-SM ${mano}: refuerzos terminan en el montante y la Gola queda debajo`,()=>{

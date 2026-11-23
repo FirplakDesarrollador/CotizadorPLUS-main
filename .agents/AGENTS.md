@@ -38,12 +38,19 @@ Cualquier agente o IDE (Claude Code, Codex, Antigravity, Gemini CLI, Cursor) deb
 
 ## 3. Reglas Inviolables de Gobernanza (Safe Change)
 
-1. **Autorización estricta**: ningún agente puede ejecutar `impact`, `quick`, `gate`, `full`, `release` ni pruebas o acciones con coste/red externa sin autorización explícita del usuario (excepto `test:focused`, `quality:plan`, `quality:learn`, `skills:check` o cuando el usuario invoque directamente `/desplegar <modo>`).
+1. **Autorización**: invocar `/desplegar` es autorización directa para ejecutar el flujo completo; fuera de `/desplegar`, ningún agente puede ejecutar `impact`, `quick`, `gate`, `full` ni operaciones de red/git/despliegue sin orden explícita del usuario (salvo `test:focused`, `quality:plan`, `quality:learn`, `skills:check`).
 2. **Estados verificables explícitos**: cada etapa reporta `VERIFIED`, `FAILED`, `SKIPPED` o `NOT_CONFIGURED`. Si una etapa requerida queda `SKIPPED` o `NOT_CONFIGURED`, el gate falla. Prohibido falsear verdes.
 3. **Prohibido relajar aserciones o saltar pruebas**: prohibido usar `.skip`, `.todo`, `.only`, eliminar pruebas, añadir `exclude`/`globalIgnores` para esconder errores o debilitar aserciones.
 4. **Trinquete de deuda inviolable**: `docs/quality/baseline.json` solo puede bajar deuda, jamás subirla.
 5. **Gobernanza de `quality:learn`**: estrictamente consultivo (nunca edita código, pruebas ni baselines). Ninguna entrega se cierra con hallazgos `HIGH` sin resolver o justificar técnicamente.
 6. **Sin GitHub Actions**: todo el ciclo de calidad y publicación se opera en local con verificación previa de `origin/DEV` y verificación final de Vercel.
+
+## 4. Invariantes de Cotizaciones y PDF
+
+- Todo artículo de **+ Agregar herrajes/otros** se cuenta con cantidades y valores en **Herrajes / otros** del PDF; se excluye de muebles y programación de módulos. El total lo incluye una sola vez.
+- Toda sección cuyo nombre contenga **closet** usa los materiales de **Closet/Walk-in closet** de Características del proyecto para todos sus módulos, independientemente del prefijo.
+- Las especificaciones impresas deben describir los materiales y cantos realmente elegidos en Características del proyecto, con su catálogo, sin textos genéricos de la plantilla que contradigan esas selecciones.
+- Para cambios en cotizaciones, materiales o impresión, cumplir el [protocolo de verificación](WikiLLM/wiki/protocolo_pdf_cotizaciones.md): auditoría de datos, regresiones y dos generaciones independientes del PDF con revisión de texto y páginas renderizadas.
 
 ---
 
@@ -81,4 +88,5 @@ Identificar si se trata de una nueva ingestión de conocimiento, una actualizaci
 
 ### 3. Verificación Final
 - Nunca modificar archivos dentro de `WikiLLM/raw/` (son de solo lectura).
-- Usar rutas relativas adecuadas y mantener formato técnico y conciso.
+- Comprobar que todas las referencias cruzadas entre páginas usen rutas relativas adecuadas.
+- Mantener formato técnico y conciso.

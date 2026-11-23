@@ -1,0 +1,98 @@
+# Líneas de material suelto en una cotización
+
+## Qué son
+
+Un tablero, canto o herraje cobrado dentro de una cocina **sin pasar por un
+módulo**: un repuesto, un sobrante, herraje adicional. Se agregan con el botón
+**"+ Agregar herrajes/otros"**, junto a "+ Agregar módulo".
+
+El catálogo que ofrece es el de **Materiales-Parámetros**: `cot_tableros`,
+`cot_cantos` y `cot_herrajes`, solo los activos.
+
+## Unidad y precio
+
+Cada catálogo cobra en su propia unidad y su tarifa ya está expresada en ella,
+así que la cantidad se pide en esa misma unidad en lugar de convertir:
+
+| Tipo | Unidad | Tarifa |
+| --- | --- | --- |
+| Tablero | m² | `cot_tableros.precio_m2` |
+| Canto | metro lineal | `cot_cantos.precio` |
+| Herraje | unidad | `cot_herrajes.precio` |
+
+El margen **depende de lo que se agregue**, decidido con el usuario: un herraje
+lleva `margen_herraje` (35 % por defecto) y un tablero o un canto llevan
+`margen_muebles` (60 %), igual que dentro de un módulo. Se aplica con la misma
+cadena que `engine.ts` —margen sobre precio, `costo / (1 - margen)`— y el
+descuento del proyecto se aplica después, solo sobre el valor en USD, también
+como hace el motor.
+
+El costo se reparte igual que en un módulo: un herraje suma a `costoHerrajes` y
+el resto a `costoSinHerrajes`, de modo que las columnas **s/H** y **c/H** de la
+cotización siguen significando lo mismo.
+
+## El guardia del recálculo
+
+Es la pieza con más consecuencias de todo esto.
+
+Una línea de material no tiene `tipo_mueble_id`. Todas las rutas de recálculo
+—editar, agrupar, mover, recalcular la cotización completa— pasan por
+`recalcularGrupo()`, que convierte cada línea del grupo en entrada del motor con
+`inputDesdeLinea()`. Sin protección, una línea de material haría que el motor
+lanzara "Tipo de mueble no encontrado" y **tumbaría el recálculo de la cotización
+entera**, no solo el de esa línea.
+
+`grupoSeSaltaElMotor()` lo evita. Comprueba con `some` y no con `every`
+deliberadamente: si alguna vez una línea de material quedara mezclada con
+módulos, se deja el grupo intacto en lugar de reventar. `agregarLineaMaterial()`
+las pone siempre **solas en su grupo**, de modo que esa situación no debería
+darse.
+
+Como contrapartida, el precio de una línea de material **no se recalcula**: queda
+fijado al agregarla. Si cambia la tarifa del catálogo o el margen del proyecto,
+hay que borrarla y volver a agregarla.
+
+## Dónde vive cada cosa
+
+| Pieza | Archivo | Por qué ahí |
+| --- | --- | --- |
+| Precio, unidades, descripción, guardia | `src/lib/materiales-linea.ts` | No importa `server-only`, así que **se puede probar** |
+| Catálogo e inserción | `src/lib/cotizaciones.ts` | Necesita el cliente de Supabase |
+| Acciones | `src/app/cotizaciones/actions.ts` | |
+| Formulario | `src/app/cotizaciones/[id]/AgregarMaterialForm.tsx` | Pide el catálogo al abrirse, en vez de enhebrarlo como props |
+
+El formulario pide los catálogos con una acción al montarse. Enhebrarlos como
+props habría obligado a tocar la página, el cliente del detalle y la tarjeta de
+cocina para un dato que solo usa un formulario que casi nunca está abierto.
+
+## El catálogo de herrajes salía vacío
+
+La primera version pedia `cot_herrajes.descripcion`, columna que **no existe**:
+la tabla la llama `nombre`. Supabase devolvia error, el codigo hacia
+`data ?? []` y el formulario mostraba *"Herraje · 0 en catálogo"*, idéntico a un
+catálogo realmente vacío.
+
+Arreglado el nombre de la columna, y **los errores de consulta dejan de
+tragarse**: si alguno de los tres catálogos falla, `getMaterialesDisponibles()`
+lanza diciendo cuál y por qué, en vez de devolver una lista vacía.
+
+Se ofrecen los **19 herrajes activos**, incluidos los 5 de categoría
+`consumible` (tarugos, soportes metálicos, grapas, cartón, etiqueta): también se
+cobran sueltos. La categoría va en la etiqueta y en el texto de búsqueda, de modo
+que escribir "riel" encuentra los seis rieles sin tener que saberse los códigos.
+
+## PDF y verificacion vigente
+
+Todos los tipos de este boton se clasifican comercialmente en Herrajes / otros del PDF, con cantidades, unidad y valores; se excluyen del resumen de muebles y de la programacion. Esta regla no modifica el margen de catalogo del tipo de material. La cantidad real esta en `config.material.cantidad`; la cantidad de linea y las repeticiones del area se aplican una sola vez.
+
+La migracion `0228_clasificacion_pdf_herrajes_otros.sql` registra `config.clasificacionPdf = herrajes_otros` para el historico. El PDF tambien reconoce directamente `config.material`, por compatibilidad con versiones antiguas.
+
+## Exclusión en HDR y Optimizador
+
+Los artículos añadidos mediante **"+ Agregar herrajes/otros"** (herrajes, cantos o tableros sueltos) no constituyen módulos de mobiliario y carecen de despiece de piezas para hojas de ruta o patrones de corte.
+
+- **HDR (`/hdr`):** Al seleccionar una cotización guardada, `modulosDeCotizacionAction()` (`src/app/hdr/actions.ts`) utiliza `esModuloLinea()` para filtrar y extraer exclusivamente las líneas que corresponden a módulos de mueble reales (`tipo_mueble_id` válido y sin marcador de herrajes/otros). Se eliminan así los falsos errores de tipología no encontrada y solo se despliegan/exportan las hojas de ruta de módulos físicos.
+- **Optimizador (`/optimizador`):** `proyectoDesdeCotizacionAction()` (`src/app/optimizador/actions.ts`) se alimenta de `modulosDeCotizacionAction()`, garantizando que únicamente los módulos y sus piezas entren al cálculo de láminas, reparto diario y esquemas de corte en guillotina. Ningún artículo de herrajes/otros se reporta como módulo fallido ni contamina la lista de corte.
+- **Filtro canónico (`esModuloLinea`):** Ubicado en `src/lib/materiales-linea.ts` para permitir pruebas unitarias sin dependencias de servidor. Descarta toda línea que no tenga `tipo_mueble_id` o que posea `config.material` o `config.clasificacionPdf === 'herrajes_otros'`. Cobertura en `tests/materiales-linea.test.ts` y `tests/hdr-optimizador-modulos-filtro.test.ts`.
+
+`tests/materiales-linea.test.ts` mantiene la cobertura del calculo de precios y del filtro de módulos. `tests/propuesta-cotizacion.test.ts` agrega clasificacion, cantidades, redondeo y HTML imprimible; `tests/cotizaciones.test.ts` conserva sus casos originales y agrega persistencia y recalculo idempotente. El acceso administrativo fuera de requests permite auditar las cotizaciones reales sin exponer credenciales. Ya existe un flujo de verificacion en navegador autenticado y dos generaciones de PDF: consultar el [protocolo de cotizaciones](protocolo_pdf_cotizaciones.md).

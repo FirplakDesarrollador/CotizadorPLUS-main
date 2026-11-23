@@ -3,11 +3,17 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { actualizarCotizacionAction } from '../actions';
+import { monedasVisibles, type ColumnasMoneda } from '@/lib/monedas-visibles';
+import ComentariosProyecto from './ComentariosProyecto';
+import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario, parseComentariosCotizacion } from '@/lib/comentarios-cotizacion';
+import { ESTADOS_COTIZACION, ETIQUETAS_ESTADO, COLORES_ESTADO } from '@/lib/pipeline-estados';
+import type { ValoresCotizacion } from '@/lib/valores-cotizacion';
+import type { Incoterm } from '@/lib/entrega-cotizacion';
 
 const fmtCOP = (n: number) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida?: 'imperial' | 'metrico' };
+type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; notas?: string | null; total_cop: number; total_usd: number; sistema_medida?: 'imperial' | 'metrico' };
 
 export default function ProyectoHeader({
   cab,
@@ -19,6 +25,10 @@ export default function ProyectoHeader({
   onSave,
   children,
   margenGlobal,
+  columnasMoneda,
+  valores,
+  margenAplicado,
+  incoterm,
 }: {
   cab: Cab;
   editing?: boolean;
@@ -28,6 +38,11 @@ export default function ProyectoHeader({
   onMargenBlur?: () => void;
   onSave?: () => Promise<{ ok: boolean; error?: string } | void>;
   children?: React.ReactNode;
+  /** Casillas de columna del detalle. Sin ellas se muestran las dos monedas. */
+  columnasMoneda?: ColumnasMoneda;
+  valores?: ValoresCotizacion;
+  margenAplicado?: string | number;
+  incoterm?: Incoterm | null;
   margenGlobal?: { sinHerrajes: number | null; conHerrajes: number | null } | null;
 }) {
   const router = useRouter();
@@ -41,6 +56,8 @@ export default function ProyectoHeader({
   const [margenLocal, setMargenLocal] = useState(margen);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
+  const [mostrarValores, setMostrarValores] = useState(false);
 
   if (margen !== prevMargen) {
     setPrevMargen(margen);
@@ -63,6 +80,7 @@ export default function ProyectoHeader({
   }
 
   async function save() {
+    if ((estadoRequiereAlertaComentario(cab.estado) || estadoRequiereAlertaComentario(estado)) && !window.confirm(ALERTA_COMENTARIO)) return;
     setSaving(true); setError(null);
     if (margenLocal !== margen) {
       onMargenChange?.(margenLocal);
@@ -78,6 +96,7 @@ export default function ProyectoHeader({
     const res = await actualizarCotizacionAction(cab.id, { nombre, cliente_nombre: cliente, comprador_nombre: comprador, moneda, trm, estado });
     setSaving(false);
     if (!res.ok) { setError(res.error ?? 'Error'); return; }
+    setWarning(res.warning ?? null);
     onClose?.(); router.refresh();
   }
 
@@ -95,8 +114,15 @@ export default function ProyectoHeader({
         <div className="grid sm:grid-cols-3 gap-3">
           <label className="block"><span className="block text-xs text-slate-500 mb-1">Moneda</span>
             <select value={moneda} onChange={(e) => setMoneda(e.target.value as 'COP' | 'USD')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><option>USD</option><option>COP</option></select></label>
-          <label className="block"><span className="block text-xs text-slate-500 mb-1">TRM</span>
-            <input type="number" min="0.01" step="any" value={trm} onChange={(e) => setTrm(Number(e.target.value))} onBlur={saveTrm} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+          {/* Mismo criterio que el formulario de alta: en COP la TRM no se edita.
+              `readOnly` y no `disabled` para conservar el valor — el motor calcula
+              en COP y divide por la TRM para el total en USD de la cabecera. */}
+          <label className="block"><span className={`block text-xs mb-1 ${moneda === 'COP' ? 'text-slate-300' : 'text-slate-500'}`}>TRM</span>
+            <input type="number" min="0.01" step="any" value={trm} onChange={(e) => setTrm(Number(e.target.value))} onBlur={saveTrm} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+              readOnly={moneda === 'COP'}
+              aria-disabled={moneda === 'COP'}
+              title={moneda === 'COP' ? 'Solo se edita con moneda USD' : undefined}
+              className={`w-full rounded-lg border px-3 py-2 text-sm ${moneda === 'COP' ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-slate-300'}`} /></label>
           <label className="block"><span className="block text-xs text-slate-500 mb-1">Margen del proyecto (%)</span>
             <input
               type="number"
@@ -120,14 +146,19 @@ export default function ProyectoHeader({
           </label>
         </div>
         {children}
-        <label className="block max-w-xs"><span className="block text-xs text-slate-500 mb-1">Estado</span>
-          <select value={estado} onChange={(e) => setEstado(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-            <option value="borrador">borrador</option><option value="enviada">enviada</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option>
-          </select></label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <div className="flex gap-2">
-          <button onClick={save} disabled={saving || !nombre.trim()} className="rounded-lg bg-slate-900 text-white px-4 py-1.5 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">{saving ? 'Guardando…' : 'Guardar'}</button>
-          <button onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm hover:bg-slate-100">Cancelar</button>
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          <div className="space-y-3">
+            <label className="block max-w-xs"><span className="block text-xs text-slate-500 mb-1">Estado</span>
+              <select value={estado} onChange={(e) => setEstado(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                {ESTADOS_COTIZACION.map(estado => <option key={estado} value={estado}>{ETIQUETAS_ESTADO[estado]}</option>)}
+              </select></label>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <div className="flex gap-2">
+              <button onClick={save} disabled={saving || !nombre.trim()} className="rounded-lg bg-slate-900 text-white px-4 py-1.5 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">{saving ? 'Guardando…' : 'Guardar'}</button>
+              <button onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm hover:bg-slate-100">Cancelar</button>
+            </div>
+          </div>
+          <ComentariosProyecto cotizacionId={cab.id} comentarios={parseComentariosCotizacion(cab.notas)} />
         </div>
       </div>
     );
@@ -146,7 +177,7 @@ export default function ProyectoHeader({
           <span>·</span>
           <span>TRM {Number(cab.trm).toLocaleString('es-CO')}</span>
           <span>·</span>
-          <span className="text-xs rounded-full bg-slate-100 px-2 py-0.5 capitalize">{cab.estado}</span>
+          <span className={`text-xs rounded-full px-2 py-0.5 ${COLORES_ESTADO[cab.estado as keyof typeof COLORES_ESTADO] ?? 'bg-slate-100 text-slate-700'}`}>{ETIQUETAS_ESTADO[cab.estado as keyof typeof ETIQUETAS_ESTADO] ?? cab.estado}</span>
           <span className="text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">{cab.sistema_medida === 'metrico' ? 'cm · métrico' : 'in · imperial'}</span>
           {margenGlobal?.sinHerrajes != null && Number.isFinite(margenGlobal.sinHerrajes) && (
             <>
@@ -174,11 +205,34 @@ export default function ProyectoHeader({
               </span>
             </>
           )}
+          {incoterm && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{incoterm}</span>}
         </p>
       </div>
+      {/* Las casillas de columna eligen que monedas se ven; la moneda del proyecto
+          decide cual va de cifra grande cuando se ven las dos. */}
       <div className="text-right">
-        <div className="text-2xl font-bold text-slate-900">{fmtUSD(cab.total_usd)}</div>
-        <div className="text-sm text-slate-500">{fmtCOP(cab.total_cop)}</div>
+        {monedasVisibles(columnasMoneda ?? { usd: true, cop: true }, cab.moneda === 'COP' ? 'COP' : 'USD')
+          .map((m, i) => (
+            <div key={m} className={i === 0 ? 'text-2xl font-bold text-slate-900' : 'text-sm text-slate-500'}>
+              {m === 'COP' ? fmtCOP(cab.total_cop) : fmtUSD(cab.total_usd)}
+            </div>
+          ))}
+        {valores && <div className="print:hidden mt-2">
+          <button type="button" aria-expanded={mostrarValores} onClick={() => setMostrarValores((visible) => !visible)} className="rounded-md border border-emerald-700 px-3 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-50">{mostrarValores ? 'Ocultar valores' : 'Valores'}</button>
+          {mostrarValores && <section aria-label="Valores de cotización" className="mt-2 w-[min(90vw,440px)] rounded-xl border border-slate-200 bg-white p-3 text-left text-xs shadow-lg">
+            <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
+              <strong></strong><strong className="text-right">Sin herrajes</strong><strong className="text-right">Con herrajes</strong>
+              <span>Costo USD</span><span className="text-right">{fmtUSD(valores.costoSinUsd)}</span><span className="text-right">{fmtUSD(valores.costoConUsd)}</span>
+              <span>Costo COP</span><span className="text-right">{fmtCOP(valores.costoSinCop)}</span><span className="text-right">{fmtCOP(valores.costoConCop)}</span>
+              <span>Precio USD</span><span className="text-right">{fmtUSD(valores.precioSinUsd)}</span><span className="text-right">{fmtUSD(valores.precioConUsd)}</span>
+              <span>Precio COP</span><span className="text-right">{fmtCOP(valores.precioSinCop)}</span><span className="text-right">{fmtCOP(valores.precioConCop)}</span>
+              <span>Utilidad USD</span><span className="text-right">{fmtUSD(valores.precioSinUsd - valores.costoSinUsd)}</span><span className="text-right">{fmtUSD(valores.precioConUsd - valores.costoConUsd)}</span>
+              <span>Utilidad COP</span><span className="text-right">{fmtCOP(valores.precioSinCop - valores.costoSinCop)}</span><span className="text-right">{fmtCOP(valores.precioConCop - valores.costoConCop)}</span>
+            </div>
+            <p className="mt-2 border-t border-slate-100 pt-2 text-slate-600">Margen aplicado: {margenAplicado === '' || margenAplicado == null ? 'Automático por reglas del sistema' : `${margenAplicado}%`}. Margen ponderado real (precio − costo) ÷ precio: s/H {margenGlobal?.sinHerrajes?.toFixed(1) ?? '—'}% · c/H {margenGlobal?.conHerrajes?.toFixed(1) ?? '—'}%.</p>
+          </section>}
+        </div>}
+        {warning && <p role="status" className="mt-2 max-w-sm text-left text-xs text-amber-800">{warning}</p>}
       </div>
     </div>
   );

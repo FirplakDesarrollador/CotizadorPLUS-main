@@ -139,6 +139,15 @@ Para calcular un mueble individual:
 4. Calcula → verás el **precio** (COP/USD conmutable) y el **desglose** completo: materiales, piezas, canto y herrajes.
 
 ### Cotizaciones por proyecto (`/cotizaciones`)
+La barra **Registro · Pipeline · Dashboard** abre las tres vistas dentro de Cotizaciones. **Volver** regresa al listado, cuya tabla tiene scroll vertical y cabecera fija; en pantallas estrechas aparece debajo del formulario.
+
+- **Registro**: formulario CEFI con los datos del cliente/proyecto, especificaciones, asesor y estimador. Guarda una oportunidad en borrador; no crea una cotización. Los adjuntos se indican mediante una URL HTTP(S).
+- **Pipeline**: búsqueda, filtros, monitor de estados y oportunidades paginadas. Haz clic en una oportunidad para consultar todos sus datos; su dueño o un administrador puede editarla. Los históricos incompletos muestran «Sin dato».
+- **Crear cotización** desde una oportunidad precarga solo constructora, país, ciudad y nombre. Completa materiales, familias, moneda y TRM en el formulario habitual. Al crear se vincula automáticamente. El estado se sincroniza desde la cotización; borrar la cotización conserva la oportunidad.
+- **Dashboard**: consulta los KPIs/gráficas de cotizaciones y el histórico Pipeline, ordena, filtra y descarga el CSV. Los enlaces antiguos al dashboard redirigen a esta vista.
+
+Estados compartidos: **borrador, enviada, en pausa, reproceso, aprobada, rechazada y descartada**. Las alertas de comentario siguen aplicando solo a enviada y aprobada.
+
 1. **Nuevo proyecto**: nombre, cliente, moneda, TRM. Se crea con una "Cocina 1".
 2. En el detalle, agrega **cocinas** y, dentro de cada una, **módulos** (con el mismo formulario del simulador).
 3. Cada módulo se guarda con su desglose; los **totales** por cocina y proyecto se actualizan solos.
@@ -171,6 +180,13 @@ Editor del **despiece** de cada tipo, sin tocar código:
 - **Reglas**: variables paramétricas por tipo (n_puertas, n_cajones, etc.).
 - **Herrajes**: qué herraje lleva el mueble y su fórmula de cantidad.
 - **Previsualización**: ingresa dimensiones y verás el costo y desglose en vivo.
+
+### Optimizador de corte (`/optimizador`)
+Prepara los datos para optimizar el corte de un proyecto (el cálculo del plan de corte llega en la siguiente fase):
+- **Proyecto**: elige una cotización y verás sus módulos, el total de piezas a cortar, el **resumen por material** (piezas, m², láminas mínimas, máximo de láminas para no pasar el desperdicio permitido, alertas) y la lista de corte agrupada por medida.
+- **Piezas por día**: con este dato se calculan los **días de producción** y el reparto diario de piezas (el último día lleva el resto).
+- **Optimizar corte**: calcula el plan en segundo plano (la pantalla no se bloquea), con un contador y el botón **Cancelar**. El campo **Búsqueda del reparto por días (s)** define cuánto tiempo se prueban combinaciones de muebles entre días: más segundos, más combinaciones. Cada material muestra láminas, desperdicio, cortes y el **sobrante útil** (piezas, m² y la mayor medida).
+- **Parámetros de planta** (se guardan para todos los proyectos): seccionadora, espesor del disco, niveles de corte, refilado, láminas por pila según espesor, sobrante útil mínimo, desperdicio máximo, formatos de lámina, texturas que rotan o no la veta y orden del criterio de optimización.
 
 ---
 

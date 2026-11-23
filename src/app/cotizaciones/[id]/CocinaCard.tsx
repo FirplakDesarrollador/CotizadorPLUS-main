@@ -1,9 +1,11 @@
 'use client';
 import { Fragment, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import AgregarMaterialForm from './AgregarMaterialForm';
 import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineForm';
-import { actualizarCocinaAction, eliminarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
+import { actualizarCocinaAction, eliminarCocinaAction, duplicarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
 import { colorGrupo, indiceALetras } from '@/lib/module-groups';
+import { descripcionConNotas } from '@/lib/nombres-modulos';
 import type { FamiliaMaterial } from '@/lib/muebles';
 import type { ColumnasPrecio } from './CotizacionDetalleClient';
 
@@ -23,8 +25,10 @@ type LineaConfig = {
   cantoCaja?: string;
   dbTipo?: string;
   rielCodigo?: string;
+  barraCodigo?: string;
   door?: number;
   doorHand?: 'L' | 'R';
+  manoPuerta?: 'L' | 'R';
   conFondo?: boolean;
 };
 
@@ -32,6 +36,7 @@ type Linea = {
   id: string;
   pref: string | null;
   descripcion_es: string | null;
+  anotaciones: string | null;
   cantidad: number;
   costo_total_cop?: number;
 
@@ -75,7 +80,7 @@ const preciosLinea = (linea: Linea, trm: number) => {
 };
 
 export default function CocinaCard({
-  cotizacionId, cocina, allCocinas, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, onMaterialesUsados, columnasPrecio
+  cotizacionId, cocina, allCocinas, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, onMaterialesUsados, columnasPrecio, controlesOrden
 }: {
   cotizacionId: string;
   cocina: Cocina;
@@ -93,15 +98,18 @@ export default function CocinaCard({
   projectDefaults?: ProjectDefaults;
   onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] }) => void;
   columnasPrecio: ColumnasPrecio;
+  controlesOrden?: React.ReactNode;
 }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
+  const [showAddMaterial, setShowAddMaterial] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState(false);
   const [nombre, setNombre] = useState(cocina.nombre);
   const [cantCocina, setCantCocina] = useState<number>(cocina.cantidad ?? 1);
   const [groupBusy, setGroupBusy] = useState<string | null>(null);
   const [groupError, setGroupError] = useState<string | null>(null);
+  const [avisoEdicion, setAvisoEdicion] = useState<string | null>(null);
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
 
   // Sincroniza cantCocina con el prop cuando cambia desde afuera (ej. tras guardar),
@@ -156,9 +164,12 @@ export default function CocinaCard({
     cantoFrentes: l.config?.cantoFrentes ?? undefined,
     cantoCaja: l.config?.cantoCaja ?? undefined,
     dbTipo: l.config?.dbTipo ?? undefined,
+    anotaciones: l.anotaciones,
     rielCodigo: l.config?.rielCodigo ?? undefined,
+    barraCodigo: l.config?.barraCodigo ?? undefined,
     door: l.config?.door ?? undefined,
     doorHand: l.config?.doorHand ?? undefined,
+    manoPuerta: l.config?.manoPuerta ?? undefined,
     conFondo: l.config?.conFondo ?? projectDefaults?.conFondo ?? true,
   });
 
@@ -173,6 +184,21 @@ export default function CocinaCard({
     if (!confirm(`¿Eliminar la cocina "${cocina.nombre}" y sus módulos?`)) return;
     await eliminarCocinaAction(cotizacionId, cocina.id);
     router.refresh();
+  }
+
+  async function copiarCocina() {
+    if (groupBusy) return;
+    setGroupBusy('copiar');
+    setGroupError(null);
+    try {
+      const res = await duplicarCocinaAction(cotizacionId, cocina.id);
+      if (!res.ok) setGroupError(res.error ?? 'No se pudo copiar la sección');
+      else router.refresh();
+    } catch (error) {
+      setGroupError(error instanceof Error ? error.message : 'No se pudo copiar la sección');
+    } finally {
+      setGroupBusy(null);
+    }
   }
 
   async function delLinea(id: string) {
@@ -333,9 +359,10 @@ export default function CocinaCard({
   const totalColumnas = 1 + 3 + columnasMoneda + 1 + (columnasPrecio.sinHerrajes ? 2 * columnasMoneda : 0) + (columnasPrecio.conHerrajes ? 2 * columnasMoneda : 0) + 1;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200">
+    <div data-cocina-id={cocina.id} className="bg-white rounded-2xl border border-slate-200">
       <div className="flex items-center justify-between p-4 border-b border-slate-100 flex-wrap gap-2">
         <div className="flex items-center gap-2 flex-wrap">
+          {controlesOrden}
           {editName ? (
             <>
               <input value={nombre} onChange={(e) => setNombre(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-1 text-sm font-semibold" />
@@ -365,11 +392,20 @@ export default function CocinaCard({
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={delCocina} className="text-slate-300 hover:text-red-600" title="Eliminar cocina">🗑</button>
+          <button type="button" onClick={copiarCocina} disabled={groupBusy !== null}
+            className="text-slate-400 hover:text-blue-600 disabled:opacity-50 disabled:cursor-wait"
+            title={groupBusy === 'copiar' ? 'Copiando sección…' : 'Copiar sección'} aria-label={`Copiar sección ${cocina.nombre}`}>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`h-4 w-4 ${groupBusy === 'copiar' ? 'animate-pulse' : ''}`}>
+              <rect x="8" y="8" width="12" height="12" rx="2" />
+              <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" />
+            </svg>
+          </button>
+          <button onClick={delCocina} disabled={groupBusy === 'copiar'} className="text-slate-300 hover:text-red-600 disabled:opacity-50" title="Eliminar cocina">🗑</button>
         </div>
       </div>
 
       {groupError && <div className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{groupError}</div>}
+      {avisoEdicion && <p role="status" className="mx-4 mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{avisoEdicion}</p>}
       <div className="overflow-x-auto"><table className={`${columnasPrecio.usd && columnasPrecio.cop ? 'min-w-[1660px]' : 'min-w-[1180px]'} w-full text-sm`}>
         <thead>
           <tr className="bg-slate-100/90 text-slate-900 text-xs font-bold border-b border-slate-200">
@@ -505,7 +541,9 @@ export default function CocinaCard({
                         <div>{l.codigo_modulo ?? l.pref}</div>
                         {members > 1 && block.codigoGrupo && <div className="max-w-48 truncate text-[10px] font-normal text-slate-500" title={block.codigoGrupo}>{block.codigoGrupo}</div>}
                       </td>
-                      <td className="px-3 py-2 text-slate-600 leading-5">{l.descripcion_es}</td>
+                      <td className="px-3 py-2 text-slate-600 leading-5">
+                        <span className="whitespace-pre-wrap">{descripcionConNotas(l)}</span>
+                      </td>
                       {columnasPrecio.usd && <td className="px-2 text-right font-medium text-slate-700 whitespace-nowrap">{fmtUSD(unitCostoUsd)}</td>}
                       {columnasPrecio.cop && <td className="px-2 text-right font-medium text-slate-700 whitespace-nowrap">{fmtCOP(unitCostoCop)}</td>}
                       <td className="px-2 text-right">{l.cantidad}</td>
@@ -529,8 +567,8 @@ export default function CocinaCard({
                           </div>
                           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                             <AddLineForm
-                              key={l.id}
-                              cocinaId={cocina.id}
+                              key={`${l.id}:${JSON.stringify(l.config?.preset)}:${l.config?.cantoCaja}:${l.config?.cantoFrentes}`}
+                              cocinaId={cocina.id} nombreArea={cocina.nombre}
                               tipos={tipos}
                               tableros={tableros}
                               cantos={cantos}
@@ -543,7 +581,7 @@ export default function CocinaCard({
                               sistemaMedida={sistemaMedida}
                               projectDefaults={projectDefaults}
                               initial={toInicial(l)}
-                              onDone={() => setEditId(null)}
+                              onDone={(mensaje) => { setEditId(null); setAvisoEdicion(mensaje ?? null); }}
                             />
                           </div>
                         </td>
@@ -619,7 +657,7 @@ export default function CocinaCard({
           <div className="space-y-2">
             <AddLineForm
               key={`nuevo-${projectDefaults?.unidad ?? sistemaMedida}`}
-              cocinaId={cocina.id}
+              cocinaId={cocina.id} nombreArea={cocina.nombre}
               tipos={tipos}
               tableros={tableros}
               cantos={cantos}
@@ -636,8 +674,12 @@ export default function CocinaCard({
             <button onClick={() => setShowAdd(false)} className="text-sm text-slate-400 hover:underline">Cerrar</button>
           </div>
         ) : (
-          <button onClick={() => { setEditId(null); setShowAdd(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
+          <div className="flex gap-2">
+            <button onClick={() => { setEditId(null); setShowAdd(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
+            <button onClick={() => { setEditId(null); setShowAddMaterial(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar herrajes/otros</button>
+          </div>
         )}
+        {showAddMaterial && <div className="mt-3"><AgregarMaterialForm cocinaId={cocina.id} onDone={() => setShowAddMaterial(false)} /></div>}
       </div>
 
       {/* Menú contextual de click derecho (duplicación de Andrés) */}

@@ -1,15 +1,47 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import type { TipoMaterial } from '@/lib/materiales-linea';
 import { redirect } from 'next/navigation';
 import {
-  crearCotizacion, agregarLinea, editarLinea, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
-  crearCocina, actualizarCocina, eliminarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
-  reordenarGruposCocina,
+  crearCotizacion, agregarLinea, editarLineaConDetalle, eliminarLinea, eliminarCotizacion, actualizarCotizacion,
+  crearCocina, actualizarCocina, eliminarCocina, duplicarCocina, duplicarLineaACocina, cambiarGrupoLinea, desagruparGrupo,
+  reordenarGruposCocina, reordenarCocinas,
   guardarVersionCotizacion, restaurarVersionCotizacion,
+  agregarComentarioCotizacion,
+  agregarLineaMaterial, getMaterialesDisponibles, type MaterialDisponible,
   type AgregarLineaInput,
 } from '@/lib/cotizaciones';
 import type { CemaTemplate } from '@/lib/cema-template';
 import type { FirplakTemplate } from '@/lib/firplak-template';
+import { normalizarUbicacion } from '@/lib/ubicacion-cotizacion';
+import { actualizarUbicacionCotizacion } from '@/lib/cotizaciones';
+import { getUserAndRole } from '@/lib/auth';
+import { normalizarEntrega, type ConfigEntrega } from '@/lib/entrega-cotizacion';
+import { createClient } from '@/lib/supabase/server';
+import { notificarAdminsEnDesarrollo } from '@/lib/notificar-en-desarrollo';
+
+export async function actualizarUbicacionCotizacionAction(id: string, pais: string, ciudad: string) {
+  try {
+    const { user } = await getUserAndRole();
+    if (!user) throw new Error('No autenticado');
+    await actualizarUbicacionCotizacion(id, pais, ciudad);
+    revalidatePath('/cotizaciones');
+    revalidatePath('/cotizaciones');
+    revalidatePath(`/cotizaciones/${id}`);
+    return { ok: true };
+  } catch (error) { return { ok: false, error: error instanceof Error ? error.message : 'No se pudo guardar la ubicación.' }; }
+}
+
+export async function reordenarCocinasAction(cotizacionId: string, cocinaIds: string[]): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await reordenarCocinas(cotizacionId, cocinaIds);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    revalidatePath(`/cotizaciones/${cotizacionId}/imprimir`);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'No se pudo guardar el orden de las secciones.' };
+  }
+}
 
 export async function reordenarGruposCocinaAction(cocinaId: string, nuevosGrupoIds: string[]): Promise<{ ok: boolean; error?: string }> {
   try {
@@ -28,6 +60,7 @@ export async function crearCotizacionAction(
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
   try {
     const nombre = String(formData.get('nombre') || 'Cotización');
+    const ubicacion = normalizarUbicacion(String(formData.get('pais') ?? ''), String(formData.get('ciudad') ?? ''));
     const cliente_nombre = String(formData.get('cliente_nombre') || '');
     const comprador_nombre = String(formData.get('comprador_nombre') || '');
     const cotizador_por = String(formData.get('cotizador_por') || 'FIRPLAK') === 'CEMA' ? 'CEMA' : 'FIRPLAK';
@@ -39,7 +72,19 @@ export async function crearCotizacionAction(
     if (typeof configRaw === 'string' && configRaw) {
       try { configDefault = JSON.parse(configRaw); } catch { configDefault = null; }
     }
-    const id = await crearCotizacion({ nombre, cliente_nombre, comprador_nombre, cotizador_por, moneda, trm, sistema_medida, configDefault });
+    const familias = configDefault?.familiasMaterialesActivas;
+    if (!Array.isArray(familias) || familias.length === 0) {
+      throw new Error('Incluye al menos una familia de muebles en la cotización.');
+    }
+    const pipelineId = String(formData.get('pipeline_id') ?? '') || undefined;
+    if (pipelineId) {
+      if (!/^[a-f\d]{8}-(?:[a-f\d]{4}-){3}[a-f\d]{12}$/i.test(pipelineId)) throw new Error('Oportunidad inválida.');
+      const { getPipelineParaCrear } = await import('@/lib/pipeline-vinculo');
+      const oportunidad = await getPipelineParaCrear(pipelineId);
+      if (oportunidad.cotizacion_id) return { ok: true, id: oportunidad.cotizacion_id };
+    }
+    // El trigger enlaza Pipeline dentro de este mismo INSERT: no queda una cotización huérfana si el enlace falla.
+    const id = await crearCotizacion({ nombre, ...ubicacion, cliente_nombre, comprador_nombre, cotizador_por, moneda, trm, sistema_medida, configDefault, pipelineId });
     revalidatePath('/cotizaciones');
     return { ok: true, id };
   } catch (e) {
@@ -64,6 +109,25 @@ export async function desagruparGrupoAction(grupoId: string): Promise<{ ok: bool
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'No se pudo desagrupar el grupo' };
+  }
+}
+
+// El formulario pide los catalogos al abrirse, en vez de enhebrarlos como props
+// por toda la jerarquia de la cotizacion.
+export async function getMaterialesDisponiblesAction(): Promise<Record<TipoMaterial, MaterialDisponible[]>> {
+  return getMaterialesDisponibles();
+}
+
+export async function agregarLineaMaterialAction(
+  cocinaId: string,
+  entrada: { tipo: TipoMaterial; codigo: string; cantidad: number },
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const cotizacionId = await agregarLineaMaterial(cocinaId, entrada);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error' };
   }
 }
 
@@ -102,13 +166,67 @@ export async function eliminarCocinaAction(cotizacionId: string, cocinaId: strin
   revalidatePath(`/cotizaciones/${cotizacionId}`);
 }
 
-export async function actualizarCotizacionAction(id: string, patch: { nombre?: string; cliente_nombre?: string; comprador_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }): Promise<{ ok: boolean; error?: string }> {
+export async function duplicarCocinaAction(cotizacionId: string, cocinaId: string): Promise<{ ok: boolean; error?: string }> {
   try {
+    const { user } = await getUserAndRole();
+    if (!user) throw new Error('No autorizado');
+    await duplicarCocina(cocinaId, cotizacionId);
+    revalidatePath(`/cotizaciones/${cotizacionId}`);
+    revalidatePath(`/cotizaciones/${cotizacionId}/imprimir`);
+    revalidatePath('/cotizaciones');
+    revalidatePath('/cotizaciones');
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'No se pudo copiar la sección' };
+  }
+}
+
+export async function actualizarCotizacionAction(id: string, patch: { nombre?: string; cliente_nombre?: string; comprador_nombre?: string; moneda?: 'COP' | 'USD'; trm?: number; estado?: string; configDefault?: Record<string, unknown> | null }): Promise<{ ok: boolean; error?: string; warning?: string }> {
+  try {
+    let estadoAnterior: string | undefined;
+    let nombreCotizacion = 'Cotización';
+    if (patch.estado === 'en_desarrollo') {
+      const sb = await createClient();
+      const { data } = await sb.from('cot_cotizaciones').select('estado,nombre').eq('id', id).maybeSingle();
+      estadoAnterior = data?.estado;
+      nombreCotizacion = patch.nombre ?? data?.nombre ?? nombreCotizacion;
+    }
+    // El trigger de BD propaga estado a Pipeline de forma atómica y bajo RLS.
     await actualizarCotizacion(id, patch);
+    revalidatePath('/cotizaciones');
+    revalidatePath(`/cotizaciones/${id}`);
+    revalidatePath(`/cotizaciones/${id}/imprimir`);
+    const warning = estadoAnterior && estadoAnterior !== 'en_desarrollo'
+      ? await notificarAdminsEnDesarrollo({ cotizacionId: id, nombre: nombreCotizacion, estadoAnterior })
+      : undefined;
+    return { ok: true, warning };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error' };
+  }
+}
+
+export async function agregarComentarioCotizacionAction(id: string, texto: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await agregarComentarioCotizacion(id, texto);
     revalidatePath(`/cotizaciones/${id}`);
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Error' };
+    return { ok: false, error: e instanceof Error ? e.message : 'No se pudo agregar el comentario' };
+  }
+}
+
+export async function guardarEntregaAction(id: string, entrega: ConfigEntrega): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const sb = await createClient();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return { ok: false, error: 'Sesión requerida.' };
+    const { error } = await sb.from('cot_cotizaciones').update({ entrega: normalizarEntrega(entrega) }).eq('id', id).select('id').single();
+    if (error) throw error;
+    revalidatePath(`/cotizaciones/${id}`);
+    revalidatePath(`/cotizaciones/${id}/imprimir`);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'No se pudo guardar la entrega.' };
   }
 }
 
@@ -132,11 +250,11 @@ export async function guardarPlantillaFirplakAction(id: string, plantillaFirplak
   }
 }
 
-export async function editarLineaAction(lineaId: string, input: AgregarLineaInput): Promise<{ ok: boolean; error?: string }> {
+export async function editarLineaAction(lineaId: string, input: AgregarLineaInput): Promise<{ ok: boolean; error?: string; desagrupado?: boolean }> {
   try {
-    const cotizacionId = await editarLinea(lineaId, input);
+    const { cotizacionId, desagrupado } = await editarLineaConDetalle(lineaId, input);
     revalidatePath(`/cotizaciones/${cotizacionId}`);
-    return { ok: true };
+    return { ok: true, desagrupado };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error' };
   }

@@ -1,5 +1,7 @@
 # Tipologías nuevas de Prueba Tipologías
 
+Actualización 2026-11-06: para DB-2S-SM/SMG y sus variantes FE/SF rige ahora [el reparto de frentes con dos golas de 30 mm](frentes_db_2s_gola.md), confirmado por el usuario. Las referencias de 53,6 mm y 173,9 mm de estas configuraciones en la investigación siguiente son históricas; no describen su regla vigente.
+
 La migración `0081_tipologias_prueba_gola_madera.sql` incorpora cuatro
 tipologías paramétricas independientes de las familias existentes `BFD`, `OW`
 y `W`. No las actualiza ni reutiliza sus plantillas.
@@ -16,6 +18,12 @@ y `W`. No las actualiza ni reutiliza sus plantillas.
 | `SB-SM` | `SB30-SM` | Inferior con frente falso, puertas inferiores y Gola de madera, según la hoja SB30-SM. |
 | `DB-2S-SM` | `DB26-2S-SM` | Cajonera independiente 2S con dos gavetas pequeñas, una grande y Gola superior/inferior. |
 | `DB-2-SM` | `DB26-2-SM` | Variante con dos gavetas grandes iguales, Gola superior/intermedia y sin manijas. |
+| `DB-2-1INT-SM` | `DB22-2-1INT-SM` | Dos frentes exteriores iguales, una gaveta interior y una Gola de madera. |
+
+Los nombres visibles del selector para estas tres tipologías superiores son
+`Mueble Superior Sin Manija`, `Mueble Superior Locero Sin Manija` y
+`Mueble Superior Sin Manija con PUSH`. Este ajuste es exclusivamente
+descriptivo; la estructura y el cálculo de las tipologías no cambian.
 | `DB-3-SM` | `DB26-3-SM` | Variante con tres gavetas iguales; segundo par refuerzo/Gola entre la segunda y tercera. |
 
 ## Prioridad de reglas PLUS
@@ -94,6 +102,42 @@ migración `0173_db_sm_normalizar_nombres_traseros_gaveta.sql` homologa después
 la nomenclatura con DB: deja solo `trasero_gaveta_grande`, cantidad 2 y 183 mm
 de alto, conservando el canto de la pieza grande (1 largo y 2 anchos).
 
+`0188_db_2_1int_sm.sql` deriva `DB-2-1INT-SM` de `DB-2S-SM` y reutiliza las
+plantillas paramétricas para gaveta oculta. Fija tres cajas (`n_cajones=3`),
+dos pequeñas (`n_cajones_pequenos=2`) y una interior
+(`n_cajones_ocultos=1`), pero conserva únicamente dos frentes exteriores
+iguales y el frente interior de 100 mm. Para 22 × 30 × 24 pulgadas reproduce
+la hoja: base 528,8 × 585,6 mm; bases de gaveta 453,8 × 492 mm; frentes
+exteriores 351 × 555,6 mm; frente interior 100 × 525,6 mm; y respaldo
+760 × 542,8 mm. Usa tres rieles Tandem, un par de barras, un rail delantero y
+una Gola. Está activa en Supabase y permite agrupación física.
+La corrección `0189_db_2_1int_sm_canto_frentes.sql` añade el calibre base
+`22x1` a las plantillas de frente exterior e interior. Ambas conservan dos
+cantos largos y dos anchos; el motor puede así contabilizarlos y resolver el
+calibre final según el tablero de frente o el selector **Canto frentes** del
+proyecto. Sin esa clave, las aristas existían pero se omitían del consumo.
+
+En la visualización de `DB-2-1INT-SM`, la gaveta interior se desplaza como un
+conjunto (frente interior, base y trasero) hasta quedar 3,2 mm debajo de la
+cara inferior de `gola_madera`. El ajuste es exclusivamente de montaje visual:
+no modifica fórmulas de corte, cantidades ni consumos.
+
+`0190_db_2_1int_sm_fe.sql` incorpora `DB-2-1INT-SM-FE` dentro de la familia
+`DB-SM-FE`. Conserva los dos frentes exteriores de 351 mm y el frente interior
+de 100 mm para 22 × 30 × 24 pulgadas. La corrección `0191` fija dos cajas
+pequeñas FE (laterales de 500 × 100 mm) para la gaveta exterior superior y la
+gaveta interior, y una caja grande FE (500 × 200 mm) para la gaveta exterior
+inferior; todas llevan fondos de 492 mm y rieles `RIELFE500`. No lleva
+manijas ni barras. En el visor, la caja interior queda 3,2 mm debajo de la Gola
+y su contraparche queda en contacto con la cara interna del frente exterior
+superior, sin atravesarlo. Toda la caja interior se desplaza como una unidad.
+
+El montaje visual ordena las referencias de caja por su posición real:
+pequeña superior, grande inferior y pequeña interior. Este orden garantiza que
+el trasero de 80 mm cierre la profundidad y quede alineado por arriba con los
+laterales de 100 mm de la gaveta superior, sin aparecer flotando en la vista
+lateral.
+
 `0103_db_3_sm.sql` deriva `DB-3-SM` de la variante unificada: mantiene una
 sola fila `frente`, `base_gaveta` y `trasero_gaveta_grande`, cada una con
 cantidad 3. Los tres frentes se reparten por igual y los traseros miden 183 mm. El segundo
@@ -107,12 +151,31 @@ un `trasero_gaveta_grande` de 183 mm; `DB-2-SM` y `DB-3-SM` usan únicamente
 `trasero_gaveta_grande` de 183 mm, con cantidades 2 y 3. Las variantes FE ya
 tenían nombres explícitos y mantienen sus medidas propias de 80/180 mm.
 
-En el Simulador, `DB-2S-SM`, `DB-2-SM` y `DB-3-SM` aparecen agrupadas bajo
+En el Simulador y en Cotizaciones, `DB-2S-SM`, `DB-2-SM`, `DB-2-1INT-SM` y
+`DB-3-SM` aparecen agrupadas bajo
 `DB-SM — Cajoneras con Gola de madera`. El selector `Tipología DB-SM` cambia
-entre los tres tipos reales, por lo que cada variante conserva sus propias
+entre los cuatro tipos reales, por lo que cada variante conserva sus propias
 plantillas, reglas, herrajes, código comercial y montaje. Este selector es
 independiente del selector histórico `Tipología DB`; no modifica las familias
-`DB`, `UDB` ni `UDV`.
+`DB`, `UDB` ni `UDV`. Así, la búsqueda principal muestra las familias `DB`,
+`DB-SM`, `DB-SM-SF` y `DB-SM-FE`, mientras las variantes 2, 2S, 3 y 2-1INT
+permanecen en sus selectores secundarios.
+
+La clasificación del frontend se resuelve por convención de prefijo, no por una
+lista cerrada: `DB-<variante>-SM` pertenece a `DB-SM` y
+`DB-<variante>-SM-FE` pertenece a `DB-SM-FE`. El valor se normaliza antes de
+compararlo. Esto integra también `DB-2-1INT-SM` y `DB-2-1INT-SM-FE` dentro de
+sus familias en Simulador y Cotizaciones, y evita que futuras variantes
+compatibles aparezcan como opciones principales independientes.
+
+Las versiones sin respaldo se presentan como la familia virtual
+`DB-SM-SF — Cajoneras con Gola sin fondo` tanto en Simulador como en
+Cotizaciones. El selector principal oculta las variantes reales y un selector
+secundario permite elegirlas. La membresía es dinámica: todo tipo activo cuyo
+prefijo cumpla `DB-<variante>-SM-SF` se incorpora automáticamente, incluidos
+los que genere después `cot_asegurar_tipologia_sin_fondo`. Al seleccionar esta
+familia en Cotizaciones también se fija **Fondo = Sin fondo**, para conservar
+la tipología SF al guardar.
 
 En el montaje de `SB-SM`, `0090_sb_sm_bajar_refuerzos_gola.sql` baja el
 refuerzo delantero 30 mm y baja 132,4 mm tanto el rail horizontal como la
@@ -165,6 +228,19 @@ define únicamente el ensamble visual de las piezas propias de esta tipología:
 ## Familia DB-SM-FE
 
 La migración `0108_db_sm_fe.sql` incorpora la familia comercial `DB-SM-FE`.
+
+### Familia DB-SM-FE-SF
+
+Las variantes Full Extension sin fondo se mantienen como tipos independientes
+en `cot_tipos_mueble`, pero Simulador, Cotizaciones y HDR las presentan bajo
+una sola opción raíz: `DB-SM-FE-SF — Cajoneras con Gola, riel Full Extension y
+sin fondo`. El selector interno se alimenta dinámicamente de los tipos activos
+que cumplen `DB-<variante>-SM-FE-SF`; actualmente ofrece `DB-2S-SM-FE-SF`,
+`DB-2-SM-FE-SF` y `DB-2-1INT-SM-FE-SF`.
+
+Seleccionar una variante conserva su `tipo_mueble_id` real, fuerza Gola,
+mantiene `conFondo=false` y selecciona `RIELFE500`. No se reemplazan ni migran
+las líneas existentes: la consolidación es exclusivamente de presentación.
 La familia existe solo como encabezado en los selectores de Simulador,
 Cotizaciones y HDR; las filas calculables de `cot_tipos_mueble` son
 `DB-2S-SM-FE`, `DB-2-SM-FE` y `DB-3-SM-FE`. La convención comercial inserta

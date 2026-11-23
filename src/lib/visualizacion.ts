@@ -1,5 +1,8 @@
 import { evalExpr, type Pieza } from './engine';
-import type { GroupCalculation, PreparedGroupMember } from './group-engine';
+import { usaHoodSm } from './hood-sm';
+import { usaFrentesDosPequenosGola } from './frentes-gaveta';
+import { herrajesFijosDbFe, usaGavetaFeBmwBomh } from './gavetas';
+import { isUpperCabinetGroup, normalizeUpperCabinetBaseAndTop, type GroupCalculation, type PreparedGroupMember } from './group-engine';
 import { inferirMontaje, validarMontaje, type FuncionMontaje, type MontajeConfig } from './visualizacion-config';
 
 export type PanelVisual = {
@@ -7,10 +10,12 @@ export type PanelVisual = {
   funcion: FuncionMontaje; x: number; y: number; z: number; w: number; d: number; h: number;
   largo: number; ancho: number; espesor: number; giro: number; confirmado: boolean;
   nota: string; cajon: string | null;
+  recorte?: { borde: 'frontal_superior'; profundidad: number; alto: number };
+  recortes?: { borde: 'frontal_superior' | 'frontal'; profundidad: number; alto: number; z?: number }[];
 };
 export type EscenaMueble = {
   version: 1; paneles: PanelVisual[]; avisos: string[]; omitidas: string[];
-  modulos: { pref: string; x: number; largo: number; alto: number; profundo: number }[];
+  modulos: { pref: string; x: number; z: number; largo: number; alto: number; profundo: number }[];
 };
 type Item = { p: Pieza; config: MontajeConfig; funcion: FuncionMontaje; l: number; a: number; t: number; count: number; source: number; w: number; d: number; h: number };
 const mm = (v: number) => v * 25.4;
@@ -19,37 +24,54 @@ const isDrawer = (f: FuncionMontaje) => ['base_gaveta','trasero_gaveta','lateral
 
 /** Uses the exact evaluated, group-adjusted cutting list. Never changes prices. */
 export function construirVisualizacion(members: PreparedGroupMember[], group: GroupCalculation): EscenaMueble {
+  if (members.length > 1) members = normalizeUpperCabinetBaseAndTop(members);
   const scene: EscenaMueble = {version:1,paneles:[],avisos:[],omitidas:[],modulos:[]};
   const warn = (s: string) => { if (!scene.avisos.includes(s)) scene.avisos.push(s); };
   let offset=0;
   const totalL=mm(group.largoTotalIn), multi=members.length>1;
+  const upperGroup=multi&&isUpperCabinetGroup(members);
+  const groupTop=upperGroup?Math.max(...members.map((member)=>mm(member.calc.dims.A))):0;
   const continuous=new Set<string>();
   // `group-engine` fusiona tambien las piezas `continua_opcional`, pero solo las
   // que resultaron compatibles: `group.piezasContinuas` lista las claves que de
   // verdad se unieron. Sin consultarlo, una opcional fusionada llega con la
   // cantidad prorrateada (0,5 por modulo) y se descarta por fraccionaria.
-  const esContinuaEnGrupo=(pz:Pieza)=>pz.modo_agrupacion==='continua'
-    ||(pz.modo_agrupacion==='continua_opcional'
-      &&group.piezasContinuas.includes(pz.clave_fusion||pz.nombre));
+  const esContinuaEnGrupo=(pz:Pieza)=>group.piezasContinuas.includes(pz.clave_fusion||pz.nombre);
   const addPanel = (panel: PanelVisual) => {
     if (scene.paneles.length >= 1500) { warn('Se alcanzó el límite de 1.500 piezas visibles.'); return; }
     scene.paneles.push(panel);
   };
   members.forEach((member, mi) => {
     const {calc,pref}=member, result=group.lineas[mi];
-    const esBmw1 = pref === 'BMW-1' || pref === 'BMW-1-FE' || pref === 'BOMH-1' || pref === 'BOMH-1-FE';
-    const esBBLFDSm = pref === 'BBLFD-D-L/R-SM';
-    const esBBLFD = pref === 'BBLFD' || esBBLFDSm;
-    const esBlindDoorParametrico = esBBLFD || pref === 'WBL-D-L/R-SM';
-    const esDbSmEspecial = [
-      'DB-2S-SM', 'DB-2-SM', 'DB-3-SM',
-      'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-3-SM-FE',
+    const prefBase = pref.replace(/-SF$/, '');
+    const esPcGola = /^PC(?:-MO)?-SMG?$/.test(prefBase);
+    const esPcSinMo = prefBase === 'PC' || /^PC-SMG?$/.test(prefBase);
+    const esBmw1 = /^(BMW|BOMH)-1(?:-FE)?(?:-SMG?)?$/.test(prefBase);
+    const esBBLFDSm = prefBase === 'BBLFD-D-L/R-SM';
+    const esBBLFD = prefBase === 'BBLFD' || esBBLFDSm;
+    const esBlindDoorParametrico = esBBLFD || prefBase === 'WBL-D-L/R-SM';
+    const esTorrePuertasDivididas = esPcSinMo || prefBase === 'VPC' || /^(PCFD-MO|PC-MO(?:-SMG?)?)$/.test(prefBase);
+    const esPcfdMo = /^(PCFD-MO|PC-MO(?:-SMG?)?)$/.test(prefBase);
+    const esDbSmMaderaEspecial = [
+      'DB-2S-SM', 'DB-2-SM', 'DB-2-1INT-SM', 'DB-3-SM',
+      'DB-2S-SM-FE', 'DB-2-SM-FE', 'DB-2-1INT-SM-FE', 'DB-3-SM-FE',
     ].includes(pref);
+    const esDbSmg = /^DB-.+-SMG(-FE|-SF)?$/.test(pref);
+    const esDbSmEspecial = esDbSmMaderaEspecial || esDbSmg;
+    const esDb21IntSmFe = pref === 'DB-2-1INT-SM-FE' || pref === 'DB-2-1INT-SMG-FE'
+      || (/^DB-FE(?:-SF)?$/.test(pref) && Number(result.vars.n_cajones_ocultos ?? 0) > 0);
+    const vars=result.vars;
     const L=mm(calc.dims.L), A=mm(calc.dims.A), P=mm(calc.dims.P);
+    const MO=mm(Number(vars.MO ?? 0)), HOOD=mm(Number(vars.HOOD ?? 0));
+    const PUERTA_SUP=mm(Number(vars.PUERTA_SUP ?? 0));
+    const FS=mm(Number(vars.fijo_superior_z ?? 0)), FI=mm(Number(vars.fijo_inferior_z ?? 0));
+    const verticalOffset=upperGroup?groupTop-A:0;
     const thickness=(rol: string) => Number(calc.tablerosByCode[calc.preset[rol]]?.espesor_mm ?? 0);
-    const TC=thickness('caja') || 15, TF=thickness('frente') || 18, TB=thickness('fondo') || 6;
-    scene.modulos.push({pref,x:offset,largo:L,alto:A,profundo:P});
-    const vars=result.vars, items: Item[]=[];
+    const TC=thickness('caja') || 15, TR=thickness('refuerzo') || TC, TF=thickness('frente') || 18, TB=thickness('fondo') || 6;
+    // Incluye el tramo FREE sin tablero en la envolvente nominal del extractor.
+    const hoodEnvelope=usaHoodSm(pref)?HOOD:0;
+    scene.modulos.push({pref,x:offset,z:verticalOffset-hoodEnvelope,largo:L,alto:A+hoodEnvelope,profundo:P});
+    const items: Item[]=[];
     const used=new Set<number>();
     calc.piezas.forEach((p, pi) => {
       if (calc.modoFrentes==='sin_frentes' && isFront(p) || calc.modoFrentes==='solo_frentes' && !isFront(p)) return;
@@ -64,7 +86,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       // estructural: los rails delanteros son verticales a 20 mm del frente y
       // cada Gola es horizontal, contra el frente. Se fija aquí para que una
       // configuración heredada de DB no pueda volver a intercambiar planos.
-      if (esDbSmEspecial && p.nombre === 'refuerzo_delantero') {
+      if (esDbSmMaderaEspecial && p.nombre === 'refuerzo_delantero') {
         config = {
           ...config,
           funcion: 'travesano_frontal', plano: 'XZ', intercambiar: false,
@@ -73,7 +95,15 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           nota: 'Refuerzo vertical: superior y entre los niveles de gavetas.',
         };
       }
-      if (esDbSmEspecial && p.nombre === 'gola_madera') {
+      if (esDbSmg && p.nombre === 'refuerzo_delantero') {
+        config = {
+          ...config,
+          funcion: 'travesano_frontal', plano: 'XY', intercambiar: false,
+          x: 'TC', y: '27', z: 'A-H', confirmado: true,
+          nota: 'Refuerzo delantero horizontal, a 27 mm del frente.',
+        };
+      }
+      if (esDbSmMaderaEspecial && p.nombre === 'gola_madera') {
         config = {
           ...config,
           funcion: 'gola', plano: 'XY', intercambiar: false,
@@ -137,12 +167,12 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const doors=items.filter(i=>i.funcion==='frente');
     const fronts=items.filter(i=>i.funcion==='frente_gaveta').flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
     fronts.sort((a,b)=>a.item.h-b.item.h||a.item.source-b.item.source);
-    const intFronts=items.filter(i=>i.funcion==='frente_interior' && (Boolean(vars.n_cajones_ocultos) || /ocult|interior/i.test(i.p.nombre))).flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
+    const intFronts=items.filter(i=>i.funcion==='frente_interior' && /ocult|interior/i.test(i.p.nombre)).flatMap(i=>Array.from({length:i.count},(_,k)=>({item:i,k})));
     const bodyCount=Math.max(0,...items.filter(i=>i.funcion==='base_gaveta').map(i=>i.count),fronts.length+intFronts.length);
     const drawerSlots: {z:number;h:number;key:string;interior?:boolean}[]=[];
-    const gola=vars.gola?53.6:0;
+    const gola=vars.gola ? (vars.espacio_gola != null ? mm(2 * vars.espacio_gola) : 53.6) : 0;
     if(fronts.length) {
-      const sum=fronts.reduce((s,f)=>s+f.item.h,0), gap=3.2;
+      const sum=fronts.reduce((s,f)=>s+f.item.h,0), gap=usaFrentesDosPequenosGola(pref)?1.6:3.2;
       let z = doors.length > 0
         ? A - (gola ? gola : 0) - gap
         : A - Math.max(0, (innerH - sum - (fronts.length - 1) * gap - gola) / 2);
@@ -170,14 +200,14 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     // excepcion confirmada por la hoja BMW36-1.
     if(esBmw1 && drawerSlots[0]) {
       drawerSlots[0].z=3.2;
-      drawerSlots[0].h=pref === 'BOMH-1' || pref === 'BOMH-1-FE' ? 332.8 : 220.13;
+      drawerSlots[0].h=fronts[0]?.item.h ?? (prefBase.startsWith('BOMH-') ? 332.8 : 220.13);
     }
     const sequence=new Map<string,number>();
     const totals=new Map<string,number>();
     items.forEach(i=>totals.set(i.funcion,(totals.get(i.funcion)||0)+i.count));
     // Place doors in horizontal rows; full-width doors naturally stack vertically.
     const doorSlots=new Map<string,{x:number;z:number}>();
-    const blind=items.find(i=>i.funcion==='frente_falso'&&i.h>innerH*.8);
+    const blind=usaHoodSm(pref) ? undefined : items.find(i=>i.funcion==='frente_falso'&&i.h>innerH*.8);
     const left=blind?blind.w:0, doorW=L-left;
     const doorRows:{entries:{item:Item;k:number;x:number}[];width:number;height:number}[]=[];
     for(const item of doors) for(let k=0;k<item.count;k++) {
@@ -201,18 +231,31 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     // Dos laterales forman el cuerpo de cada gaveta. El trasero puede ser mas
     // bajo que esos laterales (100/80 mm o 200/180 mm): se alinea por arriba y
     // la diferencia queda libre abajo, como exige el ensamble de produccion.
-    const lateralDrawerHeights = items
+    let lateralDrawerHeights = items
       .filter((candidate) => candidate.funcion === 'lateral_gaveta')
       .flatMap((candidate) => Array.from(
         { length: Math.ceil(candidate.count / 2) },
         () => candidate.h,
       ));
-    const lateralDrawerDepths = items
+    let lateralDrawerDepths = items
       .filter((candidate) => candidate.funcion === 'lateral_gaveta')
       .flatMap((candidate) => Array.from(
         { length: Math.ceil(candidate.count / 2) },
         () => candidate.d,
       ));
+    if (esDb21IntSmFe) {
+      const lateralGrande = items.find((candidate) =>
+        candidate.funcion === 'lateral_gaveta' && candidate.p.nombre.includes('grande'));
+      const lateralPequeno = items.find((candidate) =>
+        candidate.funcion === 'lateral_gaveta' && candidate.p.nombre.includes('pequena'));
+      // La plantilla almacena primero la caja grande, pero el montaje real es:
+      // superior pequena, inferior grande e interior pequena. Las referencias
+      // de alto/profundidad deben seguir los slots y no el orden SQL.
+      if (lateralGrande && lateralPequeno) {
+        lateralDrawerHeights = [lateralPequeno.h, lateralGrande.h, lateralPequeno.h];
+        lateralDrawerDepths = [lateralPequeno.d, lateralGrande.d, lateralPequeno.d];
+      }
+    }
     // En DB-2S-SM-FE las dos cajas pequenas forman un bloque bajo la Gola
     // superior. Se baja el bloque completo solo lo necesario para conservar
     // una luz visible de 3,2 mm; la gaveta grande inferior no se desplaza.
@@ -224,7 +267,28 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
     const upperSmallDrawerDrop = esDbSmEspecial && vars.gola && smallDrawerCount > 0 && lateralDrawerHeights[0] != null
       ? Math.max(0, firstWoodDrawerTop - (upperGolaBottomZ - 3.2))
       : 0;
+    const interiorDrawerIndex = drawerSlots.findIndex((slot) => slot.interior);
+    const interiorDrawerHeight = Math.max(
+      0,
+      ...intFronts.map((candidate) => candidate.item.h),
+    );
+    // DB-2-1INT-SM aloja una gaveta interior detrás del frente exterior
+    // superior. El montaje normal suma 30 mm sobre el inicio del slot y hacía
+    // que su frente interior invadiera la Gola. Se baja la caja completa hasta
+    // conservar el mismo reveal de 3,2 mm bajo la cara inferior de la Gola.
+    const interiorDrawerDrop = ['DB-2-1INT-SM','DB-2-1INT-SM-FE'].includes(pref) && interiorDrawerIndex >= 0
+      ? Math.max(
+        0,
+        (drawerSlots[interiorDrawerIndex]?.z ?? foot) + 30 + interiorDrawerHeight
+          - (upperGolaBottomZ - 3.2),
+      )
+      : 0;
+    // En la variante FE el contraparche de la gaveta interior toca la cara
+    // interna del frente exterior superior (y=0). El montaje general arranca
+    // las cajas en y=10, por eso esta gaveta compensa esos 10 mm completos.
+    const interiorDrawerOffsetY = esDb21IntSmFe ? -10 : 0;
     const drawerBodyOffsetZ = (drawerIndex: number) => {
+      if (drawerIndex === interiorDrawerIndex) return -interiorDrawerDrop;
       if (drawerIndex >= smallDrawerCount) return 0;
       // La segunda caja pequena se apoya sobre el refuerzo delantero inferior.
       // Sus laterales comienzan 13 mm debajo de la base, por lo que se compensa
@@ -232,6 +296,21 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
       const apoyoSobreRefuerzo = drawerIndex === 1 && lateralDrawerHeights[drawerIndex] != null ? 13 : 0;
       return -upperSmallDrawerDrop + apoyoSobreRefuerzo;
     };
+    // La segunda ranura SMG sustituye al antiguo refuerzo vertical inferior y
+    // conserva su nivel de apoyo particular en cada configuracion de gavetas.
+    const indiceBaseSuperiorSmg = ['DB-2-SMG', 'DB-2-SMG-FE', 'DB-2-SMG-SF'].includes(pref) ? 0 : 1;
+    const tieneLateralEnNivelSmg = lateralDrawerHeights[indiceBaseSuperiorSmg] != null;
+    const desplazamientoNivelSmg = indiceBaseSuperiorSmg < smallDrawerCount ? -upperSmallDrawerDrop : 0;
+    const esDb21IntSmg = /^DB-2-1INT-SMG(-FE|-SF)?$/.test(pref);
+    const baseGavetaSobreJuntaZ = (drawerSlots[0]?.z ?? foot) + 30
+      + (lateralDrawerHeights[0] != null ? 13 : 0) + drawerBodyOffsetZ(0);
+    const segundoNivelSmgZ = esDb21IntSmg && drawerSlots[0]
+      // En 2-1INT la gaveta interior comparte el frente exterior superior. El
+      // borde superior del mecanizado queda bajo la base de la gaveta situada
+      // sobre la junta visible, sin usar el frente interior oculto.
+      ? baseGavetaSobreJuntaZ
+      : (drawerSlots[indiceBaseSuperiorSmg]?.z ?? foot)
+        + 30 + (tieneLateralEnNivelSmg ? 13 : 0) + desplazamientoNivelSmg;
     for(const item of items) {
       const {p,config,w,d,h,count,funcion}=item;
       for(let k=0;k<count;k++) {
@@ -253,7 +332,9 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           else drawerIndex=k;
         }
         else if(funcion==='trasero_gaveta') {
-          if(intFronts.length) {
+          if(esDb21IntSmFe) {
+            drawerIndex=p.nombre.includes('grande')?1:(k===0?0:interiorDrawerIndex);
+          } else if(intFronts.length) {
             if(h>100) drawerIndex=1;
             else drawerIndex=k===0?0:Math.max(0,drawerSlots.findIndex(s=>s.interior));
           } else {
@@ -261,7 +342,14 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
             drawerIndex=ordered.findIndex(v=>v.q===item&&v.j===k);
           }
         }
-        if(funcion==='lateral_gaveta') drawerIndex=Math.floor(i/2);
+        if(funcion==='lateral_gaveta') {
+          drawerIndex=esDb21IntSmFe
+            ? (p.nombre.includes('grande')?1:(k<2?0:interiorDrawerIndex))
+            : Math.floor(i/2);
+        }
+        if(esDb21IntSmFe&&funcion==='frente_interior'&&p.nombre.startsWith('contraparche')) {
+          drawerIndex=p.nombre.includes('grande')?1:(k===0?0:interiorDrawerIndex);
+        }
         const slot=drawerSlots[drawerIndex%Math.max(1,drawerSlots.length)];
         if(isDrawer(funcion)&&slot) cajon=slot.key;
         switch(funcion) {
@@ -269,7 +357,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
             x=k===0?0:L-w;
             if (config.x) {
               const explicitX = Number(evalExpr(config.x, {
-                L, A, P, TC, TF, TB, LP: w, AP: h, EP: d,
+                L, A, P, TC, TR, TF, TB, MO, HOOD, FS, FI, LP: w, AP: h, EP: d,
                 I: i, N: n, W: w, D: d, H: h, X: x, Y: y, Z: z,
               }));
               if (Number.isFinite(explicitX)) x=explicitX;
@@ -278,8 +366,61 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           }
           case 'base': z=foot+i*(innerH-h)/Math.max(1,n-1); break;
           case 'tapa': z=A-h; break;
-          case 'base_tapa': z=foot+i*(innerH-h)/Math.max(1,n-1); break;
-          case 'estante': y=P-d; z=foot+TC+(i+1)*(innerH-2*TC-h)/(n+1); break;
+          case 'base_tapa':
+            z=foot+i*(innerH-h)/Math.max(1,n-1);
+            if (esPcSinMo && count === 3 && k === 1) {
+              const reveal=mm(Number(vars.RV ?? (3.2/25.4)));
+              z=esPcGola ? FS : A-PUERTA_SUP-reveal/2-h/2;
+            }
+            break;
+          case 'estante':
+            if (esPcfdMo && p.nombre === 'entrepano_fijo') {
+              // MO es la luz libre entre las caras internas de ambos fijos.
+              // El superior referencia el inicio de la puerta superior; el
+              // inferior referencia el final de la puerta inferior.
+              const superiorZ=esPcGola ? FS : A-PUERTA_SUP-h;
+              z=k===0 ? (esPcGola ? FI : superiorZ-MO-h) : superiorZ;
+              y=Math.max(0,P-TB-d);
+            } else if (esPcfdMo && p.nombre === 'entrepano') {
+              const fijoSuperiorZ=esPcGola ? FS : A-PUERTA_SUP-TF;
+              const fijoInferiorZ=esPcGola ? FI : fijoSuperiorZ-MO-TF;
+              if (k===0) {
+                // Un entrepaño móvil en la zona superior, centrado entre el
+                // fijo superior y la tapa.
+                const zonaInicio=fijoSuperiorZ+TF;
+                const zonaFin=A-TC;
+                z=zonaInicio+Math.max(0,zonaFin-zonaInicio-h)/2;
+              } else {
+                // Los dos restantes se distribuyen uniformemente debajo del
+                // fijo inferior para que no parezcan pegados al vano MO.
+                const inferiores=Math.max(1,count-1);
+                const indiceInferior=k-1;
+                const zonaInicio=foot+TC;
+                const disponible=Math.max(0,fijoInferiorZ-zonaInicio-h);
+                z=zonaInicio+(indiceInferior+1)*disponible/(inferiores+1);
+              }
+              y=P-d;
+            } else if (esPcSinMo && p.nombre === 'entrepano') {
+              const reveal=mm(Number(vars.RV ?? (3.2/25.4)));
+              const fijo=items.find((candidate)=>candidate.funcion==='base_tapa');
+              const fijoH=fijo?.h ?? TC;
+              const fijoZ=esPcGola ? FS : A-PUERTA_SUP-reveal/2-fijoH/2;
+              // La regla de altura cuenta el fijo como un entrepano superior.
+              const alturaSup=PUERTA_SUP/25.4;
+              const reglaSup=alturaSup<=16?0:alturaSup<=24?1:alturaSup<=36?2:3;
+              const superiores=Math.min(count,Math.max(0,reglaSup-1));
+              const arriba=k<superiores;
+              const cantidad=arriba?superiores:count-superiores;
+              const indice=arriba?k:k-superiores;
+              const inicio=arriba?fijoZ+fijoH:foot+TC;
+              const fin=arriba?A-TC:fijoZ;
+              z=inicio+(indice+1)*Math.max(0,fin-inicio-h)/(cantidad+1);
+              y=P-d;
+            } else {
+              y=P-d;
+              z=foot+TC+(i+1)*(innerH-2*TC-h)/(n+1);
+            }
+            break;
           case 'division': x=(i+1)*L/(n+1)-w/2; z=foot+TC; break;
           case 'respaldo': y=baseDepth ?? P-d; z=foot+(innerH-h)/2; break;
           case 'travesano_frontal': {
@@ -314,19 +455,33 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
             if(!Number.isFinite(z)) z=A-h-i*(innerH-h)/Math.max(1,n);
             break;
           }
-          case 'travesano_posterior': y=P-d; z=foot+i*(innerH-h)/Math.max(1,n-1); break;
+          case 'travesano_posterior':
+            y=P-d;
+            z=upperGroup?A-(i+1)*h:foot+i*(innerH-h)/Math.max(1,n-1);
+            break;
           case 'travesano_lateral': x=TC; z=A-h; break;
           case 'frente': {
             const ds=doorSlots.get(`${item.source}:${k}`)!;
             x=ds.x; z=ds.z; y=-d;
-            if (esBBLFD && p.nombre === 'frente') {
+            if (esTorrePuertasDivididas && p.nombre === 'puerta_inferior') {
+              // La altura del lateral ya descuenta TK; `foot` es exactamente
+              // el arranque de la carcasa y de las puertas inferiores.
+              z=foot;
+            }
+            else if (esTorrePuertasDivididas && p.nombre === 'puerta_superior') {
+              // La puerta superior remata con la misma luz RV usada por su
+              // fórmula de corte. No depende del orden SQL de las piezas.
+              const reveal=mm(Number(vars.RV ?? (3.2/25.4)));
+              z=A-h-reveal;
+            }
+            else if (esBBLFD && p.nombre === 'frente') {
               const reveal = mm(Number(vars.RV ?? (3.2 / 25.4)));
               x=Number(vars.mano_derecha ?? 1) === 1 ? L-reveal-w : reveal;
             }
             else if (esBlindDoorParametrico && p.nombre === 'frente') x=Number(vars.mano_derecha ?? 1) === 1 ? L-w : 0;
             if (config.z) {
               const explicitZ = Number(evalExpr(config.z, {
-                L, A, P, TC, TF, TB, LP: w, AP: h, EP: d,
+                L, A, P, TC, TR, TF, TB, MO, HOOD, FS, FI, LP: w, AP: h, EP: d,
                 I: i, N: n, W: w, D: d, H: h, X: x, Y: y, Z: z,
               }));
               if (Number.isFinite(explicitZ)) z=explicitZ;
@@ -341,7 +496,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           case 'base_gaveta': {
             const tieneLateralesDeMadera = lateralDrawerHeights[drawerIndex] != null;
             x=(L-w)/2;
-            y=10;
+            y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0);
             z=(slot?.z??foot)+30+(tieneLateralesDeMadera?13:0)+drawerBodyOffsetZ(drawerIndex);
             break;
           }
@@ -349,12 +504,12 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
             const lateralHeight = lateralDrawerHeights[drawerIndex];
             const lateralDepth = lateralDrawerDepths[drawerIndex];
             x=(L-w)/2;
-            y=10+(lateralDepth??items.find(v=>v.funcion==='base_gaveta')?.d??P-80)-d;
+            y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0)+(lateralDepth??items.find(v=>v.funcion==='base_gaveta')?.d??P-80)-d;
             z=(slot?.z??foot)+30+Math.max(0,(lateralHeight??h)-h)+drawerBodyOffsetZ(drawerIndex);
             break;
           }
-          case 'lateral_gaveta': x=i%2===0?TC+12:L-TC-12-w; y=10; z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
-          case 'frente_interior': x=(L-w)/2; y=10; z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
+          case 'lateral_gaveta': { const luzRiel=herrajesFijosDbFe(pref)||usaGavetaFeBmwBomh(pref)?13:12; x=i%2===0?TC+luzRiel:L-TC-luzRiel-w; y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0); z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break; }
+          case 'frente_interior': x=(L-w)/2; y=10+(drawerIndex===interiorDrawerIndex?interiorDrawerOffsetY:0); z=(slot?.z??foot)+30+drawerBodyOffsetZ(drawerIndex); break;
           case 'gola':
             if (esBBLFDSm && p.nombre === 'gola_madera') {
               const frenteW = mm(Number(vars.door ?? 0));
@@ -386,7 +541,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         }
         const defaults={x,y,z};
         let giro=0, confirmed=config.confirmado===true;
-        const ctx={L:width,A,P,TC,TF,TB,LP:item.l,AP:item.a,EP:item.t,I:k,N:count,W:w,D:d,H:h,X:x,Y:y,Z:z};
+        const ctx={L:width,A,P,TC,TR,TF,TB,MO,HOOD,FS,FI,LP:item.l,AP:item.a,EP:item.t,I:k,N:count,W:w,D:d,H:h,X:x,Y:y,Z:z};
         try {
           for(const axis of ['x','y','z'] as const) if(config[axis]) defaults[axis]=Number(evalExpr(config[axis],ctx));
           if(!Object.values(defaults).every(Number.isFinite)) throw new Error('Coordenada no finita');
@@ -396,7 +551,7 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
         // Los pares DB-SM se relacionan con componentes físicos: el primero se
         // apoya arriba y el segundo queda bajo la última gaveta del bloque
         // superior (dos pequeñas en DB-2S-SM, una grande en DB-2-SM).
-        if (esDbSmEspecial && (p.nombre === 'refuerzo_delantero' || p.nombre === 'gola_madera')) {
+        if (esDbSmMaderaEspecial && (p.nombre === 'refuerzo_delantero' || p.nombre === 'gola_madera')) {
           const indiceBaseSuperior = ['DB-2-SM', 'DB-2-SM-FE'].includes(pref) ? 0 : 1;
           const tieneLateralesDeMadera = lateralDrawerHeights[indiceBaseSuperior] != null;
           const desplazamientoBloqueSuperior = indiceBaseSuperior < smallDrawerCount ? -upperSmallDrawerDrop : 0;
@@ -412,10 +567,54 @@ export function construirVisualizacion(members: PreparedGroupMember[], group: Gr
           }
           confirmed = true;
         }
+        let recorte: PanelVisual['recorte'];
+        let recortes: PanelVisual['recortes'];
+        const recortesConfig = esDbSmg && funcion === 'lateral'
+          ? (config.recortes ?? [
+            { borde: 'frontal_superior' as const, profundidad: '27', alto: '73' },
+            { borde: 'frontal_nivel_gaveta' as const, profundidad: '27', alto: '73' },
+          ])
+          : (config.recortes ?? (config.recorte ? [config.recorte] : []));
+        if (recortesConfig.length) {
+          try {
+            recortes = recortesConfig.map((item) => {
+              const profundidad = Number(evalExpr(item.profundidad, ctx));
+              const alto = Number(evalExpr(item.alto, ctx));
+              const zRecorte = item.borde === 'frontal_nivel_gaveta'
+                ? Math.max(0, Math.min(h - alto, segundoNivelSmgZ - alto - defaults.z))
+                : item.borde === 'frontal' ? Number(evalExpr(item.z!, {...ctx,Z:defaults.z})) : undefined;
+              if (!(profundidad > 0 && profundidad < d && alto > 0 && alto < h)) throw new Error('Recorte fuera del panel');
+              if (zRecorte != null && !(zRecorte >= 0 && zRecorte + alto <= h)) throw new Error('Nivel de recorte fuera del panel');
+              return item.borde === 'frontal_superior'
+                ? { borde: 'frontal_superior' as const, profundidad, alto }
+                : { borde: 'frontal' as const, profundidad, alto, z: zRecorte };
+            });
+            const superior = recortes.find((item) => item.borde === 'frontal_superior');
+            if (superior) recorte = { borde: 'frontal_superior', profundidad: superior.profundidad, alto: superior.alto };
+          } catch {
+            recortes = undefined;
+            warn(`${pref} · ${p.nombre}: mecanizado visual inválido; se representa el panel completo.`);
+            confirmed = false;
+          }
+        }
         addPanel({id:`${mi}:${item.source}:${k}`,nombre:p.nombre,modulo:mi,pref,rol:p.rol_tablero,
-          material:calc.preset[p.rol_tablero]??'',funcion,x:defaults.x+(full?0:offset),y:defaults.y,z:defaults.z,w,d,h,
+          material:calc.preset[p.rol_tablero]??'',funcion,x:defaults.x+(full?0:offset),y:defaults.y,z:defaults.z+verticalOffset,w,d,h,
           largo:item.l,ancho:item.a,espesor:item.t,giro,confirmado:confirmed,
-          nota:config.nota??'',cajon});
+          nota:config.nota??'',cajon,recorte,recortes});
+      }
+    }
+    // La caja FE se conserva completa; solo se baja su montaje lo necesario
+    // para caber bajo la nueva gola de la gaveta inferior, sin cruzar la base.
+    if (esBmw1 && prefBase.endsWith('-SM')) {
+      const golaInferior=scene.paneles.find(p=>p.modulo===mi&&p.nombre==='gola_madera');
+      const cuerpos=scene.paneles.filter(p=>p.modulo===mi&&p.cajon&&p.funcion!=='frente_gaveta');
+      if (golaInferior && cuerpos.length) {
+        const necesario=Math.max(0,...cuerpos.map(p=>p.z+p.h-golaInferior.z));
+        const base=scene.paneles.find(p=>p.modulo===mi&&p.nombre==='base');
+        const disponible=Math.max(0,Math.min(...cuerpos.map(p=>p.z-(base?base.z+base.h:0))));
+        const bajar=Math.min(necesario,disponible);
+        cuerpos.forEach(p=>{p.z-=bajar;});
+        if (necesario>disponible+0.001) warn(`${pref}: la caja de gaveta no cabe entre la base y la gola con estos espesores; revisar fabricación.`);
       }
     }
     if(['BBL','BLS','BLS-RS-SM','WER','WBL','SDB','WPC','PCFD'].includes(pref)) warn(`${pref}: interpretación de piezas rectangulares; recortes, ensambles y distribución especial requieren validación de montaje.`);

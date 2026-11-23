@@ -61,9 +61,14 @@ horizontal para no comprimir fechas, estados ni valores.
 La proporción principal 50/50 y el divisor se declaran como estilos CSS
 explícitos, no mediante variantes responsivas de Tailwind, para garantizar que
 el servidor de desarrollo los aplique aunque su hoja de utilidades esté en caché.
-Dentro del formulario, `Materiales globales` también usa una cuadrícula CSS
-explícita de dos columnas iguales: módulos inferiores B/V a la izquierda y
-módulos superiores W/TW a la derecha.
+Dentro del formulario, `Materiales globales` usa una cuadrícula CSS explícita
+de dos columnas con cuatro tarjetas: inferiores, superiores, clósets y baños.
+Cada tarjeta permanece contraída mientras no esté incluida y despliega sus
+tableros y cantos al activarse. Debe quedar al menos una familia incluida. El
+editor de características reutiliza el mismo modelo y muestra las cuatro
+familias persistidas. Frente, Filler, Panel y Zócalo comparten un único selector
+de tablero claramente rotulado. Los selectores de perfiles predefinidos no forman parte del flujo de
+Cotizaciones.
 El contenedor de esta pantalla usa 1200 px de ancho máximo, reduciendo el
 espacio lateral libre frente al diseño original y dando más área a los campos,
 selectores de materiales y columnas del listado.
@@ -112,6 +117,10 @@ El proyecto utiliza el App Router (`app/`) para definir las secciones principale
 - **`cotizador/`**: Interfaz principal para simular muebles y generar desgloses de precios en tiempo real.
 - **`cotizaciones/`**: Historial y gestión de cotizaciones ya guardadas.
 - **`admin/`**: Panel administrativo para gestionar parámetros globales, reglas y catálogos.
+  En los catálogos de tableros, cantos y herrajes, **Editar** despliega el
+  formulario inmediatamente debajo de la fila seleccionada. El formulario
+  superior queda reservado para **Agregar**, evitando separar visualmente el
+  registro de los datos que se están modificando.
 - **`hdr/`**: Buscador de despiece por código de mueble (ej. `SBFD30`, `W2436`, `DB18-1S`). Solo admin, ver §5.
 - **`login/`**: Inicio de sesión con correo y contraseña mediante Supabase Auth.
 - **`recuperar-contrasena/`**, **`auth/callback/`** y **`actualizar-contrasena/`**: recuperación de contraseña con enlace PKCE de Supabase. El callback intercambia el `code` por una sesión temporal, el formulario actualiza la clave y cierra esa sesión para volver al login. Estas rutas están exceptuadas de la redirección normal del proxy mientras se completa el flujo.
@@ -129,9 +138,23 @@ La interfaz está altamente componetizada para mantener el código limpio y reus
 Ejemplos de componentes destacados:
 - **Campos de Entrada (`Campo.tsx`)**: Envoltorios estandarizados para inputs y selects.
 - **Selectores Complejos (`Combobox.tsx`)**: Usados para selecciones avanzadas (como búsqueda de tableros o herrajes).
-- **Layout raíz (`app/layout.tsx`)**: mantiene el renderizado de servidor y usa `suppressHydrationWarning` únicamente en `<body>` para tolerar atributos transitorios inyectados por extensiones del navegador antes de la hidratación (por ejemplo, Grammarly).
+- **Layout raíz (`app/layout.tsx`)**: mantiene el renderizado de servidor y usa `suppressHydrationWarning` en `<html>` y `<body>` para tolerar, exclusivamente en esos nodos raíz, atributos transitorios inyectados por extensiones del navegador antes de la hidratación (por ejemplo, `data-qb-installed`). React limita esta supresión al nivel inmediato, por lo que proteger solo `<body>` no cubre mutaciones de `<html>`.
 - **Utilidades de UI (`TooltipToggle.tsx`, `GuideButton.tsx`)**: Para presentar información de contexto o ayuda al usuario sin sobrecargar la pantalla principal.
 - **Constructor combinado (`CotizadorForm.tsx`)**: Presenta arriba los módulos confirmados en orden físico, permite editarlos, eliminarlos, arrastrarlos o moverlos con botones. `+ Agregar módulo` valida el formulario activo, lo confirma y abre el siguiente heredando su configuración. La unidad queda bloqueada después del primer módulo. La tarjeta "Desglose de costo" muestra los totales agregados (Tablero/Canto/Consumibles/Herrajes) sin desglosar por rol de tablero ni por herraje individual — el detalle por rol de tablero (`result.maderaPorRol`) vive en la tarjeta "Materiales" más abajo, y el detalle por herraje (`result.herrajes`) en la tarjeta "Herrajes".
+
+### Precios de tablero propios de una cotización
+
+En **Características del proyecto**, cada selector de tablero de caja/refuerzos,
+frente y fondo muestra el precio editable en COP/m². El mapa
+`config_default.preciosTableros` pertenece exclusivamente a la cotización y usa
+el código del tablero como clave; por eso, si el mismo tablero aparece en más
+de un rol o familia, conserva un único valor coherente dentro del proyecto.
+
+Al guardar un precio, `actualizarCotizacion` lo copia a la configuración de las
+líneas y recalcula sus grupos. `prepararCotizacion` aplica el mapa sobre una
+copia de `tablerosByCode`: nunca escribe en `cot_tableros` ni muta el catálogo
+precompilado compartido. Cotizaciones sin override siguen usando `precio_m2`
+del catálogo. El alcance se limita a tableros; cantos y herrajes no participan.
 - **Búsqueda de tableros por color:** `Combobox` admite `searchText` adicional a la etiqueta visible. Los selectores de tablero del Simulador, creación y edición de cotizaciones, configuración del proyecto y administración indexan explícitamente `cot_tableros.color_nombre`; por ejemplo, escribir `constructor` encuentra los tableros Primadera asociados a ese color. La normalización ignora mayúsculas y tildes.
 - **Tarjeta de Cocina (`CocinaCard.tsx`)**: Renderiza los módulos de cada cocina con arrastre de grupos, columna de Costo USD, desgloses por línea y una fila de totales superiores alineada exactamente con las columnas de valores (Costo USD, Cant, Unit USD, Total USD, Total COP).
 
@@ -172,7 +195,9 @@ comercial, por ejemplo `UDB18-2S` o `UDV24-3`. Desde `0058`, UDV también usa
 esos overrides en su plantilla física: para `-2S` genera dos gavetas pequeñas
 de 5,5″ y una grande, en lugar de tres gavetas iguales.
 
-## 5. Buscador HDR por código (`src/app/hdr/`)
+## 5. HDR, Buscar/Crear y Seguimiento (`src/app/hdr/`)
+
+La organización actual es HDR desde cotización guardada, Consumos, Seguimiento y Buscar/Crear. Buscar/Crear reúne la búsqueda por nombre completo/parcial entre cotizaciones y el formulario manual cuyo botón ahora es Crear. Seguimiento descarga una plantilla Excel manual con hojas Seguimiento y Códigos, nombres exactos únicos por familia y sin cantidades. Ver [reglas, formato y verificación](hdr_buscar_seguimiento.md).
 
 `HdrBuscador.tsx` genera el despiece de un mueble sin necesidad de abrir un módulo en Cotizaciones/Simulador. El formulario reproduce el mismo bloque "Tipo De Mueble / Largo / Alto / Prof / Unidad" de `AddLineForm.tsx`/`CotizadorForm.tsx` (mismo `Combobox` buscable para el tipo, mismos componentes `Campo`), en vez de interpretar un código como texto libre — más confiable que parsear el código, porque el usuario elige el tipo directamente de la lista real de `cot_tipos_mueble`. Si el tipo elegido empieza con `DB`, aparece además el selector "Tipología DB" (mismas opciones que en Cotizaciones/Simulador, `DB_TIPOLOGIAS` de `src/lib/muebles.ts`), que arma los overrides `n_cajones`/`n_cajones_pequenos`. A diferencia de `AddLineForm`/`CotizadorForm` (donde Tipo va en su propia fila y Largo/Alto/Prof/Unidad debajo en un grid de 4), en HDR ese bloque quedó **integrado en una sola fila** (`grid-cols-12`, Tipo con `col-span-5`, cada medida `col-span-2`, Unidad `col-span-1`, apilando a una columna en pantallas angostas) — pedido explícito para eliminar el espacio vacío que dejaba el Combobox de Tipo solo en su fila.
 
@@ -225,3 +250,32 @@ La construcción de la tabla (`construirFilas`, nombres de producción, regla Co
 Nuevas dependencias: `jspdf` y `html2canvas-pro` (ninguna aparece en el reporte de vulnerabilidades de `npm audit`; las 11 que sí salen son todas de paquetes preexistentes — `next`, `postcss`, `sharp`, `xlsx`, etc. — sin relación con este cambio).
 
 *NOTA: Gran parte del diseño y la interacción fluye a través de Server Actions de Next.js, conectando directamente los componentes interactivos con funciones seguras del servidor (como `cotizar.ts`).*
+
+## Recuperación de medidas del Simulador (2026-10-30)
+
+El almacenamiento `simulador-storage` usa versión 9. `getModuloValues` y
+`moduloFromValues` normalizan medidas opcionales ausentes a cadena vacía,
+conservan medidas existentes, IDs, materiales y módulos combinados. La migración
+cubre versiones anteriores; el `merge` normaliza también snapshots incompletos
+de la misma versión. Los snapshots usados por deshacer/rehacer pasan por la
+misma normalización, cubriendo estados en memoria tras Fast Refresh.
+
+Una medida obligatoria ausente permanece incompleta: no se inventa un cero.
+`parseMedida(null/undefined)` devuelve NaN en lugar de invocar `.trim()`; las
+validaciones existentes muestran el campo pendiente. Esto corrige el Runtime
+TypeError al construir inputs desde estados guardados sin PUERTA SUP, HOOD,
+FREE u otros campos opcionales nuevos.
+
+Regresiones: `tests/simuladorStore.test.ts` (migración, hidratación de versión
+actual, campos incompletos, preservación e historial) y `tests/module-groups.test.ts`
+(parser ausente, cero real y fracciones). Verificación de navegador con Chrome
+mediante Playwright, ya que el plugin Browser no está disponible: recuperar
+estado incompleto → calcular individual/combinado → resultado sin overlay y
+sin borrar los módulos guardados; FREE ausente sigue siendo obligatorio.
+Resultado final: quality:plan → quality:impact → quality:gate aprobados (91 suites); quality:learn --strict sin hallazgos HIGH. La prueba en navegador no escribió cotizaciones ni modificó el almacenamiento del usuario.
+
+## Navegación de Diseño
+
+La pestaña Diseño abre HDR, Optimizador, Reglas de diseño, Consumos y Seguimiento en la misma pestaña mediante `/admin/diseno?seccion=...`. La cuadrícula tiene tres botones por fila y centra la última fila. El servidor carga los datos de la sección elegida. Los enlaces históricos `/hdr` y `/optimizador` redirigen a su sección en Diseño. La navegación principal muestra Diseño como entrada a ambas herramientas.
+
+HDR separa Generar desde cotización, Buscar y Crear. Cada sección tiene su propio interruptor de prefijo HRJ. Consumos y Seguimiento tienen entradas propias en Diseño.

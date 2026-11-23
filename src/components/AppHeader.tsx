@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { signOutAction } from '@/app/cotizador/session-actions';
+import AppHeaderAyuda from '@/components/AppHeaderAyuda';
+import type { HelpContext } from '@/lib/guias';
 
-export default function AppHeader({ email, rol, active }: { email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'hdr' | 'manual' }) {
+export default function AppHeader({ nombre, email, rol, active, helpContext }: { nombre?: string | null; email?: string; rol: string; active?: 'cotizador' | 'cotizaciones' | 'admin' | 'diseno' | 'hdr' | 'optimizador' | 'manual'; helpContext?: HelpContext }) {
   const link = (href: string, label: string, key: string) => (
     <Link href={href} className={`px-3 py-1.5 rounded-lg text-sm ${active === key ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>{label}</Link>
   );
@@ -9,7 +11,7 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
     <header className="border-b border-slate-200 bg-white sticky top-0 z-40">
       <div
         className="mx-auto grid w-full max-w-[1500px] items-start gap-4 px-4 py-1.5"
-        style={{ gridTemplateColumns: '180px minmax(0, 1fr) 180px' }}
+        style={{ gridTemplateColumns: '180px minmax(0, 1fr) auto' }}
       >
         <div className="flex flex-col justify-self-start leading-none">
           <span className="whitespace-nowrap font-semibold text-slate-900" style={{ fontSize: 18 }}>Cotizador PLUS</span>
@@ -21,10 +23,11 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
           {link('/cotizaciones', 'Cotizaciones', 'cotizaciones')}
           {rol === 'admin' && link('/admin', 'Materiales-Parámetros', 'admin')}
           {rol === 'admin' && link('/admin/diseno', 'Diseño', 'diseno')}
-          {rol === 'admin' && link('/hdr', 'HDR', 'hdr')}
           {link('/manual', 'Manual', 'manual')}
           </nav>
         </div>
+        <div className="flex items-center justify-self-end gap-2">
+        <AppHeaderAyuda context={helpContext ?? (active === 'cotizador' ? 'simulador' : active === 'cotizaciones' ? 'cotizaciones' : active === 'admin' ? 'materiales' : active === 'diseno' ? 'diseno' : active === 'hdr' ? 'hdr' : active === 'optimizador' ? 'optimizador' : 'manual')} />
         <details
           className="relative text-sm text-slate-500"
           style={{ justifySelf: 'end' }}
@@ -41,7 +44,8 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
             style={{ position: 'absolute', right: 0, top: '100%', width: 256 }}
           >
             <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
-              <p className="truncate text-sm font-medium text-slate-900">{email || 'Usuario'}</p>
+              <p className="truncate text-sm font-semibold text-slate-900">{nombre || 'Usuario'}</p>
+              <p className="mt-0.5 truncate text-xs text-slate-500">{email || 'Sin correo'}</p>
               <p className="mt-0.5 text-xs capitalize text-slate-500">Rol: {rol}</p>
               <form action={signOutAction} className="mt-3 border-t border-slate-100 pt-2">
                 <button className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50">Cerrar sesión</button>
@@ -49,6 +53,7 @@ export default function AppHeader({ email, rol, active }: { email?: string; rol:
             </div>
           </div>
         </details>
+        </div>
       </div>
     </header>
   );

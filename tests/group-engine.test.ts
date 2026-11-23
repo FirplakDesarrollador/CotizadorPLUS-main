@@ -128,7 +128,19 @@ test('permite materiales de frente distintos cuando conservan el espesor', () =>
   ]));
 });
 
-test('bloquea incompatibilidades antes de transformar el despiece', () => {
+test('permite tableros de caja distintos y conserva piezas incompatibles por módulo', () => {
+  const left = member({ pref: 'B', width: 12 });
+  const right = member({ pref: 'DB', width: 10 });
+  right.calc.preset.caja = 'R2';
+  right.calc.cantoCaja = '19x1';
+  const grouped = calcularGrupoFisico([left, right]);
+  assert.equal(grouped.lineas.length, 2);
+  assert.ok(!grouped.piezasContinuas.includes('base'));
+  assert.equal(pieceTotal(grouped, 'base'), 2);
+  assert.equal(pieceTotal(grouped, 'lateral'), 4);
+});
+
+test('mantiene incompatibilidades no solicitadas antes de transformar el despiece', () => {
   assert.throws(() => calcularGrupoFisico([
     member({ pref: 'B', width: 12, frontBoard: 'FRONT_A' }),
     member({ pref: 'DB', width: 10, frontBoard: 'FRONT_THIN' }),
@@ -203,6 +215,91 @@ test('agrupa aunque una tipología tenga una pieza continua adicional', () => {
   assert.ok(grouped.piezasContinuas.includes('refuerzo_trasero'));
   assert.ok(!grouped.piezasContinuas.includes('fondo'));
   assert.equal(pieceTotal(grouped, 'fondo'), 1);
+});
+
+test('separa los fondos de muebles superiores cuando tienen alturas diferentes', () => {
+  const tall = member({ pref: 'UW', width: 30, height: 38 });
+  const short = member({ pref: 'W', width: 35, height: 24 });
+
+  const grouped = calcularGrupoFisico([tall, short]);
+
+  assert.ok(!grouped.piezasContinuas.includes('fondo'));
+  assert.ok(!grouped.piezasContinuas.includes('base'));
+  assert.equal(pieceTotal(grouped, 'fondo'), 2);
+  assert.equal(pieceTotal(grouped, 'base'), 2);
+  assert.deepEqual(
+    grouped.lineas.map((line) => line.piezas.find((piece) => piece.pieza === 'fondo')!.anchoIn),
+    [38, 24],
+  );
+  assert.ok(grouped.lineas.flatMap((line) => line.piezas)
+    .filter((piece) => piece.pieza === 'fondo')
+    .every((piece) => piece.compartida === false));
+});
+
+test('mantiene bases superiores incompatibles independientes y agrupa las demas piezas', () => {
+  const standard = member({ pref: 'W-SM', width: 30, height: 30 });
+  const extended = member({ pref: 'W-SM-PUSH', width: 35, height: 30 });
+
+  const grouped = calcularGrupoFisico([standard, extended]);
+
+  assert.ok(!grouped.piezasContinuas.includes('base'));
+  assert.ok(grouped.piezasContinuas.includes('fondo'));
+  assert.ok(grouped.piezasContinuas.includes('refuerzo_trasero'));
+  assert.equal(pieceTotal(grouped, 'base'), 2);
+  assert.equal(pieceTotal(grouped, 'fondo'), 1);
+  const baseLengths = grouped.lineas
+    .map((line) => line.piezas.find((piece) => piece.pieza === 'base')!.largoIn);
+  assert.ok(Math.abs(baseLengths[0] - (30 - 2 * TC + TC / 2)) < 0.000001);
+  assert.ok(Math.abs(baseLengths[1] - (35 - 2 * TC + TC / 2)) < 0.000001);
+});
+
+test('separa base_tapa para conservar bases locales y una tapa superior continua', () => {
+  const left = member({ pref: 'W', width: 30, height: 24 });
+  const right = member({ pref: 'UW', width: 35, height: 38 });
+  for (const candidate of [left, right]) {
+    candidate.calc.piezas = candidate.calc.piezas.map((piece) => piece.nombre === 'base'
+      ? {
+        ...piece, nombre: 'base_tapa', formula_cantidad: '2',
+        clave_fusion: 'base_tapa', formula_largo_grupo: 'LG-(2*TC)',
+        visualizacion: { version: 1, funcion: 'base_tapa', plano: 'XY', confirmado: true },
+      }
+      : piece);
+  }
+
+  const grouped = calcularGrupoFisico([left, right]);
+
+  assert.ok(grouped.piezasContinuas.includes('tapa'));
+  assert.ok(!grouped.piezasContinuas.includes('base_tapa'));
+  assert.equal(pieceTotal(grouped, 'base'), 2);
+  assert.equal(pieceTotal(grouped, 'tapa'), 1);
+});
+
+test('homologa una pieza opcional nueva con una pieza continua existente', () => {
+  const established = member({ pref: 'DB-2S-SM-FE', width: 30, omitBack: true });
+  const newlyEnabled = member({ pref: 'BOV', width: 24, omitBack: true });
+  newlyEnabled.calc.piezas = newlyEnabled.calc.piezas.map((piece) => piece.nombre === 'base'
+    ? { ...piece, modo_agrupacion: 'continua_opcional' }
+    : piece);
+
+  const grouped = calcularGrupoFisico([established, newlyEnabled]);
+  assert.ok(grouped.piezasContinuas.includes('base'));
+  assert.equal(pieceTotal(grouped, 'base'), 1);
+  assert.equal(pieceTotal(grouped, 'lateral'), 3);
+});
+
+test('ensancha una pieza local girada al eliminar el lateral de la unión', () => {
+  const left = member({ pref: 'S', width: 24, omitBack: true });
+  const right = member({ pref: 'SA', width: 24, omitBack: true });
+  const rotatedBack: Pieza = {
+    nombre: 'fondo', rol_tablero: 'fondo', formula_cantidad: '1',
+    formula_largo: 'A', formula_ancho: `L-${TC}`, modo_agrupacion: 'local',
+  };
+  left.calc.piezas.push(rotatedBack);
+  right.calc.piezas.push(rotatedBack);
+
+  const grouped = calcularGrupoFisico([left, right]);
+  const widths = grouped.lineas.map((line) => line.piezas.find((piece) => piece.pieza === 'fondo')!.anchoIn);
+  assert.ok(widths.every((width) => Math.abs(width - (24 - TC / 2)) < 0.001));
 });
 
 test('omite fondo y descuenta el espesor de caja en la base al agrupar módulos B-SM', () => {

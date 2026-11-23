@@ -42,11 +42,12 @@ La agrupación debe reflejarse en despiece, costo, precio, UI, impresión y Exce
 - El despiece presenta dimensiones con máximo un decimal. Los refuerzos y
   `gola_madera` nominales de 80 mm se normalizan a 80 mm exactos antes de
   calcular área, canto y costo; no se redondean únicamente en pantalla.
-- Al calcular un grupo, A1 define automáticamente el tablero de `caja`, el de
-  `refuerzo` y el canto de caja para todos los integrantes. Esto corrige estados
-  persistidos o cambios de perfil incompatibles sin alterar los materiales de
-  frente. En grupos B-SM no se compara el tablero de fondo porque esa pieza se
-  omite temporalmente.
+- La agrupación admite distintos códigos de tablero y cantos entre módulos.
+  Las piezas continuas solo se fusionan si su geometría, material y cantos
+  coinciden; de lo contrario conservan su fabricación local. Los laterales
+  solo descuentan una división compartida cuando ambos módulos tienen tablero
+  y canto compatibles. Cada pieza local usa el espesor de su propio tablero.
+  La profundidad, política de margen y espesor de frente mantienen sus reglas.
 
 ### 2.2 Código individual y agrupado
 
@@ -95,6 +96,21 @@ La plantilla declarará el comportamiento; el motor no lo inferirá solo por nom
   y posición de montaje; si no, permanecen locales sin bloquear el grupo.
 
 Los entrepaños permanecen separados porque una pieza continua colisionaría con divisiones de altura completa. Una pieza continua solo se fusiona si es homologable en todos los miembros; nunca atraviesa únicamente parte del grupo.
+
+Para grupos compuestos exclusivamente por muebles superiores `W`, `UW`, `OW`,
+`WSM`, `W-SM`, `TW`, `TW-SM-PUSH`, `W-SM-PUSH` o `W-SM-LOC` se aplican dos
+excepciones parciales que no bloquean la agrupación completa:
+
+- Si las alturas difieren, cada módulo conserva su fondo independiente. Las
+  demás piezas estructurales homologables continúan agrupándose.
+- Si las bases tienen largos individuales diferentes o no conservan la misma
+  sección, todas permanecen independientes. Fondos, refuerzos y demás piezas
+  compatibles conservan su agrupación.
+- Los superiores de distinta altura se alinean por la cara superior; el desnivel
+  queda debajo del módulo más bajo. Cuando una plantilla combina `base_tapa`, el
+  motor la separa: conserva una base local por módulo y fabrica una sola tapa
+  continua. En la representación, los dos refuerzos traseros continuos quedan
+  inmediatamente debajo de la tapa, apilados uno bajo el otro.
 
 ### 4.2 Dimensiones según espesor
 
@@ -147,8 +163,8 @@ fondo. Los tipos no-SM permanecen intactos.
 Todos los miembros deben cumplir:
 
 - Misma altura y profundidad físicas, normalizadas a milímetros con tolerancia de `0.5 mm`.
-- Mismo código, material y espesor en roles `caja`, `refuerzo` y `fondo`.
-- Mismo calibre de canto de caja.
+- El material y el canto pueden variar; las piezas que no sean compatibles
+  permanecen locales y no se descuentan como compartidas.
 - Mismo espesor de frentes; material y color de frente sí pueden variar.
 - Misma política de margen.
 - `cantidad = 1` y mismo sistema de nomenclatura del proyecto.
@@ -157,14 +173,25 @@ Todos los miembros deben cumplir:
 
 Cambiar un atributo incompatible en un integrante se bloquea antes de persistir y la alerta explica la causa. `sin_frentes` puede convivir con módulos con frentes; `solo_frentes` no es una carcasa agrupable.
 
-### 5.1 Exclusiones iniciales
+### 5.1 Alcance de carcazas lineales
 
-- Esquineros/ciegos: `TW`, `WBL`, `DVE`, `BBLFD` si se activa.
-- Torres/hornos: `OVPC`, `PC`, `PCFD`, `VPC`.
-- Especiales: `BOMH`.
-- Paneles/complementos: `D`, `F`, `PN`, `R`, `TK`.
+La migración `0183_agrupacion_carcazas_lineales.sql` amplía la agrupación a
+26 familias lineales de cocina, baño, clóset, hornos y torres. La selección es
+explícita y cada tipo debe tener exactamente una plantilla `lateral` con
+cantidad dos. Los laterales se comparten; `base` y `tapa` son continuas
+opcionales y solo se fusionan si existen y son homologables en todos los
+integrantes. Fondos, rails, entrepaños, gavetas y frentes permanecen locales y
+se ajustan al espacio liberado por la división compartida.
 
-La habilitación se guarda en catálogo para poder añadir reglas posteriores sin condicionales hardcodeados.
+`0183` fue aplicada al proyecto Supabase configurado el 2026-10-19 y verificada
+por consulta directa: `26/26` tipos tienen `permite_agrupacion=true`; `BOV`
+conserva `lateral_compartido` y base `continua_opcional` con `LG-(2*TC)`.
+
+Permanecen excluidos los esquineros o ciegos (`TW`, `WBL`, `DVE`, `BBLFD`,
+`BLS`), paneles, zócalos y piezas sueltas (`D`, `DF`, `E`, `F`, `KD`, `KF`,
+`PN`, `R`, `TK`), y cualquier plantilla sin un par inequívoco de laterales de
+carcaza. No se activa un tipo nuevo por categoría: debe incorporarse a la lista
+validada con sus metadatos de fabricación.
 
 ## 6. Precio individual y subtotal
 
@@ -359,3 +386,38 @@ El módulo `/cotizador` reutiliza el motor físico sin crear proyecto, cocina ni
 - Un error del motor deja intacta la última configuración válida y bloquea nuevas confirmaciones hasta que cambie el formulario.
 - El resultado público es un desglose único del conjunto en modo combinado o del módulo en modo individual.
 - La sesión, incluido borrador, orden, edición y resultado, persiste en `simulador-storage` y participa en Undo/Redo.
+
+## Agrupación SMG (2026-10-30)
+
+La migración `0230_agrupacion_smg.sql` habilita BFD-SMG, SBFD-SMG y sus variantes
+-SF, que antes tenían la agrupación deshabilitada y piezas estructurales locales.
+Los catorce DB-SMG ya estaban habilitados. Se mantienen las reglas del motor:
+`n+1` laterales; base y refuerzos traseros continuos; refuerzo frontal opcional
+solo con montaje, sección, cantidad, material y cantos compatibles. Frentes,
+entrepaños y gavetas conservan su fabricación local. No se altera el mecanizado
+SMG ni se agrega una gola de madera. Agrupados omiten fondo y usan base `P-TC`,
+según la regla existente de inferiores SM/SMG; separados recuperan su despiece.
+Siguen vigentes profundidad, espesor, materiales, margen, longitud de tablero y
+cantidad unitaria del módulo. No se agrupan automáticamente líneas históricas.
+
+La carga precompilada pagina `cot_piezas_plantilla` de mil en mil, ordenada por
+`orden,id`: había 1.013 filas y PostgREST truncaba trece piezas. El helper
+`catalogo-paginado.ts` falla ante errores para impedir cálculos parciales.
+
+Verificación reproducible de solo lectura:
+`node --conditions=react-server --env-file=.env --import tsx db/tests/smg_agrupacion.ts`.
+Cubre las 18 variantes y 18 cruces con BFD-SMG, tres laterales por pareja,
+base continua, fondo individual/agrupado y rechazo de profundidad incompatible.
+Regresiones en `tests/bfd-smg.test.ts` y `tests/catalogo-paginado.test.ts`.
+
+Evidencia final (2026-10-30): grupo BFD24-SMG + SBFD24-SMG creado desde la
+interfaz autenticada y persistido como A1/A2, 48 pulgadas, tres laterales y una
+unión. En este cruce el refuerzo frontal permaneció local por diferencias de
+canto, tal como exige la homologación opcional. Dos generaciones independientes
+del PDF produjeron cuatro páginas con texto idéntico; se revisaron las ocho
+páginas renderizadas y los dos módulos en la programación. La cotización temporal
+fue eliminada. Auditoría de cotizaciones existentes: cero errores y diferencias.
+`quality:plan`, `quality:impact` y `quality:gate`: exit 0 (89 suites).
+`quality:learn -- --strict`: exit 0, cero HIGH. La advertencia MED por falta de
+`cotizar.test.ts` se cubre específicamente con el helper unitario paginado y la
+auditoría reproducible que carga el catálogo real y llama a `cotizarGrupo`.

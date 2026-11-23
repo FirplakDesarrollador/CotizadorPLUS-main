@@ -1,31 +1,64 @@
 import { notFound } from 'next/navigation';
-import { getCotizacion } from '@/lib/cotizaciones';
+import {referenciaCotizacion} from '@/lib/referencia-cotizacion';
+import { getCotizacion, nombresDeHerrajes, tablerosDeProyecto } from '@/lib/cotizaciones';
 import PrintButton from './PrintButton';
+import { esPanel } from '@/lib/nombres-modulos';
+import PrintDocumentTitle from './PrintDocumentTitle';
 import CemaPrintEditor, { type CemaScheduleRow } from './CemaPrintEditor';
 import { normalizarCemaTemplate, type CemaTemplate } from '@/lib/cema-template';
 import FirplakPrintEditor, { type FirplakKitchenRow, type FirplakScheduleRow } from './FirplakPrintEditor';
 import { normalizarFirplakTemplate, type FirplakTemplate } from '@/lib/firplak-template';
+import { herrajesDeLaCotizacion, type HerrajeDeLinea } from '@/lib/herrajes-propuesta';
+import { grupoDeLinea } from '@/lib/grupos-programacion';
+import { monedasVisibles } from '@/lib/monedas-visibles';
+import { separarPropuesta, totalLineaPropuesta, type LineaPropuesta } from '@/lib/propuesta-cotizacion';
+import { especificacionesProyecto } from '@/lib/materiales-proyecto';
+import { areasParaEntrega, calcularRecargoEntrega, normalizarDdp, normalizarEntrega, resumirEntrega } from '@/lib/entrega-cotizacion';
+import { getParametros } from '@/lib/admin';
+import { EntregaPdf, HerrajesOtrosPdf, MaterialesProyectoPdf } from './DetallesProyecto';
+import { idiomaDeConsulta, traducirEspecificaciones, traducirTexto, traducirUnidad } from '@/lib/propuesta-ingles';
 
 const fmtCOP = (n: number) => Number(n || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const fmtUSD = (n: number) => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
-type Linea = { id: string; pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null } | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_total_cop: number; costo_total_cop?: number; breakdown?: Record<string, unknown> | null };
+type Linea = LineaPropuesta & { id: string; pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null } | null; descripcion_es: string | null; anotaciones: string | null; cantidad: number; precio_unit_usd: number; precio_total_cop: number; costo_total_cop?: number; breakdown?: Record<string, unknown> | null };
 type Cocina = { id: string; nombre: string; cantidad?: number; lineas: Linea[] };
-function precios(l: Linea, trm: number) { const b = l.breakdown ?? {}; const cant = Number(l.cantidad || 0); const sinUsd = Number(b.precioUsd ?? l.precio_unit_usd ?? 0); const sinCop = Number(b.precioCop ?? sinUsd * trm); const conUsd = Number(b.precioConHerrajesUsd ?? l.precio_unit_usd ?? 0); const conCop = Number(b.precioConHerrajesCop ?? l.precio_total_cop / Math.max(1, cant)); return { cant, sinUsd, sinCop, conUsd, conCop }; }
+function precios(l: Linea, trm: number) { const b = l.breakdown ?? {}; const cant = Number(l.cantidad || 0); const sinUsd = Number(b.precioUsd ?? l.precio_unit_usd ?? 0); const sinCop = Number(b.precioCop ?? sinUsd * trm); const conUsd = totalLineaPropuesta(l, 'USD') / Math.max(1, cant); const conCop = totalLineaPropuesta(l, 'COP') / Math.max(1, cant); return { cant, sinUsd, sinCop, conUsd, conCop }; }
 
 export default async function ImprimirPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params; const query = await searchParams;
-  const { cabecera, cocinas } = await getCotizacion(id); if (!cabecera) notFound();
+  const { cabecera, cocinas, lineasSinCocina } = await getCotizacion(id); if (!cabecera) notFound();
+  const propuesta = separarPropuesta(cocinas as Cocina[]);
+  // "Print / PDF (English)" abre esta misma ruta con lang=en.
+  const idioma = idiomaDeConsulta(query.lang); const en = idioma === 'en';
+  const tx = (texto: string | null | undefined) => en ? traducirTexto(texto) : (texto ?? '');
+  const entrega = normalizarEntrega(cabecera.entrega);
+  const [tableros, parametros] = await Promise.all([
+    tablerosDeProyecto(),
+    entrega.incoterm === 'DDP' && entrega.ddp.aplicarTarifas ? getParametros() : undefined,
+  ]);
+  const lotes = entrega.modo ? resumirEntrega(entrega, areasParaEntrega(propuesta.muebles, lineasSinCocina as Linea[]), tableros) : [];
+  const entregasParciales = entrega.modo === 'parcial' ? entrega.parciales.map((parcial, i) => ({
+    contenedores: lotes[i].contenedores,
+    tamano: parcial.contenedor,
+  })) : undefined;
+  const logistica = lotes.length && lotes.every(lote => lote.contenedores !== null)
+    ? lotes.reduce((suma, lote) => suma + (lote.contenedores ?? 0), 0) : null;
+  const recargo = calcularRecargoEntrega(entrega, normalizarDdp(parametros?.ddp), cocinas as Cocina[], Number(cabecera.trm));
+  const incluyeDdp = entrega.incoterm === 'DDP';
+  const especificaciones = especificacionesProyecto(cabecera.config_default ?? {}, tableros, cocinas as Cocina[]);
+  const materiales = en ? traducirEspecificaciones(especificaciones) : especificaciones;
+  const adicionales = en ? propuesta.adicionales.map((a) => ({ ...a, descripcion: traducirTexto(a.descripcion), unidad: traducirUnidad(a.unidad) })) : propuesta.adicionales;
   if (cabecera.cotizador_por === 'CEMA') {
     const stored = normalizarCemaTemplate(cabecera.plantilla_cema as Partial<CemaTemplate> | null);
     const created = new Date(cabecera.created_at);
     const template: CemaTemplate = {
       ...stored,
-      quoteReference: stored.quoteReference || cabecera.codigo || id.slice(0, 8).toUpperCase(),
+      quoteReference: stored.quoteReference || referenciaCotizacion({id,codigo:cabecera.codigo}),
       proposalDate: stored.proposalDate || created.toISOString().slice(0, 10),
     };
     const scheduleMap = new Map<string, CemaScheduleRow>();
     let kitchens = 0;
-    for (const cocina of cocinas as Cocina[]) {
+    for (const cocina of propuesta.muebles.filter(area => area.lineas.length > 0)) {
       const multiplier = Number(cocina.cantidad ?? 1);
       kitchens += multiplier;
       for (const line of cocina.lineas) {
@@ -33,43 +66,75 @@ export default async function ImprimirPage({ params, searchParams }: { params: P
         const current = scheduleMap.get(sku);
         const quantity = Number(line.cantidad || 0) * multiplier;
         if (current) current.quantity += quantity;
-        else scheduleMap.set(sku, { sku, description: line.descripcion_es ?? '', quantity });
+        else scheduleMap.set(sku, { sku, description: tx(line.descripcion_es), quantity });
       }
     }
     return <CemaPrintEditor initialData={{
       id,
-      projectName: cabecera.nombre || 'Untitled Project',
+      projectName: cabecera.nombre || (en ? 'Untitled project' : 'Proyecto sin nombre'),
       preparedFor: cabecera.cliente_nombre || '—',
       contact: cabecera.comprador_nombre || '',
       kitchens,
-      totalUsd: Number(cabecera.total_usd || 0),
+      totalUsd: Number(cabecera.total_usd || 0) + recargo.usd,
+      recargoEntregaUsd: recargo.usd,
       template,
+      adicionales,
+      materiales,
+      logistica,
+      entregasParciales,
+      incluyeDdp,
+      idioma,
       schedule: [...scheduleMap.values()].sort((a, b) => a.sku.localeCompare(b.sku)),
     }} />;
   }
+  // Moneda de la propuesta: la misma regla que el encabezado del detalle. Las
+  // casillas de columna viajan en la URL del boton Imprimir / PDF; si no vienen
+  // —al abrir la pagina directo— manda la moneda del proyecto.
+  const monedaProyecto: 'USD' | 'COP' = cabecera.moneda === 'COP' ? 'COP' : 'USD';
+  const monedaElegida = monedasVisibles(
+    { usd: query.usd !== '0', cop: query.cop !== '0' },
+    monedaProyecto,
+  )[0];
+
   if (cabecera.cotizador_por === 'FIRPLAK') {
     const stored = normalizarFirplakTemplate(cabecera.plantilla_firplak as Partial<FirplakTemplate> | null);
     const template: FirplakTemplate = { ...stored, proposalDate: stored.proposalDate || new Date(cabecera.created_at).toISOString().slice(0, 10) };
+    // Herrajes reales de la cotizacion: salen del despiece de cada linea, no de
+    // una lista fija. Se multiplican por las unidades de la linea y por las veces
+    // que se repite el area.
+    const herrajesLineas = propuesta.muebles.flatMap((cocina) => cocina.lineas.map((l) => ({
+      cantidad: Number(l.cantidad || 0) * Number(cocina.cantidad ?? 1),
+      herrajes: (Array.isArray(l.breakdown?.herrajes) ? l.breakdown.herrajes : []) as HerrajeDeLinea[],
+    })));
+    const nombresHerrajes = await nombresDeHerrajes(
+      herrajesLineas.flatMap((l) => l.herrajes.map((h) => String(h.codigo ?? ''))).filter(Boolean),
+    );
+    const herrajes = herrajesDeLaCotizacion(herrajesLineas, nombresHerrajes).map((h) => ({ ...h, descripcion: tx(h.descripcion) }));
+
     const scheduleMap = new Map<string, FirplakScheduleRow>();
-    const kitchenRows: FirplakKitchenRow[] = (cocinas as Cocina[]).map((cocina) => {
+    const kitchenRows: FirplakKitchenRow[] = propuesta.muebles.filter(c => c.lineas.length > 0).map((cocina) => {
       const quantity = Number(cocina.cantidad ?? 1);
-      const unitUsd = cocina.lineas.reduce((sum, line) => { const p=precios(line,Number(cabecera.trm||0)); return sum+p.conUsd*p.cant; },0);
-      for (const line of cocina.lineas) { const sku=line.codigo_modulo??line.pref??'SIN SKU'; const lineQuantity=Number(line.cantidad||0)*quantity; const current=scheduleMap.get(sku); if(current) current.quantity+=lineQuantity; else scheduleMap.set(sku,{sku,description:line.descripcion_es??'',quantity:lineQuantity}); }
-      return { name:cocina.nombre, quantity, unitUsd, totalUsd:unitUsd*quantity };
+      const unitUsd = cocina.lineas.reduce((sum, line) => sum + totalLineaPropuesta(line, 'USD'), 0);
+      // El mismo total en pesos, para cuando la cotizacion esta en COP: se toma el
+      // valor en COP de cada linea, no el USD por la TRM, que redondearia dos veces.
+      const unitCop = cocina.lineas.reduce((sum, line) => sum + totalLineaPropuesta(line, 'COP'), 0);
+      for (const line of cocina.lineas) { const sku=line.codigo_modulo??line.pref??'SIN SKU'; const lineQuantity=Number(line.cantidad||0)*quantity; const current=scheduleMap.get(sku); if(current) current.quantity+=lineQuantity; else scheduleMap.set(sku,{sku,description:tx(line.descripcion_es),quantity:lineQuantity,grupo:grupoDeLinea(line.pref??line.codigo_modulo)}); }
+      return { name:cocina.nombre, quantity, unitUsd, totalUsd:unitUsd*quantity, unitCop, totalCop:unitCop*quantity };
     });
-    const config = (cabecera.config_default ?? {}) as Record<string, unknown>;
-    const projectMaterials = Object.entries(config).filter(([,v])=>typeof v==='string' || typeof v==='number').slice(0,16).map(([k,v])=>`${k}: ${String(v)}`).join('\n');
-    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||'Proyecto sin nombre', builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:cabecera.codigo||id.slice(0,8).toUpperCase(), totalUsd:kitchenRows.reduce((sum,row)=>sum+row.totalUsd,0), template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), projectMaterials }} />;
+    return <FirplakPrintEditor initialData={{ id, projectName:cabecera.nombre||(en?'Untitled project':'Proyecto sin nombre'), builder:cabecera.cliente_nombre||'', buyer:cabecera.comprador_nombre||'', reference:referenciaCotizacion({id,codigo:cabecera.codigo}), totalUsd:propuesta.totalUsd + recargo.usd, totalCop:propuesta.totalCop + recargo.cop, moneda:monedaElegida, template, kitchens:kitchenRows, schedule:[...scheduleMap.values()].sort((a,b)=>a.sku.localeCompare(b.sku)), materiales, adicionales, herrajes, idioma, logistica, entregasParciales, incluyeDdp }} />;
   }
   const mostrarSin = query.sinHerrajes !== '0'; const mostrarCon = query.conHerrajes !== '0'; const mostrarUsd = query.usd !== '0'; const mostrarCop = query.cop !== '0'; const trm = Number(cabecera.trm || 0);
   const proyecto = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 };
-  const cocinasCalculadas = (cocinas as Cocina[]).map((c) => { const sub = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 }; c.lineas.forEach((l) => { const p = precios(l, trm); sub.sinUsd += p.sinUsd * p.cant; sub.sinCop += p.sinCop * p.cant; sub.conUsd += p.conUsd * p.cant; sub.conCop += p.conCop * p.cant; }); const mult = Number(c.cantidad ?? 1); proyecto.sinUsd += sub.sinUsd * mult; proyecto.sinCop += sub.sinCop * mult; proyecto.conUsd += sub.conUsd * mult; proyecto.conCop += sub.conCop * mult; return { c, sub, mult }; });
-  return <div className="min-h-screen bg-white text-slate-800"><style>{`@media print { .no-print { display:none !important; } @page { margin: 1.2cm; } } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }`}</style><div className="mx-auto max-w-6xl p-8"><PrintButton />
-    <div className="mb-4 flex items-start justify-between border-b-2 border-slate-800 pb-3"><div><h1 className="text-2xl font-bold text-slate-900">Cotización</h1><p className="text-lg font-semibold">{cabecera.nombre}</p><p className="text-sm text-slate-500">Constructora: {cabecera.cliente_nombre || '—'} · Comprador: {cabecera.comprador_nombre || '—'} · Estado: {cabecera.estado}</p></div><div className="text-right text-sm text-slate-500"><div>Fecha: {new Date().toLocaleDateString('es-CO')}</div><div>TRM: {trm.toLocaleString('es-CO')}</div></div></div>
-    {cocinasCalculadas.map(({ c, sub, mult }) => <div key={c.id} className="mb-5"><h2 className="rounded bg-slate-100 px-2 py-1 font-semibold text-slate-900">Cocina: {c.nombre} {mult > 1 ? `(Cant: ${mult})` : ''}</h2><table className="mt-1 w-full text-xs"><thead><tr className="border-b border-slate-300 text-left text-slate-500"><th className="py-1">Grupo</th><th>Módulo</th><th>Descripción</th>{mostrarUsd && <th className="text-right">Costo USD</th>}{mostrarCop && <th className="text-right">Costo COP</th>}<th className="text-right">Cant</th>{mostrarSin && mostrarUsd && <><th className="text-right">Unit s/H USD</th><th className="text-right">Total s/H USD</th></>}{mostrarSin && mostrarCop && <><th className="text-right">Unit s/H COP</th><th className="text-right">Total s/H COP</th></>}{mostrarCon && mostrarUsd && <><th className="text-right">Unit c/H USD</th><th className="text-right">Total c/H USD</th></>}{mostrarCon && mostrarCop && <><th className="text-right">Unit c/H COP</th><th className="text-right">Total c/H COP</th></>}</tr></thead><tbody>
-      {c.lineas.map((l) => { const p = precios(l, trm); const costoCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0); const count = c.lineas.filter((x) => x.grupo_id === l.grupo_id).length; const label = count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? ''); return <tr key={l.id} className="border-b border-slate-100"><td className="py-1 font-semibold">{label}</td><td className="font-medium">{l.codigo_modulo ?? l.pref}</td><td className="text-slate-600">{l.descripcion_es}</td>{mostrarUsd && <td className="text-right">{fmtUSD(trm > 0 ? costoCop / trm : 0)}</td>}{mostrarCop && <td className="text-right">{fmtCOP(costoCop)}</td>}<td className="text-right">{p.cant}</td>{mostrarSin && mostrarUsd && <><td className="text-right">{fmtUSD(p.sinUsd)}</td><td className="text-right">{fmtUSD(p.sinUsd * p.cant)}</td></>}{mostrarSin && mostrarCop && <><td className="text-right">{fmtCOP(p.sinCop)}</td><td className="text-right">{fmtCOP(p.sinCop * p.cant)}</td></>}{mostrarCon && mostrarUsd && <><td className="text-right">{fmtUSD(p.conUsd)}</td><td className="text-right">{fmtUSD(p.conUsd * p.cant)}</td></>}{mostrarCon && mostrarCop && <><td className="text-right">{fmtCOP(p.conCop)}</td><td className="text-right">{fmtCOP(p.conCop * p.cant)}</td></>}</tr>; })}
+  const cocinasCalculadas = propuesta.muebles.filter(area => area.lineas.length > 0).map((c) => { const sub = { sinUsd: 0, sinCop: 0, conUsd: 0, conCop: 0 }; c.lineas.forEach((l) => { const p = precios(l, trm); sub.sinUsd += p.sinUsd * p.cant; sub.sinCop += p.sinCop * p.cant; sub.conUsd += p.conUsd * p.cant; sub.conCop += p.conCop * p.cant; }); const mult = Number(c.cantidad ?? 1); proyecto.sinUsd += sub.sinUsd * mult; proyecto.sinCop += sub.sinCop * mult; proyecto.conUsd += sub.conUsd * mult; proyecto.conCop += sub.conCop * mult; return { c, sub, mult }; });
+  return <div className="min-h-screen bg-white text-slate-800"><style>{`@media print { .no-print { display:none !important; } @page { margin: 1.2cm; } } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }`}</style><div className="mx-auto max-w-6xl p-8"><PrintDocumentTitle projectName={cabecera.nombre || (en ? "Untitled project" : "Proyecto sin nombre")} idioma={idioma} /><PrintButton />
+    <div className="mb-4 flex items-start justify-between border-b-2 border-slate-800 pb-3"><div><h1 className="text-2xl font-bold text-slate-900">{en ? 'Quote' : 'Cotización'}</h1><p className="text-lg font-semibold">{cabecera.nombre}</p><p className="text-sm text-slate-500">{en ? 'General contractor' : 'Constructora'}: {cabecera.cliente_nombre || '—'} · {en ? 'Buyer' : 'Comprador'}: {cabecera.comprador_nombre || '—'} · {en ? 'Status' : 'Estado'}: {cabecera.estado}</p></div><div className="text-right text-sm text-slate-500"><div>{en ? 'Date' : 'Fecha'}: {new Date().toLocaleDateString(en ? 'en-US' : 'es-CO')}</div><div>{en ? 'Exchange rate (TRM)' : 'TRM'}: {trm.toLocaleString(en ? 'en-US' : 'es-CO')}</div></div></div>
+    {cocinasCalculadas.map(({ c, sub, mult }) => <div key={c.id} className="mb-5"><h2 className="rounded bg-slate-100 px-2 py-1 font-semibold text-slate-900">{en ? 'Area' : 'Cocina'}: {c.nombre} {mult > 1 ? `(${en ? 'Qty' : 'Cant'}: ${mult})` : ''}</h2><table className="mt-1 w-full text-xs"><thead><tr className="border-b border-slate-300 text-left text-slate-500"><th className="py-1">{en ? 'Group' : 'Grupo'}</th><th>{en ? 'Module' : 'Módulo'}</th><th>{en ? 'Description' : 'Descripción'}</th>{mostrarUsd && <th className="text-right">{en ? 'Cost' : 'Costo'} USD</th>}{mostrarCop && <th className="text-right">{en ? 'Cost' : 'Costo'} COP</th>}<th className="text-right">{en ? 'Qty' : 'Cant'}</th>{mostrarSin && mostrarUsd && <><th className="text-right">{en ? 'Unit w/o HW USD' : 'Unit s/H USD'}</th><th className="text-right">{en ? 'Total w/o HW USD' : 'Total s/H USD'}</th></>}{mostrarSin && mostrarCop && <><th className="text-right">{en ? 'Unit w/o HW COP' : 'Unit s/H COP'}</th><th className="text-right">{en ? 'Total w/o HW COP' : 'Total s/H COP'}</th></>}{mostrarCon && mostrarUsd && <><th className="text-right">{en ? 'Unit w/ HW USD' : 'Unit c/H USD'}</th><th className="text-right">{en ? 'Total w/ HW USD' : 'Total c/H USD'}</th></>}{mostrarCon && mostrarCop && <><th className="text-right">{en ? 'Unit w/ HW COP' : 'Unit c/H COP'}</th><th className="text-right">{en ? 'Total w/ HW COP' : 'Total c/H COP'}</th></>}</tr></thead><tbody>
+      {c.lineas.map((l) => { const p = precios(l, trm); const costoCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0); const count = c.lineas.filter((x) => x.grupo_id === l.grupo_id).length; const label = count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? ''); return <tr key={l.id} className="border-b border-slate-100"><td className="py-1 font-semibold">{label}</td><td className="font-medium">{l.codigo_modulo ?? l.pref}</td><td className="text-slate-600 whitespace-pre-wrap">{tx(l.descripcion_es)}{!esPanel(l.pref) && l.anotaciones ? ` · ${tx(l.anotaciones)}` : ''}</td>{mostrarUsd && <td className="text-right">{fmtUSD(trm > 0 ? costoCop / trm : 0)}</td>}{mostrarCop && <td className="text-right">{fmtCOP(costoCop)}</td>}<td className="text-right">{p.cant}</td>{mostrarSin && mostrarUsd && <><td className="text-right">{fmtUSD(p.sinUsd)}</td><td className="text-right">{fmtUSD(p.sinUsd * p.cant)}</td></>}{mostrarSin && mostrarCop && <><td className="text-right">{fmtCOP(p.sinCop)}</td><td className="text-right">{fmtCOP(p.sinCop * p.cant)}</td></>}{mostrarCon && mostrarUsd && <><td className="text-right">{fmtUSD(p.conUsd)}</td><td className="text-right">{fmtUSD(p.conUsd * p.cant)}</td></>}{mostrarCon && mostrarCop && <><td className="text-right">{fmtCOP(p.conCop)}</td><td className="text-right">{fmtCOP(p.conCop * p.cant)}</td></>}</tr>; })}
       <tr className="font-semibold"><td colSpan={3 + Number(mostrarUsd) + Number(mostrarCop) + 1} className="py-1 text-right">Subtotal {c.nombre}</td>{mostrarSin && mostrarUsd && <><td></td><td className="text-right">{fmtUSD(sub.sinUsd * mult)}</td></>}{mostrarSin && mostrarCop && <><td></td><td className="text-right">{fmtCOP(sub.sinCop * mult)}</td></>}{mostrarCon && mostrarUsd && <><td></td><td className="text-right">{fmtUSD(sub.conUsd * mult)}</td></>}{mostrarCon && mostrarCop && <><td></td><td className="text-right">{fmtCOP(sub.conCop * mult)}</td></>}</tr>
     </tbody></table></div>)}
-    <div className="mt-4 border-t-2 border-slate-800 pt-3"><table className="ml-auto text-sm"><tbody>{mostrarSin && <tr><td className="pr-6 font-bold">TOTAL SIN HERRAJES</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.sinUsd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.sinCop)}</td>}</tr>}{mostrarCon && <tr><td className="pr-6 font-bold">TOTAL CON HERRAJES</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.conUsd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.conCop)}</td>}</tr>}</tbody></table></div>
-    {!mostrarSin && !mostrarCon && <p className="text-sm text-slate-500">La cotización fue generada sin columnas de precio.</p>}<p className="mt-8 text-xs text-slate-400">Generado por Cotizador PLUS · {new Date().toLocaleString('es-CO')}</p></div></div>;
+    {entregasParciales && <EntregaPdf contenedores={logistica} parciales={entregasParciales} idioma={idioma} />}
+    <HerrajesOtrosPdf filas={adicionales} moneda={monedaElegida} idioma={idioma} /><MaterialesProyectoPdf bloques={materiales} />
+    <div className="mt-4 border-t-2 border-slate-800 pt-3"><table className="ml-auto text-sm"><tbody>{mostrarSin && <tr><td className="pr-6 font-bold">{en ? 'TOTAL WITHOUT HARDWARE' : 'TOTAL SIN HERRAJES'}</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.sinUsd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.sinCop)}</td>}</tr>}{mostrarCon && <tr><td className="pr-6 font-bold">{en ? 'TOTAL WITH HARDWARE' : 'TOTAL CON HERRAJES'}</td>{mostrarUsd && <td className="text-right font-bold">{fmtUSD(proyecto.conUsd + propuesta.totalAdicionalUsd + recargo.usd)}</td>}{mostrarCop && <td className="pl-6 text-right font-bold">{fmtCOP(proyecto.conCop + propuesta.totalAdicionalCop + recargo.cop)}</td>}</tr>}</tbody></table></div>
+    {incluyeDdp && <p className="mt-2 text-sm text-slate-600">{en ? 'The total includes DDP.' : 'El total incluye DDP.'}</p>}
+    {!mostrarSin && !mostrarCon && <p className="text-sm text-slate-500">{en ? 'The quote was generated without price columns.' : 'La cotización fue generada sin columnas de precio.'}</p>}<p className="mt-8 text-xs text-slate-400">{en ? 'Generated by' : 'Generado por'} Cotizador PLUS · {new Date().toLocaleString(en ? 'en-US' : 'es-CO')}</p></div></div>;
 }

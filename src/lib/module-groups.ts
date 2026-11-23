@@ -1,5 +1,6 @@
 import type { UnidadDim } from '@/lib/engine';
-import { esMuebleSuperior } from '@/lib/muebles';
+import { esIndependienteDeFondo, esMuebleSuperior, altoPorDefectoIn } from '@/lib/muebles';
+import { codigoConMano, type ManoPuerta } from './mano-puerta';
 
 export type SistemaMedida = 'imperial' | 'metrico';
 
@@ -51,8 +52,9 @@ export function convertirExacto(value: number, from: UnidadDim, to: UnidadDim): 
 // son de texto libre justamente para permitir este formato; sin este parseo,
 // Number("24 7/8") da NaN, que Supabase guarda como NULL y se lee de vuelta como 0
 // (un módulo "0x0x0" con costo casi nulo en una cotización real).
-export function parseMedida(raw: string | number): number {
+export function parseMedida(raw: string | number | null | undefined): number {
   if (typeof raw === 'number') return raw;
+  if (typeof raw !== 'string') return NaN;
   const s = raw.trim().replace(/["”]/g, '');
   if (s === '') return NaN;
   const directo = Number(s);
@@ -113,7 +115,10 @@ export function anchoCodigo(value: number, unidad: UnidadDim, sistema: SistemaMe
     return entero === 0 ? fraccion : `${entero} ${fraccion}`;
   }
   // No redondea: solo elimina ceros de presentación introducidos por Number.
-  return String(converted);
+  // Los campos especiales se normalizan internamente a pulgadas con seis
+  // decimales. Al volver a cm pueden aparecer residuos visibles
+  // (`10` -> `10.00000032`). Se usa la misma precision de los formularios.
+  return String(Number(converted.toFixed(6)));
 }
 
 // La medida va inmediatamente después de la letra base, no al final del código.
@@ -137,11 +142,17 @@ export function sufijoSistemaFrente(sistemaFrente: string | null | undefined): s
   return sistemaFrente === 'gola' ? '-SM' : '';
 }
 
-// Los superiores de la familia W, los paneles PN, los fillers F y los zocalos TK incluyen el alto en el código
+// Los superiores de la familia W, los paneles PN, los fillers F, los zocalos TK y gaveteros DFE incluyen el alto en el código
 // (W2936 = 29 de largo, 36 de alto): a diferencia de los demás tipos su alto sí
 // varía y no es un dato implícito del tipo. WCC queda fuera a propósito — es un
 // módulo de clóset (categoria='closet'), no un superior de pared.
-const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK'] as const;
+const PREFS_ALTO_EN_CODIGO = ['W', 'UW', 'OW', 'WBL', 'WER', 'WLD', 'WPC', 'WSM', 'PN', 'F', 'TK', 'DFE'] as const;
+const PREFS_TORRE_DIMENSIONES_TK = ['PC', 'PCFD', 'PCFD-MO', 'VPC', 'OVPC'] as const;
+
+function esTorreConDimensionesTk(pref: string): boolean {
+  return (PREFS_TORRE_DIMENSIONES_TK as readonly string[]).includes(pref.replace(/-SF$/, ''))
+    || /^PC(?:-MO)?(?:-SMG?)?(?:-SF)?$/.test(pref);
+}
 
 export function incluyeAltoEnCodigo(pref: string | null | undefined): boolean {
   const base = String(pref ?? '').toUpperCase().split('-')[0];
@@ -149,6 +160,8 @@ export function incluyeAltoEnCodigo(pref: string | null | undefined): boolean {
 }
 
 export type CodigoComercialInput = {
+  manoPuerta?: ManoPuerta | null;
+  nPuertas?: number;
   pref: string;
   largo: number;
   alto: number;
@@ -162,6 +175,9 @@ export type CodigoComercialInput = {
   doorHand?: 'L' | 'R' | null;
   espesorCajaMm?: number | null;
   espesorFrenteMm?: number | null;
+  conFondo?: boolean;
+  /** Altura del zocalo, normalizada a pulgadas en overrides.zocalo. */
+  zocaloIn?: number | null;
 };
 
 // Código comercial completo de un módulo. Es la única fuente de verdad del orden
@@ -172,43 +188,84 @@ export type CodigoComercialInput = {
 export function codigoComercial(input: CodigoComercialInput): string {
   const { pref, largo, alto, prof, unidad, sistema } = input;
   const prefNormalizado = String(pref).toUpperCase();
+  const prefSinFondo = prefNormalizado.replace(/-SF$/, '');
+  const blindSinFondo = /^(BBLFD(?:-D-L\/R-SM)?|WBL-D-L\/R-SM)-SF$/.test(prefNormalizado);
+  // SMG18 es una convención del segmento comercial, no una lista cerrada de
+  // tipologías. Aplica a cualquier familia que declare un segmento SMG.
+  const esSmg = prefNormalizado.split('-').includes('SMG');
   const esTw = prefNormalizado === 'TW';
   const esTwSmPush = prefNormalizado === 'TW-SM-PUSH';
-  let codigo = codigoModulo(pref, largo, unidad, sistema);
+  const esTwSmHood = prefNormalizado === 'TW-SM-HOOD';
+  let codigo = codigoModulo(blindSinFondo ? prefSinFondo : pref, largo, unidad, sistema);
   // Las nuevas tipologías con sufijo propio (W-SM, OW-MO, W-SM-PUSH) conservan
   // ese sufijo al final: sus medidas variables se insertan antes de él.
   const agregarMedida = (medida: string) => {
     const guion = codigo.indexOf('-');
     codigo = guion === -1 ? codigo + medida : codigo.slice(0, guion) + medida + codigo.slice(guion);
   };
-  const altoSufijo = (incluyeAltoEnCodigo(pref) || esTw || esTwSmPush) ? anchoCodigo(alto, unidad, sistema) : '';
+  const esTorreTk = esTorreConDimensionesTk(prefNormalizado);
+  // Los inferiores B omiten únicamente sus dimensiones estándar. Se compara
+  // en cm antes de formatear para no perder cambios por redondeo imperial.
+  const esInferiorB = prefNormalizado.startsWith('B');
+  // Las llamadas históricas sin profundidad no representan geometría completa;
+  // conservan su etiqueta. Los formularios y líneas persistidas envían los tres ejes.
+  const esDb = /^DB(?:-|$)/.test(prefNormalizado) && prof != null;
+  const altoCm = convertirExacto(alto, unidad, 'cm');
+  const profCm = prof == null ? NaN : convertirExacto(prof, unidad, 'cm');
+  const planoSinProfundidad = prefNormalizado === 'PN' || prefNormalizado === 'F';
+  const altoEstandar = altoPorDefectoIn(prefNormalizado, 'inferior');
+  const altoOtraFamilia = prof != null && !planoSinProfundidad
+    && (altoEstandar == null || Math.abs(altoCm - altoEstandar * 2.54) > 0.001);
+  const profOtraFamilia = prof != null && !planoSinProfundidad && Number.isFinite(profCm) && Math.abs(profCm - 60.96) > 0.001
+    && (!esInferiorB || Math.abs(profCm - 60.9) > 0.001);
+  const altoBVariable = (esInferiorB || esDb) && Number.isFinite(altoCm) && Math.abs(altoCm - 76.2) > 0.001;
+  const profBVariable = (esInferiorB || esDb) && Number.isFinite(profCm)
+    && Math.abs(profCm - 60.96) > 0.001 && (esDb || Math.abs(profCm - 60.9) > 0.001);
+  const esSvfdh = /^SVFDH(?:-|$)/.test(prefNormalizado);
+  const altoSufijo = (esSvfdh || altoBVariable || altoOtraFamilia || incluyeAltoEnCodigo(pref) || esTw || esTwSmPush || esTwSmHood || esTorreTk)
+    ? anchoCodigo(alto, unidad, sistema)
+    : '';
   if (altoSufijo) agregarMedida(altoSufijo);
-  // Los superiores W de 24 in identifican esa profundidad en su código. La
-  // comparación se hace en pulgadas para conservar la regla en cm o mm.
-  const esWsm = prefNormalizado === 'WSM';
-  const esWProf24 = prefNormalizado.split('-')[0] === 'W'
-    && prof != null
-    && Math.abs(convertirExacto(prof, unidad, 'in') - 24) < 0.001;
-  const profSufijo = (esWProf24 || ((esWsm || esTw || esTwSmPush) && prof != null))
-    ? anchoCodigo(prof!, unidad, sistema)
+  // Todos los muebles superiores y DFE incluyen la profundidad tras el alto. WCC se
+  // excluye porque, aunque su prefijo empieza por W, pertenece a clóset. La
+  // regla vive aquí para que Simulador, Cotizaciones, recálculo y HDR nombren
+  // el mismo módulo de forma idéntica.
+  const esDfe = prefNormalizado.split('-')[0] === 'DFE';
+  const incluyeProfundidad = (esMuebleSuperior(prefNormalizado) && prefNormalizado !== 'WCC')
+    || profBVariable
+    || profOtraFamilia
+    || esTorreTk
+    || esDfe || esSvfdh;
+  const profSufijo = incluyeProfundidad && prof != null
+    ? anchoCodigo(prof, unidad, sistema)
     : '';
   if (profSufijo) agregarMedida(profSufijo);
-  const dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
+  // PN es una pieza plana: ni estados heredados de gola/cajonera ni la caja
+  // deben introducir segmentos ajenos a sus medidas y al material del frente.
+  if (planoSinProfundidad) return `${codigo}${Number(input.espesorFrenteMm) === 15 ? '-15MM' : ''}`;
+  let dbSufijo = input.dbTipo ? `-${input.dbTipo.split('-').slice(1).join('-')}` : '';
+  const esDbFe = /^(DB|IC)-FE(?:-SF)?$/.test(prefNormalizado);
+  if (esDbFe && input.dbTipo === 'DB2-1OP') dbSufijo = '-2-1INT';
+  if (esDbFe && dbSufijo) {
+    codigo = codigo.replace('-FE', `${dbSufijo}-FE`);
+    dbSufijo = '';
+  }
   const pcfdSufijo = Number(input.pcfdCajones) > 0 ? `-${Number(input.pcfdCajones)}OP-PUSH` : '';
-  const llevaSmPropio = prefNormalizado.split('-').includes('SM') || esWsm;
+  const llevaSmPropio = prefNormalizado.split('-').some((segmento) => segmento === 'SM' || segmento === 'SMG')
+    || prefNormalizado === 'WSM';
   // DB tradicional y sus configuraciones (DB-1S, DB-2S, DB-2, DB-3, DB-4,
   // DB2-1OP) no son variantes SM. Las familias con Gola son tipos separados
   // DB-*-SM / DB-*-SM-FE, por lo que un estado heredado nunca debe convertir
   // DB en `DBXX-...-SM`.
-  const bloqueaSmTransversal = prefNormalizado === 'DB';
-  const bblfdSufijo = prefNormalizado === 'BBLFD'
+  const bloqueaSmTransversal = prefNormalizado === 'DB' || esDbFe;
+  const bblfdSufijo = prefSinFondo === 'BBLFD'
     && input.door != null
     && Number.isFinite(input.door)
     && input.door > 0
     && input.doorHand
     ? `-D${anchoCodigo(input.door, unidad, sistema)}${input.doorHand}`
     : '';
-  if ((prefNormalizado === 'WBL-D-L/R-SM' || prefNormalizado === 'BBLFD-D-L/R-SM')
+  if ((prefSinFondo === 'WBL-D-L/R-SM' || prefSinFondo === 'BBLFD-D-L/R-SM')
     && input.door != null
     && Number.isFinite(input.door)
     && input.door > 0
@@ -224,14 +281,25 @@ export function codigoComercial(input: CodigoComercialInput): string {
     ? espesorCajaMm
     : null;
   const codigoBase = codigo + bblfdSufijo + dbSufijo + pcfdSufijo
-    + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente));
-  if (espesorComun == null) return codigoBase;
+    + (llevaSmPropio || bloqueaSmTransversal ? '' : sufijoSistemaFrente(input.sistemaFrente))
+    + (blindSinFondo || (input.conFondo === false
+      && !esIndependienteDeFondo(prefNormalizado)
+      && !prefNormalizado.split('-').includes('SF')) ? '-SF' : '');
+  const tkMedida = esTorreTk && input.zocaloIn != null
+    ? anchoCodigo(input.zocaloIn, 'in', sistema)
+    : '';
+  const finalizar = (valor: string) => codigoConMano(tkMedida ? `${valor} TK${tkMedida}` : valor, prefNormalizado, input.nPuertas, input.manoPuerta);
+  // SMG integra el espesor común en su segmento, igual que SM: SMG15/SMG18.
+  if (esSmg) return finalizar(espesorComun != null
+    ? codigoBase.replace('-SMG', `-SMG${espesorComun}`)
+    : codigoBase);
+  if (espesorComun == null) return finalizar(codigoBase);
   // En muebles superiores W/TW con sistema SM el indicador de espesor forma
   // parte del propio segmento: `-SM15`, `-SM18` o sus variantes `-PUSH`.
   if (esMuebleSuperior(prefNormalizado) && codigoBase.includes('-SM')) {
-    return codigoBase.replace('-SM', `-SM${espesorComun}`);
+    return finalizar(codigoBase.replace('-SM', `-SM${espesorComun}`));
   }
-  return `${codigoBase}-${espesorComun === 18 ? '18MM' : '15MM'}`;
+  return finalizar(`${codigoBase}-${espesorComun === 18 ? '18MM' : '15MM'}`);
 }
 
 export function codigoGrupo(codigos: string[]): string {

@@ -26,7 +26,7 @@ La base de datos se estructura en torno a los siguientes modelos:
 ### Transaccionales (Cotizaciones)
 *   **`cot_cotizaciones`:** Cabecera del documento de cotización (cliente, moneda, TRM congelada, estado del negocio).
 *   **`cot_cocinas`:** Jerarquía de cocinas dentro de un proyecto. Almacena el nombre, orden, cantidad (multiplicador de los muebles internos) y totales acumulados en COP/USD.
-*   **`cot_cotizacion_lineas`:** Líneas individuales que componen el presupuesto. Almacena las dimensiones, cantidad solicitada, variables de diseño y guarda el objeto `breakdown` final (JSON) generado por el motor para auditoría histórica.
+*   **`cot_cotizacion_lineas`:** Líneas individuales que componen el presupuesto. Almacena las dimensiones, cantidad solicitada, variables de diseño, la anotación libre exclusiva de esa línea y el objeto `breakdown` final (JSON) generado por el motor para auditoría histórica. `anotaciones` no modifica la tipología ni el cálculo.
 *   **`cot_grupos_modulos`:** Bloques físicos ordenados dentro de una cocina. Almacena la letra canónica, el código concatenado, los subtotales y el breakdown estructural del grupo. Cada línea apunta a un grupo y conserva su posición de izquierda a derecha.
 *   **`cot_cotizacion_versiones`:** Historial inmutable de snapshots JSONB del agregado completo (cabecera, cocinas, grupos y líneas). Las versiones se generan exclusivamente por solicitud manual del usuario; no existen respaldos automáticos.
 
@@ -41,6 +41,12 @@ La migración `0020_agrupacion_modulos.sql` incorpora:
 - Backfill de cada línea histórica como bloque unitario A, B, C… sin modificar sus importes ni breakdown históricos.
 
 La tabla de grupos tiene RLS vinculada al propietario de la cotización o al rol administrador. La migración debe aplicarse antes de desplegar el código que consulta estas columnas.
+
+`cot_cotizaciones.notas` contiene el historial JSON de comentarios internos del estado actual. Se modifica exclusivamente mediante `cot_agregar_comentario`, que anexa entradas inmutables y valida propiedad o rol administrador. Al formar parte de la cabecera, el historial queda aislado por snapshot de versión y no se muestra en documentos impresos.
+
+La autoría se conserva en `cot_cotizaciones.creado_por`. El nombre visible se
+mantiene en `cot_perfiles.nombre`, se elige durante el ingreso y se consulta para
+la columna “Cotizado por”; no se sustituye el UUID de autor por texto.
 
 `codigo_modulo` (el código que se ve en la columna "Módulo" de la tabla de la cocina) lo recalcula siempre `recalcularGrupo()` en `src/lib/cotizaciones.ts`, a partir del prefijo base del tipo de mueble (`prefImperial`/`prefMetrico`, ej. `DB`) y el largo — nunca a partir del `pref` guardado en la línea. Para los muebles `DB` (cajonera), la tipología elegida en el formulario (ej. `DB-1S`, campo "Tipología DB") se guarda por separado como `config.dbTipo` en `cot_cotizacion_lineas` y `recalcularGrupo()` la anexa como sufijo al final del código (`DB15-1S`). Antes de este fix, `dbTipo` no se persistía y el sufijo se perdía cada vez que se creaba o editaba el módulo, aunque el formulario lo mostrara seleccionado.
 
@@ -85,8 +91,13 @@ ningún valor vacío, columna `NOT NULL` y valor predeterminado `FIRPLAK`.
 En el encabezado del detalle de una cotización, el primer dato bajo el nombre
 del proyecto muestra `cotizador_por` (`FIRPLAK` o `CEMA`) en vez de la
 constructora; esta última continúa disponible como dato comercial editable.
-- `conFondo` se fija al crear el proyecto y se copia también a `cot_cotizacion_lineas.config`, de modo que edición, duplicado, agrupación y recálculo conserven la decisión estructural.
-- `materialesInferiores` y `materialesSuperiores` guardan, cada uno, perfil, preset de tableros y cantos. Al agregar un mueble se busca la primera `B` o `W` de su prefijo: `B` primero usa inferiores y `W` primero usa superiores (`WBL` usa superiores). Los prefijos sin ambas letras usan inferiores como fallback compatible. Las claves planas antiguas se conservan como alias del bloque inferior para abrir proyectos previos sin migración.
+- `conFondo` se define inicialmente al crear el proyecto y se copia a `cot_cotizacion_lineas.config`. `AddLineForm` expone además un desplegable **Fondo** por módulo durante creación y edición; su valor se persiste para que duplicado, agrupación y recálculo conserven la decisión estructural. Los módulos superiores fuerzan **Con fondo**.
+- La migración `0186_tipologias_sin_fondo_bajo_demanda.sql` añade la función autenticada `cot_asegurar_tipologia_sin_fondo(uuid)`. Para una fuente activa crea solo si no existe el tipo `<pref>-SF`, bajo bloqueo transaccional por prefijo; clona metadatos, reglas, herrajes y todas las piezas excepto el respaldo `fondo`, y recalcula la base a `P-TC`. Si el tipo ya existe —o la fuente ya termina en `-SF`— devuelve el UUID existente sin modificarlo.
+- La migración `0187_resolver_tipologia_con_sin_fondo.sql` añade `cot_resolver_tipologia_fondo(uuid, boolean)`. Con `false` delega en la creación/reutilización SF; con `true`, si el tipo actual termina en `-SF`, exige y devuelve su tipo base activo. Esta función es el punto de entrada usado al agregar y editar líneas, de modo que `tipo_mueble_id`, código comercial y descripción regresan a la tipología con fondo.
+- `familiasMaterialesActivas` identifica cuáles de las cuatro familias forman parte del proyecto: inferiores, superiores, clósets y baños. Cada bloque activo guarda directamente su preset de tableros y cantos, sin selector de perfil predefinido. Esto permite cotizaciones que solo contienen clósets o baños; `AddLineForm` limita las tipologías nuevas a esas familias. Las claves planas antiguas se conservan como alias compatible para abrir proyectos previos.
+- `F`, `PN` y `TK` permanecen disponibles incluso en proyectos sin inferiores. En ese caso toman el bloque de la primera familia activa (por ejemplo clóset en una cotización solo de clósets).
+- La migración `0209_frente_compartido_elementos_planos.sql` establece que Filler, Panel y Zócalo consumen el rol `frente`. La interfaz lo comunica en un único campo: **Tablero frente (también Filler, Panel y Zócalo)**. No existen selectores ni materiales independientes para estos tres elementos.
+  Fue aplicada y verificada en Supabase el 2026-10-20 para `F`, `PN` y `TK`.
 
 La migración 0026 fue aplicada y verificada en Supabase **I+D** el 2026-08-10 (columna `config_default` de tipo `jsonb` confirmada en `information_schema.columns`). Nota: el número 0025 ya estaba tomado por `0025_pcfd_gavetas_parametricas.sql` (rama paralela); esta migración se renombró a 0026 al integrar ambas ramas en DEV.
 

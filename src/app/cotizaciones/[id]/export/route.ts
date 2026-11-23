@@ -1,10 +1,13 @@
 import { NextRequest } from 'next/server';
 import ExcelJS from 'exceljs';
+import { descripcionConNotas } from '@/lib/nombres-modulos';
 import { getCotizacion } from '@/lib/cotizaciones';
 import { createClient } from '@/lib/supabase/server';
+import { aplicaIva, calcularIva, etiquetaIva, totalConIva } from '@/lib/iva';
+import { monedasVisibles } from '@/lib/monedas-visibles';
 
 type Breakdown = Record<string, unknown> | null;
-type Linea = { pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null } | null; descripcion_es: string | null; cantidad: number; precio_unit_usd: number; precio_total_cop: number; costo_total_cop?: number; breakdown?: Breakdown };
+type Linea = { pref: string | null; codigo_modulo: string | null; grupo_id: string | null; posicion_grupo: number; grupo?: { orden: number; etiqueta: string; codigo_grupo: string | null } | null; descripcion_es: string | null; anotaciones: string | null; cantidad: number; precio_unit_usd: number; precio_total_cop: number; costo_total_cop?: number; breakdown?: Breakdown };
 type Cocina = { nombre: string; cantidad?: number; lineas: Linea[] };
 
 function precios(linea: Linea, trm: number) {
@@ -57,7 +60,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     for (const l of c.lineas) {
       const p = precios(l, trm); const count = c.lineas.filter((x) => x.grupo_id === l.grupo_id).length;
       const costoCop = Number(l.costo_total_cop ?? l.breakdown?.costoConHerrajes ?? 0);
-      const row: (string | number)[] = [count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? ''), l.codigo_modulo || l.pref || '', count > 1 ? (l.grupo?.codigo_grupo ?? '') : '', l.descripcion_es || ''];
+      const descripcion = descripcionConNotas(l);
+      const row: (string | number)[] = [count > 1 ? `${l.grupo?.etiqueta ?? ''}${l.posicion_grupo}` : (l.grupo?.etiqueta ?? ''), l.codigo_modulo || l.pref || '', count > 1 ? (l.grupo?.codigo_grupo ?? '') : '', descripcion];
       if (mostrarUsd) row.push(trm > 0 ? costoCop / trm : 0);
       if (mostrarCop) row.push(costoCop);
       row.push(p.cant);
@@ -66,6 +70,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       if (mostrarCon && mostrarUsd) row.push(p.conUsd, p.conUsd * p.cant);
       if (mostrarCon && mostrarCop) row.push(p.conCop, p.conCop * p.cant);
       const excelRow = ws.addRow(row);
+      excelRow.getCell(4).alignment = { vertical: 'top', wrapText: true };
       for (let col = 5; col <= header.length; col++) if (header[col - 1] !== 'Cant') excelRow.getCell(col).numFmt = header[col - 1].endsWith('COP') ? '"$"#,##0' : '"$"#,##0.00';
       sub.sinUsd += p.sinUsd * p.cant; sub.sinCop += p.sinCop * p.cant; sub.conUsd += p.conUsd * p.cant; sub.conCop += p.conCop * p.cant;
     }
@@ -85,6 +90,31 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (mostrarCon && mostrarUsd) total.push('', totals.conUsd);
   if (mostrarCon && mostrarCop) total.push('', totals.conCop);
   const totalRow = ws.addRow(total); totalRow.font = { bold: true, size: 12 };
+
+  // IVA: solo en cotizaciones en pesos, y solo sobre la columna c/H COP, que es la
+  // que se le factura al cliente. Si esa columna no se exporto no hay sobre que
+  // liquidarlo, y la fila se omite en vez de salir en cero.
+  // Misma regla que el encabezado y la propuesta: manda lo que se eligio en las
+  // casillas y, con las dos marcadas, la moneda del proyecto.
+  const moneda = monedasVisibles(
+    { usd: mostrarUsd, cop: mostrarCop },
+    cabecera.moneda === 'COP' ? 'COP' : 'USD',
+  )[0];
+  if (aplicaIva(moneda) && mostrarCon && mostrarCop) {
+    totalRow.getCell(1).value = '';
+    totalRow.getCell(4).value = 'TOTAL ANTES DE IVA';
+    const relleno = (etiqueta: string, valor: number): (string | number)[] => {
+      const fila: (string | number)[] = ['', '', '', etiqueta];
+      if (mostrarUsd) fila.push(''); if (mostrarCop) fila.push(''); fila.push('');
+      if (mostrarSin && mostrarUsd) fila.push('', '');
+      if (mostrarSin && mostrarCop) fila.push('', '');
+      if (mostrarCon && mostrarUsd) fila.push('', '');
+      fila.push('', valor);
+      return fila;
+    };
+    ws.addRow(relleno(etiquetaIva(), calcularIva(totals.conCop))).font = { bold: true };
+    ws.addRow(relleno('TOTAL CON IVA INCLUIDO', totalConIva(totals.conCop))).font = { bold: true, size: 12 };
+  }
   const buf = await wb.xlsx.writeBuffer();
   const fileName = `Cotizacion-${(cabecera.nombre || 'proyecto').replace(/[^a-zA-Z0-9-_]+/g, '_')}.xlsx`;
   return new Response(buf, { headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="${fileName}"` } });

@@ -1,167 +1,70 @@
 'use client';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import type { CotizarResult } from '@/lib/cotizar';
 import { exportarNodoAPdf, nombreArchivoPdf } from './pdfExport';
-import { orientarPieza } from '@/lib/muebles';
+import { colorPiezaHdr, construirFilas, normalizarColorHdr, type ColoresHdr, type FilaHDR, type ResultadoHdr } from './datosHdr';
+import { crearDestinoHdr, esCancelacionHdr, type GuardarArchivoHdr } from './destinoExportacion';
+export { descripcionModulo } from './datosHdr';
 
 export type Tablero = { codigo: string; espesor_mm: number | null };
-export type HdrTablaHandle = { exportarPdf: () => Promise<void> };
+export type DatosHdrExcel = { titulo: string; cantidad: string; color: string; proyecto: string; filas: (FilaHDR & { color: string })[] };
+export type HdrTablaHandle = { exportarPdf: (guardar?: GuardarArchivoHdr) => Promise<void>; datosExcel: () => DatosHdrExcel };
 
-// Letra material por rol de tablero — confirmado contra la hoja de ruta real de B12
-// (BASE B, RAIL … P, DOOR … C, BACKING F): caja=Balance, refuerzo=Polar, frente=Color, fondo=Fondo/shaker.
-const SUFIJO_ROL: Record<string, string> = { caja: 'B', refuerzo: 'P', frente: 'C', fondo: 'F' };
+const SIN_COLORES: ColoresHdr = {};
 
-// Traducción del nombre interno de la pieza al nombre de producción. No se pudieron
-// reproducir los sufijos de código de riel/bisagra de la hoja real (ej. "R17L762"):
-// no hay dato en la app para derivarlos, así que se omiten.
-const NOMBRE_PRODUCCION: [RegExp, string][] = [
-  [/^lateral$/, 'SIDE'],
-  [/^base$/, 'BASE'],
-  [/trasero_gaveta/, 'TRASERO CAJON'],
-  [/refuerzo_trasero/, 'RAIL TRASERO'],
-  [/refuerzo_(delantero|horizontal)/, 'RAIL DELANTERO'],
-  [/entrepano/, 'SHELF'],
-  [/base_gaveta/, 'PIEZA CAJON'],
-  // Caja de gaveta en madera (tipos con riel full extension, ej. B-FE).
-  [/lateral_gaveta_der/, 'LAT DER GAV'],
-  [/lateral_gaveta_izq/, 'LAT IZQ GAV'],
-  [/^contraparche$/, 'CONTRAPARCHE'],
-  [/^fondo_gaveta$/, 'FONDO GAV'],
-  [/frente_gaveta/, 'FRENTE GAVETA'],
-  [/frente_cajon/, 'FRENTE GAVETA'],
-  [/gola_perfil/, 'GOLA'],
-  [/^fondo$/, 'BACKING'],
-];
-
-function nombreProduccion(nombre: string, tienePuertas: boolean): string {
-  if (nombre === 'frente') return tienePuertas ? 'DOOR' : 'FRENTE';
-  for (const [re, label] of NOMBRE_PRODUCCION) if (re.test(nombre)) return label;
-  return nombre.toUpperCase().replace(/_/g, ' ');
+function CampoColorHdr({ etiqueta, valor, onChange, onBlur }: {
+  etiqueta: string; valor: string; onChange: (valor: string) => void; onBlur: () => void;
+}) {
+  return <div className="hdr-color relative w-40 max-w-full rounded-md border border-slate-300 text-[.8125rem] leading-5">
+    <div aria-hidden="true" data-hdr-color-texto className="invisible whitespace-pre-wrap px-1.5 py-1 [overflow-wrap:anywhere]">{valor || 'Por definir'}{'\u200b'}</div>
+    <textarea aria-label={etiqueta} rows={1} required value={valor} onChange={e => onChange(e.target.value)} onBlur={onBlur}
+      data-hdr-color-editor placeholder="Por definir"
+      className="absolute inset-0 size-full resize-none overflow-hidden rounded-md px-1.5 py-1 whitespace-pre-wrap [overflow-wrap:anywhere] focus:outline-2 focus:outline-slate-400" />
+  </div>;
 }
 
-// Color vs Blanco de canto: no está guardado por pieza en cot_piezas_plantilla (solo
-// hay un calibre). Regla deducida cruzando la hoja de ruta real de B12: las piezas
-// visibles desde afuera van en Color, las ocultas dentro de la carcasa van en Blanco.
-// Es una inferencia por nombre, no un dato confirmado pieza por pieza en todo el catálogo.
-function esVisible(nombre: string): boolean {
-  return !/trasero|entrepano|base_gaveta|lateral_gaveta|contraparche/.test(nombre);
-}
-
-function espesorCantoLabel(calibre: string | null): string {
-  if (!calibre) return '';
-  // Insensible a mayúsculas: el calibre puede llegar como `19x0,45` o `19X0,45`
-  // según venga de la plantilla de la pieza o del override del formulario. Con el
-  // split sensible a `x` minúscula, la columna salía vacía en el segundo caso.
-  return calibre.split(/x/i)[1] ?? '';
-}
-
-type FilaHDR = {
-  letra: string;
-  pieza: string;
-  largoMm: number;
-  anchoMm: number;
-  espesorMm: number | null;
-  cantoLargoColor: number;
-  cantoAnchoColor: number;
-  cantoLargoBlanco: number;
-  cantoAnchoBlanco: number;
-  espesorCanto: string;
-};
-
-function construirFilas(res: CotizarResult, tableros: Tablero[]): FilaHDR[] {
-  const rolToEspesor: Record<string, number | null> = {};
-  for (const m of res.maderaPorRol) {
-    rolToEspesor[m.rol] = tableros.find((t) => t.codigo === m.codigo)?.espesor_mm ?? null;
-  }
-  const tienePuertas = (res.vars.n_puertas ?? 0) > 0;
-
-  const filas: FilaHDR[] = [];
-  let letraIdx = 0;
-  const siguienteLetra = () => {
-    const l = String.fromCharCode(65 + (letraIdx % 26));
-    letraIdx++;
-    return l;
-  };
-
-  for (const p of res.piezas.filter((p) => p.cant > 0)) {
-    const nombreBase = nombreProduccion(p.pieza, tienePuertas);
-    const sufijo = SUFIJO_ROL[p.rol] ?? '';
-    const visible = esVisible(p.pieza);
-    const espesorCanto = espesorCantoLabel(p.cantoCalibre);
-    const n = Math.round(p.cant);
-    for (let i = 0; i < n; i++) {
-      const esLateralPar = p.pieza === 'lateral' && n === 2;
-      const esBaseTapa = p.pieza === 'base_tapa' && n === 2;
-      const esPuertaPar = p.pieza === 'frente' && tienePuertas && n === 2;
-      const esEntrepanoPar = p.pieza === 'entrepano' && n > 1;
-      const nombre = esLateralPar
-        ? `SIDE ${i === 0 ? 'R' : 'L'}`
-        : esBaseTapa
-        ? (i === 0 ? 'BASE' : 'TAPA')
-        : esPuertaPar
-        ? `DOOR ${i === 0 ? 'R' : 'L'}`
-        : esEntrepanoPar
-        ? `SHELF ${i + 1}`
-        : nombreBase;
-      // Orientación de presentación compartida con el despiece del Simulador.
-      const orientada = orientarPieza(p);
-      filas.push({
-        letra: siguienteLetra(),
-        pieza: sufijo ? `${nombre} ${sufijo}` : nombre,
-        largoMm: orientada.largoIn * 25.4,
-        anchoMm: orientada.anchoIn * 25.4,
-        espesorMm: rolToEspesor[p.rol] ?? null,
-        cantoLargoColor: visible ? p.cantoLargos : 0,
-        cantoAnchoColor: visible ? p.cantoAnchos : 0,
-        cantoLargoBlanco: visible ? 0 : p.cantoLargos,
-        cantoAnchoBlanco: visible ? 0 : p.cantoAnchos,
-        espesorCanto,
-      });
-    }
-  }
-  return filas;
-}
-
-export function descripcionModulo(res: CotizarResult): string {
-  const partes: string[] = [];
-  const n = (k: string) => Math.round(res.vars[k] ?? 0);
-  if (n('n_cajones') > 0) partes.push(`${n('n_cajones')} GAVETA${n('n_cajones') > 1 ? 'S' : ''}`);
-  if (n('n_puertas') > 0) partes.push(`${n('n_puertas')} PUERTA${n('n_puertas') > 1 ? 'S' : ''}`);
-  if (n('n_entrepanos') > 0) partes.push(`${n('n_entrepanos')} ENTREPAÑO${n('n_entrepanos') > 1 ? 'S' : ''}`);
-  return partes.join(' ');
-}
-
-const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tablero[]; titulo: string; mostrarBotonExportar?: boolean }>(
-  function HdrTabla({ res, tableros, titulo, mostrarBotonExportar = true }, ref) {
-  const [color, setColor] = useState('');
-  const [proyecto, setProyecto] = useState('');
+const HdrTabla = forwardRef<HdrTablaHandle, { res: ResultadoHdr; pref?: string; codigoModulo?: string; tableros: Tablero[]; titulo: string; mostrarBotonExportar?: boolean; proyectoInicial?: string; referenciaRepetida?: boolean; coloresPorRol?: ColoresHdr }>(
+  function HdrTabla({ res, pref, codigoModulo, tableros, titulo, mostrarBotonExportar = true, proyectoInicial = '', referenciaRepetida, coloresPorRol = SIN_COLORES }, ref) {
+  const [color, setColor] = useState('Por definir');
+  const [proyectoEditado, setProyecto] = useState<string>();
+  const proyecto = proyectoEditado ?? proyectoInicial;
   const [cantidad, setCantidad] = useState('');
   const [colorPorLetra, setColorPorLetra] = useState<Record<string, string>>({});
   const [exportando, setExportando] = useState(false);
+  const [errorExportacion, setErrorExportacion] = useState<string | null>(null);
   const contenedorRef = useRef<HTMLDivElement>(null);
 
-  const filas = useMemo(() => construirFilas(res, tableros), [res, tableros]);
+  const filas = useMemo(() => construirFilas(res, tableros, pref, codigoModulo), [res, tableros, pref, codigoModulo]);
 
-  const exportarPdf = useCallback(async () => {
+  const exportarPdf = useCallback(async (guardar?: GuardarArchivoHdr) => {
     if (!contenedorRef.current) return;
     setExportando(true);
     try {
-      await exportarNodoAPdf(contenedorRef.current, nombreArchivoPdf(titulo));
+      const destino = guardar ? undefined : await crearDestinoHdr(proyecto);
+      await exportarNodoAPdf(contenedorRef.current, nombreArchivoPdf(titulo), guardar ?? destino?.guardar);
+      await destino?.finalizar();
     } finally {
       setExportando(false);
     }
-  }, [titulo]);
+  }, [titulo, proyecto]);
 
-  useImperativeHandle(ref, () => ({ exportarPdf }), [exportarPdf]);
+  const datosExcel = useCallback((): DatosHdrExcel => ({ titulo, cantidad, color: normalizarColorHdr(color), proyecto, filas: filas.map(f => ({ ...f, color: colorPiezaHdr(f.rol, coloresPorRol, color, colorPorLetra[f.letra]) })) }), [titulo, cantidad, color, proyecto, filas, colorPorLetra, coloresPorRol]);
+  const informarError = (e: unknown) => { if (!esCancelacionHdr(e)) setErrorExportacion(e instanceof Error ? e.message : 'No se pudo completar la exportación.'); };
+  const exportarExcel = async () => {
+    setErrorExportacion(null);
+    try { const destino = await crearDestinoHdr(proyecto); const { descargarExcelHdr } = await import('./excel'); await descargarExcelHdr([datosExcel()], titulo, destino); }
+    catch (e) { informarError(e); }
+  };
+  useImperativeHandle(ref, () => ({ exportarPdf, datosExcel }), [exportarPdf, datosExcel]);
 
   return (
     <div>
       {mostrarBotonExportar && (
-        <div className="flex justify-end mb-2">
+        <div className="flex justify-end gap-2 mb-2">
+          <button type="button" onClick={exportarExcel} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs">Exportar Excel</button>
           <button
             type="button"
-            onClick={exportarPdf}
+            onClick={() => { setErrorExportacion(null); void exportarPdf().catch(informarError); }}
             disabled={exportando}
             className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
@@ -169,19 +72,21 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tabl
           </button>
         </div>
       )}
-      <div ref={contenedorRef} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      {errorExportacion && <p role="alert" className="mb-2 text-sm text-red-700">{errorExportacion}</p>}
+      <div ref={contenedorRef} data-hdr-modulo={titulo} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
       <div className="p-4 border-b border-slate-200 flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <div className="font-bold text-slate-900">{titulo}</div>
-          <div className="mt-2 grid grid-cols-3 gap-x-6 gap-y-1 text-sm text-slate-600">
+          {referenciaRepetida && <p className="mt-1 text-xs text-slate-600">Referencia con variantes de notas o fabricación. Materiales: {res.maderaPorRol.filter(m => m.cm2 > 0).map(m => `${m.rol}: ${m.codigo}`).join(' · ')}. Herrajes: {res.herrajes.filter(h => h.cant > 0).map(h => `${h.codigo ?? h.rol} × ${h.cant}`).join(' · ') || 'Sin herrajes'}.</p>}
+          <div className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm text-slate-600 sm:grid-cols-2 xl:grid-cols-3">
             <label className="flex items-center gap-2">Color:
-              <input value={color} onChange={(e) => setColor(e.target.value)} placeholder="Por definir" className="inp-sm" />
+              <CampoColorHdr etiqueta="Color general" valor={color} onChange={setColor} onBlur={() => setColor(normalizarColorHdr(color))} />
             </label>
             <label className="flex items-center gap-2">Proyecto:
               <input value={proyecto} onChange={(e) => setProyecto(e.target.value)} placeholder="Por definir" className="inp-sm" />
             </label>
-            <label className="flex items-center gap-2">Cantidad:
-              <input value={cantidad} onChange={(e) => setCantidad(e.target.value)} placeholder="Por definir" className="inp-sm" />
+            <label className="flex items-center gap-2">{(res.vars.modulos ?? 1) > 1 ? 'Cantidad de grupos:' : 'Cantidad:'}
+              <input type="number" min={0} step={1} value={cantidad} onChange={(e) => setCantidad(e.target.value)} className="inp-sm" />
             </label>
           </div>
         </div>
@@ -212,6 +117,7 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tabl
               <th className="px-2 text-right">Canto Ancho<br />Blanco</th>
               <th className="px-2 text-right">Espesor<br />canto</th>
               <th className="px-2">Color</th>
+              {filas.some(f => f.origen) && <th className="px-2">Módulo / pieza compartida</th>}
             </tr>
           </thead>
           <tbody>
@@ -227,23 +133,25 @@ const HdrTabla = forwardRef<HdrTablaHandle, { res: CotizarResult; tableros: Tabl
                 <td className="px-2 text-right">{f.cantoLargoBlanco || 0}</td>
                 <td className="px-2 text-right">{f.cantoAnchoBlanco || 0}</td>
                 <td className="px-2 text-right">{f.espesorCanto}</td>
-                <td className="px-2">
-                  <input
-                    value={colorPorLetra[f.letra] ?? ''}
-                    onChange={(e) => setColorPorLetra((cs) => ({ ...cs, [f.letra]: e.target.value }))}
-                    placeholder="Por definir"
-                    className="inp-sm"
+                <td className="px-2 py-1">
+                  <CampoColorHdr
+                    etiqueta={`Color de ${f.letra} ${f.pieza}`}
+                    valor={colorPorLetra[f.letra] ?? colorPiezaHdr(f.rol, coloresPorRol, color)}
+                    onChange={valor => setColorPorLetra(cs => ({ ...cs, [f.letra]: valor }))}
+                    onBlur={() => setColorPorLetra(cs => {
+                      const siguiente = { ...cs };
+                      if (siguiente[f.letra]?.trim()) siguiente[f.letra] = siguiente[f.letra].trim();
+                      else delete siguiente[f.letra];
+                      return siguiente;
+                    })}
                   />
                 </td>
+                {filas.some(f => f.origen) && <td className="px-2 text-xs">{f.origen}<div className="text-slate-500">{f.tableroCodigo}</div></td>}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      <p className="px-4 py-2 text-xs text-slate-400 border-t border-slate-100">
-        Canto Color/Blanco: inferido por pieza (visible → Color, oculta → Blanco), no es un dato guardado en el catálogo — ver notas del código de riel/bisagra omitidas en el nombre de pieza.
-      </p>
 
       <style>{`.inp-sm{border:1px solid #cbd5e1;border-radius:.375rem;padding:.2rem .4rem;font-size:.8125rem;min-width:7rem}.inp-sm:focus{outline:2px solid #94a3b8;outline-offset:0}`}</style>
       </div>

@@ -1,4 +1,6 @@
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import { loadBaseline, ROOT_DIR, type Baseline } from './common';
 
 export interface TestExecutionResult {
@@ -38,11 +40,19 @@ export function executeTests(testFiles: string[], baseline?: Baseline): TestExec
   const startTime = Date.now();
   console.log(`\nEjecutando ${testFiles.length} suite(s) de pruebas...`);
 
-  const proc = spawnSync('npx', ['tsx', '--test', ...testFiles], {
-    cwd: ROOT_DIR,
-    encoding: 'utf-8',
-    shell: true,
-  });
+  const tsxCli = path.join(ROOT_DIR, 'node_modules', 'tsx', 'dist', 'cli.mjs');
+  const proc = fs.existsSync(tsxCli)
+    ? spawnSync(process.execPath, [tsxCli, '--test', ...testFiles], {
+        cwd: ROOT_DIR,
+        encoding: 'utf-8',
+        maxBuffer: 64 * 1024 * 1024,
+      })
+    : spawnSync('npx', ['tsx', '--test', ...testFiles], {
+        cwd: ROOT_DIR,
+        encoding: 'utf-8',
+        shell: true,
+        maxBuffer: 64 * 1024 * 1024,
+      });
 
   const durationMs = Date.now() - startTime;
   const rawOutput = (proc.stdout || '') + '\n' + (proc.stderr || '');

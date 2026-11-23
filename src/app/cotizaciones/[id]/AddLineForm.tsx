@@ -1,14 +1,22 @@
 'use client';
+import { puertasSegunReglas, requiereManoPuerta, type ManoPuerta } from '@/lib/mano-puerta';
+import type { Regla } from '@/lib/engine';
+import { usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from '@/lib/gavetas';
+import HerrajesGaveta from '@/components/HerrajesGaveta';
+import { usaHoodSm, validarHoodSm } from '@/lib/hood-sm';
+import { convertirExacto } from '@/lib/module-groups';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { agregarLineaAction, editarLineaAction } from '../actions';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
+import { etiquetaTipoModulo } from '@/lib/nombres-modulos';
+import { familiaMaterialDelArea, presetMaterialesTipologia, usaCajaMaterialFrente, usaFondoMaterialFrente } from '@/lib/materiales-proyecto';
 import { TIPS_COTIZADOR } from '@/lib/tooltips';
-import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_RIELES, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esTipologiaDbSm, esTipologiaDbSmFe, familiaMaterialPorPrefijo, permiteRemovible, permiteTipologiaDb, usaHuecoHornoParametrico, usaPuertaParametrica, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
+import { altoPorDefectoIn, etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, DB_SMG_TIPOLOGIAS, DB_SMG_FE_TIPOLOGIAS, PCFD_CONFIGURACIONES, SISTEMAS_FRENTE, esElementoPlano, esIndependienteDeFondo, esMuebleSuperior, esTipologiaDbSm, esTipologiaDbSmFe, esTipologiaDbSmFeSf, esTipologiaDbSmSf, esTipologiaDbSmG, esTipologiaDbSmGFe, esTipologiaDbSmGSf, obtenerTipologiasDbSmFeSf, obtenerTipologiasDbSmSf, obtenerTipologiasDbSmGSf, CLAVE_CONFIG_FAMILIA, permiteRemovible, permiteTipologiaDb, tkPredeterminadoTorre, usaHuecoHornoParametrico, usaMedidasMoHood, usaMoTorre, usaPuertaParametrica, usaPuertaSupTorre, usaTkTorre, type FamiliaMaterial, type SistemaFrente } from '@/lib/muebles';
 import { parseMedida, codigoComercial } from '@/lib/module-groups';
 
-type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
+type Tipo = { id: string; pref: string; reglasPuertas?: Regla[]; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null; categoria?: string | null };
 type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
@@ -21,8 +29,12 @@ export type ProjectDefaults = {
   // recargoId: string;
   margen: string;
   conFondo?: boolean;
+  familiasMaterialesActivas?: FamiliaMaterial[];
   materialesInferiores?: MaterialDefaults;
   materialesSuperiores?: MaterialDefaults;
+  materialesCloset?: MaterialDefaults;
+  materialesBanos?: MaterialDefaults;
+  preciosTableros?: Record<string, number>;
   // Defaults del primer mueble (opcionales, vienen de NuevoCotizacionForm)
   tipoId?: string;
   largo?: string;
@@ -43,6 +55,7 @@ export type ProjectDefaults = {
 };
 
 export type LineaInicial = {
+  manoPuerta?: ManoPuerta;
   lineaId: string;
   tipoId: string;
   largo: string | number;
@@ -61,16 +74,24 @@ export type LineaInicial = {
   cantoCaja?: string;
   dbTipo?: string;
   rielCodigo?: string;
+  barraCodigo?: string;
   // Variantes transversales (ver src/lib/muebles.ts).
   sistemaFrente?: SistemaFrente;
   removible?: boolean;
   door?: number;
   doorHand?: 'L' | 'R';
   conFondo?: boolean;
+  anotaciones?: string | null;
 };
 
-const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente', fondo: 'Tablero fondo' };
+const ROL_LABEL: Record<string, string> = { caja: 'Tablero caja / refuerzos', refuerzo: 'Tablero caja / refuerzos', frente: 'Tablero frente (también Filler, Panel y Zócalo)', gaveta: 'Tablero Gaveta (15 mm)', fondo: 'Tablero fondo' };
+const DB_SM_GROUP_VALUE = '__DB_SM__';
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
+const DB_SM_FE_SF_GROUP_VALUE = '__DB_SM_FE_SF__';
+const DB_SM_SF_GROUP_VALUE = '__DB_SM_SF__';
+const DB_SMG_GROUP_VALUE = '__DB_SMG__';
+const DB_SMG_FE_GROUP_VALUE = '__DB_SMG_FE__';
+const DB_SMG_SF_GROUP_VALUE = '__DB_SMG_SF__';
 const TO_MM: Record<'in' | 'cm' | 'mm', number> = { in: 25.4, cm: 10, mm: 1 };
 const convertir = (value: number, from: 'in' | 'cm' | 'mm', to: 'in' | 'cm' | 'mm') =>
   Math.round((value * TO_MM[from]) / TO_MM[to] * 1e6) / 1e6;
@@ -81,9 +102,10 @@ const getCantoMatch = (cantos: string[], target: string) =>
   target;
 
 export default function AddLineForm({
-  cocinaId, tipos, tableros, cantos, presetDefault, rolesByTipo, perfiles, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, initial, onDone, onMaterialesUsados
+  cocinaId, nombreArea = '', tipos, tableros, cantos, presetDefault, rolesByTipo, perfilDefaultId, herrajesByTipo, trm, sistemaMedida, projectDefaults, initial, onDone, onMaterialesUsados
 }: {
   cocinaId: string;
+  nombreArea?: string;
   tipos: Tipo[];
   tableros: Tablero[];
   cantos: string[];
@@ -96,21 +118,35 @@ export default function AddLineForm({
   sistemaMedida: 'imperial' | 'metrico';
   projectDefaults?: ProjectDefaults;
   initial?: LineaInicial;
-  onDone?: () => void;
+  onDone?: (mensaje?: string) => void;
   // Se dispara al agregar un mueble (no al editar) con los materiales y cantos usados,
   // para que el próximo mueble de la cocina arranque con esos mismos valores por defecto.
   onMaterialesUsados?: (materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] }) => void;
 }) {
   const router = useRouter();
   const esEdicion = !!initial;
-  const sbfd = tipos.find((t) => t.pref === 'SBFD');
+  const familiasActivas = projectDefaults?.familiasMaterialesActivas;
+  const tiposDisponibles = initial || !familiasActivas?.length
+    ? tipos
+    : tipos.filter((tipo) => esElementoPlano(tipo.pref) || familiasActivas.includes(familiaMaterialDelArea(tipo.pref, nombreArea)));
+  const sbfd = tiposDisponibles.find((t) => t.pref === 'SBFD');
   const ov = initial?.overrides ?? null;
-  const tipoInicialId = initial?.tipoId ?? projectDefaults?.tipoId ?? sbfd?.id ?? tipos[0]?.id ?? '';
+  const tipoProyecto = tiposDisponibles.some((tipo) => tipo.id === projectDefaults?.tipoId) ? projectDefaults?.tipoId : undefined;
+  const tipoInicialId = initial?.tipoId ?? tipoProyecto ?? sbfd?.id ?? tiposDisponibles[0]?.id ?? '';
   const tipoInicialPref = tipos.find((t) => t.id === tipoInicialId)?.pref ?? '';
-  const materialProyecto = (pref: string): MaterialDefaults | undefined =>
-    familiaMaterialPorPrefijo(pref) === 'superior'
-      ? projectDefaults?.materialesSuperiores
-      : projectDefaults?.materialesInferiores;
+  // Cada familia tiene su bloque de materiales. Las cotizaciones creadas antes de
+  // que existieran closet y banos no lo traen: caen en inferiores, como siempre.
+  const familiaProyecto = (pref: string): FamiliaMaterial => {
+    const familia = familiaMaterialDelArea(pref, nombreArea);
+    if (familia === 'closet') return familia;
+    if (esElementoPlano(pref) && familiasActivas?.length && !familiasActivas.includes(familia)) return familiasActivas[0];
+    return familia;
+  };
+  const materialProyecto = (pref: string): MaterialDefaults | undefined => {
+    const familia = familiaProyecto(pref);
+    const porFamilia = projectDefaults as unknown as Record<string, MaterialDefaults | undefined> | undefined;
+    return porFamilia?.[CLAVE_CONFIG_FAMILIA[familia]] ?? projectDefaults?.materialesInferiores;
+  };
   const materialInicial = materialProyecto(tipoInicialPref);
 
   // Estados — si viene de NuevoCotizacionForm (projectDefaults), usar esos valores como defaults
@@ -122,14 +158,16 @@ export default function AddLineForm({
   const [prof, setProf] = useState(initial?.prof != null ? String(initial.prof) : (projectDefaults?.prof ?? String(convertir(24, 'in', unidad))));
   const [perfilId, setPerfilId] = useState(initial ? '' : (materialInicial?.perfilId ?? projectDefaults?.perfilId ?? perfilDefaultId));
   const [herrajesExcl, setHerrajesExcl] = useState<string[]>(
-    initial?.herrajesExcluidos ?? materialInicial?.herrajesExcl ?? projectDefaults?.herrajesExcl ?? [],
+    initial ? (initial.herrajesExcluidos ?? []) : (materialInicial?.herrajesExcl ?? projectDefaults?.herrajesExcl ?? []),
   );
-  const [preset, setPreset] = useState<Record<string, string>>(() => {
+  const [presetSeleccionado, setPreset] = useState<Record<string, string>>(() => {
     if (initial?.preset) return initial.preset;
     if (materialInicial?.preset) return materialInicial.preset;
     if (projectDefaults?.preset) return projectDefaults.preset;
     return presetDefault;
   });
+  const prefMaterial = tipos.find((t) => t.id === tipoId)?.pref;
+  const preset = presetMaterialesTipologia({ ...presetSeleccionado, gaveta: presetSeleccionado.gaveta || tableroGaveta15(presetSeleccionado.caja, tableros) }, prefMaterial);
 
   const [cantoFrentesSel, setCantoFrentesSel] = useState(() => {
     if (initial?.cantoFrentes !== undefined) return initial.cantoFrentes;
@@ -159,15 +197,24 @@ export default function AddLineForm({
   }); */
 
   const [cantidad, setCantidad] = useState(initial?.cantidad ?? 1);
+  const [anotaciones, setAnotaciones] = useState(initial?.anotaciones ?? '');
   const [margenInput, setMargenInput] = useState(initial?.margenOverride != null ? String(initial.margenOverride * 100) : (projectDefaults?.margen ?? ''));
 
   const [npuertas, setNpuertas] = useState(ov?.n_puertas != null ? String(ov.n_puertas) : (projectDefaults?.npuertas ?? ''));
   const [ncajones, setNcajones] = useState(ov?.n_cajones != null ? String(ov.n_cajones) : (projectDefaults?.ncajones ?? ''));
   const [nentrepanos, setNentrepanos] = useState(ov?.n_entrepanos != null ? String(ov.n_entrepanos) : (projectDefaults?.nentrepanos ?? ''));
-  const [zocalo, setZocalo] = useState(ov?.zocalo != null ? String(ov.zocalo) : '');
+  const [zocalo, setZocalo] = useState(() => {
+    if (ov?.zocalo != null) return String(convertir(ov.zocalo, 'in', unidad));
+    const valor = tkPredeterminadoTorre(tipoInicialPref);
+    return valor == null ? '' : String(convertir(valor, 'in', unidad));
+  });
+  const [puertaSup, setPuertaSup] = useState(ov?.PUERTA_SUP != null
+    ? String(convertir(ov.PUERTA_SUP, 'in', unidad))
+    : usaPuertaSupTorre(tipoInicialPref) ? String(convertir(30, 'in', unidad)) : '');
   const [nbarras, setNbarras] = useState(ov?.n_barras != null ? String(ov.n_barras) : '');
   const [dbTipo, setDbTipo] = useState(initial?.dbTipo ?? '');
-  const [rielCodigo, setRielCodigo] = useState(initial?.rielCodigo ?? 'RIELTANDEM');
+  const [barraCodigo, setBarraCodigo] = useState(initial?.barraCodigo ?? (initial ? "BARRAEST" : ""));
+  const [rielSeleccionado, setRielCodigo] = useState(initial?.rielCodigo ?? (initial ? 'RIELTANDEM' : ''));
   const [pcfdConfig, setPcfdConfig] = useState(() => {
     if (ov?.n_cajones === 2 && ov?.n_entrepanos === 3) return '2OP';
     if (ov?.n_cajones === 4 && ov?.n_entrepanos === 3) return '4OP';
@@ -175,10 +222,12 @@ export default function AddLineForm({
     return '';
   });
   const [modoFrentes, setModoFrentes] = useState<'normal' | 'sin_frentes' | 'solo_frentes'>(initial?.modoFrentes ?? projectDefaults?.modoFrentes ?? 'normal');
+  const [conFondo, setConFondo] = useState<boolean>(initial?.conFondo ?? projectDefaults?.conFondo ?? true);
   const [sistemaFrente, setSistemaFrente] = useState<SistemaFrente>(initial?.sistemaFrente ?? 'manija');
   const [removible, setRemovible] = useState<boolean>(initial?.removible ?? false);
   const [door, setDoor] = useState(initial?.door != null ? String(initial.door) : '');
   const [doorHand, setDoorHand] = useState<'L' | 'R'>(initial?.doorHand ?? 'R');
+  const [manoPuerta, setManoPuerta] = useState<ManoPuerta | ''>(initial?.manoPuerta ?? '');
   const [hornoLargo, setHornoLargo] = useState(
     ov?.horno_largo != null
       ? String(convertir(ov.horno_largo, 'in', unidad))
@@ -189,31 +238,101 @@ export default function AddLineForm({
       ? String(convertir(ov.horno_alto, 'in', unidad))
       : usaHuecoHornoParametrico(tipoInicialPref) ? String(convertir(153.2, 'mm', unidad)) : '',
   );
+  const [mo, setMo] = useState(
+    ov?.MO != null ? String(convertir(ov.MO, 'in', unidad))
+      : usaMedidasMoHood(tipoInicialPref) ? String(convertir(200, 'mm', unidad))
+        : usaMoTorre(tipoInicialPref) ? String(convertir(20, 'in', unidad)) : '',
+  );
+  const [hood, setHood] = useState(
+    ov?.HOOD != null ? String(convertir(ov.HOOD, 'in', unidad))
+      : usaMedidasMoHood(tipoInicialPref) ? '0' : '',
+  );
+  const [free, setFree] = useState(ov?.FREE != null ? String(convertir(ov.FREE, 'in', unidad)) : '');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Mapeos y opciones
-  const roles = rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo'];
+  const rolesBase = Array.from(new Set([...(rolesByTipo[tipoId] ?? ['caja', 'frente', 'fondo']).filter(rol => !esTipologiaDbFe(prefMaterial) || rol !== 'gaveta'), ...(usaTableroGaveta(prefMaterial) ? ['gaveta'] : [])]));
+  const roles = usaCajaMaterialFrente(prefMaterial) ? Array.from(new Set([...rolesBase, 'frente'])) : rolesBase;
   const prefTipo = tipos.find((t) => t.id === tipoId)?.pref ?? '';
+  const fuerzaConFondo = esMuebleSuperior(prefTipo) || esIndependienteDeFondo(prefTipo);
+  const tipo = tipos.find((t) => t.id === tipoId);
   const esDB = permiteTipologiaDb(prefTipo);
-  const esDbTradicional = prefTipo === 'DB';
+  const esDbTradicional = prefTipo === 'DB' || esTipologiaDbFe(prefTipo);
+  const rielCodigo = herrajesFijosDbFe(prefTipo) ? 'RIELFE500' : rielSeleccionado;
+  const usaTipologiaDbSm = esTipologiaDbSm(prefTipo);
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(prefTipo);
+  const usaTipologiaDbSmFeSf = esTipologiaDbSmFeSf(prefTipo);
+  const usaTipologiaDbSmSf = esTipologiaDbSmSf(prefTipo);
+  const usaTipologiaDbSmg = esTipologiaDbSmG(prefTipo);
+  const usaTipologiaDbSmgFe = esTipologiaDbSmGFe(prefTipo);
+  const usaTipologiaDbSmgSf = esTipologiaDbSmGSf(prefTipo);
+  const tipologiasDbSmSf = obtenerTipologiasDbSmSf(tiposDisponibles);
+  const tipologiasDbSmFeSf = obtenerTipologiasDbSmFeSf(tiposDisponibles);
+  const tipologiasDbSmgSf = obtenerTipologiasDbSmGSf(tiposDisponibles);
   const esPCFD = (tipos.find((t) => t.id === tipoId)?.pref ?? '') === 'PCFD';
   const usaDoor = usaPuertaParametrica(prefTipo);
+  const puertasActuales = puertasSegunReglas(tipo?.reglasPuertas, { largo: parseMedida(largo), alto: parseMedida(alto), prof: parseMedida(prof), unidad }, npuertas === '' ? undefined : Number(npuertas));
+  const pideMano = requiereManoPuerta(prefTipo, puertasActuales);
   const usaHuecoHorno = usaHuecoHornoParametrico(prefTipo);
-  const usaRiel = esDB || esPCFD;
+  const usaMoHood = [tipo?.pref, tipo?.pref_imperial, tipo?.pref_metrico].some(usaMedidasMoHood);
+  const usaHood = usaHoodSm(tipo?.pref);
+  const usaTk = usaTkTorre(prefTipo);
+  const usaPuertaSup = usaPuertaSupTorre(prefTipo);
+  const usaMoPcfd = usaMoTorre(prefTipo);
+  const usaRiel = usaTableroGaveta(prefTipo) || esDB || usaTipologiaDbSmFeSf || usaTipologiaDbSmg || usaTipologiaDbSmgFe || usaTipologiaDbSmgSf || esPCFD;
   const herrajesTipo = herrajesByTipo[tipoId] ?? [];
 
-  const tipo = tipos.find((t) => t.id === tipoId);
   const prefProyecto = (t: Tipo | undefined) => sistemaMedida === 'metrico'
     ? (t?.pref_metrico || t?.pref || '')
     : (t?.pref_imperial || t?.pref || '');
 
   const tipoOptions = (() => {
     const options: { value: string; label: string }[] = [];
+    let dbSmAgregado = false;
     let dbSmFeAgregado = false;
-    for (const t of tipos) {
+    let dbSmFeSfAgregado = false;
+    let dbSmSfAgregado = false;
+    let dbSmgAgregado = false;
+    let dbSmgFeAgregado = false;
+    let dbSmgSfAgregado = false;
+    for (const t of tiposDisponibles) {
+      if (esTipologiaDbSmFeSf(t.pref)) {
+        if (!dbSmFeSfAgregado) {
+          options.push({ value: DB_SM_FE_SF_GROUP_VALUE, label: 'DB-SM-FE-SF — Cajoneras con Gola, riel Full Extension y sin fondo' });
+          dbSmFeSfAgregado = true;
+        }
+        continue;
+      }
+      if (esTipologiaDbSmGSf(t.pref)) {
+        if (!dbSmgSfAgregado) {
+          options.push({ value: DB_SMG_SF_GROUP_VALUE, label: 'DB-SMG-SF — Cajoneras con Gola metálica sin fondo' });
+          dbSmgSfAgregado = true;
+        }
+        continue;
+      }
+      if (esTipologiaDbSmGFe(t.pref)) {
+        if (!dbSmgFeAgregado) {
+          options.push({ value: DB_SMG_FE_GROUP_VALUE, label: 'DB-SMG-FE — Cajoneras con Gola metálica y riel Full Extension' });
+          dbSmgFeAgregado = true;
+        }
+        continue;
+      }
+      if (esTipologiaDbSmG(t.pref)) {
+        if (!dbSmgAgregado) {
+          options.push({ value: DB_SMG_GROUP_VALUE, label: 'DB-SMG — Cajoneras con Gola metálica' });
+          dbSmgAgregado = true;
+        }
+        continue;
+      }
+      if (esTipologiaDbSmSf(t.pref)) {
+        if (!dbSmSfAgregado) {
+          options.push({ value: DB_SM_SF_GROUP_VALUE, label: 'DB-SM-SF — Cajoneras con Gola sin fondo' });
+          dbSmSfAgregado = true;
+        }
+        continue;
+      }
       if (esTipologiaDbSmFe(t.pref)) {
         if (!dbSmFeAgregado) {
           options.push({ value: DB_SM_FE_GROUP_VALUE, label: 'DB-SM-FE — Cajoneras con Gola y riel Full Extension' });
@@ -221,11 +340,30 @@ export default function AddLineForm({
         }
         continue;
       }
-      options.push({ value: t.id, label: ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM', 'BLS', 'BLS-RS-SM', 'BOMH-1', 'BOMH-1-FE'].includes(t.pref) ? (t.nombre_es ?? prefProyecto(t)) : `${prefProyecto(t)} — ${t.nombre_es ?? ''}` });
+      if (esTipologiaDbSm(t.pref)) {
+        if (!dbSmAgregado) {
+          options.push({ value: DB_SM_GROUP_VALUE, label: 'DB-SM — Cajoneras con Gola de madera' });
+          dbSmAgregado = true;
+        }
+        continue;
+      }
+      options.push({ value: t.id, label: etiquetaTipoModulo(prefProyecto(t), t.nombre_es) });
     }
     return options;
   })();
-  const tipoSelectorValue = usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
+  const tipoSelectorValue = usaTipologiaDbSmgSf
+    ? DB_SMG_SF_GROUP_VALUE
+    : usaTipologiaDbSmgFe
+      ? DB_SMG_FE_GROUP_VALUE
+      : usaTipologiaDbSmg
+        ? DB_SMG_GROUP_VALUE
+    : usaTipologiaDbSmFeSf
+    ? DB_SM_FE_SF_GROUP_VALUE
+    : usaTipologiaDbSm
+    ? DB_SM_GROUP_VALUE
+    : usaTipologiaDbSmFe
+      ? DB_SM_FE_GROUP_VALUE
+      : usaTipologiaDbSmSf ? DB_SM_SF_GROUP_VALUE : tipoId;
   const tableroOptions = useMemo(() => [...tableros].sort((a, b) => a.codigo.localeCompare(b.codigo)).map((t) => ({
     value: t.codigo,
     label: `${t.codigo} · ${[t.proveedor, t.sustrato, t.espesor_mm && t.espesor_mm + 'mm', t.color_nombre].filter(Boolean).join(' ')}`,
@@ -233,8 +371,20 @@ export default function AddLineForm({
   })), [tableros]);
 
   function handleTipoChange(id: string) {
-    const resolvedId = id === DB_SM_FE_GROUP_VALUE
-      ? tipos.find((t) => t.pref === DB_SM_FE_TIPOLOGIAS[0].pref)?.id
+    const resolvedId = id === DB_SM_FE_SF_GROUP_VALUE
+      ? tipologiasDbSmFeSf[0]?.id
+      : id === DB_SMG_SF_GROUP_VALUE
+      ? tipologiasDbSmgSf[0]?.id
+      : id === DB_SMG_FE_GROUP_VALUE
+        ? tipos.find((t) => t.pref === DB_SMG_FE_TIPOLOGIAS[0].pref)?.id
+        : id === DB_SMG_GROUP_VALUE
+      ? tipos.find((t) => t.pref === DB_SMG_TIPOLOGIAS[0].pref)?.id
+      : id === DB_SM_GROUP_VALUE
+      ? tipos.find((t) => t.pref === DB_SM_TIPOLOGIAS[0].pref)?.id
+      : id === DB_SM_FE_GROUP_VALUE
+        ? tipos.find((t) => t.pref === DB_SM_FE_TIPOLOGIAS[0].pref)?.id
+      : id === DB_SM_SF_GROUP_VALUE
+        ? tipologiasDbSmSf[0]?.id
       : id;
     if (!resolvedId) return;
     setTipoId(resolvedId);
@@ -247,13 +397,38 @@ export default function AddLineForm({
     setNcajones('');
     setNentrepanos('');
     setZocalo('');
+    setPuertaSup('');
     setNbarras('');
     setDbTipo('');
-    setRielCodigo('RIELTANDEM');
+    setRielCodigo('');
+    setBarraCodigo('');
     setPcfdConfig('');
     setDoor('');
+    setFree('');
     setDoorHand('R');
     const nuevoTipo = tipos.find((t) => t.id === resolvedId);
+    if (usaMedidasMoHood(nuevoTipo?.pref)) {
+      setMo(String(convertir(200, 'mm', unidad)));
+      setHood('0');
+    } else {
+      setMo('');
+      setHood('');
+    }
+    const tkPredeterminado = tkPredeterminadoTorre(nuevoTipo?.pref);
+    if (tkPredeterminado != null) setZocalo(String(convertir(tkPredeterminado, 'in', unidad)));
+    if (usaPuertaSupTorre(nuevoTipo?.pref)) setPuertaSup(String(convertir(30, 'in', unidad)));
+    if (usaMoTorre(nuevoTipo?.pref)) setMo(String(convertir(20, 'in', unidad)));
+    if (esTipologiaDbSmSf(nuevoTipo?.pref) || esTipologiaDbSmFeSf(nuevoTipo?.pref)) setConFondo(false);
+    if (esTipologiaDbSmFeSf(nuevoTipo?.pref)) {
+      setSistemaFrente('gola');
+      setRielCodigo('RIELFE500');
+    }
+    if (esTipologiaDbSmG(nuevoTipo?.pref) || esTipologiaDbSmGFe(nuevoTipo?.pref) || esTipologiaDbSmGSf(nuevoTipo?.pref)) {
+      setSistemaFrente('gola');
+      setConFondo(!esTipologiaDbSmGSf(nuevoTipo?.pref));
+      setRielCodigo(herrajesFijosDbFe(nuevoTipo?.pref) ? 'RIELFE500' : '');
+      setBarraCodigo('');
+    }
     if (usaHuecoHornoParametrico(nuevoTipo?.pref)) {
       setHornoLargo(String(convertir(219.2, 'mm', unidad)));
       setHornoAlto(String(convertir(153.2, 'mm', unidad)));
@@ -271,25 +446,30 @@ export default function AddLineForm({
     }
     // Los muebles superiores de pared (W) siempre parten de 12 de fondo por defecto.
     const nuevoPref = prefProyecto(nuevoTipo);
+    // Mismo criterio que el Simulador: 28,75" la linea U y Sink Vanity, 30" el
+    // resto de los inferiores. Editable.
+    const altoDefecto = altoPorDefectoIn(nuevoPref, tipos.find((t) => t.pref === nuevoPref)?.categoria);
+    if (altoDefecto != null) {
+      setAlto(String(unidad === 'in' ? altoDefecto : unidad === 'cm' ? altoDefecto * 2.54 : altoDefecto * 25.4));
+    }
     if (nuevoPref === 'W') setProf(unidad === 'in' ? '12' : unidad === 'cm' ? '30.48' : '304.8');
     if (nuevoPref === 'WSM') setProf(unidad === 'in' ? '14' : unidad === 'cm' ? '35.56' : '355.6');
     if (['F', 'DB'].includes(tipos.find((t) => t.id === resolvedId)?.pref ?? '')) setSistemaFrente('manija');
   }
 
-  function aplicarDbSmFeTipo(pref: string) {
+  function aplicarDbSmTipo(pref: string) {
     const tipo = tipos.find((item) => item.pref === pref);
     if (tipo) handleTipoChange(tipo.id);
   }
 
-  function aplicarPerfil(id: string) {
-    setPerfilId(id);
-    const p = perfiles.find((x) => x.id === id);
-    if (p) setPreset({ ...p.valores });
+  function aplicarDbSmSfTipo(pref: string) {
+    const tipo = tipos.find((item) => item.pref === pref);
+    if (tipo) handleTipoChange(tipo.id);
   }
 
   function aplicarDbTipo(k: string) {
     setDbTipo(k);
-    const t = DB_TIPOLOGIAS.find((x) => x.key === k);
+    const t = tipologiasDbParaPrefijo(prefTipo).find((x) => x.key === k);
     if (t) {
       setNcajones(String(t.nc));
       setNbarras(String(t.nb));
@@ -302,16 +482,24 @@ export default function AddLineForm({
     if (!config) return;
     setNcajones(String(config.nc));
     setNentrepanos(String(config.ne));
-    setZocalo(String(config.zocalo));
+    setZocalo(String(convertir(config.zocalo, 'in', unidad)));
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (usaHood) {
+      try { validarHoodSm(parseMedida(alto), hood.trim() === '' ? undefined : parseMedida(hood), free.trim() === '' ? undefined : parseMedida(free)); }
+      catch (error) { setError((error as Error).message); return; }
+    }
     const dimsInvalidas = [
       ['Largo', largo], ['Alto', alto], ['Prof', prof],
       ...(usaDoor ? [['Puerta', door]] : []),
       ...(usaHuecoHorno ? [['Largo libre del horno', hornoLargo], ['Alto libre del horno', hornoAlto]] : []),
+      ...(usaMoHood ? [['MO', mo], ['HOOD', hood]] : []),
+      ...(usaTk ? [['TK', zocalo]] : []),
+      ...(usaPuertaSup ? [['PUERTA SUP', puertaSup]] : []),
+      ...(usaMoPcfd ? [['MO', mo]] : []),
     ]
       .filter(([, v]) => Number.isNaN(parseMedida(v as string)));
     if (dimsInvalidas.length > 0) {
@@ -324,23 +512,51 @@ export default function AddLineForm({
       setLoading(false);
       return;
     }
+    if (usaMoHood && (!(parseMedida(mo) > 0) || !(parseMedida(hood) >= 0)
+      || parseMedida(mo) + parseMedida(hood) >= parseMedida(alto))) {
+      setError('MO debe ser mayor que cero, HOOD no puede ser negativo y su suma debe ser menor que el alto del mueble.');
+      setLoading(false);
+      return;
+    }
+    const altoUtil = parseMedida(alto) - parseMedida(zocalo);
+    if (usaTk && (!(parseMedida(zocalo) >= 0) || !(altoUtil > 0))) {
+      setError('TK es obligatorio, debe ser mayor o igual a cero y menor que el alto.'); setLoading(false); return;
+    }
+    if (usaPuertaSup && (!(parseMedida(puertaSup) > 0) || !(parseMedida(puertaSup) < altoUtil))) {
+      setError('PUERTA SUP es obligatoria y debe ser menor que la altura útil.'); setLoading(false); return;
+    }
+    if (usaMoPcfd && (!(parseMedida(mo) > 0) || !(parseMedida(mo) < altoUtil))) {
+      setError('MO es obligatorio y debe ser menor que la altura útil.'); setLoading(false); return;
+    }
     const overrides: Record<string, number> = {};
     if (npuertas !== '') overrides.n_puertas = Number(npuertas);
     if (ncajones !== '') overrides.n_cajones = Number(ncajones);
     if (nentrepanos !== '') overrides.n_entrepanos = Number(nentrepanos);
-    if (zocalo !== '') overrides.zocalo = Number(zocalo);
+    if (zocalo !== '') overrides.zocalo = convertir(parseMedida(zocalo), unidad, 'in');
+    if (usaPuertaSup) overrides.PUERTA_SUP = convertir(parseMedida(puertaSup), unidad, 'in');
+    if (usaMoPcfd) overrides.MO = convertir(parseMedida(mo), unidad, 'in');
     if (nbarras !== '') overrides.n_barras = Number(nbarras);
     if (usaHuecoHorno) {
       overrides.horno_largo = convertir(parseMedida(hornoLargo), unidad, 'in');
       overrides.horno_alto = convertir(parseMedida(hornoAlto), unidad, 'in');
     }
+    if (usaMoHood) {
+      overrides.MO = convertir(parseMedida(mo), unidad, 'in');
+      overrides.HOOD = convertir(parseMedida(hood), unidad, 'in');
+    }
+    if (usaHood) {
+      overrides.HOOD = convertirExacto(parseMedida(hood), unidad, 'in');
+      overrides.FREE = convertirExacto(parseMedida(free), unidad, 'in');
+    }
     if (esDB && dbTipo) {
-      const dbT = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
+      const dbT = tipologiasDbParaPrefijo(prefTipo).find((x) => x.key === dbTipo);
       overrides.n_cajones_pequenos = dbT?.npeq ?? 0;
       overrides.n_cajones_ocultos = dbT?.noculto ?? 0;
     }
     // Variantes transversales: override numérico 0/1 (migración 0028).
-    overrides.gola = esTipologiaDbSm(prefTipo) || esTipologiaDbSmFe(prefTipo) ? 1 : esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0;
+    overrides.gola = esTipologiaDbSm(prefTipo) || esTipologiaDbSmFe(prefTipo) || esTipologiaDbSmFeSf(prefTipo) || esTipologiaDbSmSf(prefTipo)
+      || esTipologiaDbSmG(prefTipo) || esTipologiaDbSmGFe(prefTipo) || esTipologiaDbSmGSf(prefTipo)
+      ? 1 : esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0;
     if (permiteRemovible(prefTipo)) overrides.removible = removible ? 1 : 0;
 
     const payload = {
@@ -356,10 +572,13 @@ export default function AddLineForm({
       cantidad,
       prefLabel: prefProyecto(tipo)
         ? codigoComercial({
+            manoPuerta: pideMano ? (manoPuerta || undefined) : undefined,
+            nPuertas: puertasActuales,
             pref: prefProyecto(tipo),
             largo: parseMedida(largo),
             alto: parseMedida(alto),
             prof: parseMedida(prof),
+            zocaloIn: overrides.zocalo ?? null,
             unidad,
             sistema: sistemaMedida,
             sistemaFrente,
@@ -369,6 +588,7 @@ export default function AddLineForm({
             doorHand: usaDoor ? doorHand : null,
             espesorCajaMm: tableros.find((tablero) => tablero.codigo === preset.caja)?.espesor_mm,
             espesorFrenteMm: tableros.find((tablero) => tablero.codigo === preset.frente)?.espesor_mm,
+            conFondo: fuerzaConFondo ? true : conFondo,
           })
         : undefined,
       modoFrentes,
@@ -380,11 +600,15 @@ export default function AddLineForm({
       margenOverride: margenInput !== '' ? Number(margenInput) / 100 : undefined,
       cantoFrentes: cantoFrentesSel !== '' ? cantoFrentesSel : undefined,
       cantoCaja: cantoCajaSel !== '' ? cantoCajaSel : undefined,
+      barraCodigo: usaTableroGaveta(prefTipo) && !herrajesFijosDbFe(prefTipo) ? barraCodigo : undefined,
       rielCodigo: usaRiel && rielCodigo ? rielCodigo : undefined,
       dbTipo: esDB && dbTipo ? dbTipo : undefined,
       door: usaDoor ? parseMedida(door) : undefined,
       doorHand: usaDoor ? doorHand : undefined,
-      conFondo: initial?.conFondo ?? projectDefaults?.conFondo ?? true,
+      manoPuerta: pideMano ? (manoPuerta || undefined) : undefined,
+      conFondo: fuerzaConFondo ? true : conFondo,
+      preciosTableros: projectDefaults?.preciosTableros,
+      anotaciones,
     };
 
     const res = esEdicion
@@ -397,12 +621,13 @@ export default function AddLineForm({
     }
     if (!esEdicion) {
       onMaterialesUsados?.({
-        familia: familiaMaterialPorPrefijo(prefTipo),
-        preset, cantoFrentes: cantoFrentesSel, cantoCaja: cantoCajaSel, perfilId, herrajesExcl,
+        familia: familiaProyecto(prefTipo),
+        // Recordar la selección de familia, sin convertir su caja global en frente.
+        preset: presetSeleccionado, cantoFrentes: cantoFrentesSel, cantoCaja: cantoCajaSel, perfilId, herrajesExcl,
       });
     }
     router.refresh();
-    onDone?.();
+    onDone?.('desagrupado' in res && res.desagrupado ? 'El mueble se separó del grupo y sus cambios individuales quedaron guardados.' : undefined);
   }
 
   return (
@@ -411,7 +636,9 @@ export default function AddLineForm({
         <h2 className="font-semibold text-slate-900">{esEdicion ? 'Editar mueble' : 'Agregar mueble'}</h2>
         {projectDefaults && (
           <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
-            ✓ Materiales globales aplicados
+            {Object.entries(presetMaterialesTipologia(materialProyecto(prefMaterial ?? '')?.preset ?? {}, prefMaterial)).every(([rol, codigo]) => preset[rol] === codigo)
+              ? '✓ Materiales globales aplicados'
+              : 'Selección individual de materiales'}
           </span>
         )}
       </div>
@@ -440,6 +667,51 @@ export default function AddLineForm({
           </L>
         </div>
 
+        {usaTk && (
+          <div className={`grid gap-1 ${usaPuertaSup || usaMoPcfd ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <L label="TK"><input type="text" required value={zocalo} onChange={(e) => setZocalo(e.target.value)} placeholder="0" className="inp" /></L>
+            {usaPuertaSup && <L label="PUERTA SUP"><input type="text" required value={puertaSup} onChange={(e) => setPuertaSup(e.target.value)} className="inp" /></L>}
+            {usaMoPcfd && <L label="MO"><input type="text" required value={mo} onChange={(e) => setMo(e.target.value)} className="inp" /></L>}
+          </div>
+        )}
+
+        {usaHood && <div className="grid grid-cols-2 gap-2 md:col-span-2">
+          <L label="HOOD">
+            <input type="text" required value={hood} onChange={(e) => setHood(e.target.value)} title="Medida total por debajo de la carcasa" className="inp" />
+            <p className="mt-1 text-xs text-slate-500">Medida total por debajo de la carcasa</p>
+          </L>
+          <L label="FREE">
+            <input type="text" required value={free} onChange={(e) => setFree(e.target.value)} title="Parte visible del extractor" className="inp" />
+            <p className="mt-1 text-xs text-slate-500">Parte visible del extractor</p>
+          </L>
+        </div>}
+        {usaMoHood && (
+          <div className="grid grid-cols-2 gap-1">
+            <L label="MO">
+              <input
+                type="text"
+                required
+                value={mo}
+                onChange={(e) => setMo(e.target.value)}
+                placeholder={String(convertir(200, 'mm', unidad))}
+                title="Distancia entre la base y el entrepaño fijo"
+                className="inp"
+              />
+            </L>
+            <L label="HOOD">
+              <input
+                type="text"
+                required
+                value={hood}
+                onChange={(e) => setHood(e.target.value)}
+                placeholder="0"
+                title="Distancia entre el final inferior del lateral y la base"
+                className="inp"
+              />
+            </L>
+          </div>
+        )}
+
         {usaHuecoHorno && (
           <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 md:col-span-2 lg:col-span-4">
             <div className="grid grid-cols-2 gap-2">
@@ -455,7 +727,7 @@ export default function AddLineForm({
         )}
 
         {usaDoor && (
-          <div className="grid grid-cols-2 gap-1 md:col-span-2">
+          <div className="grid grid-cols-1 gap-1 md:col-span-2">
             <L label={prefTipo === 'BBLFD' ? 'Door' : 'Puerta'}>
               <input type="text" required value={door} onChange={(e) => setDoor(e.target.value)} placeholder="22 7/8" className="inp" />
             </L>
@@ -497,8 +769,9 @@ export default function AddLineForm({
 
         <div className="grid grid-cols-3 gap-1 md:col-span-2">
           <L label="Nº puertas">
-            <input type="number" placeholder="auto" value={npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" />
+            <input type="number" placeholder="auto" disabled={usaHood} value={usaHood ? (tipo?.pref === 'TW-SM-HOOD' ? '1' : '2') : npuertas} onChange={(e) => setNpuertas(e.target.value)} className="inp" />
           </L>
+          {pideMano && <L label="Apertura de la puerta (obligatoria)"><select required value={manoPuerta} onChange={e => setManoPuerta(e.target.value as ManoPuerta | '')} className="inp"><option value="">Elige L o R</option><option value="L">L</option><option value="R">R</option></select></L>}
           <L label="Nº cajones">
             <input type="number" min={0} step={1} placeholder="auto" value={ncajones} onChange={(e) => { setNcajones(e.target.value); if (esPCFD) setPcfdConfig(''); }} className="inp" />
           </L>
@@ -515,22 +788,31 @@ export default function AddLineForm({
                 {PCFD_CONFIGURACIONES.map((config) => <option key={config.key} value={config.key}>{config.key} · {config.desc}</option>)}
               </select>
             </L>
-            <L label="Zócalo TK (in)">
-              <input type="number" min={0} step="any" placeholder="auto" value={zocalo} onChange={(e) => { setZocalo(e.target.value); setPcfdConfig(''); }} className="inp" />
-            </L>
           </div>
         )}
 
         {esDB && (
           <div className="grid grid-cols-2 gap-1">
-            <L label="Tipología DB">
+            <L label={`Tipología ${prefTipo || 'DB'}`}>
               <select value={dbTipo} onChange={(e) => aplicarDbTipo(e.target.value)} className="inp">
                 <option value="">— manual —</option>
-                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{t.key}</option>)}
+                {tipologiasDbParaPrefijo(prefTipo).map((t) => <option key={t.key} value={t.key} title={t.desc}>{etiquetaTipologiaDb(t.key, prefTipo)}</option>)}
               </select>
             </L>
             <L label="Nº barras (pares)">
-              <input type="number" placeholder="0" value={nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" />
+              <input disabled={esTipologiaDbFe(prefTipo)} type="number" placeholder="0" value={esTipologiaDbFe(prefTipo) ? '0' : nbarras} onChange={(e) => setNbarras(e.target.value)} className="inp" />
+            </L>
+          </div>
+        )}
+
+        {usaTipologiaDbSm && (
+          <div className="grid grid-cols-1 gap-1">
+            <L label="Tipología DB-SM">
+              <select value={prefTipo} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {DB_SM_TIPOLOGIAS.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.desc}</option>
+                ))}
+              </select>
             </L>
           </div>
         )}
@@ -538,7 +820,7 @@ export default function AddLineForm({
         {usaTipologiaDbSmFe && (
           <div className="grid grid-cols-1 gap-1">
             <L label="Tipología DB-SM-FE">
-              <select value={prefTipo} onChange={(e) => aplicarDbSmFeTipo(e.target.value)} className="inp">
+              <select value={prefTipo} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
                 {DB_SM_FE_TIPOLOGIAS.map((tipologia) => (
                   <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.desc}</option>
                 ))}
@@ -547,29 +829,75 @@ export default function AddLineForm({
           </div>
         )}
 
-        {usaRiel && (
+        {usaTipologiaDbSmFeSf && (
           <div className="grid grid-cols-1 gap-1">
-            <L label="Tipo de riel">
-              <select value={rielCodigo} onChange={(e) => setRielCodigo(e.target.value)} className="inp">
-                {DB_RIELES.map((r) => (
-                  <option key={r.codigo} value={r.codigo}>{r.nombre}</option>
+            <L label="Tipología DB-SM-FE-SF">
+              <select value={prefTipo} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {tipologiasDbSmFeSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola, Full Extension y sin fondo'}</option>
                 ))}
               </select>
             </L>
           </div>
         )}
 
-        {perfiles.length > 0 && (
-          <L label="Perfil de material">
-            <Combobox value={perfilId} options={perfiles.map((p) => ({ value: p.id, label: p.nombre }))} onChange={aplicarPerfil} placeholder="Elegir perfil…" />
-          </L>
+        {usaTipologiaDbSmSf && (
+          <div className="grid grid-cols-1 gap-1">
+            <L label="Tipología DB-SM-SF">
+              <select value={prefTipo} onChange={(e) => aplicarDbSmSfTipo(e.target.value)} className="inp">
+                {tipologiasDbSmSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola sin fondo'}</option>
+                ))}
+              </select>
+            </L>
+          </div>
         )}
+
+        {usaTipologiaDbSmg && (
+          <div className="grid grid-cols-1 gap-1">
+            <L label="Tipología DB-SMG">
+              <select value={prefTipo} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {DB_SMG_TIPOLOGIAS.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.desc}</option>
+                ))}
+              </select>
+            </L>
+          </div>
+        )}
+
+        {usaTipologiaDbSmgFe && (
+          <div className="grid grid-cols-1 gap-1">
+            <L label="Tipología DB-SMG-FE">
+              <select value={prefTipo} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {DB_SMG_FE_TIPOLOGIAS.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.desc}</option>
+                ))}
+              </select>
+            </L>
+          </div>
+        )}
+
+        {usaTipologiaDbSmgSf && (
+          <div className="grid grid-cols-1 gap-1">
+            <L label="Tipología DB-SMG-SF">
+              <select value={prefTipo} onChange={(e) => aplicarDbSmTipo(e.target.value)} className="inp">
+                {tipologiasDbSmgSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola metálica sin fondo'}</option>
+                ))}
+              </select>
+            </L>
+          </div>
+        )}
+
+        {usaRiel && <HerrajesGaveta riel={rielCodigo} barra={barraCodigo} onRiel={setRielCodigo} onBarra={setBarraCodigo} fe={herrajesFijosDbFe(prefTipo)} />}
 
         {roles.filter((r) => r !== 'refuerzo').map((rol) => (
           <L key={rol} label={ROL_LABEL[rol] ?? `Tablero ${rol}`}>
             <Combobox
               value={preset[rol] ?? ''}
-              options={tableroOptions}
+              disabled={(usaCajaMaterialFrente(prefMaterial) && (rol === 'caja' || rol === 'refuerzo'))
+                || (rol === 'fondo' && usaFondoMaterialFrente(prefMaterial))}
+              options={rol === 'gaveta' ? tableroOptions.filter(o => Number(tableros.find(t => t.codigo === o.value)?.espesor_mm) === 15) : tableroOptions}
               onChange={(v) => {
                 setPreset((p) => ({ ...p, [rol]: v, ...(rol === 'caja' ? { refuerzo: v } : {}) }));
                 const board = tableros.find((t) => t.codigo === v);
@@ -620,18 +948,31 @@ export default function AddLineForm({
             </select>
           </L>
           <L label="Canto caja">
-            <select value={cantoCajaSel} onChange={(e) => setCantoCajaSel(e.target.value)} className="inp">
+            <select value={usaCajaMaterialFrente(prefMaterial) ? cantoFrentesSel : cantoCajaSel} disabled={usaCajaMaterialFrente(prefMaterial)} title={usaCajaMaterialFrente(prefMaterial) ? 'Todas las piezas usan el canto de frente' : undefined} onChange={(e) => setCantoCajaSel(e.target.value)} className="inp">
               <option value="">Por defecto</option>
               {cantos.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </L>
         </div>
 
+        <L label="Fondo">
+          <select
+            value={fuerzaConFondo ? 'con_fondo' : conFondo ? 'con_fondo' : 'sin_fondo'}
+            onChange={(e) => setConFondo(e.target.value === 'con_fondo')}
+            disabled={fuerzaConFondo}
+            title={fuerzaConFondo ? 'Esta tipología no admite variante sin fondo' : undefined}
+            className="inp disabled:bg-slate-100"
+          >
+            <option value="con_fondo">Con fondo</option>
+            <option value="sin_fondo">Sin fondo</option>
+          </select>
+        </L>
+
         {herrajesTipo.length > 0 && (
           <div className="col-span-full rounded-lg border border-slate-200 p-2.5">
             <p className="text-[11px] font-medium text-slate-500 uppercase mb-1.5">Herrajes del módulo</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-              {herrajesTipo.map((h) => (
+              {herrajesTipo.filter(h => !herrajesFijosDbFe(prefTipo) || h.rol !== 'barra').map((h) => (
                 <label key={h.rol} className="flex cursor-pointer items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-sm text-slate-700 capitalize">
                   <input
                     type="checkbox"
@@ -639,12 +980,26 @@ export default function AddLineForm({
                     onChange={() => setHerrajesExcl((actual) => actual.includes(h.rol) ? actual.filter((rol) => rol !== h.rol) : [...actual, h.rol])}
                   />
                   {h.rol}
-                  {h.codigo ? <span className="text-slate-400 normal-case">· {h.codigo}</span> : null}
+                  {h.codigo ? <span className="text-slate-400 normal-case">· {h.rol === 'riel' ? (rielCodigo || 'Seleccionar riel') : h.rol === 'barra' ? (barraCodigo || 'Seleccionar barra') : h.codigo}</span> : null}
                 </label>
               ))}
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mt-3">
+        <L label="Anotaciones">
+          <textarea
+            value={anotaciones}
+            onChange={(e) => setAnotaciones(e.target.value)}
+            maxLength={1000}
+            rows={3}
+            placeholder="Escribe una indicación específica para este mueble…"
+            className="inp min-h-20 resize-y"
+          />
+        </L>
+        <p className="mt-1 text-xs text-slate-500">Solo aplica a este mueble dentro de esta cotización.</p>
       </div>
 
       {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
@@ -654,7 +1009,7 @@ export default function AddLineForm({
           {loading ? 'Guardando…' : esEdicion ? 'Guardar cambios' : '+ Agregar a la cotización'}
         </button>
         {esEdicion && (
-          <button type="button" onClick={onDone} className="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100">
+          <button type="button" onClick={() => onDone?.()} className="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100">
             Cancelar
           </button>
         )}

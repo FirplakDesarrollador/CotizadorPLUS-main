@@ -92,3 +92,21 @@ Lo que esa vía **no** puede cubrir es el otro lado: que un fallo de
 `createServerClient` se propague en lugar de caer a la rama elevada, porque
 exigiría un request de Next real. Ahí la garantía es estructural — el `try`
 envuelve una sola línea.
+
+## Nombre visible del usuario
+
+La migración `0207_nombre_usuario_cotizaciones.sql` permite que cada usuario
+autenticado guarde el nombre que elige al ingresar mediante
+`cot_guardar_nombre_usuario`. La función usa `auth.uid()` como identidad y hace
+`upsert` únicamente sobre esa fila de `cot_perfiles`, sin aceptar un `user_id`
+del cliente ni modificar el rol.
+
+El listado de cotizaciones conserva la autoría real en
+`cot_cotizaciones.creado_por` y resuelve únicamente `user_id`/`nombre` mediante
+`cot_nombres_usuarios`. Esta RPC permite mostrar “Cotizado por” sin ampliar la
+política de lectura de `cot_perfiles` ni exponer roles de otros usuarios.
+
+El encabezado compartido consulta `rol` y `nombre` del perfil autenticado con
+`getUserAndRole`. En el desplegable **User** presenta primero el nombre elegido
+por el usuario, luego su correo de autenticación y finalmente su rol. Todas las
+pestañas pasan estos datos al mismo componente `AppHeader`.

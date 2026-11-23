@@ -2,19 +2,37 @@
 import { useMemo, useRef, useState } from 'react';
 import { previewAction } from '../admin/diseno/actions';
 import { modulosDeCotizacionAction, type ModuloHDR } from './actions';
-import { DB_TIPOLOGIAS, DB_SM_FE_TIPOLOGIAS, SISTEMAS_FRENTE, esTipologiaDbSmFe, permiteTipologiaDb, usaPuertaParametrica, type SistemaFrente } from '@/lib/muebles';
+import { etiquetaTipologiaDb, esTipologiaDbFe, tipologiasDbParaPrefijo, DB_SM_FE_TIPOLOGIAS, SISTEMAS_FRENTE, esTipologiaDbSmFe, esTipologiaDbSmFeSf, obtenerTipologiasDbSmFeSf, permiteTipologiaDb, usaPuertaParametrica, type SistemaFrente } from '@/lib/muebles';
 import Combobox from '@/components/Combobox';
 import Campo from '@/components/Campo';
 import { codigoComercial, parseMedida } from '@/lib/module-groups';
+import { presetMaterialesTipologia, resolverCodigoTablero } from '@/lib/materiales-proyecto';
 import type { CotizarResult } from '@/lib/cotizar';
+import { usaFrentesDosPequenosGola } from '@/lib/frentes-gaveta';
+import { esPanel, etiquetaTipoModulo } from '@/lib/nombres-modulos';
 import type { CotizacionHeader } from '@/lib/cotizaciones';
 import HdrTabla, { descripcionModulo, type Tablero, type HdrTablaHandle } from './HdrTabla';
+import HdrBuscarGuardados from './HdrBuscarGuardados';
+import { CAMPOS_COLOR_HDR, consolidarModulosHdr, descripcionPiezaPlanaHdr, prefijarHrj, tituloModuloHdr, type ColoresHdr } from './datosHdr';
+import { crearDestinoHdr, esCancelacionHdr } from './destinoExportacion';
+import { exigirRevisionHdr } from './validacion';
 
 type Tipo = { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; nombre_es: string | null; categoria: string | null };
 const DB_SM_FE_GROUP_VALUE = '__DB_SM_FE__';
+const DB_SM_FE_SF_GROUP_VALUE = '__DB_SM_FE_SF__';
+
+function PrefijoHrj({ checked, onChange, contexto }: { checked: boolean; onChange: (valor: boolean) => void; contexto: string }) {
+  return <label className="flex w-fit cursor-pointer items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-slate-700">
+    <span>Prefijo HRJ</span>
+    <input type="checkbox" role="switch" aria-label={`Agregar prefijo HRJ ${contexto}`} checked={checked} onChange={e => onChange(e.target.checked)} className="peer sr-only" />
+    <span aria-hidden="true" className="relative h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-emerald-600 peer-checked:after:translate-x-5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-emerald-700" />
+  </label>;
+}
 
 export default function HdrBuscador({ tipos, presetDefault, tableros, cotizaciones }:
   { tipos: Tipo[]; presetDefault: Record<string, string>; tableros: Tablero[]; cotizaciones: CotizacionHeader[] }) {
+  const [revisionConfirmada, setRevisionConfirmada] = useState(false);
+  const presetResuelto = Object.fromEntries(Object.entries(presetDefault).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, tableros)]));
   const [tipoId, setTipoId] = useState('');
   const [largo, setLargo] = useState(30);
   const [alto, setAlto] = useState(30);
@@ -24,22 +42,44 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   const [sistemaFrente, setSistemaFrente] = useState<SistemaFrente>('manija');
   const [door, setDoor] = useState('');
   const [doorHand, setDoorHand] = useState<'L' | 'R'>('R');
+  const [notaPanel, setNotaPanel] = useState('');
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<CotizarResult | null>(null);
 
   const [cotizacionId, setCotizacionId] = useState('');
+  const [proyectoHdr, setProyectoHdr] = useState('');
+  const [prefijoHrj, setPrefijoHrj] = useState(false);
+  const [coloresHdr, setColoresHdr] = useState<ColoresHdr>({});
+  const [prefijoHrjBuscar, setPrefijoHrjBuscar] = useState(false);
+  const [prefijoHrjCrear, setPrefijoHrjCrear] = useState(false);
   const [modLoading, setModLoading] = useState(false);
   const [modError, setModError] = useState<string | null>(null);
   const [modulos, setModulos] = useState<ModuloHDR[] | null>(null);
-  const [exportandoTodas, setExportandoTodas] = useState<{ hecho: number; total: number } | null>(null);
+  const [seleccionPdf, setSeleccionPdf] = useState<Set<string>>(() => new Set());
+  const [exportandoPdf, setExportandoPdf] = useState<{ hecho: number; total: number } | null>(null);
+  const [exportandoExcel, setExportandoExcel] = useState(false);
+  const cargaCotizacion = useRef(0);
   const tablasRef = useRef(new Map<string, HdrTablaHandle>());
+  const hdrDisponibles = (modulos ?? []).filter(m => m.ok);
+  const hdrSeleccionadas = hdrDisponibles.filter(m => seleccionPdf.has(m.lineaId));
+  const exportando = exportandoPdf !== null || exportandoExcel;
+  const referencias = useMemo(() => { const conteo = new Map<string, number>(); for (const m of modulos ?? []) conteo.set(m.codigoModulo, (conteo.get(m.codigoModulo) ?? 0) + 1); return conteo; }, [modulos]);
+  const totalMuebles = (modulos ?? []).reduce((n, m) => n + (m.origenes ?? []).reduce((s, o) => s + o.cantidad * o.repeticionesArea, 0), 0);
 
   const tipoOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
     let dbSmFeAgregado = false;
+    let dbSmFeSfAgregado = false;
     for (const t of tipos) {
+      if (esTipologiaDbSmFeSf(t.pref)) {
+        if (!dbSmFeSfAgregado) {
+          options.push({ value: DB_SM_FE_SF_GROUP_VALUE, label: 'DB-SM-FE-SF — Cajoneras con Gola, riel Full Extension y sin fondo' });
+          dbSmFeSfAgregado = true;
+        }
+        continue;
+      }
       if (esTipologiaDbSmFe(t.pref)) {
         if (!dbSmFeAgregado) {
           options.push({ value: DB_SM_FE_GROUP_VALUE, label: 'DB-SM-FE — Cajoneras con Gola y riel Full Extension' });
@@ -47,16 +87,20 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         }
         continue;
       }
-      options.push({ value: t.id, label: ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM', 'BLS', 'BLS-RS-SM', 'BOMH-1', 'BOMH-1-FE'].includes(t.pref) ? (t.nombre_es ?? t.pref) : `${t.pref} — ${t.nombre_es ?? ''}` });
+      options.push({ value: t.id, label: etiquetaTipoModulo(t.pref, t.nombre_es) });
     }
     return options;
   }, [tipos]);
   const tipoSel = tipos.find((t) => t.id === tipoId);
   const esDB = permiteTipologiaDb(tipoSel?.pref);
-  const esDbTradicional = tipoSel?.pref === 'DB';
+  const esDbTradicional = (tipoSel?.pref === 'DB' || esTipologiaDbFe(tipoSel?.pref));
   const usaTipologiaDbSmFe = esTipologiaDbSmFe(tipoSel?.pref);
+  const usaTipologiaDbSmFeSf = esTipologiaDbSmFeSf(tipoSel?.pref);
+  const tipologiasDbSmFeSf = obtenerTipologiasDbSmFeSf(tipos);
   const usaDoor = usaPuertaParametrica(tipoSel?.pref);
-  const tipoSelectorValue = usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
+  const tipoSelectorValue = usaTipologiaDbSmFeSf
+    ? DB_SM_FE_SF_GROUP_VALUE
+    : usaTipologiaDbSmFe ? DB_SM_FE_GROUP_VALUE : tipoId;
 
   const cotizacionOptions = useMemo(
     () => cotizaciones.map((c) => ({
@@ -67,7 +111,9 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   );
 
   function handleTipoChange(v: string) {
-    const resolvedId = v === DB_SM_FE_GROUP_VALUE
+    const resolvedId = v === DB_SM_FE_SF_GROUP_VALUE
+      ? tipologiasDbSmFeSf[0]?.id
+      : v === DB_SM_FE_GROUP_VALUE
       ? tipos.find((t) => t.pref === DB_SM_FE_TIPOLOGIAS[0].pref)?.id
       : v;
     if (!resolvedId) return;
@@ -76,7 +122,8 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     if (!pref.startsWith('DB')) setDbTipo('');
     if (pref === 'W') setProf(unidad === 'in' ? 12 : unidad === 'cm' ? 30.48 : 304.8);
     if (pref === 'WSM') setProf(unidad === 'in' ? 14 : unidad === 'cm' ? 35.56 : 355.6);
-    if (pref === 'F' || pref === 'DB') setSistemaFrente('manija');
+    if (pref === 'F' || (pref === 'DB' || esTipologiaDbFe(pref))) setSistemaFrente('manija');
+    if (esTipologiaDbSmFeSf(pref) || usaFrentesDosPequenosGola(pref)) setSistemaFrente('gola');
   }
 
   function aplicarDbSmFeTipo(pref: string) {
@@ -90,16 +137,16 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
     if (usaDoor && !(parseMedida(door) > 0)) { setError('Escribe una medida válida para Puerta.'); return; }
     setError(null);
     setLoading(true);
-    const overrides: Record<string, number> = { gola: esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0 };
+    const overrides: Record<string, number> = { gola: usaFrentesDosPequenosGola(tipoSel?.pref) ? 1 : esDbTradicional ? 0 : sistemaFrente === 'gola' ? 1 : 0 };
     if (esDB && dbTipo) {
-      const t = DB_TIPOLOGIAS.find((x) => x.key === dbTipo);
+      const t = tipologiasDbParaPrefijo(tipoSel?.pref).find((x) => x.key === dbTipo);
       if (t) {
         overrides.n_cajones = t.nc;
         overrides.n_cajones_pequenos = t.npeq;
       }
     }
     const r = await previewAction({
-      tipoId, largo, alto, prof, unidad, preset: presetDefault, conHerrajes: false, overrides,
+      tipoId, largo, alto, prof, unidad, preset: presetResuelto, conHerrajes: false, overrides, dbTipo: esDB ? dbTipo : undefined,
       door: usaDoor ? parseMedida(door) : undefined,
       doorHand: usaDoor ? doorHand : undefined,
     });
@@ -109,55 +156,103 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
   }
 
   async function handleCotizacionChange(id: string) {
+    const solicitud = ++cargaCotizacion.current;
+    setRevisionConfirmada(false);
     setCotizacionId(id);
+    setProyectoHdr(cotizaciones.find(c => c.id === id)?.nombre ?? '');
     setModulos(null);
+    setSeleccionPdf(new Set());
     setModError(null);
     tablasRef.current.clear();
+    setModLoading(Boolean(id));
     if (!id) return;
-    setModLoading(true);
     try {
       const r = await modulosDeCotizacionAction(id);
-      setModulos(r);
+      if (solicitud !== cargaCotizacion.current) return;
+      const hojas = consolidarModulosHdr(r);
+      setModulos(hojas);
+      setSeleccionPdf(new Set(hojas.filter(m => m.ok).map(m => m.lineaId)));
     } catch (e) {
-      setModError(e instanceof Error ? e.message : 'Error al cargar los módulos de la cotización.');
+      if (solicitud === cargaCotizacion.current) setModError(e instanceof Error ? e.message : 'Error al cargar los módulos de la cotización.');
     } finally {
-      setModLoading(false);
+      if (solicitud === cargaCotizacion.current) setModLoading(false);
     }
+  }
+
+  function seleccionarHdr(lineaId: string, marcada: boolean) {
+    setSeleccionPdf(actual => {
+      const siguiente = new Set(actual);
+      if (marcada) siguiente.add(lineaId);
+      else siguiente.delete(lineaId);
+      return siguiente;
+    });
   }
 
   // Un solo botón, un PDF independiente por módulo (no un PDF combinado). Secuencial,
   // no en paralelo: cada exportación usa html2canvas (pesado) y varios navegadores
   // bloquean descargas múltiples disparadas de golpe si no van una detrás de otra.
-  async function exportarTodasPdf() {
-    const okModulos = (modulos ?? []).filter((m) => m.ok);
-    if (okModulos.length === 0) return;
-    setExportandoTodas({ hecho: 0, total: okModulos.length });
-    for (let i = 0; i < okModulos.length; i++) {
-      const handle = tablasRef.current.get(okModulos[i].lineaId);
-      if (handle) await handle.exportarPdf();
-      setExportandoTodas({ hecho: i + 1, total: okModulos.length });
-      if (i < okModulos.length - 1) await new Promise((r) => setTimeout(r, 300));
-    }
-    setExportandoTodas(null);
+  async function exportarSeleccionPdf() {
+    if (!hdrSeleccionadas.length) return;
+    setExportandoPdf({ hecho: 0, total: hdrSeleccionadas.length });
+    setModError(null);
+    try {
+      exigirRevisionHdr(hdrSeleccionadas, revisionConfirmada);
+      const handles = hdrSeleccionadas.map(m => { const handle = tablasRef.current.get(m.lineaId); if (!handle) throw new Error(`La HDR de ${m.codigoModulo} aún no está lista.`); return handle; });
+      const destino = await crearDestinoHdr(proyectoHdr);
+      for (let i = 0; i < handles.length; i++) { await handles[i].exportarPdf(destino.guardar); setExportandoPdf({ hecho: i + 1, total: handles.length }); }
+      await destino.finalizar();
+    } catch (e) { if (!esCancelacionHdr(e)) setModError(e instanceof Error ? e.message : 'No se pudo exportar la selección de HDR.'); }
+    finally { setExportandoPdf(null); }
   }
 
+  async function exportarExcel() {
+    setExportandoExcel(true);
+    setModError(null);
+    try {
+      exigirRevisionHdr(modulos ?? [], revisionConfirmada);
+      if (modulos?.some(m => !m.ok)) throw new Error('Hay muebles con errores. Corrígelos antes de exportar para no omitirlos.');
+      const datos = (modulos ?? []).map(m => { const tabla = tablasRef.current.get(m.lineaId); if (!tabla) throw new Error(`La HDR de ${m.codigoModulo} aún no está lista.`); return tabla.datosExcel(); });
+      const destino = await crearDestinoHdr(proyectoHdr);
+      const { descargarExcelHdr } = await import('./excel');
+      await descargarExcelHdr(datos, proyectoHdr, destino);
+    } catch (e) { if (!esCancelacionHdr(e)) setModError(e instanceof Error ? e.message : 'No se pudo exportar el Excel.'); }
+    finally { setExportandoExcel(false); }
+  }
+
+  const materialesCodigo = presetMaterialesTipologia(presetResuelto, tipoSel?.pref);
   const codigo = tipoSel
     ? codigoComercial({
-        pref: tipoSel.pref, largo, alto, prof, unidad, sistema: 'imperial', sistemaFrente,
+        pref: tipoSel.pref, largo, alto, prof, unidad, sistema: unidad === 'in' ? 'imperial' : 'metrico', sistemaFrente, dbTipo: esDB ? dbTipo : null,
         door: usaDoor && door !== '' ? parseMedida(door) : null,
         doorHand: usaDoor ? doorHand : null,
-        espesorCajaMm: tableros.find((tablero) => tablero.codigo === presetDefault.caja)?.espesor_mm,
-        espesorFrenteMm: tableros.find((tablero) => tablero.codigo === presetDefault.frente)?.espesor_mm,
+        espesorCajaMm: tableros.find((tablero) => tablero.codigo === materialesCodigo.caja)?.espesor_mm,
+        espesorFrenteMm: tableros.find((tablero) => tablero.codigo === materialesCodigo.frente)?.espesor_mm,
       })
+    : '';
+  const tituloCreado = res
+    ? (() => {
+        const nombre = `${codigo} ${descripcionPiezaPlanaHdr(tipoSel?.pref, notaPanel) ?? descripcionModulo(res, tipoSel?.pref)}`;
+        return prefijoHrjCrear ? prefijarHrj(nombre, tipoSel?.pref, codigo) : nombre;
+      })()
     : '';
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
-        <h2 className="font-semibold text-slate-900">Generar desde una cotización guardada</h2>
+        <h2 className="font-semibold text-slate-900">Generar desde cotización</h2>
         <Campo label="Cotización">
-          <Combobox value={cotizacionId} options={cotizacionOptions} onChange={handleCotizacionChange} placeholder="Buscar cotización por código, nombre o cliente…" />
+          <Combobox value={cotizacionId} options={cotizacionOptions} onChange={handleCotizacionChange} disabled={exportando} placeholder="Buscar cotización por código, nombre o cliente…" />
         </Campo>
+        <Campo label="Nombre del proyecto">
+          <input value={proyectoHdr} onChange={e => setProyectoHdr(e.target.value)} placeholder="Nombre para las hojas de ruta" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </Campo>
+        <PrefijoHrj checked={prefijoHrj} onChange={setPrefijoHrj} contexto="al nombre del mueble" />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {CAMPOS_COLOR_HDR.map(([rol, etiqueta]) => <Campo key={rol} label={etiqueta}>
+            <input value={coloresHdr[rol] ?? ''} onChange={e => setColoresHdr(actual => ({ ...actual, [rol]: e.target.value }))}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          </Campo>)}
+        </div>
         {modLoading && <p className="text-slate-400 text-sm">Cargando módulos…</p>}
         {modError && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{modError}</div>}
         {modulos && modulos.length === 0 && <p className="text-slate-400 text-sm">Esta cotización no tiene módulos.</p>}
@@ -165,33 +260,62 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
       {modulos && modulos.length > 0 && (
         <div className="space-y-4">
-          <div className="flex justify-end">
+          {modulos.some(m => m.avisosValidacion?.length) && (
+            <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 space-y-2">
+              <p className="font-semibold">Revisión de hojas de ruta pendiente</p>
+              <ul className="list-disc pl-5">{modulos.flatMap(m => (m.avisosValidacion ?? []).map((aviso, i) => <li key={`${m.lineaId}-${i}`}>{m.codigoModulo}: {aviso}</li>))}</ul>
+              <a href={`/cotizaciones/${cotizacionId}`} className="underline">Abrir cotización para corregir las cantidades</a>
+              <p>Después de guardar la corrección, vuelve a seleccionar la cotización para validar las HDR.</p>
+              {modulos.some(m => m.aperturaPendiente) && <p>Completa la apertura L/R en la cotización para exportar las hojas afectadas.</p>}
+              {modulos.some(m => m.avisosValidacion?.length && !m.aperturaPendiente) && <label className="flex items-start gap-2"><input type="checkbox" checked={revisionConfirmada} onChange={e => setRevisionConfirmada(e.target.checked)} />He revisado los avisos y confirmo que las cantidades guardadas son intencionales.</label>}
+            </div>
+          )}
+          <p className="text-sm text-slate-600">Al exportar, elige Descargas: se creará «{proyectoHdr.trim() || 'Proyecto'} - HDR». Si tu navegador no admite carpetas, se descargará un ZIP con esa carpeta.</p>
+          <p className="text-sm text-slate-600">Muebles contabilizados: {totalMuebles.toLocaleString('es-CO')} · HDR: {modulos.length}. Los grupos físicos se muestran completos, con sus piezas compartidas contadas una sola vez.</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <span aria-live="polite" className="text-sm text-slate-700">{hdrSeleccionadas.length} de {hdrDisponibles.length} HDR seleccionadas</span>
+            <button type="button" onClick={() => setSeleccionPdf(new Set(hdrDisponibles.map(m => m.lineaId)))} disabled={exportando || hdrSeleccionadas.length === hdrDisponibles.length} className="text-sm underline disabled:opacity-50">Seleccionar todas</button>
+            <button type="button" onClick={() => setSeleccionPdf(new Set())} disabled={exportando || !hdrSeleccionadas.length} className="text-sm underline disabled:opacity-50">Desmarcar todas</button>
+            <button type="button" onClick={exportarExcel} disabled={exportando || !hdrDisponibles.length} className="ml-auto rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm disabled:opacity-50">{exportandoExcel ? 'Generando Excel…' : 'Exportar Excel'}</button>
             <button
               type="button"
-              onClick={exportarTodasPdf}
-              disabled={exportandoTodas !== null || !modulos.some((m) => m.ok)}
+              onClick={exportarSeleccionPdf}
+              disabled={exportando || !hdrSeleccionadas.length}
               className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
             >
-              {exportandoTodas ? `Generando ${exportandoTodas.hecho}/${exportandoTodas.total}…` : '⬇ Exportar todas en PDF'}
+              {exportandoPdf ? `Generando ${exportandoPdf.hecho}/${exportandoPdf.total}…` : '⬇ Exportar selección en PDF'}
             </button>
           </div>
 
           {modulos.map((m) => (
-            <div key={m.lineaId}>
+            <div key={m.lineaId} className="space-y-1">
               {m.ok ? (
-                <HdrTabla
-                  ref={(handle) => {
-                    if (handle) tablasRef.current.set(m.lineaId, handle);
-                    else tablasRef.current.delete(m.lineaId);
-                  }}
-                  res={m.result}
-                  tableros={tableros}
-                  titulo={`${m.codigoModulo} ${descripcionModulo(m.result)} · ${m.cocinaNombre}${m.cantidad > 1 ? ` · ×${m.cantidad}` : ''}`}
-                  mostrarBotonExportar={false}
-                />
+                <>
+                  <label className="inline-flex w-fit cursor-pointer items-center gap-2 px-1 py-1 text-sm text-slate-700">
+                    <input type="checkbox" checked={seleccionPdf.has(m.lineaId)} disabled={exportando}
+                      aria-label={`Incluir en PDF: ${tituloModuloHdr(m, prefijoHrj)}`}
+                      onChange={e => seleccionarHdr(m.lineaId, e.target.checked)} className="size-4 accent-emerald-700" />
+                    Incluir en PDF
+                  </label>
+                  <HdrTabla
+                    ref={(handle) => {
+                      if (handle) tablasRef.current.set(m.lineaId, handle);
+                      else tablasRef.current.delete(m.lineaId);
+                    }}
+                    res={m.result}
+                    pref={m.pref}
+                    codigoModulo={m.codigoModulo}
+                    tableros={tableros}
+                    titulo={tituloModuloHdr(m, prefijoHrj)}
+                    proyectoInicial={proyectoHdr}
+                    coloresPorRol={coloresHdr}
+                    referenciaRepetida={(referencias.get(m.codigoModulo) ?? 0) > 1}
+                    mostrarBotonExportar={false}
+                  />
+                </>
               ) : (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {m.codigoModulo} ({m.cocinaNombre}): {m.error}
+                  {m.codigoModulo}: {m.error}
                 </div>
               )}
             </div>
@@ -199,8 +323,14 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
         </div>
       )}
 
-      <div className="border-t border-slate-200 pt-6">
-        <h2 className="font-semibold text-slate-900 mb-3">Buscar por tipo y medidas</h2>
+      <section className="space-y-3 border-t border-slate-200 pt-6" aria-label="Buscar HDR">
+        <h2 className="font-semibold text-slate-900">Buscar</h2>
+        <PrefijoHrj checked={prefijoHrjBuscar} onChange={setPrefijoHrjBuscar} contexto="al nombre del mueble buscado" />
+        <HdrBuscarGuardados tableros={tableros} prefijoHrj={prefijoHrjBuscar} />
+      </section>
+      <section className="space-y-3 border-t border-slate-200 pt-6" aria-label="Crear HDR">
+        <h2 className="font-semibold text-slate-900">Crear</h2>
+        <PrefijoHrj checked={prefijoHrjCrear} onChange={setPrefijoHrjCrear} contexto="al nombre del mueble creado" />
         <form onSubmit={buscar} className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
           <div className="grid grid-cols-12 gap-2 items-end">
             <Campo label="Tipo De Mueble" className="col-span-12 sm:col-span-5">
@@ -237,10 +367,10 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
           )}
 
           {esDB && (
-            <Campo label="Tipología DB">
+            <Campo label={`Tipología ${tipoSel?.pref || 'DB'}`}>
               <select value={dbTipo} onChange={(e) => setDbTipo(e.target.value)} className="inp">
                 <option value="">— manual —</option>
-                {DB_TIPOLOGIAS.map((t) => <option key={t.key} value={t.key} title={t.desc}>{t.key}</option>)}
+                {tipologiasDbParaPrefijo(tipoSel?.pref).map((t) => <option key={t.key} value={t.key} title={t.desc}>{etiquetaTipologiaDb(t.key, tipoSel?.pref)}</option>)}
               </select>
             </Campo>
           )}
@@ -255,15 +385,26 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
             </Campo>
           )}
 
+          {usaTipologiaDbSmFeSf && (
+            <Campo label="Tipología DB-SM-FE-SF">
+              <select value={tipoSel?.pref ?? ''} onChange={(e) => aplicarDbSmFeTipo(e.target.value)} className="inp">
+                {tipologiasDbSmFeSf.map((tipologia) => (
+                  <option key={tipologia.pref} value={tipologia.pref}>{tipologia.pref} · {tipologia.nombre_es ?? 'Cajonera con Gola, Full Extension y sin fondo'}</option>
+                ))}
+              </select>
+            </Campo>
+          )}
+
           {!esDbTradicional && (
             <Campo label="Sistema de frente">
-              <select value={sistemaFrente} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
+              <select value={sistemaFrente} disabled={usaFrentesDosPequenosGola(tipoSel?.pref)} title={usaFrentesDosPequenosGola(tipoSel?.pref) ? 'Esta tipología usa dos espacios de gola de 30 mm' : undefined} onChange={(e) => setSistemaFrente(e.target.value as SistemaFrente)} className="inp">
                 {SISTEMAS_FRENTE.map((s) => <option key={s.key} value={s.key} title={s.desc}>{s.label}</option>)}
               </select>
             </Campo>
           )}
 
-          <button className="rounded-lg bg-slate-900 text-white px-5 py-2 text-sm font-medium hover:bg-slate-800">Buscar</button>
+          {(esPanel(tipoSel?.pref) || tipoSel?.pref === 'F') && <Campo label={esPanel(tipoSel?.pref) ? 'Notas del panel' : 'Notas del filler'}><input value={notaPanel} onChange={e => setNotaPanel(e.target.value)} placeholder="Ej. lateral" className="inp" /></Campo>}
+          <button disabled={loading} className="rounded-lg bg-slate-900 text-white px-5 py-2 text-sm font-medium hover:bg-slate-800 disabled:opacity-50">Crear</button>
 
           <style>{`.inp{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.5rem .6rem;font-size:.875rem}.inp:focus{outline:2px solid #94a3b8;outline-offset:0}.inp::-webkit-outer-spin-button,.inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.inp[type=number]{-moz-appearance:textfield}`}</style>
         </form>
@@ -273,10 +414,11 @@ export default function HdrBuscador({ tipos, presetDefault, tableros, cotizacion
 
         {res && (
           <div className="mt-4">
-            <HdrTabla res={res} tableros={tableros} titulo={`${codigo} ${descripcionModulo(res)}`} />
+            <HdrTabla key={`${codigo}-${JSON.stringify(res.piezas)}`} res={res} pref={tipoSel?.pref} codigoModulo={codigo} tableros={tableros} proyectoInicial={proyectoHdr} titulo={tituloCreado} />
           </div>
         )}
-      </div>
+      </section>
+
     </div>
   );
 }

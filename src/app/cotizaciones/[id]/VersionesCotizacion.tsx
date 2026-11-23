@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CotizacionVersion } from '@/lib/cotizaciones';
 import { guardarVersionCotizacionAction, restaurarVersionCotizacionAction } from '../actions';
+import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario } from '@/lib/comentarios-cotizacion';
 
 const fechaFormat = new Intl.DateTimeFormat('es-CO', {
   dateStyle: 'medium',
@@ -18,9 +19,11 @@ const horaFormat = new Intl.DateTimeFormat('es-CO', {
 export default function VersionesCotizacion({
   cotizacionId,
   versiones,
+  estado,
 }: {
   cotizacionId: string;
   versiones: CotizacionVersion[];
+  estado: string;
 }) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -38,6 +41,7 @@ export default function VersionesCotizacion({
 
   async function guardar() {
     if (guardando || restaurandoId !== null) return;
+    if (estadoRequiereAlertaComentario(estado) && !window.confirm(ALERTA_COMENTARIO)) return;
 
     const nombreLimpio = nombre.trim();
     if (!nombreLimpio) {
@@ -68,6 +72,7 @@ export default function VersionesCotizacion({
 
   async function restaurar(version: CotizacionVersion) {
     if (guardando || restaurandoId !== null) return;
+    if (estadoRequiereAlertaComentario(estado) && !window.confirm(ALERTA_COMENTARIO)) return;
 
     const etiqueta = version.nombre?.trim() || `Versión ${version.numero}`;
     if (!window.confirm(`¿Cargar la versión “${etiqueta}”? Los datos del proyecto se reemplazarán con este snapshot.`)) {

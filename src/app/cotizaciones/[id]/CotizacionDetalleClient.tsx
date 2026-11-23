@@ -1,17 +1,22 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ProyectoHeader from './ProyectoHeader';
 import CocinaCard from './CocinaCard';
 import AddCocina from './AddCocina';
-import GuideButton from '@/components/GuideButton';
-import TooltipToggle from '@/components/TooltipToggle';
 import ProjectConfigPanel, { type ProjectDefaults } from './ProjectConfigPanel';
-import { eliminarCotizacionAction, actualizarCotizacionAction } from '../actions';
+import EntregaPanel from './EntregaPanel';
+import { areasParaEntrega, calcularRecargoEntrega, resumirEntrega, type ConfigEntrega, type ParametrosDdp } from '@/lib/entrega-cotizacion';
+import { eliminarCotizacionAction, actualizarCotizacionAction, reordenarCocinasAction, guardarEntregaAction } from '../actions';
 import VersionesCotizacion from './VersionesCotizacion';
 import type { CotizacionVersion } from '@/lib/cotizaciones';
-import type { FamiliaMaterial } from '@/lib/muebles';
+import { CLAVE_CONFIG_FAMILIA, type FamiliaMaterial } from '@/lib/muebles';
 import { calcularMargenGlobalProyecto } from '@/lib/module-groups';
+import { ALERTA_COMENTARIO, estadoRequiereAlertaComentario } from '@/lib/comentarios-cotizacion';
+import { crearGuardadoSecuencial } from '@/lib/guardado-secuencial';
+import UbicacionEditor from './UbicacionEditor';
+import { calcularValoresCotizacion } from '@/lib/valores-cotizacion';
+import { cantidadesInstalacion, type TarifasInstalacion } from '@/lib/instalacion-cotizacion';
 
 type LineaConfig = {
   preset?: Record<string, string>;
@@ -32,6 +37,7 @@ type Linea = {
   id: string;
   pref: string | null;
   descripcion_es: string | null;
+  anotaciones: string | null;
   cantidad: number;
   precio_unit_usd: number;
   precio_total_usd: number;
@@ -54,10 +60,10 @@ type Linea = {
 
 type Cocina = { id: string; nombre: string; cantidad?: number; total_cop: number; total_usd: number; lineas: Linea[] };
 type Tipo = { id: string; pref: string; pref_imperial?: string | null; pref_metrico?: string | null; nombre_es: string | null };
-type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null };
+type Tablero = { codigo: string; proveedor: string | null; sustrato: string | null; espesor_mm: number | null; color_nombre: string | null; precio_m2: number };
 type Perfil = { id: string; nombre: string; descripcion: string | null; valores: Record<string, string> };
 type HerrajeTipo = { rol: string; codigo: string | null };
-type Cab = { id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
+type Cab = { pais?: string; ciudad?: string | null; id: string; nombre: string | null; cliente_nombre: string | null; comprador_nombre?: string | null; cotizador_por: 'FIRPLAK' | 'CEMA'; moneda: string; trm: number; estado: string; notas?: string | null; total_cop: number; total_usd: number; sistema_medida: 'imperial' | 'metrico' };
 export type ColumnasPrecio = { sinHerrajes: boolean; conHerrajes: boolean; usd: boolean; cop: boolean };
 type UnidadProyecto = 'in' | 'cm' | 'mm';
 
@@ -70,25 +76,21 @@ function convertirMedidaProyecto(valor: string | undefined, origen: UnidadProyec
   return String(Math.round((numero * FACTOR_MM[origen] / FACTOR_MM[destino]) * 1e6) / 1e6);
 }
 
-const GUIA_PROYECTO = [
-  { title: 'Proyecto / cotización', description: 'Un proyecto agrupa cocinas, y cada cocina agrupa módulos (muebles). Así se arma una cotización completa.' },
-  { selector: '[data-tour="proyecto"]', title: 'Características del proyecto', description: 'Usa "editar" para cambiar en una sola sección nombre, cliente, moneda, TRM, estado, materiales y margen. A la derecha ves el total.' },
-  { selector: '[data-tour="export"]', title: 'Exportar', description: 'Descarga la cotización en Excel, o ábrela como PDF para imprimir/guardar.' },
-  { selector: '[data-tour="versiones"]', title: 'Versiones', description: 'Guarda puntos de retorno del proyecto y restaura una versión anterior cuando lo necesites.' },
-  { selector: '[data-tour="cocinas"]', title: 'Cocinas y módulos', description: 'Cada tarjeta es una cocina. Dentro agregas módulos con "+ Agregar módulo"; el subtotal por cocina se calcula solo.' },
-  { selector: '[data-tour="add-cocina"]', title: 'Agregar cocina', description: 'Añade tantas cocinas como necesite el proyecto. El total del proyecto suma todas.' },
-];
-
 interface Props {
   cabecera: Cab;
   cocinas: Cocina[];
   cotizacionId: string;
+  lineasSinCocina: Linea[];
   tipos: Tipo[];
   tableros: Tablero[];
   cantos: string[];
   presetDefault: Record<string, string>;
   rolesByTipo: Record<string, string[]>;
   initialConfig?: Partial<ProjectDefaults> | null;
+  abrirCaracteristicas?: boolean;
+  entregaInicial: ConfigEntrega;
+  ddp: ParametrosDdp;
+  tarifasInstalacion: TarifasInstalacion;
   perfiles: Perfil[];
   perfilDefaultId: string;
   herrajesByTipo: Record<string, HerrajeTipo[]>;
@@ -96,7 +98,7 @@ interface Props {
 }
 
 export default function CotizacionDetalleClient({
-  cabecera, cocinas, cotizacionId, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, perfiles, perfilDefaultId, herrajesByTipo, versiones
+  cabecera, cocinas, cotizacionId, lineasSinCocina, tipos, tableros, cantos, presetDefault, rolesByTipo, initialConfig, abrirCaracteristicas = false, entregaInicial, ddp, tarifasInstalacion, perfiles, perfilDefaultId, herrajesByTipo, versiones
 }: Props) {
   const unidadInicial: UnidadProyecto = cabecera.sistema_medida === 'metrico' ? 'cm' : 'in';
   // Estado global del proyecto: si viene initialConfig del query param ?cfg, úsalo;
@@ -115,8 +117,12 @@ export default function CotizacionDetalleClient({
         // recargoId: initialConfig.recargoId ?? '',
         margen: initialConfig.margen ?? '',
         conFondo: initialConfig.conFondo ?? true,
+        familiasMaterialesActivas: initialConfig.familiasMaterialesActivas,
         materialesInferiores: initialConfig.materialesInferiores,
         materialesSuperiores: initialConfig.materialesSuperiores,
+        materialesCloset: initialConfig.materialesCloset,
+        materialesBanos: initialConfig.materialesBanos,
+        preciosTableros: initialConfig.preciosTableros,
         tipoId: initialConfig.tipoId,
         largo: initialConfig.largo,
         alto: initialConfig.alto,
@@ -157,19 +163,92 @@ export default function CotizacionDetalleClient({
       },
     };
   });
-  const [showCharacteristics, setShowCharacteristics] = useState(false);
+  const [showCharacteristics, setShowCharacteristics] = useState(abrirCaracteristicas);
+  const [entrega, setEntrega] = useState(entregaInicial);
   const [columnasPrecio, setColumnasPrecio] = useState<ColumnasPrecio>({ sinHerrajes: true, conHerrajes: true, usd: true, cop: true });
 
   const router = useRouter();
+  const [ordenSecciones, setOrdenSecciones] = useState<string[] | null>(null);
+  const [seccionArrastrada, setSeccionArrastrada] = useState<string | null>(null);
+  const [seccionDestino, setSeccionDestino] = useState<string | null>(null);
+  const [guardandoOrden, setGuardandoOrden] = useState(false);
+  const [mensajeOrden, setMensajeOrden] = useState('');
+  const [errorOrden, setErrorOrden] = useState('');
+  const ordenEnCurso = useRef(false);
+  const [seccionesPrevias, setSeccionesPrevias] = useState(cocinas);
+  if (seccionesPrevias !== cocinas) {
+    setSeccionesPrevias(cocinas);
+    setOrdenSecciones(null);
+  }
+  const seccionesPorId = new Map(cocinas.map(c => [c.id, c]));
+  const seccionesOrdenadas = ordenSecciones
+    ? ordenSecciones.flatMap(id => { const seccion = seccionesPorId.get(id); return seccion ? [seccion] : []; })
+    : cocinas;
+
+  async function moverSeccion(origenId: string, destinoId: string) {
+    setSeccionArrastrada(null);
+    setSeccionDestino(null);
+    if (ordenEnCurso.current || origenId === destinoId) return;
+    const ordenAnterior = seccionesOrdenadas.map(c => c.id);
+    const ids = [...ordenAnterior];
+    const origen = ids.indexOf(origenId);
+    const destino = ids.indexOf(destinoId);
+    if (origen < 0 || destino < 0) return;
+    ids.splice(origen, 1);
+    ids.splice(destino, 0, origenId);
+    ordenEnCurso.current = true;
+    setOrdenSecciones(ids);
+    setGuardandoOrden(true);
+    setErrorOrden('');
+    setMensajeOrden('');
+    try {
+      const resultado = await reordenarCocinasAction(cotizacionId, ids);
+      if (!resultado.ok) throw new Error(resultado.error || 'No se pudo guardar el orden.');
+      setMensajeOrden('Orden de secciones guardado.');
+    } catch (error) {
+      setOrdenSecciones(ordenAnterior);
+      setErrorOrden(error instanceof Error ? error.message : 'No se pudo guardar el orden.');
+    } finally {
+      ordenEnCurso.current = false;
+      setGuardandoOrden(false);
+      router.refresh();
+    }
+  }
+  const [guardadoMateriales, setGuardadoMateriales] = useState({ pendientes: 0, error: null as string | null });
+  const guardarEnOrden = useMemo(() => crearGuardadoSecuencial<ProjectDefaults>(async next => {
+    const resultado = await actualizarCotizacionAction(cotizacionId, { configDefault: next });
+    if (!resultado.ok) throw new Error(resultado.error || 'No se pudieron aplicar los materiales.');
+    router.refresh();
+  }, (pendientes, error) => setGuardadoMateriales({ pendientes, error })), [cotizacionId, router]);
+
+  async function guardarCaracteristicas(next: ProjectDefaults) {
+    try {
+      await guardarEnOrden(next);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  }
 
   const margenGlobal = useMemo(
     () => calcularMargenGlobalProyecto(cocinas, cabecera.total_cop),
     [cocinas, cabecera.total_cop]
   );
+  const valores = useMemo(() => calcularValoresCotizacion([...cocinas, { lineas: lineasSinCocina }], Number(cabecera.trm)), [cocinas, lineasSinCocina, cabecera.trm]);
+  const areasEntrega = useMemo(() => areasParaEntrega(cocinas, lineasSinCocina), [cocinas, lineasSinCocina]);
+  const logistica = useMemo(() => entrega.modo ? resumirEntrega(entrega, areasEntrega, tableros) : [], [entrega, areasEntrega, tableros]);
+  const unidadesInstalacion = useMemo(() => cantidadesInstalacion([...cocinas, { nombre: 'Sin área', lineas: lineasSinCocina }], tipos), [cocinas, lineasSinCocina, tipos]);
+  const recargo = useMemo(() => calcularRecargoEntrega(entregaInicial, ddp, cocinas, Number(cabecera.trm)), [entregaInicial, ddp, cocinas, cabecera.trm]);
+
+  async function guardarEntrega(config: ConfigEntrega) {
+    const resultado = await guardarEntregaAction(cotizacionId, config);
+    if (resultado.ok) router.refresh();
+    return resultado;
+  }
 
   function handleProjectDefaultsChange(next: ProjectDefaults) {
     setProjectDefaults(next);
-    actualizarCotizacionAction(cotizacionId, { configDefault: next }).catch(() => {});
+    void guardarCaracteristicas(next);
   }
 
   function handleUnidadProyectoChange(unidad: UnidadProyecto) {
@@ -185,14 +264,13 @@ export default function CotizacionDetalleClient({
   }
 
   async function handleMargenBlur() {
-    await actualizarCotizacionAction(cotizacionId, { configDefault: projectDefaults });
-    router.refresh();
+    await guardarCaracteristicas(projectDefaults);
   }
 
   // Al agregar un mueble, sus materiales y cantos quedan como default del proyecto
   // para que el próximo mueble (incluso en otra pestaña o al día siguiente) arranque con los mismos valores.
   function handleMaterialesUsados(materiales: { familia: FamiliaMaterial; preset: Record<string, string>; cantoFrentes: string; cantoCaja: string; perfilId?: string; herrajesExcl?: string[] }) {
-    const key = materiales.familia === 'superior' ? 'materialesSuperiores' : 'materialesInferiores';
+    const key = CLAVE_CONFIG_FAMILIA[materiales.familia];
     const materialSet = { preset: materiales.preset, cantoFrentes: materiales.cantoFrentes, cantoCaja: materiales.cantoCaja, perfilId: materiales.perfilId, herrajesExcl: materiales.herrajesExcl };
     handleProjectDefaultsChange({
       ...projectDefaults,
@@ -205,14 +283,11 @@ export default function CotizacionDetalleClient({
     <>
       <div className="flex items-start justify-between gap-2" data-tour="proyecto">
         <div className="flex-1">
-          <ProyectoHeader cab={cabecera} margenGlobal={margenGlobal} />
-        </div>
-        <div className="flex gap-2">
-          <GuideButton steps={GUIA_PROYECTO} label="Guía" />
-          <TooltipToggle />
+          <ProyectoHeader cab={{ ...cabecera, total_cop: Number(cabecera.total_cop) + recargo.cop, total_usd: Number(cabecera.total_usd) + recargo.usd }} incoterm={entregaInicial.incoterm} margenGlobal={margenGlobal} valores={valores} margenAplicado={projectDefaults.margen} columnasMoneda={{ usd: columnasPrecio.usd, cop: columnasPrecio.cop }} />
         </div>
       </div>
 
+      <UbicacionEditor id={cabecera.id} pais={cabecera.pais ?? 'Colombia'} ciudad={cabecera.ciudad ?? null}/>
       <section data-tour="config" className="space-y-2">
         <button
           type="button"
@@ -231,13 +306,12 @@ export default function CotizacionDetalleClient({
             margen={projectDefaults.margen}
             onMargenChange={(margen) => setProjectDefaults((prev) => ({ ...prev, margen }))}
             onMargenBlur={handleMargenBlur}
-            onSave={async () => {
-              await actualizarCotizacionAction(cotizacionId, { configDefault: projectDefaults });
-              router.refresh();
-              return { ok: true };
-            }}
+            onSave={() => guardarCaracteristicas(projectDefaults)}
             margenGlobal={margenGlobal}
           >
+            <p role="status" className={guardadoMateriales.error ? 'mt-3 text-sm text-red-700' : 'mt-3 text-sm text-slate-600'}>
+              {guardadoMateriales.error || (guardadoMateriales.pendientes ? 'Aplicando materiales a todos los muebles, paneles y fillers…' : 'Materiales guardados y aplicados a los módulos del proyecto.')}
+            </p>
             <ProjectConfigPanel
               tableros={tableros}
               cantos={cantos}
@@ -245,6 +319,9 @@ export default function CotizacionDetalleClient({
               defaults={projectDefaults}
               onChange={handleProjectDefaultsChange}
             />
+            <EntregaPanel config={entrega} areas={areasEntrega} resultados={logistica}
+              instalacion={{ tarifas: tarifasInstalacion, cantidades: unidadesInstalacion, moneda: cabecera.moneda === 'COP' ? 'COP' : 'USD', trm: Number(cabecera.trm) }}
+              onChange={setEntrega} onSave={guardarEntrega} />
           </ProyectoHeader>
         ) : null}
       </section>
@@ -285,18 +362,71 @@ export default function CotizacionDetalleClient({
       </div>
 
       <div className="flex flex-wrap gap-2" data-tour="export">
-        <a href={`/cotizaciones/${cotizacionId}/export?sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">⬇ Exportar Excel</a>
-        <a href={`/cotizaciones/${cotizacionId}/imprimir?sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">🖨 Imprimir / PDF</a>
-        <VersionesCotizacion cotizacionId={cotizacionId} versiones={versiones} />
+        <a href={`/cotizaciones/${cotizacionId}/export?lang=es&sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">⬇ Exportar Excel</a>
+        <a
+          href={`/cotizaciones/${cotizacionId}/imprimir?sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}`}
+          onClick={(event) => {
+            if (estadoRequiereAlertaComentario(cabecera.estado) && !window.confirm(ALERTA_COMENTARIO)) event.preventDefault();
+          }}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+        >🖨 Imprimir / PDF</a>
+        {/* Misma impresion con lang=en: textos fijos y descripciones en ingles. */}
+        <a
+          href={`/cotizaciones/${cotizacionId}/imprimir?sinHerrajes=${columnasPrecio.sinHerrajes ? '1' : '0'}&conHerrajes=${columnasPrecio.conHerrajes ? '1' : '0'}&usd=${columnasPrecio.usd ? '1' : '0'}&cop=${columnasPrecio.cop ? '1' : '0'}&lang=en`}
+          onClick={(event) => {
+            if (estadoRequiereAlertaComentario(cabecera.estado) && !window.confirm(ALERTA_COMENTARIO)) event.preventDefault();
+          }}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+        >🖨 Print / PDF (English)</a>
+        <VersionesCotizacion cotizacionId={cotizacionId} versiones={versiones} estado={cabecera.estado} />
       </div>
 
       <div className="space-y-4" data-tour="cocinas">
-        {cocinas.map((c) => (
+        <p role="status" className="text-xs text-slate-500">{guardandoOrden ? 'Guardando orden de secciones…' : mensajeOrden || (cocinas.length > 1 ? 'Arrastra el asa de una sección o usa las flechas para cambiar su orden.' : '')}</p>
+        {errorOrden && <p role="alert" className="text-sm text-red-600">{errorOrden}</p>}
+        {seccionesOrdenadas.map((c, index) => (
+          <div key={c.id} data-seccion-id={c.id}
+            className={`rounded-2xl ${seccionDestino === c.id ? 'ring-2 ring-blue-400' : ''} ${seccionArrastrada === c.id ? 'opacity-50' : ''}`}
+            onDragOver={event => {
+              if (!event.dataTransfer.types.includes('application/x-cotizador-seccion') || guardandoOrden) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
+              setSeccionDestino(c.id);
+            }}
+            onDrop={event => {
+              const origen = event.dataTransfer.getData('application/x-cotizador-seccion');
+              if (!seccionesPorId.has(origen)) return;
+              event.preventDefault();
+              event.stopPropagation();
+              void moverSeccion(origen, c.id);
+            }}>
           <CocinaCard
-            key={c.id}
             cotizacionId={cotizacionId}
             cocina={c}
-            allCocinas={cocinas}
+            allCocinas={seccionesOrdenadas}
+            controlesOrden={
+              <div className="flex shrink-0 items-center gap-1 text-slate-400">
+                <button type="button" draggable={!guardandoOrden && cocinas.length > 1}
+                  disabled={guardandoOrden || cocinas.length < 2}
+                  aria-label={`Arrastrar sección ${c.nombre}`} title="Arrastrar sección"
+                  className="cursor-grab rounded px-1 text-lg font-bold hover:text-blue-600 active:cursor-grabbing disabled:cursor-default disabled:opacity-20"
+                  onDragStart={event => {
+                    event.stopPropagation();
+                    event.dataTransfer.setData('application/x-cotizador-seccion', c.id);
+                    event.dataTransfer.effectAllowed = 'move';
+                    setSeccionArrastrada(c.id);
+                  }}
+                  onDragEnd={() => { setSeccionArrastrada(null); setSeccionDestino(null); }}>⋮⋮</button>
+                <div className="flex flex-col text-[9px] font-bold leading-tight">
+                  <button type="button" aria-label={`Mover sección ${c.nombre} arriba`} title="Mover sección arriba"
+                    disabled={guardandoOrden || index === 0} className="hover:text-blue-600 disabled:opacity-20"
+                    onClick={() => void moverSeccion(c.id, seccionesOrdenadas[index - 1].id)}>▲</button>
+                  <button type="button" aria-label={`Mover sección ${c.nombre} abajo`} title="Mover sección abajo"
+                    disabled={guardandoOrden || index === seccionesOrdenadas.length - 1} className="hover:text-blue-600 disabled:opacity-20"
+                    onClick={() => void moverSeccion(c.id, seccionesOrdenadas[index + 1].id)}>▼</button>
+                </div>
+              </div>
+            }
             tipos={tipos}
             tableros={tableros}
             cantos={cantos}
@@ -311,6 +441,7 @@ export default function CotizacionDetalleClient({
             onMaterialesUsados={handleMaterialesUsados}
             columnasPrecio={columnasPrecio}
           />
+          </div>
         ))}
         <div data-tour="add-cocina"><AddCocina cotizacionId={cotizacionId} /></div>
       </div>

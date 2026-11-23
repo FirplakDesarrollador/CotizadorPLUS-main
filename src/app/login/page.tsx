@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -14,10 +15,22 @@ export default function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true); setError(null);
+    const nombreLimpio = nombre.trim();
+    if (!nombreLimpio) {
+      setLoading(false);
+      setError('El nombre es obligatorio.');
+      return;
+    }
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { setLoading(false); setError(error.message); return; }
+    const { error: nombreError } = await supabase.rpc('cot_guardar_nombre_usuario', { p_nombre: nombreLimpio });
     setLoading(false);
-    if (error) { setError(error.message); return; }
+    if (nombreError) {
+      await supabase.auth.signOut();
+      setError(nombreError.message);
+      return;
+    }
     router.push('/cotizador');
     router.refresh();
   }
@@ -33,6 +46,9 @@ export default function LoginPage() {
           <p className="text-sm text-slate-500">Inicia sesión para continuar</p>
         </div>
         <div className="space-y-3">
+          <input type="text" required maxLength={80} placeholder="Tu nombre" value={nombre}
+            onChange={(e) => setNombre(e.target.value)} autoComplete="name"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
           <input type="email" required placeholder="correo@firplak.com" value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />

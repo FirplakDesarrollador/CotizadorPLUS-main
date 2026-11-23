@@ -32,10 +32,12 @@ export const SISTEMAS_FRENTE: { key: SistemaFrente; label: string; desc: string 
 //
 // Vive aquí y no en cada tabla para que el despiece del Simulador y el del HDR no
 // vuelvan a contradecirse.
-export function orientarPieza<T extends { rol: string; largoIn: number; anchoIn: number }>(
+export function orientarPieza<T extends { pieza?: string; rol: string; largoIn: number; anchoIn: number }>(
   pieza: T,
 ): { largoIn: number; anchoIn: number } {
-  const invertir = pieza.rol === 'frente';
+  // Un entrepaño puede usar tablero de frente (PCFD-MO) sin convertirse por
+  // ello en una puerta vertical. Su nombre conserva los ejes de fabricación.
+  const invertir = pieza.rol === 'frente' && !String(pieza.pieza ?? '').startsWith('entrepano');
   return invertir
     ? { largoIn: pieza.anchoIn, anchoIn: pieza.largoIn }
     : { largoIn: pieza.largoIn, anchoIn: pieza.anchoIn };
@@ -75,7 +77,40 @@ export function ordenarPiezasDespiece<T extends { pieza: string; origen?: string
     .map(({ pieza }) => pieza);
 }
 
-export type FamiliaMaterial = 'inferior' | 'superior';
+export type FamiliaMaterial = 'inferior' | 'superior' | 'closet' | 'banos';
+
+export const FAMILIAS_MATERIAL: readonly FamiliaMaterial[] = ['inferior', 'superior', 'closet', 'banos'];
+
+/** Titulo de cada bloque de materiales en los formularios del proyecto. */
+export const ETIQUETA_FAMILIA: Record<FamiliaMaterial, string> = {
+  inferior: 'Modulos inferiores (B)',
+  superior: 'Muebles superiores (W y TW)',
+  closet: 'Closet/Walk in Closet',
+  banos: 'Banos/Auxiliares',
+};
+
+/** Donde vive la configuracion de cada familia dentro de `config_default`. */
+export const CLAVE_CONFIG_FAMILIA: Record<FamiliaMaterial, string> = {
+  inferior: 'materialesInferiores',
+  superior: 'materialesSuperiores',
+  closet: 'materialesCloset',
+  banos: 'materialesBanos',
+};
+
+/**
+ * Closet y walk in closet. **Provisional**: son los cuatro tipos que el catalogo
+ * marca con categoria `closet`, a falta de la lista que confirme produccion.
+ * `WCC` lleva W, asi que sin esta tabla caeria en superiores.
+ */
+const PREFS_CLOSET: readonly string[] = ['CC', 'CLV', 'DFE', 'WCC'];
+
+/**
+ * Banos y auxiliares: los vanities del catalogo (categoria `vanity`). Antes se
+ * cotizaban con el tablero de inferiores; ahora tienen el suyo.
+ */
+const PREFS_BANOS: readonly string[] = [
+  'DV', 'DVE', 'SV', 'SVFD', 'SVFDH', 'SVFDH-SMG', 'UDV', 'USVFD', 'UV', 'UVFD', 'V', 'V-FE', 'VDF', 'VFD', 'VPC',
+];
 
 // Los prefijos pueden contener ambas letras (por ejemplo WBL). La primera B o
 // W, leída de izquierda a derecha, determina el juego de materiales del proyecto.
@@ -90,19 +125,190 @@ export function esMuebleSuperior(pref: string | null | undefined): boolean {
   return w >= 0 && (b < 0 || w < b);
 }
 
+export function usaMedidasMoHood(pref: string | null | undefined): boolean {
+  return String(pref ?? '').trim().toUpperCase() === 'W-MO-HOOD';
+}
+
+const PREFS_TK_TORRE = ['PC', 'PCFD', 'VPC', 'OVPC', 'PCFD-MO', 'PC-MO', 'PC-SM', 'PC-SMG', 'PC-MO-SM', 'PC-MO-SMG'] as const;
+export function usaTkTorre(pref: string | null | undefined): boolean {
+  return (PREFS_TK_TORRE as readonly string[]).includes(String(pref ?? '').trim().toUpperCase().replace(/-SF$/, ''));
+}
+
+// Solo VPC conserva TK0 como valor inicial. En PC, PCFD, PCFD-MO y OVPC el TK
+// debe ser una medida elegida por el usuario, no un cero inyectado por el formulario.
+export function tkPredeterminadoTorre(pref: string | null | undefined): number | null {
+  return String(pref ?? '').trim().toUpperCase() === 'VPC' ? 0 : null;
+}
+
+export function usaPuertaSupTorre(pref: string | null | undefined): boolean {
+  return ['PC', 'VPC', 'PCFD-MO', 'PC-MO', 'PC-SM', 'PC-SMG', 'PC-MO-SM', 'PC-MO-SMG'].includes(String(pref ?? '').trim().toUpperCase().replace(/-SF$/, ''));
+}
+
+export function usaMoTorre(pref: string | null | undefined): boolean {
+  return /^(PCFD-MO|PC-MO(?:-SMG?)?)(?:-SF)?$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+/**
+ * Que juego de materiales del proyecto le toca a un tipo de mueble.
+ *
+ * Closet y banos se reconocen por el prefijo exacto del catalogo y van primero,
+ * porque algunos llevan las letras que decidirian lo contrario: `WCC` tiene W y
+ * caeria en superiores, y los vanities caian en inferiores. El resto sigue la
+ * regla de siempre: la primera B o W manda.
+ */
 export function familiaMaterialPorPrefijo(pref: string | null | undefined): FamiliaMaterial {
-  return esMuebleSuperior(pref) ? 'superior' : 'inferior';
+  const value = String(pref ?? '').trim().toUpperCase();
+  if (PREFS_CLOSET.includes(value)) return 'closet';
+  if (PREFS_BANOS.includes(value)) return 'banos';
+  return esMuebleSuperior(value) ? 'superior' : 'inferior';
+}
+
+// Elementos planos: tipologías de **una sola pieza**, sin puertas, gavetas ni
+// entrepaños. Cada una es la única de su categoría en el catálogo (`filler`,
+// `panel`, `zocalo`), y producción las lee por su nombre, no por la letra.
+//
+// La tabla gobierna dos cosas a la vez, y a propósito: con qué texto empieza la
+// descripción y que esta no lleve contadores. Los `· N puerta(s)` y
+// `· N entrepaño(s)` que arrastraban salían de reglas **globales** de
+// `n_puertas`/`n_entrepanos`, que aplican a todo tipo sin excepción; para un
+// panel de relleno no significan nada.
+const ELEMENTOS_PLANOS: Record<string, string> = { F: 'FILLER', PN: 'PANEL', TK: 'TOEKICK' };
+
+// Las letras iniciales de `prefLabel`, que al agregar la línea es el código
+// completo (`F636`, `TK5 1/496`) y tras el primer recálculo es solo el prefijo
+// base (`F`). Se compara contra las letras y no contra el valor entero para que
+// ambos resuelvan, sin arrastrar un prefijo distinto que empiece igual (`FPK`).
+function letrasIniciales(prefLabel: string | null | undefined): string {
+  return String(prefLabel ?? '').trim().toUpperCase().match(/^[A-Z]+/)?.[0] ?? '';
+}
+
+// La etiqueta con la que empieza `descripcion_es`.
+export function etiquetaDescripcion(prefLabel: string | null | undefined): string {
+  const value = String(prefLabel ?? '').trim();
+  if (!value) return '';
+  return ELEMENTOS_PLANOS[letrasIniciales(value)] ?? value;
+}
+
+// Si la descripción debe omitir los contadores de puertas, gavetas y entrepaños.
+export function esElementoPlano(prefLabel: string | null | undefined): boolean {
+  return letrasIniciales(prefLabel) in ELEMENTOS_PLANOS;
+}
+
+// Tipologías cuyo despiece y código comercial no cambian con la configuración
+// de fondo del proyecto. DFE no es un elemento plano, pero tampoco tiene un
+// respaldo estructural que justifique crear una variante DFE-SF. PCFD se maneja
+// siempre como la tipologia base; no existe una alternativa comercial PCFD-SF.
+export function esIndependienteDeFondo(prefLabel: string | null | undefined): boolean {
+  const pref = String(prefLabel ?? '').trim().toUpperCase().replace(/-SF$/, '');
+  return esElementoPlano(pref) || pref === 'DFE' || pref === 'PCFD';
+}
+
+// Cuántos entrepaños tiene **realmente** el módulo, contados sobre el despiece.
+//
+// La descripción de una línea usaba la variable de regla `n_entrepanos`, que es
+// una regla global por altura (0/1/2/3) y **no** describe el mueble: en 47 de
+// los 81 tipos del catálogo no coincide con las piezas que se cortan. `B` y
+// `BFD` llevan el entrepaño fijo en 1 y la descripción decía 2; `SBFD`, `BOV` y
+// otros 23 tipos no tienen ninguno y decía 2 o 3; `AL` tiene 5 y `WPC` 6.
+//
+// Cuenta también `entrepano_fijo` (UW, BMW-1, BOMH-1 y sus FE): es una pieza
+// más de la hoja de corte, con su material y su canto.
+export function contarEntrepanos(piezas: readonly { pieza: string; cant: number }[]): number {
+  return piezas
+    .filter((p) => /^entrepano/i.test(p.pieza))
+    .reduce((total, p) => total + Math.max(0, Math.round(p.cant)), 0);
+}
+
+/** BOV tiene un frente físico fijo; no lo describe la variable global de puertas por ancho. */
+export function puertasDescripcion(pref: string | null | undefined, piezas: readonly { pieza: string; cant: number }[], variable = 0): number {
+  return /^BOV(?:-|$)/i.test(pref ?? '')
+    ? piezas.filter(p => p.pieza === 'frente').reduce((n, p) => n + Math.max(0, Math.round(p.cant)), 0)
+    : Math.round(variable);
+}
+
+// Alto estándar de la línea U y de la pareja Sink Vanity: 28,75 pulgadas.
+export const ALTO_LINEA_U_IN = 28.75;
+
+// La lista es explícita y no una regla sobre el prefijo. "Empieza por U" dejaría
+// entrar a `UW`, que es un superior, y un tipo nuevo de la línea heredaría el
+// alto sin que nadie lo decidiera. Al añadir una tipología de esta familia hay
+// que agregarla aquí.
+const PREFS_ALTO_LINEA_U = [
+  'UB', 'UB-FE', 'UBFD', 'UDB', 'UDV', 'USVFD', 'UV', 'UVFD',
+  'SV', 'SVFD', 'SVFDH', 'SVFDH-SMG',
+] as const;
+
+// Alto estándar del resto de los muebles inferiores.
+export const ALTO_INFERIOR_IN = 30;
+
+// Torres y alacenas. El catálogo las clasifica como `inferior`, pero se arman a
+// la altura de un mueble alto, no a 30", así que se quedan **sin** alto por
+// defecto en lugar de recibir uno equivocado.
+const PREFS_TORRE = ['AL', 'OVPC', 'PC', 'PCFD'] as const;
+
+// Alto que el formulario carga al elegir el tipo, en pulgadas, o `null` si esa
+// tipología no tiene uno. Se carga como valor inicial y sigue siendo editable:
+// es una comodidad, no una restricción.
+//
+// El orden de las tres reglas importa: los inferiores de la línea U (`UB`,
+// `UDB`…) son de categoría `inferior`, así que su 28,75" tiene que resolverse
+// antes de la regla general.
+export function altoPorDefectoIn(
+  pref: string | null | undefined,
+  categoria?: string | null,
+): number | null {
+  const value = String(pref ?? '').toUpperCase();
+  if ((PREFS_ALTO_LINEA_U as readonly string[]).includes(value)) return ALTO_LINEA_U_IN;
+  if ((PREFS_TORRE as readonly string[]).includes(value) || usaTkTorre(value)) return null;
+  return categoria === 'inferior' ? ALTO_INFERIOR_IN : null;
+}
+
+// Solo los campos que la regla necesita, para no atar este módulo —que es de
+// cliente— a la forma completa de `Pieza`.
+type PiezaAjustable = {
+  nombre: string;
+  rol_tablero: string;
+  formula_cantidad: string;
+  formula_largo: string | null;
+  formula_ancho: string | null;
+};
+
+// "Sin fondo" es una configuración de proyecto que describe los módulos
+// INFERIORES: anula el respaldo. La base descuenta un espesor de caja por
+// defecto. DB-FE sin fondo usa la profundidad completa. **Los muebles superiores siempre
+// llevan fondo**, así que la transformación no les aplica — de lo contrario un W
+// se cotizaría sin respaldo y el tablero de fondo de superiores que el formulario
+// sigue pidiendo no se consumiría.
+//
+// Vive aquí y no en `cotizar.ts` porque aquel importa `server-only` y no puede
+// ejercerse desde una prueba; la regla afecta al precio, así que necesita una.
+export function ajustarPiezasSinFondo<T extends PiezaAjustable>(
+  piezas: T[], pref: string | null | undefined, conFondo: boolean | undefined,
+): T[] {
+  if (conFondo !== false || esMuebleSuperior(pref) || esIndependienteDeFondo(pref)) return piezas;
+  const profundidadBase = esTipologiaDbFe(pref) ? 'P' : 'P-TC';
+  return piezas.map((pieza) => {
+    // `fondo_gaveta` pertenece al cajón; solo se elimina el respaldo `fondo`.
+    if (pieza.nombre.toLowerCase() === 'fondo') return { ...pieza, formula_cantidad: '0' };
+    if (pieza.nombre !== 'base') return pieza;
+      // Los BOV descuentan el refuerzo trasero, independientemente de la opción de espaldar.
+      if (/^BOV(?:-SMG)?(?:-SF)?$/i.test(String(pref ?? ''))) return pieza;
+    // Se conserva el eje de largo propio de cada plantilla.
+    if (/\bP\b/.test(pieza.formula_ancho ?? '')) return { ...pieza, formula_ancho: profundidadBase };
+    if (/\bP\b/.test(pieza.formula_largo ?? '')) return { ...pieza, formula_largo: profundidadBase };
+    return pieza;
+  });
 }
 
 export const PREFS_CON_PUERTA_PARAMETRICA = ['BBLFD', 'BBLFD-D-L/R-SM', 'WBL-D-L/R-SM'] as const;
 
 export function usaPuertaParametrica(pref: string | null | undefined): boolean {
-  const value = String(pref ?? '').toUpperCase();
+  const value = String(pref ?? '').toUpperCase().replace(/-SF$/, '');
   return (PREFS_CON_PUERTA_PARAMETRICA as readonly string[]).includes(value);
 }
 
 export function usaHuecoHornoParametrico(pref: string | null | undefined): boolean {
-  return ['BOMH-1', 'BOMH-1-FE'].includes(String(pref ?? '').toUpperCase());
+  return /^BOMH-1(?:-FE)?(?:-SMG?)?(?:-SF)?$/.test(String(pref ?? '').toUpperCase());
 }
 
 // Familias con pares base/removible verificados en las hojas de ruta. Fuera de
@@ -124,10 +330,42 @@ export const DB_TIPOLOGIAS: DbTipologia[] = [
   { key: 'DB-1S', nc: 3, nb: 2, npeq: 1, desc: '1 cajón pequeño + 2 grandes · 2 pares de barra' },
   { key: 'DB-2S', nc: 3, nb: 1, npeq: 2, desc: '2 cajones pequeños + 1 grande · 1 par de barra' },
   { key: 'DB-2', nc: 2, nb: 2, npeq: 0, desc: '2 cajones iguales (grandes) · 2 pares de barra' },
-  { key: 'DB-3', nc: 3, nb: 0, npeq: 0, desc: '3 cajones iguales · sin barras' },
+  // DB-3 son tres cajones GRANDES (el catálogo le da tres `trasero_gaveta_grande`
+  // y ningún pequeño), y las barras van en los cajones grandes: le corresponden
+  // tres pares. Estaba en 0, que es lo que hacía que el selector dijera
+  // "sin barras" y que el módulo se cotizara sin las barras estabilizadoras.
+  { key: 'DB-3', nc: 3, nb: 3, npeq: 0, desc: '3 cajones iguales · 3 pares de barra' },
   { key: 'DB-4', nc: 4, nb: 0, npeq: 0, desc: '4 cajones iguales · sin barras' },
   { key: 'DB2-1OP', nc: 3, nb: 1, npeq: 0, noculto: 1, desc: '2 cajones + 1 oculto · 1 par de barra' },
 ];
+
+// Todas las configuraciones DB creadas se ofrecen en Simulador y Cotizaciones.
+// En sistema métrico sus etiquetas se presentan con el prefijo IC equivalente.
+export const DB_TIPOLOGIAS_COTIZABLES = DB_TIPOLOGIAS;
+
+export function esTipologiaDbFe(pref: string | null | undefined): boolean {
+  return /^DB-FE(?:-SF)?$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export const DB_FE_TIPOLOGIAS: DbTipologia[] = DB_TIPOLOGIAS.map(t => ({
+  ...t, nb: 0, desc: `${t.desc.split(' · ')[0]} · Full Extension`,
+}));
+
+export function tipologiasDbParaPrefijo(pref: string | null | undefined): DbTipologia[] {
+  return esTipologiaDbFe(pref) ? DB_FE_TIPOLOGIAS : DB_TIPOLOGIAS;
+}
+
+/** La tipología fija geometría y riel incluso si llega un estado heredado de DB. */
+export function aplicarConfiguracionDbFe<T extends { dbTipo?: string; rielCodigo?: string; sistemaFrente?: string; overrides?: Record<string, number> }>(input: T, pref: string | null | undefined): T {
+  if (!esTipologiaDbFe(pref)) return input;
+  const variante = input.dbTipo ? DB_FE_TIPOLOGIAS.find(t => t.key === input.dbTipo) : undefined;
+  if (input.dbTipo && !variante) throw new Error('Variante DB-FE no válida.');
+  return { ...input, rielCodigo: 'RIELFE500', sistemaFrente: 'manija', overrides: {
+    ...input.overrides,
+    ...(variante ? { n_cajones: variante.nc, n_cajones_pequenos: variante.npeq, n_cajones_ocultos: variante.noculto ?? 0 } : {}),
+    gola: 0, n_barras: 0,
+  } };
+}
 
 // Cajoneras que comparten el selector comercial de tipologias DB. Mantener
 // esta decision en una sola funcion evita que una ruta aplique el selector sin
@@ -136,45 +374,142 @@ export const PREFS_CON_TIPOLOGIA_DB = ['DB', 'UDB', 'UDV'] as const;
 
 export function permiteTipologiaDb(pref: string | null | undefined): boolean {
   const p = String(pref ?? '').toUpperCase();
-  return (PREFS_CON_TIPOLOGIA_DB as readonly string[]).includes(p);
+  return esTipologiaDbFe(p) || (PREFS_CON_TIPOLOGIA_DB as readonly string[]).includes(p);
+}
+
+// Cómo se **muestra** una tipología en el selector, según el tipo elegido: un
+// `UDV` ofrece `UDV-1S`, no `DB-1S`.
+//
+// La `key` no cambia. Es el identificador que se persiste en `config.dbTipo` y
+// del que sale el sufijo del código comercial (`DB-1S` → `-1S`, que produce
+// `UDV36-1S`): tocarla rompería las líneas ya guardadas y el código de módulo.
+// Esto es presentación y nada más.
+export function etiquetaTipologiaDb(key: string, pref: string | null | undefined): string {
+  const base = String(pref ?? '').toUpperCase();
+  // La clave histórica DB2-1OP se conserva en cálculos y datos persistidos;
+  // únicamente su nombre comercial visible cambia a DB-2-1INT.
+  const etiqueta = key === 'DB2-1OP' ? 'DB-2-1INT' : key;
+  if (esTipologiaDbFe(base) || /^IC-FE(?:-SF)?$/.test(base)) {
+    return `${etiqueta.replace(/^DB/, base.startsWith('IC') ? 'IC' : 'DB')}-FE${base.endsWith('-SF') ? '-SF' : ''}`;
+  }
+  if (!base || base === 'DB') return etiqueta;
+  // `DB-1S` → `UDV-1S`; `DB-2-1INT` → `UDV-2-1INT`.
+  return etiqueta.replace(/^DB/, base);
 }
 
 // Las tipologias DB con Gola de madera son tipos independientes en base de
 // datos porque cada una tiene plantillas y montaje propios. En el formulario
 // se presentan como una sola familia para evitar tres entradas casi iguales.
 export type DbSmTipologia = {
-  pref: 'DB-2S-SM' | 'DB-2-SM' | 'DB-3-SM';
+  pref: 'DB-2S-SM' | 'DB-2-SM' | 'DB-2-1INT-SM' | 'DB-3-SM';
   desc: string;
 };
 
 export const DB_SM_TIPOLOGIAS: DbSmTipologia[] = [
   { pref: 'DB-2S-SM', desc: '2 gavetas pequeñas + 1 grande' },
   { pref: 'DB-2-SM', desc: '2 gavetas iguales' },
+  { pref: 'DB-2-1INT-SM', desc: '2 gavetas exteriores + 1 interior' },
   { pref: 'DB-3-SM', desc: '3 gavetas iguales' },
 ];
 
 export function esTipologiaDbSm(pref: string | null | undefined): boolean {
-  const p = String(pref ?? '').toUpperCase();
-  return DB_SM_TIPOLOGIAS.some((tipologia) => tipologia.pref === p);
+  const p = String(pref ?? '').trim().toUpperCase();
+  // La familia se reconoce por convención y no por una lista cerrada. Así una
+  // variante nueva DB-<variante>-SM se integra al grupo principal en vez de
+  // filtrarse como una tipología raíz independiente.
+  return /^DB-.+-SM$/.test(p);
+}
+
+// Las variantes DB con Gola y sin fondo se crean bajo demanda en la base de
+// datos. Por eso esta familia se reconoce por convención, en lugar de mantener
+// una lista cerrada: cualquier futura `DB-<variante>-SM-SF` aparecerá dentro de
+// la tipología general DB-SM-SF sin requerir otro cambio de frontend.
+export function esTipologiaDbSmSf(pref: string | null | undefined): boolean {
+  const p = String(pref ?? '').trim().toUpperCase();
+  return /^DB-.+-SM-SF$/.test(p);
+}
+
+export function obtenerTipologiasDbSmSf<T extends { pref: string }>(tipos: readonly T[]): T[] {
+  return tipos
+    .filter((tipo) => esTipologiaDbSmSf(tipo.pref))
+    .sort((a, b) => a.pref.localeCompare(b.pref, 'es', { numeric: true }));
 }
 
 // Cajoneras DB con Gola de madera y cajas de gaveta en madera para riel
 // Full Extension de 500 mm. Se presentan como la familia comercial DB-SM-FE,
 // aunque cada variante conserva una plantilla independiente en la base de datos.
 export type DbSmFeTipologia = {
-  pref: 'DB-2S-SM-FE' | 'DB-2-SM-FE' | 'DB-3-SM-FE';
+  pref: 'DB-2S-SM-FE' | 'DB-2-SM-FE' | 'DB-2-1INT-SM-FE' | 'DB-3-SM-FE';
   desc: string;
 };
 
 export const DB_SM_FE_TIPOLOGIAS: DbSmFeTipologia[] = [
   { pref: 'DB-2S-SM-FE', desc: '2 gavetas pequeñas + 1 grande' },
   { pref: 'DB-2-SM-FE', desc: '2 gavetas iguales' },
+  { pref: 'DB-2-1INT-SM-FE', desc: '2 gavetas exteriores + 1 interior' },
   { pref: 'DB-3-SM-FE', desc: '3 gavetas iguales' },
 ];
 
 export function esTipologiaDbSmFe(pref: string | null | undefined): boolean {
-  const p = String(pref ?? '').toUpperCase();
-  return DB_SM_FE_TIPOLOGIAS.some((tipologia) => tipologia.pref === p);
+  const p = String(pref ?? '').trim().toUpperCase();
+  return /^DB-.+-SM-FE$/.test(p);
+}
+
+// Variantes Full Extension sin fondo. Son tipos independientes en base de
+// datos, pero se muestran como una sola familia comercial con selector interno.
+export function esTipologiaDbSmFeSf(pref: string | null | undefined): boolean {
+  return /^DB-.+-SM-FE-SF$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export function obtenerTipologiasDbSmFeSf<T extends { pref: string }>(tipos: readonly T[]): T[] {
+  return tipos
+    .filter((tipo) => esTipologiaDbSmFeSf(tipo.pref))
+    .sort((a, b) => a.pref.localeCompare(b.pref, 'es', { numeric: true }));
+}
+
+// Las cajoneras con gola metálica replican las tres familias comerciales de
+// DB-SM. Las regex son deliberadamente disjuntas y se evalúan SF -> FE -> base
+// en los formularios para evitar que una variante entre en la familia raíz.
+export type DbSmGTipologia = {
+  pref: 'DB-2S-SMG' | 'DB-2-SMG' | 'DB-2-1INT-SMG' | 'DB-3-SMG';
+  desc: string;
+};
+
+export const DB_SMG_TIPOLOGIAS: DbSmGTipologia[] = [
+  { pref: 'DB-2S-SMG', desc: '2 gavetas pequeñas + 1 grande' },
+  { pref: 'DB-2-SMG', desc: '2 gavetas iguales' },
+  { pref: 'DB-2-1INT-SMG', desc: '2 gavetas exteriores + 1 interior' },
+  { pref: 'DB-3-SMG', desc: '3 gavetas iguales' },
+];
+
+export type DbSmGFeTipologia = {
+  pref: 'DB-2S-SMG-FE' | 'DB-2-SMG-FE' | 'DB-2-1INT-SMG-FE' | 'DB-3-SMG-FE';
+  desc: string;
+};
+
+export const DB_SMG_FE_TIPOLOGIAS: DbSmGFeTipologia[] = [
+  { pref: 'DB-2S-SMG-FE', desc: '2 gavetas pequeñas + 1 grande · Full Extension' },
+  { pref: 'DB-2-SMG-FE', desc: '2 gavetas iguales · Full Extension' },
+  { pref: 'DB-2-1INT-SMG-FE', desc: '2 gavetas exteriores + 1 interior · Full Extension' },
+  { pref: 'DB-3-SMG-FE', desc: '3 gavetas iguales · Full Extension' },
+];
+
+export function esTipologiaDbSmG(pref: string | null | undefined): boolean {
+  return /^DB-.+-SMG$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export function esTipologiaDbSmGFe(pref: string | null | undefined): boolean {
+  return /^DB-.+-SMG-FE$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export function esTipologiaDbSmGSf(pref: string | null | undefined): boolean {
+  return /^DB-.+-SMG-SF$/.test(String(pref ?? '').trim().toUpperCase());
+}
+
+export function obtenerTipologiasDbSmGSf<T extends { pref: string }>(tipos: readonly T[]): T[] {
+  return tipos
+    .filter((tipo) => esTipologiaDbSmGSf(tipo.pref))
+    .sort((a, b) => a.pref.localeCompare(b.pref, 'es', { numeric: true }));
 }
 
 // Configuraciones rápidas de torre PCFD. Son presets editables: después de

@@ -1,0 +1,25 @@
+# Entrega e Incoterm en cotizaciones
+
+Características del proyecto se abre en la primera navegación tras crear la cotización. Allí se guardan el Incoterm, la modalidad de entrega y la instalación. En los parciales, la lupa junto al nombre abre los módulos por área. Al marcar un módulo se propone el saldo de unidades de proyecto, incluyendo las repeticiones del área. Reducir la cantidad libera unidades para otro parcial. Se pueden asignar de una vez las unidades disponibles de un área. El resumen visible conserva contenedores, peso, ocupación y avance.
+
+El JSON de Entrega guarda las cantidades absolutas por ID de línea. Las asignaciones históricas por área o por módulo se leen como el total de proyecto. El cálculo limita la suma al total de línea y aplica el multiplicador de área una sola vez. Los adicionales quedan fuera de la asignación.
+
+El cálculo usa el despiece persistido y el espesor de cada tablero. Los tamaños de 20 y 40 pies usan cargas útiles de 15.000 kg y 22.000 kg, respectivamente. Las claves guardadas son `20T` y `40T`. Cuando se elige modalidad parcial, los PDF CEMA, FIRPLAK y general muestran el total de contenedores y una fila por entrega con su cantidad y tamaño en pies. El bloque de PDF se limita a esos datos.
+
+## Instalación
+
+Entrega permite activar Instalación, marcar Muebles y Mesones de forma independiente, y elegir una sola zona entre Miami, Fuera de Miami y Texas. La lupa se habilita al activar el servicio y escoger una zona. El cuadro muestra las tablas de los grupos marcados para esa zona. El costo y el precio de cada fila son el producto de la tarifa unitaria y la cantidad correspondiente. El margen es el porcentaje registrado en la tarifa.
+
+La sección Instalación de Materiales y Parámetros abre las seis tablas editables. La migración 0268 inicializa `cot_parametros.instalacion` con las tres zonas sin tarifas y conserva el registro si ya existe. Las tarifas se guardan en USD. Las cotizaciones en COP convierten con su TRM guardada. Los parámetros o cantidades pendientes aparecen como guion en el cálculo. La selección y las cantidades manuales se guardan con Entrega. Los resultados de instalación se consultan en Características del proyecto.
+
+Alacena se reconoce por tipología de catálogo. El conteo de Muebles excluye alacenas, fillers, TK y paneles. Armado usa una unidad por mueble o alacena. Las manijas se toman del despiece de herrajes y se multiplican por las unidades y las repeticiones. Para los paneles se toma la dimensión mayor y se compara con 70 pulgadas. Los m² y perforaciones de mesones se ingresan manualmente mientras se implementa su módulo. La estadía se ingresa manualmente y aparece en Fuera de Miami y Texas.
+
+## Verificación del reparto e instalación
+
+En Chrome local, una cotización temporal de 12 módulos guardó y recargó parciales de 5 y 7 unidades. Se verificaron la selección exclusiva de zona, la apertura de las tablas marcadas, la captura manual de 2,5 m² y las seis tablas editables de parámetros. La prueba de navegador no grabó tarifas globales de prueba. Las pruebas unitarias cubren multiplicadores, dimensiones, zona, márgenes, TRM y faltantes de tarifas, además del reparto y de las configuraciones de entrega antiguas.
+
+Dos ejecuciones independientes de Guardar e imprimir por plantilla confirmaron el texto y las páginas renderizadas del PDF FIRPLAK en español y CEMA en inglés. En ambas aparece un total de dos contenedores, uno de 20 pies en la primera entrega y uno de 40 en la segunda. La cotización temporal se eliminó. Pasaron 143 suites y `quality:learn -- --strict` registró cero HIGH. La auditoría estricta global de solo lectura sigue mostrando el problema de agrupación de laterales en Satori cocinas observado antes de este cambio.
+
+FOB conserva el importe base. CIF convierte el importe indicado con la TRM de la cotización. DDP suma el transporte manual en COP o USD y, si se marca Aplicar tarifas, también suma los porcentajes de Materiales-Parámetros sobre el precio de venta de tablero y herrajes, incluidos los adicionales de esos tipos. Para un módulo, la participación del tablero se obtiene prorrateando la venta sin herrajes según su participación en el costo. Las configuraciones DDP anteriores con tarifas implícitas conservan ese cálculo. El recargo se aplica al total presentado. Los motores y los precios persistidos de cada línea conservan sus reglas. El PDF indica que el total incluye DDP.
+
+La migración `0267_entrega_cotizaciones.sql` agrega la configuración de entrega al proyecto e inicializa el parámetro `ddp`. Está aplicada y registrada en Supabase. Se verificó la escritura con rollback y se probó el cálculo con datos de Kundara Campestre: 8 contenedores de 20 pies o 6 de 40 pies para la entrega total. Ver [protocolo de cotizaciones y PDF](protocolo_pdf_cotizaciones.md).

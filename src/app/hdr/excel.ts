@@ -1,0 +1,39 @@
+import ExcelJS from 'exceljs';
+import type { DatosHdrExcel } from './HdrTabla';
+import { normalizarColorHdr } from './datosHdr';
+import { crearDestinoHdr, type DestinoHdr } from './destinoExportacion';
+
+/** Una fila por pieza, sin bloques por área, en el mismo orden de las HDR visibles. */
+export function crearWorkbookHdr(modulos: readonly DatosHdrExcel[]): ExcelJS.Workbook {
+  const workbook = new ExcelJS.Workbook();
+  const ws = workbook.addWorksheet('HDR');
+  ws.addRow(['Módulo', 'Letra', 'Pieza', 'Largo (mm)', 'Ancho (mm)', 'Espesor (mm)', 'Canto largo Color', 'Canto ancho Color', 'Canto largo Blanco', 'Canto ancho Blanco', 'Espesor canto (mm)', 'Cantidad módulos / grupos', 'Color general', 'Proyecto', 'Color pieza', 'Origen de pieza', 'Referencia tablero']);
+  for (const m of modulos) for (const f of m.filas) {
+    const espesor = f.espesorCanto === '' ? null : Number(f.espesorCanto.replace(',', '.'));
+    ws.addRow([m.titulo, f.letra, f.pieza, Number(f.largoMm.toFixed(1)), Number(f.anchoMm.toFixed(1)), f.espesorMm, f.cantoLargoColor, f.cantoAnchoColor, f.cantoLargoBlanco, f.cantoAnchoBlanco, espesor != null && Number.isFinite(espesor) ? espesor : null, m.cantidad.trim() === '' ? null : Number(m.cantidad), normalizarColorHdr(m.color), m.proyecto, normalizarColorHdr(f.color, m.color), f.origen ?? '', f.tableroCodigo ?? '']);
+  }
+  const anchoColor = (valores: readonly string[]) => Math.max(24, ...valores.map(v => v.length + 2));
+  const coloresGenerales = modulos.map(m => normalizarColorHdr(m.color));
+  const coloresPieza = modulos.flatMap(m => m.filas.map(f => normalizarColorHdr(f.color, m.color)));
+  ws.columns.forEach((c, i) => {
+    c.width = i === 0 ? 65 : i === 2 ? 25 : i === 12 ? anchoColor(coloresGenerales) : i === 14 ? anchoColor(coloresPieza) : i >= 12 ? 24 : 19;
+  });
+  for (const index of [4, 5, 6]) ws.getColumn(index).numFmt = '0.0';
+  ws.getColumn(11).numFmt = '0.00';
+  ws.getColumn(12).numFmt = '0.###';
+  ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF253E50' } };
+  ws.getRow(1).alignment = { wrapText: true };
+  ws.getRow(1).height = 30;
+  ws.views = [{ state: 'frozen', ySplit: 1 }];
+  ws.autoFilter = { from: 'A1', to: { row: ws.rowCount, column: 17 } };
+  return workbook;
+}
+
+export async function descargarExcelHdr(modulos: readonly DatosHdrExcel[], nombre: string, destinoElegido?: DestinoHdr): Promise<void> {
+  const destino = destinoElegido ?? await crearDestinoHdr(nombre);
+  const buffer = await crearWorkbookHdr(modulos).xlsx.writeBuffer();
+  const blob = new Blob([new Uint8Array(buffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  await destino.guardar(`${nombre.replace(/[^\p{L}\p{N}_. -]/gu, '_').slice(0, 120) || 'muebles'}.xlsx`, blob);
+  await destino.finalizar();
+}

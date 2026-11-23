@@ -1,7 +1,10 @@
 import 'server-only';
+import { validarManoPuerta, type ManoPuerta } from './mano-puerta';
+import { usaHoodSm, validarHoodSm } from './hood-sm';
+import { leerCatalogoPaginado } from './catalogo-paginado';
 import { createClient } from '@/lib/supabase/server';
 import {
-  calcularMueble, toInches, normCalibre,
+  calcularMueble, toInches, normCalibre, derivarVars, geoVars,
   type Dims, type UnidadDim, type Regla, type Pieza, type HerrajePlantilla,
   type Breakdown, type CalcInput,
   type Tablero, type Canto, type Herraje,
@@ -10,9 +13,15 @@ import { calcularGrupoFisico, type GroupCalculation, type PreparedGroupMember } 
 import { consolidarGrupo, type CotizarGrupoResult } from '@/lib/group-result';
 import { construirVisualizacion } from './visualizacion';
 import { codigoComercial } from './module-groups';
-import { usaHuecoHornoParametrico, usaPuertaParametrica } from './muebles';
+import { ajustarPiezasSinFondo, usaHuecoHornoParametrico, usaPuertaParametrica, esTipologiaDbFe, aplicarConfiguracionDbFe } from './muebles';
+import { aplicarPreciosTableros, type PreciosTablerosCotizacion } from './precios-tableros';
+import { presetMaterialesTipologia, usaFondoMaterialFrente, resolverCodigoTablero } from './materiales-proyecto';
+import { ajustarGavetasFe, piezasConTableroGaveta, usaTableroGaveta, tableroGaveta15, herrajesFijosDbFe } from './gavetas';
+import { ajustarEntrepanos, ajustarGeometriaBov, normalizarPlantillasFabricacion, normalizarReglasPuertas } from './reglas-fabricacion';
+import { ajustarFrentesDosPequenosGola } from './frentes-gaveta';
 
 export type CotizarInput = {
+  manoPuerta?: ManoPuerta;
   tipoId: string;
   largo: number; alto: number; prof: number;
   unidad: UnidadDim;
@@ -34,12 +43,15 @@ export type CotizarInput = {
   // Si se especifica, se reemplaza el precio del riel por defecto (RIELTANDEM) con
   // el precio del riel elegido, manteniendo la plantilla de herrajes sin tocar.
   rielCodigo?: string;
+  barraCodigo?: string;
+  dbTipo?: string;
   door?: number;
   doorHand?: 'L' | 'R';
   conFondo?: boolean;
+  preciosTableros?: PreciosTablerosCotizacion;
 };
 
-export type CotizarResult = Breakdown & { trm: number; margen: number };
+export type CotizarResult = Breakdown & { trm: number; margen: number; prefMueble?: string };
 
 export type CotizacionPreparada = PreparedGroupMember & {
   trm: number;
@@ -85,7 +97,7 @@ export async function cargarCatalogoPrecompilado(): Promise<CatalogoPrecompilado
   ] = await Promise.all([
     sb.from('cot_parametros').select('key,value'),
     sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,etiquetas_und,margen_key,usa_carton,categoria'),
-    sb.from('cot_piezas_plantilla').select('*').order('orden'),
+    leerCatalogoPaginado((desde, hasta) => sb.from('cot_piezas_plantilla').select('*').order('orden').order('id').range(desde, hasta)),
     sb.from('cot_reglas_config').select('*').eq('activo', true),
     sb.from('cot_herrajes_plantilla').select('*').order('orden'),
     sb.from('cot_cantos').select('calibre,precio'),
@@ -178,10 +190,7 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     reglas = reglasDb ?? [];
     herrajesPlant = herrajesPlantDb ?? [];
 
-    const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
-    const preset = { ...presetDefault, ...inp.preset };
-    const codes = [...new Set(Object.values(preset).filter(Boolean))];
-    const { data: tablerosDb } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato').in('codigo', codes);
+    const { data: tablerosDb } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato').eq('activo', true);
 
     tablerosByCode = Object.fromEntries(((tablerosDb ?? []) as any[]).map((t: any) => [t.codigo, t as Tablero]));
     cantosByCalibre = Object.fromEntries(((cantosDb ?? []) as any[]).map((c: any) => [normCalibre(c.calibre), c as Canto]));
@@ -192,15 +201,28 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
   }
 
   // Preset final
+  inp = aplicarConfiguracionDbFe(inp, tipo.pref);
+  if (herrajesFijosDbFe(tipo.pref)) inp = { ...inp, rielCodigo: 'RIELFE500', barraCodigo: undefined, herrajesExcluidos: [...new Set([...(inp.herrajesExcluidos ?? []), 'barra'])] };
   const presetDefault = (P.preset_default ?? {}) as Record<string, string>;
-  const preset = { ...presetDefault, ...inp.preset };
-
-  // Riel override para muebles DB
-  if (inp.rielCodigo && inp.rielCodigo !== 'RIELTANDEM') {
-    const rielElegido = herrajesByCode[inp.rielCodigo];
-    if (rielElegido) {
-      herrajesByCode['RIELTANDEM'] = { ...herrajesByCode['RIELTANDEM'], precio: Number(rielElegido.precio) };
+  const preset = presetMaterialesTipologia(Object.fromEntries(Object.entries({ ...presetDefault, ...inp.preset }).map(([rol, codigo]) => [rol, resolverCodigoTablero(codigo, Object.values(tablerosByCode))])), tipo.pref);
+  if (usaTableroGaveta(tipo.pref) && !preset.gaveta) preset.gaveta = tableroGaveta15(preset.caja, Object.values(tablerosByCode));
+  if (usaFondoMaterialFrente(tipo.pref) && inp.conFondo !== false && !/-SF$/i.test(tipo.pref)) {
+    const fondo = tablerosByCode[preset.fondo];
+    if (!fondo || Number(fondo.espesor_mm) !== 6) {
+      throw new Error(`Fondo del color del frente no disponible en 6 mm: ${preset.fondo || 'sin referencia'}. Revise el catálogo; no se sustituye por blanco.`);
     }
+  }
+  tablerosByCode = aplicarPreciosTableros(tablerosByCode, inp.preciosTableros);
+
+  if (usaTableroGaveta(tipo.pref) && Number(tablerosByCode[preset.gaveta]?.espesor_mm) !== 15) {
+    throw new Error('Selecciona un Tablero Gaveta de 15 mm.');
+  }
+  for (const [rol, codigo] of [['riel', inp.rielCodigo], ['barra', inp.barraCodigo]] as const) {
+    if (codigo && (!herrajesByCode[codigo] || (herrajesByCode[codigo].categoria ? herrajesByCode[codigo].categoria !== rol : !codigo.toUpperCase().startsWith(rol.toUpperCase())))) throw new Error(`Referencia de ${rol} no disponible: ${codigo}`);
+  }
+  // Riel override para muebles DB
+  if (esTipologiaDbFe(tipo.pref)) {
+    if (!herrajesByCode.RIELFE500) throw new Error('No está disponible el riel RIELFE500 requerido por DB-FE.');
   }
 
   const margenes = (P.margenes ?? {}) as Record<string, number>;
@@ -225,7 +247,16 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     ...(inp.overrides ?? {}),
     ...(inp.door != null ? { door: toInches(inp.door, inp.unidad) } : {}),
     ...(inp.doorHand ? { mano_derecha: inp.doorHand === 'R' ? 1 : 0 } : {}),
+    ...(usaHoodSm(tipo.pref) ? { n_puertas: tipo.pref === 'TW-SM-HOOD' ? 1 : 2 } : {}),
   };
+  if (usaHoodSm(tipo.pref)) {
+    const medidas=validarHoodSm(dims.A, inp.overrides?.HOOD, inp.overrides?.FREE);
+    dims.A=medidas.altoCarcasa;
+    const tc=Number(tablerosByCode[preset.caja]?.espesor_mm ?? 0)/25.4;
+    if (dims.A <= 200.85/25.4 + 2*tc) {
+      throw new Error('Alto − HOOD debe dejar espacio para el entrepaño fijo de 200,85 mm y la tapa.');
+    }
+  }
   if (usaPuertaParametrica(tipo.pref)) {
     if (!(inp.door != null && Number.isFinite(inp.door) && inp.door > 0)) throw new Error('Puerta es obligatoria y debe ser mayor que cero para esta tipología.');
     if (!inp.doorHand) throw new Error('Selecciona L o R para la apertura.');
@@ -257,23 +288,17 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     throw new Error('zocalo debe ser mayor o igual a cero y menor que el alto del mueble');
   }
 
-  const piezasAjustadas = ((piezas ?? []) as Pieza[]).map((pieza) => {
-    if (inp.conFondo !== false) return pieza;
-    if (pieza.rol_tablero === 'fondo') return { ...pieza, formula_cantidad: '0' };
-    if (pieza.nombre !== 'base') return pieza;
-
-    // Sin fondo, la base ocupa la profundidad menos exactamente un espesor
-    // del tablero de caja. Se conserva el eje de largo propio de cada plantilla.
-    if (/\bP\b/.test(pieza.formula_ancho ?? '')) return { ...pieza, formula_ancho: 'P-TC' };
-    if (/\bP\b/.test(pieza.formula_largo ?? '')) return { ...pieza, formula_largo: 'P-TC' };
-    return pieza;
-  });
+  // La regla vive en `muebles.ts`, que no importa `server-only` y por tanto sí
+  // se puede ejercer desde una prueba. Allí se documenta por qué los muebles
+  // superiores quedan fuera.
+  const piezasAjustadas = ajustarGeometriaBov(piezasConTableroGaveta(ajustarEntrepanos(ajustarPiezasSinFondo(normalizarPlantillasFabricacion((piezas ?? []) as Pieza[], tipo.pref), tipo.pref, inp.conFondo), tipo.pref), tipo.pref), tipo.pref);
+  const frentesAjustados = ajustarFrentesDosPequenosGola(ajustarGavetasFe(piezasAjustadas, tipo.pref, preset, inp.cantoCaja), normalizarReglasPuertas((reglas ?? []) as Regla[]), tipo.pref);
 
   const calc: CalcInput = {
     dims,
-    piezas: piezasAjustadas,
+    piezas: frentesAjustados.piezas,
     herrajesPlantilla: inp.conHerrajes ? ((herrajesPlant ?? []) as HerrajePlantilla[]) : [],
-    reglas: (reglas ?? []) as Regla[],
+    reglas: frentesAjustados.reglas,
     preset,
     tablerosByCode,
     cantosByCalibre,
@@ -292,7 +317,9 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     descuento: inp.descuento,
     cantoFrentes: inp.cantoFrentes,
     cantoCaja: inp.cantoCaja,
-    rielCodigo: inp.rielCodigo ?? 'RIELTANDEM',
+    cantoFrentesEnTodasLasPiezas: usaFondoMaterialFrente(tipo.pref),
+    rielCodigo: inp.rielCodigo,
+    barraCodigo: inp.barraCodigo,
   };
 
   return {
@@ -300,18 +327,25 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
     pref: tipo.pref,
     omiteFondoSoloAgrupado: tipo.categoria === 'inferior'
       && tipo.pref.toUpperCase().includes('B')
-      && /(^|-)SM($|-)/i.test(tipo.pref),
+      && /(^|-)(SM|SMG)($|-)/i.test(tipo.pref),
     codigoModulo: codigoComercial({
+      manoPuerta: inp.manoPuerta,
+      nPuertas: derivarVars(calc.reglas, dims, calc.overrides, geoVars(calc)).n_puertas,
       pref: tipo.pref,
       largo: inp.largo,
       alto: inp.alto,
       prof: inp.prof,
+      zocaloIn: inp.overrides?.zocalo ?? null,
       unidad: inp.unidad,
       sistema: inp.unidad === 'in' ? 'imperial' : 'metrico',
       door: inp.door,
       doorHand: inp.doorHand,
       espesorCajaMm: tablerosByCode[preset.caja]?.espesor_mm,
       espesorFrenteMm: tablerosByCode[preset.frente]?.espesor_mm,
+      conFondo: inp.conFondo,
+      dbTipo: inp.dbTipo,
+      sistemaFrente: inp.overrides?.gola ? 'gola' : 'manija',
+      pcfdCajones: tipo.pref === 'PCFD' ? inp.overrides?.n_cajones : undefined,
     }),
     prefImperial: tipo.pref_imperial || tipo.pref,
     prefMetrico: tipo.pref_metrico || tipo.pref,
@@ -323,33 +357,23 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
 
 export async function cotizar(inp: CotizarInput): Promise<CotizarResult> {
   const prepared = await prepararCotizacion(inp);
-  return { ...calcularMueble(prepared.calc), trm: prepared.trm, margen: prepared.margen };
+  return { ...calcularMueble(prepared.calc), trm: prepared.trm, margen: prepared.margen, prefMueble: prepared.pref };
 }
 
 export async function cotizarGrupo(
   inputs: CotizarInput[],
   catalogo?: CatalogoPrecompilado
 ): Promise<GroupCalculation & { preparados: CotizacionPreparada[] }> {
-  // Una estructura físicamente agrupada comparte caja, refuerzos y canto. A1
-  // es la fuente de verdad para evitar estados persistidos o cambios de perfil
-  // que dejen códigos estructurales distintos entre módulos del mismo grupo.
-  const first = inputs[0];
-  const normalizados = inputs.length > 1 && first ? inputs.map((input) => ({
-    ...input,
-    preset: {
-      ...input.preset,
-      caja: first.preset.caja,
-      refuerzo: first.preset.refuerzo ?? first.preset.caja,
-    },
-    cantoCaja: first.cantoCaja,
-  })) : inputs;
-  const preparados = await Promise.all(normalizados.map((i) => prepararCotizacion(i, catalogo)));
+  // Cada integrante conserva sus materiales y cantos. El motor solo comparte
+  // las piezas compatibles y mantiene locales las que difieren.
+  const preparados = await Promise.all(inputs.map((i) => prepararCotizacion(i, catalogo)));
   return { ...calcularGrupoFisico(preparados), preparados };
 }
 
-export async function cotizarGrupoConsolidado(inputs: CotizarInput[]): Promise<CotizarGrupoResult> {
+export async function cotizarGrupoConsolidado(inputs: CotizarInput[], exigirMano = false): Promise<CotizarGrupoResult> {
   if (inputs.length === 0) throw new Error('Agrega al menos un módulo para calcular.');
   const group = await cotizarGrupo(inputs);
+  if (exigirMano) group.preparados.forEach((p, i) => validarManoPuerta(p.pref, group.lineas[i].vars.n_puertas, inputs[i].manoPuerta));
   const first = group.preparados[0];
   const result = consolidarGrupo(group, { trm: first.trm, margen: first.margen });
   return { ...result, visualizacion: construirVisualizacion(group.preparados, group) };
@@ -358,8 +382,22 @@ export async function cotizarGrupoConsolidado(inputs: CotizarInput[]): Promise<C
 export type { CotizarGrupoResult } from '@/lib/group-result';
 
 // Datos para poblar la UI del cotizador.
+const TIPOLOGIAS_NO_COTIZABLES = new Set([
+  'OILVP', 'S', 'SA', 'SLOC', 'SMO', 'ICP',
+  'ALP', 'AL', 'ALH',
+  'BBL', 'BBL-SF', 'BBLFD-D-L/R-SM-SF',
+]);
+
+function esTipologiaNoCotizable(tipo: { pref: string; pref_imperial?: string | null; pref_metrico?: string | null }) {
+  return [tipo.pref, tipo.pref_imperial, tipo.pref_metrico].some(
+    (pref) => pref != null && TIPOLOGIAS_NO_COTIZABLES.has(pref),
+  );
+}
+
 export async function getCotizadorData() {
   const sb = await createClient();
+  const { data: reglasPuertas, error: reglasPuertasError } = await sb.from('cot_reglas_config').select('*').eq('activo', true).eq('variable', 'n_puertas');
+  if (reglasPuertasError) throw new Error('No se pudieron cargar las reglas de puertas.');
   const [{ data: tipos }, /* { data: recargos }, */ { data: tableros }, { data: params }, { data: piezasRoles }, { data: perfiles }, { data: cantos }] = await Promise.all([
     sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,nombre_es,categoria,margen_key').eq('activo', true).order('pref'),
     // sb.from('cot_recargos_cliente').select('id,cliente_nombre,recargo_pct,incluye_herrajes').eq('activo', true).order('cliente_nombre'),
@@ -392,10 +430,14 @@ export async function getCotizadorData() {
   const perfilesList = (perfiles ?? []) as { id: string; nombre: string; descripcion: string | null; valores: Record<string, string>; es_default: boolean; orden: number }[];
   const presetParam = (P.preset_default ?? {}) as Record<string, string>;
   const perfilDefault = perfilesList.find((p) => p.es_default) ?? perfilesList[0];
-  const presetDefault = perfilDefault?.valores ?? presetParam;
+  const presetBase = perfilDefault?.valores ?? presetParam;
+  const presetNormalizado = Object.fromEntries(Object.entries(presetBase).map(([rol,codigo])=>[rol,resolverCodigoTablero(codigo,tableros??[])]));
+  const presetDefault = { ...presetNormalizado, gaveta: tableroGaveta15(presetNormalizado.caja, tableros ?? []) };
 
   return {
-    tipos: tipos ?? [],
+    // Defensa adicional a `activo = true`: evita exponer tipologías retiradas
+    // si un entorno todavía no ha aplicado la migración que las desactiva.
+    tipos: (tipos ?? []).filter((tipo: { pref: string; pref_imperial?: string | null; pref_metrico?: string | null }) => !esTipologiaNoCotizable(tipo)).map((tipo: { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; nombre_es: string | null; categoria: string | null; margen_key: string | null }) => ({ ...tipo, reglasPuertas: (reglasPuertas ?? []).filter((r: Regla) => r.tipo_mueble_id == null || r.tipo_mueble_id === tipo.id) as Regla[] })),
     // recargos: recargos ?? [],
     tableros: tableros ?? [],
     cantos: ((cantos ?? []) as Array<{ calibre: string }>).map((c: any) => c.calibre as string),
