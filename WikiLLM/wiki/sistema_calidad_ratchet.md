@@ -37,7 +37,7 @@ El sistema de calidad de **Cotizador PLUS** protege el repositorio contra regres
    - Verifica integridad de `quality/manifest.json` (cero rutas rotas y cero suites activas huérfanas).
 
 5. **Línea Base y Trinquete (`docs/quality/baseline.json`)**:
-   - Congela deuda histórica permitida (0 errores de TypeScript, 36 errores de ESLint heredados en 4 archivos de `src/lib/`, 0 tests fallidos).
+   - Congela el objetivo en **0 errores de TypeScript, 0 errores de ESLint y 0 tests fallidos** (`916/916` pruebas pasando).
    - Regla inviolable: $\text{Errores Nuevos} = 0 \;\land\; \text{Errores Totales} \le \text{Errores Baseline}$.
    - `npm run quality:baseline:update` solo admite reducciones verificadas de deuda.
 

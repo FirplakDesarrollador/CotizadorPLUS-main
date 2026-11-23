@@ -32,8 +32,8 @@ export async function getDiseno(tipoId: string) {
   ]);
   return {
     piezas: piezas ?? [], reglas: reglas ?? [], herrajes: herrajes ?? [],
-    tableros: (tableros ?? []).map((t: any) => t.codigo),
-    cantos: [...new Set((cantos ?? []).map((c: any) => c.calibre))],
+    tableros: ((tableros ?? []) as Array<{ codigo: string }>).map((t) => t.codigo),
+    cantos: [...new Set(((cantos ?? []) as Array<{ calibre: string }>).map((c) => c.calibre))],
     herrajeCat: herrajeCat ?? [],
   };
 }

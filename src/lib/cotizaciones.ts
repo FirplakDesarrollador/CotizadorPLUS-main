@@ -113,12 +113,24 @@ export async function getCotizacion(id: string) {
     }
     return grupo;
   });
-  const gruposById = Object.fromEntries((gruposActuales as Array<{ id: string }>).map((g) => [g.id, g]));
-  const lineasByCocina: Record<string, unknown[]> = {};
+  const gruposById = Object.fromEntries((gruposActuales as Array<{ id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop?: number; total_usd?: number; [key: string]: unknown }>).map((g) => [g.id, g]));
+  type LineaEnriquecida = LineaPersistida & {
+    precio_unit_cop: number;
+    precio_unit_usd: number;
+    precio_total_cop: number;
+    precio_total_usd: number;
+    costo_sin_herrajes_cop?: number;
+    costo_herrajes_cop?: number;
+    costo_total_cop?: number;
+    breakdown?: Record<string, unknown> | null;
+    grupo?: { id: string; orden: number; etiqueta: string; codigo_grupo: string | null; total_cop?: number; total_usd?: number; [key: string]: unknown } | null;
+    [key: string]: unknown;
+  };
+  const lineasByCocina: Record<string, LineaEnriquecida[]> = {};
   for (const l of lineasActuales) {
     const k = (l as { cocina_id: string | null }).cocina_id ?? 'sin';
     const grupo = gruposById[(l as { grupo_id?: string }).grupo_id ?? ''];
-    (lineasByCocina[k] ||= []).push({ ...l, grupo });
+    (lineasByCocina[k] ||= []).push({ ...l, grupo } as LineaEnriquecida);
   }
   for (const rows of Object.values(lineasByCocina)) rows.sort((a, b) => {
     const aa = a as { grupo?: { orden?: number }; posicion_grupo?: number; orden?: number };
@@ -126,7 +138,8 @@ export async function getCotizacion(id: string) {
     return Number(aa.grupo?.orden ?? aa.orden ?? 0) - Number(bb.grupo?.orden ?? bb.orden ?? 0)
       || Number(aa.posicion_grupo ?? 1) - Number(bb.posicion_grupo ?? 1);
   });
-  const cocinasConLineas = ((cocinas ?? []) as Array<{ id: string }>).map((c: any) => ({ ...c, lineas: lineasByCocina[c.id] ?? [] }));
+  type CocinaRow = { id: string; nombre: string; cantidad?: number | null; orden?: number; total_cop?: number; total_usd?: number; [key: string]: unknown };
+  const cocinasConLineas = ((cocinas ?? []) as CocinaRow[]).map((c) => ({ ...c, lineas: lineasByCocina[c.id] ?? [] }));
   return { cabecera: cab, cocinas: cocinasConLineas, lineasSinCocina: lineasByCocina['sin'] ?? [] };
 }
 
@@ -652,8 +665,9 @@ export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: str
   const { data: grupos, error: groupsError } = await sb.from('cot_grupos_modulos')
     .select('id,etiqueta,orden').eq('cocina_id', current.cocina_id).order('orden');
   if (groupsError) throw new Error(groupsError.message);
-  const list = grupos ?? [];
-  let target = (list as any[]).find((g: any) => g.etiqueta === parsed.letra) ?? null;
+  type GrupoResumen = { id: string; etiqueta: string; orden: number };
+  const list = (grupos ?? []) as GrupoResumen[];
+  let target: GrupoResumen | null = list.find((g) => g.etiqueta === parsed.letra) ?? null;
   let createdTargetId: string | null = null;
 
   if (!target) {
@@ -665,17 +679,19 @@ export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: str
       etiqueta: `NUEVO-${crypto.randomUUID()}`,
     }).select('id,etiqueta,orden').single();
     if (error || !created) throw new Error(error?.message ?? 'No se pudo crear el grupo');
-    createdTargetId = created.id;
-    const ordered = [...list, created];
+    const createdRow = created as GrupoResumen;
+    createdTargetId = createdRow.id;
+    const ordered = [...list, createdRow];
     ordered.splice(requestedIndex, 0, ordered.pop()!);
     for (let i = 0; i < ordered.length; i += 1) {
       await sb.from('cot_grupos_modulos').update({ orden: 10000 + i }).eq('id', ordered[i].id);
     }
-    target = created;
+    target = createdRow;
   }
 
+  const targetGroup: GrupoResumen = target;
   const { data: targetRows } = await sb.from('cot_cotizacion_lineas').select('*')
-    .eq('grupo_id', target.id).neq('id', lineaId).order('posicion_grupo');
+    .eq('grupo_id', targetGroup.id).neq('id', lineaId).order('posicion_grupo');
   const prospective = [...((targetRows ?? []) as LineaPersistida[])];
   const requestedPos = Math.max(1, Math.min(parsed.posicion ?? prospective.length + 1, prospective.length + 1));
   prospective.splice(requestedPos - 1, 0, current);
@@ -696,14 +712,14 @@ export async function cambiarGrupoLinea(lineaId: string, etiquetaSolicitada: str
 
   for (let i = 0; i < prospective.length; i += 1) {
     const { error } = await sb.from('cot_cotizacion_lineas').update({
-      grupo_id: target.id,
+      grupo_id: targetGroup.id,
       posicion_grupo: i + 1,
     }).eq('id', prospective[i].id);
     if (error) throw new Error(error.message);
   }
 
-  if (current.grupo_id !== target.id) await recalcularGrupo(current.grupo_id);
-  await recalcularGrupo(target.id);
+  if (current.grupo_id !== targetGroup.id) await recalcularGrupo(current.grupo_id);
+  await recalcularGrupo(targetGroup.id);
   await normalizarGrupos(current.cocina_id);
   await recomputarTotales(current.cotizacion_id);
   return current.cotizacion_id;
@@ -817,7 +833,7 @@ export async function actualizarCotizacion(id: string, patch: { nombre?: string;
     if (lineasError) throw new Error(lineasError.message);
     const grupos = new Set<string>();
 
-    await Promise.all(((lineas ?? []) as any[]).map(async (linea: any) => {
+    await Promise.all(((lineas ?? []) as Array<{ id: string; grupo_id: string | null; config: Record<string, unknown> | null }>).map(async (linea) => {
       const currentConfig = ((linea.config ?? {}) as Record<string, unknown>);
       const configUpdates: Record<string, unknown> = {};
       if (patch.trm !== undefined) {

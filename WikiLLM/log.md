@@ -3327,3 +3327,7 @@ Se actualizó el sistema modular de calidad a v2 con invocación universal `/des
 
 ## [2026-11-23] fix | Correcciones de auditoría en el motor de calidad v2
 Se resolvieron los hallazgos detectados tras auditar el motor `/desplegar`: normalización de recibos v1 legados en `loadRunReceipt()` (`common.ts`), comparación de `quality:policy` frente a `HEAD` y `merge-base` (`policy.ts`), conteo real de líneas para archivos nuevos sin `git add` y uso de `matchPattern` en `learn.ts`, y unificación de `.agents/workflows/calidad.md` y `.agents/workflows/quality.md` como alias del protocolo canónico `/desplegar`.
+
+
+## [2026-11-23] lint | Eliminados los 35 errores históricos de ESLint y trinquete congelado en 0/0/0
+Se reemplazaron los tipos `any` heredados en `src/lib/admin.ts`, `src/lib/diseno.ts`, `src/lib/cotizar.ts` y `src/lib/cotizaciones.ts` por tipos explícitos equivalentes sin modificar el comportamiento en runtime. Verificado con `npm run typecheck` (0 errores), `npm run lint` (0 errores), `916/916` pruebas en verde y `npm run quality:baseline:update`, bajando `docs/quality/baseline.json` de `35` a `0` errores permitidos (`maxLintErrors=0`, `maxTypeErrors=0`, `maxFailingTests=0`).

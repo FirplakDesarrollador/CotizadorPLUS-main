@@ -83,6 +83,10 @@ export type CatalogoPrecompilado = {
   tablerosByCode: Record<string, Tablero>;
 };
 
+type TipoMuebleRow = CatalogoPrecompilado['tiposById'][string];
+type ParamRow = { key: string; value: unknown };
+type HerrajeCatalogRow = Herraje & { selector_key?: string | null };
+
 export async function cargarCatalogoPrecompilado(): Promise<CatalogoPrecompilado> {
   const sb = await createClient();
   const [
@@ -105,8 +109,8 @@ export async function cargarCatalogoPrecompilado(): Promise<CatalogoPrecompilado
     sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato'),
   ]);
 
-  const P = Object.fromEntries(((params ?? []) as any[]).map((r: any) => [r.key, r.value])) as Record<string, unknown>;
-  const tiposById = Object.fromEntries(((tipos ?? []) as any[]).map((t: any) => [t.id, t]));
+  const P = Object.fromEntries(((params ?? []) as ParamRow[]).map((r) => [r.key, r.value])) as Record<string, unknown>;
+  const tiposById = Object.fromEntries(((tipos ?? []) as TipoMuebleRow[]).map((t) => [t.id, t]));
   const piezasByTipoId: Record<string, unknown[]> = {};
   for (const p of (piezas ?? []) as Array<{ tipo_mueble_id: string }>) {
     if (!piezasByTipoId[p.tipo_mueble_id]) piezasByTipoId[p.tipo_mueble_id] = [];
@@ -126,12 +130,13 @@ export async function cargarCatalogoPrecompilado(): Promise<CatalogoPrecompilado
     if (!herrajesPlantByTipoId[hp.tipo_mueble_id]) herrajesPlantByTipoId[hp.tipo_mueble_id] = [];
     herrajesPlantByTipoId[hp.tipo_mueble_id].push(hp);
   }
-  const cantosByCalibre = Object.fromEntries(((cantos ?? []) as any[]).map((c: any) => [normCalibre(c.calibre), c as Canto]));
-  const herrajesByCode = Object.fromEntries(((herrajesAll ?? []) as any[]).map((h: any) => [h.codigo, h as Herraje]));
+  const cantosByCalibre = Object.fromEntries(((cantos ?? []) as Canto[]).map((c) => [normCalibre(c.calibre), c]));
+  const herrajesRows = (herrajesAll ?? []) as HerrajeCatalogRow[];
+  const herrajesByCode = Object.fromEntries(herrajesRows.map((h) => [h.codigo, h as Herraje]));
   const consumiblesBySelector = Object.fromEntries(
-    ((herrajesAll ?? []) as any[]).filter((h: any) => h.categoria === 'consumible' && h.selector_key).map((h: any) => [h.selector_key as string, Number(h.precio)])
+    herrajesRows.filter((h) => h.categoria === 'consumible' && h.selector_key).map((h) => [h.selector_key as string, Number(h.precio)])
   );
-  const tablerosByCode = Object.fromEntries(((tableros ?? []) as any[]).map((t: any) => [t.codigo, t as Tablero]));
+  const tablerosByCode = Object.fromEntries(((tableros ?? []) as Tablero[]).map((t) => [t.codigo, t]));
 
   return {
     params: P,
@@ -149,7 +154,7 @@ export async function cargarCatalogoPrecompilado(): Promise<CatalogoPrecompilado
 
 export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoPrecompilado): Promise<CotizacionPreparada> {
   let P: Record<string, unknown>;
-  let tipo: any;
+  let tipo: TipoMuebleRow;
   let piezas: unknown[];
   let reglas: unknown[];
   let herrajesPlant: unknown[];
@@ -176,8 +181,8 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
       sb.from('cot_tipos_mueble').select('id,pref,pref_imperial,pref_metrico,permite_agrupacion,etiquetas_und,margen_key,usa_carton,categoria').eq('id', inp.tipoId).single(),
     ]);
     if (!tipoDb) throw new Error('Tipo de mueble no encontrado');
-    tipo = tipoDb;
-    P = Object.fromEntries(((params ?? []) as any[]).map((r: any) => [r.key, r.value])) as Record<string, unknown>;
+    tipo = tipoDb as TipoMuebleRow;
+    P = Object.fromEntries(((params ?? []) as ParamRow[]).map((r) => [r.key, r.value])) as Record<string, unknown>;
 
     const [{ data: piezasDb }, { data: reglasDb }, { data: herrajesPlantDb }, { data: cantosDb }, { data: herrajesAllDb }] = await Promise.all([
       sb.from('cot_piezas_plantilla').select('*').eq('tipo_mueble_id', inp.tipoId).order('orden'),
@@ -192,11 +197,12 @@ export async function prepararCotizacion(inp: CotizarInput, catalogo?: CatalogoP
 
     const { data: tablerosDb } = await sb.from('cot_tableros').select('codigo,precio_m2,espesor_mm,formato').eq('activo', true);
 
-    tablerosByCode = Object.fromEntries(((tablerosDb ?? []) as any[]).map((t: any) => [t.codigo, t as Tablero]));
-    cantosByCalibre = Object.fromEntries(((cantosDb ?? []) as any[]).map((c: any) => [normCalibre(c.calibre), c as Canto]));
-    herrajesByCode = Object.fromEntries(((herrajesAllDb ?? []) as any[]).map((h: any) => [h.codigo, h as Herraje]));
+    tablerosByCode = Object.fromEntries(((tablerosDb ?? []) as Tablero[]).map((t) => [t.codigo, t]));
+    cantosByCalibre = Object.fromEntries(((cantosDb ?? []) as Canto[]).map((c) => [normCalibre(c.calibre), c]));
+    const herrajesRowsDb = (herrajesAllDb ?? []) as HerrajeCatalogRow[];
+    herrajesByCode = Object.fromEntries(herrajesRowsDb.map((h) => [h.codigo, h as Herraje]));
     consumiblesBySelector = Object.fromEntries(
-      ((herrajesAllDb ?? []) as any[]).filter((h: any) => h.categoria === 'consumible' && h.selector_key).map((h: any) => [h.selector_key as string, Number(h.precio)])
+      herrajesRowsDb.filter((h) => h.categoria === 'consumible' && h.selector_key).map((h) => [h.selector_key as string, Number(h.precio)])
     );
   }
 
@@ -408,7 +414,7 @@ export async function getCotizadorData() {
     sb.from('cot_cantos').select('calibre').order('calibre'),
   ]);
   const { data: herrajesPlant } = await sb.from('cot_herrajes_plantilla').select('tipo_mueble_id,rol,herraje_codigo,orden').order('orden');
-  const P = Object.fromEntries(((params ?? []) as Array<{ key: string; value: unknown }>).map((r: any) => [r.key, r.value]));
+  const P = Object.fromEntries(((params ?? []) as ParamRow[]).map((r) => [r.key, r.value]));
 
   // Herrajes por tipo (rol + código), para permitir incluir/excluir por línea.
   const herrajesByTipo: Record<string, { rol: string; codigo: string | null }[]> = {};
@@ -440,7 +446,7 @@ export async function getCotizadorData() {
     tipos: (tipos ?? []).filter((tipo: { pref: string; pref_imperial?: string | null; pref_metrico?: string | null }) => !esTipologiaNoCotizable(tipo)).map((tipo: { id: string; pref: string; pref_imperial: string | null; pref_metrico: string | null; nombre_es: string | null; categoria: string | null; margen_key: string | null }) => ({ ...tipo, reglasPuertas: (reglasPuertas ?? []).filter((r: Regla) => r.tipo_mueble_id == null || r.tipo_mueble_id === tipo.id) as Regla[] })),
     // recargos: recargos ?? [],
     tableros: tableros ?? [],
-    cantos: ((cantos ?? []) as Array<{ calibre: string }>).map((c: any) => c.calibre as string),
+    cantos: ((cantos ?? []) as Array<{ calibre: string }>).map((c) => c.calibre),
     trmDefault: Number((P.trm as { valor?: number })?.valor ?? 4200),
     presetDefault,
     perfiles: perfilesList,
