@@ -1,3 +1,52 @@
+<!-- AUTO-GENERATED from AGENTS.md via npm run skills:sync. Do not edit directly. -->
+
+<!-- BEGIN:nextjs-agent-rules -->
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+<!-- END:nextjs-agent-rules -->
+
+# Protocolo Universal `/desplegar` y Sistema de Calidad
+
+Este repositorio cuenta con un sistema modular de calidad, trinquete de deuda histórica (*Ratchet*) y publicación local controlada. Su fuente canónica es `.agents/skills/desplegar/SKILL.md` (sincronizada determinísticamente hacia Claude Code, Antigravity y Cursor mediante `npm run skills:sync`).
+
+## 1. Reconocimiento del Comando `/desplegar`
+
+Cualquier agente o IDE (Claude Code, Codex, Antigravity, Gemini CLI, Cursor) debe leer y ejecutar exactamente `.agents/skills/desplegar/SKILL.md` cuando el usuario invoque `/desplegar`:
+
+- `/desplegar` (sin argumentos — ejecución directa sin preguntas): trae e integra primero lo nuevo de `origin/DEV` en la rama actual → corre calidad (`plan` + `full` + `learn`), evaluando y corrigiendo hasta verde → commit y push a la rama actual → merge y validación en `DEV` → merge a `main` + verificación de despliegue en Vercel → reporte final.
+- `/desplegar plan`: solo ejecuta `npm run quality:plan` (costo 0, no muta nada).
+- `/desplegar impact`: ejecuta `npm run quality:impact`; si termina en exit 0, ejecuta `npm run quality:learn`.
+- `/desplegar quick`: ejecuta `npm run quality:quick`; si termina en exit 0, ejecuta `npm run quality:learn`.
+- `/desplegar gate`: ejecuta `npm run quality:gate` (escala automáticamente a `FULL` ante archivos huérfanos, cambios transversales o del harness); si termina en exit 0, ejecuta `npm run quality:learn`.
+- `/desplegar full`: ejecuta `npm run quality:full` (cobertura exhaustiva incluyendo `npm run build`); si termina en exit 0, ejecuta `npm run quality:learn`.
+- `/desplegar learn`: ejecuta `npm run quality:learn` (análisis estrictamente consultivo en `.tmp/quality/learning-report.md`).
+- `/desplegar release`: alias explícito del flujo completo de `/desplegar`.
+
+## 2. Comandos Operativos
+
+- `npm run test:focused -- <archivo>`: pruebas enfocadas Nivel 1 durante desarrollo.
+- `npm run quality:plan`: plan de impacto y detección de archivos huérfanos (costo 0).
+- `npm run quality:policy`: política de no regresión (bloquea `.skip`/`.todo`, pruebas borradas, subidas de baseline y nuevos `exclude`).
+- `npm run quality:impact`: validación modular de capacidades tocadas.
+- `npm run quality:quick`: validación rápida (`policy` + `skills:check` + `typecheck` + pruebas de impacto).
+- `npm run quality:gate`: compuerta conservadora por impacto + trinquete (con auto-escalamiento a `FULL`).
+- `npm run quality:full` / `npm run quality:gate:full`: validación exhaustiva completa + `next build`.
+- `npm run quality:learn`: auditoría consultiva (`.tmp/quality/learning-report.md` y `.tmp/quality/learn-report.json`).
+- `npm run quality:baseline:update`: congela reducciones verificadas de deuda en `docs/quality/baseline.json`.
+- `npm run skills:sync` / `npm run skills:check` / `npm run skills:validate`: sincronización y validación multi-IDE sin symlinks.
+
+## 3. Reglas Inviolables de Gobernanza (Safe Change)
+
+1. **Autorización estricta**: ningún agente puede ejecutar `impact`, `quick`, `gate`, `full`, `release` ni pruebas o acciones con coste/red externa sin autorización explícita del usuario (excepto `test:focused`, `quality:plan`, `quality:learn`, `skills:check` o cuando el usuario invoque directamente `/desplegar <modo>`).
+2. **Estados verificables explícitos**: cada etapa reporta `VERIFIED`, `FAILED`, `SKIPPED` o `NOT_CONFIGURED`. Si una etapa requerida queda `SKIPPED` o `NOT_CONFIGURED`, el gate falla. Prohibido falsear verdes.
+3. **Prohibido relajar aserciones o saltar pruebas**: prohibido usar `.skip`, `.todo`, `.only`, eliminar pruebas, añadir `exclude`/`globalIgnores` para esconder errores o debilitar aserciones.
+4. **Trinquete de deuda inviolable**: `docs/quality/baseline.json` solo puede bajar deuda, jamás subirla.
+5. **Gobernanza de `quality:learn`**: estrictamente consultivo (nunca edita código, pruebas ni baselines). Ninguna entrega se cierra con hallazgos `HIGH` sin resolver o justificar técnicamente.
+6. **Sin GitHub Actions**: todo el ciclo de calidad y publicación se opera en local con verificación previa de `origin/DEV` y verificación final de Vercel.
+
+---
+
 # Reglas y Workflows de WikiLLM
 
 ## Schema de WikiLLM
@@ -22,60 +71,14 @@ Tu responsabilidad es mantener la wiki como una base de conocimiento coherente y
 
 ## Workflow: Mantenimiento de WikiLLM
 
-Este flujo de trabajo define los pasos exactos a seguir para garantizar que la base de conocimiento (WikiLLM) se mantenga estructurada, actualizada y coherente, cumpliendo con las directrices del proyecto. Puede ser invocado al añadir nuevos componentes, refactorizar partes clave o simplemente al querer documentar algo nuevo.
-
 ### 1. Fase de Evaluación
-**Identificar el tipo de acción:** ¿Se trata de una nueva ingestión de conocimiento, una actualización de una funcionalidad existente, o una revisión de salud (lint)?
+Identificar si se trata de una nueva ingestión de conocimiento, una actualización de funcionalidad existente o una revisión de salud (lint).
 
 ### 2. Ejecución según la Acción
-
-#### A. Ingestión (Nueva Información)
-1. **Analizar la fuente:** Lee y procesa el nuevo documento (desde `raw/`) o la nueva información descubierta en el código.
-2. **Sintetizar:** Extrae los conceptos clave, arquitectura o patrones de diseño relevantes.
-3. **Crear / Actualizar:** Escribe un nuevo documento Markdown en `WikiLLM/wiki/` (o actualiza de forma sustancial uno existente) con la información sintetizada.
-4. **Registrar en el Índice:** Agrega la nueva página bajo la categoría correspondiente en `WikiLLM/index.md` con su enlace relativo y una breve descripción (ej. `- [Título](wiki/nombre.md) - Descripción`).
-5. **Log de Actividad:** Añade una entrada al final de `WikiLLM/log.md` usando el formato `## [YYYY-MM-DD] ingest | <Descripción corta>`.
-
-#### B. Actualización (Cambios o Correcciones)
-1. **Identificar archivo afectado:** Busca en `WikiLLM/wiki/` la página que documenta la funcionalidad que acaba de ser modificada.
-2. **Modificar contenido:** Actualiza la información para reflejar el nuevo estado de la aplicación, eliminando detalles, rutas o lógicas obsoletas.
-3. **Log de Actividad:** Añade una entrada al final de `WikiLLM/log.md` usando el formato `## [YYYY-MM-DD] update | <Descripción del cambio>`. *(No modifiques index.md a menos que el nombre o propósito de la página haya cambiado radicalmente).*
-
-#### C. Mantenimiento (Linting)
-1. **Verificar enlaces:** Revisa que todos los enlaces en `WikiLLM/index.md` apunten a archivos `.md` existentes.
-2. **Identificar huérfanos:** Busca archivos en `WikiLLM/wiki/` que no estén referenciados en `index.md` y agrégalos.
-3. **Resolver conflictos:** Verifica y corrige posibles contradicciones leyendo e iterando a través de los distintos documentos de la wiki.
-4. **Log de Actividad:** Añade una entrada al final de `WikiLLM/log.md` usando el formato `## [YYYY-MM-DD] lint | <Resumen de problemas arreglados>`.
+- **Ingestión**: analiza la fuente -> sintetiza -> crea/actualiza en `WikiLLM/wiki/` -> registra en `WikiLLM/index.md` -> añade entrada `ingest` en `WikiLLM/log.md`.
+- **Actualización**: identifica la página afectada en `WikiLLM/wiki/` -> actualiza reflejando el nuevo estado -> añade entrada `update` en `WikiLLM/log.md`.
+- **Mantenimiento (Linting)**: verifica enlaces en `WikiLLM/index.md`, elimina huérfanos y contradicciones -> añade entrada `lint` en `WikiLLM/log.md`.
 
 ### 3. Verificación Final
-- Asegurarse de que no se haya modificado ningún archivo dentro de `WikiLLM/raw/` (son de solo lectura).
-- Comprobar que todas las referencias cruzadas entre páginas usen rutas relativas adecuadas.
-- Validar que el formato se mantenga técnico, conciso y libre de fragmentos excesivamente grandes de código puro (a menos que sean esenciales para explicar un patrón).
-
----
-
-# Sistema de Calidad Modular, Trinquete de Deuda y Safe Change
-
-El repositorio cuenta con un sistema de calidad basado en impacto, trinquete de deuda histórica (*Ratchet*) y auditoría consultiva continua.
-
-### 1. Comandos Operativos Obligatorios
-- `npm run quality:plan`: Inspecciona el `git diff` e imprime las capacidades/lanes afectados y pruebas requeridas (dry-run, costo 0).
-- `npm run quality:impact`: Ejecuta únicamente las pruebas unitarias/integración de los lanes modificados.
-- `npm run quality:gate`: Valida el impacto + trinquete de TypeScript, ESLint y pruebas unitarias. Debe terminar con **exit code 0** antes de cualquier commit, PR o entrega.
-- `npm run quality:gate:full`: Suite exhaustiva para releases y CI.
-- `npm run quality:baseline:update`: Asienta y congela mejoras cuando se reduce deuda técnica histórica.
-- `npm run quality:learn`: Auditoría consultiva post-ejecución que identifica brechas de cobertura, mapeo, riesgos de latencia y arquitectura.
-
-### 2. Reglas Inviolables de Gobernanza para Agentes (Safe Change)
-1. **Planificar Primero**: Ejecuta siempre `npm run quality:plan` antes de correr comandos costosos o entregar código.
-2. **Prohibido Relajar Aserciones o Saltar Pruebas**:
-   - Queda estrictamente prohibido usar `.skip`, comentar pruebas o debilitar aserciones para forzar el paso de un test.
-   - Si un test falla debido a una regresión, se debe corregir el código productivo, no la prueba.
-3. **Inviolabilidad de la Línea Base (Trinquete / Ratchet)**:
-   - `docs/quality/baseline.json` congela la deuda histórica permitida.
-   - Ningún agente o desarrollador puede incrementar el número de errores de linter, tipos o tests fallidos. La deuda solo puede bajar, jamás subir.
-   - Solo se ejecutará `quality:baseline:update` para registrar disminuciones verificadas de deuda.
-4. **Gobernanza de `quality:learn`**:
-   - **Estrictamente consultivo**: NUNCA debe modificar automáticamente pruebas, baselines, mapas ni código de producción.
-   - **Criterio de resolución**: Ninguna tarea de desarrollo se considerará terminada si existen hallazgos de severidad `HIGH` sin resolver (creando la prueba correspondiente) o sin justificación técnica documentada.
-
+- Nunca modificar archivos dentro de `WikiLLM/raw/` (son de solo lectura).
+- Usar rutas relativas adecuadas y mantener formato técnico y conciso.

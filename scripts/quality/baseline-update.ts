@@ -1,7 +1,6 @@
-import { execSync } from 'node:child_process';
 import {
+  getCurrentBranch,
   loadBaseline,
-  ROOT_DIR,
   saveBaseline,
   type Baseline,
 } from './common';
@@ -11,50 +10,44 @@ import { executeTests } from './run-tests';
 
 async function updateBaseline() {
   console.log('\n======================================================');
-  console.log('       🔄 ACTUALIZACIÓN DE LÍNEA BASE (BASELINE)      ');
+  console.log('       ACTUALIZACIÓN DE LÍNEA BASE (RATCHET)          ');
   console.log('======================================================\n');
 
   const oldBaseline = loadBaseline();
-  let branch = 'unknown';
-  try {
-    branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: ROOT_DIR, encoding: 'utf-8' }).trim();
-  } catch {
-    branch = 'main';
-  }
+  const branch = getCurrentBranch();
 
-  // 1. Verificación estática
-  console.log('1️⃣ Midiendo errores de tipos (tsc)...');
+  console.log('1. Midiendo errores de tipos (tsc)...');
   const typeResult = checkTypecheckRatchet(oldBaseline);
 
-  console.log('2️⃣ Midiendo errores de linter (eslint)...');
+  console.log('2. Midiendo errores de linter (eslint)...');
   const lintResult = checkLintRatchet(oldBaseline);
 
-  // 3. Ejecutar todas las pruebas para capturar fallos reales actuales
-  console.log('3️⃣ Ejecutando suite completa de pruebas...');
+  console.log('3. Ejecutando suite completa de pruebas...');
   const allTests = getAllTestFiles();
   const testResults = executeTests(allTests, {
     ...oldBaseline,
-    rules: { ...oldBaseline.rules, maxFailingTests: 9999 }, // permitir medir sin abortar
+    rules: { ...oldBaseline.rules, maxFailingTests: 9999 },
   });
 
-  // 4. Validar trinquete: no se permite inflar la deuda
-  const allowForce = process.argv.includes('--force');
-  if (!allowForce) {
-    if (typeResult.errorCount > oldBaseline.rules.maxTypeErrors) {
-      console.error(
-        `❌ No se puede actualizar baseline: errores de tipo (${typeResult.errorCount}) superan el baseline anterior (${oldBaseline.rules.maxTypeErrors}).`
-      );
-      process.exit(1);
-    }
-    if (lintResult.errorCount > oldBaseline.rules.maxLintErrors) {
-      console.error(
-        `❌ No se puede actualizar baseline: errores de linter (${lintResult.errorCount}) superan el baseline anterior (${oldBaseline.rules.maxLintErrors}).`
-      );
-      process.exit(1);
-    }
+  if (typeResult.errorCount > oldBaseline.rules.maxTypeErrors) {
+    console.error(
+      `Rechazado: errores de tipo (${typeResult.errorCount}) superan el baseline actual (${oldBaseline.rules.maxTypeErrors}). El trinquete solo permite bajar deuda.`
+    );
+    process.exit(1);
+  }
+  if (lintResult.errorCount > oldBaseline.rules.maxLintErrors) {
+    console.error(
+      `Rechazado: errores de linter (${lintResult.errorCount}) superan el baseline actual (${oldBaseline.rules.maxLintErrors}). El trinquete solo permite bajar deuda.`
+    );
+    process.exit(1);
+  }
+  if (testResults.failed > oldBaseline.rules.maxFailingTests) {
+    console.error(
+      `Rechazado: pruebas fallidas (${testResults.failed}) superan el baseline actual (${oldBaseline.rules.maxFailingTests}).`
+    );
+    process.exit(1);
   }
 
-  // 5. Construir lista de fallos conocidos actualizada
   const knownFailingTests: Baseline['knownFailingTests'] = [];
   testResults.knownFailuresEncountered.forEach((kf) => {
     const existing = oldBaseline.knownFailingTests.find((e) => e.name.toLowerCase() === kf.name.toLowerCase());
@@ -64,20 +57,6 @@ async function updateBaseline() {
       reason: existing?.reason ?? 'Fallo histórico conocido',
     });
   });
-
-  testResults.newFailures.forEach((nf) => {
-    knownFailuresEncounteredFallback(nf);
-  });
-
-  function knownFailuresEncounteredFallback(nf: { name: string; errorSnippet: string }) {
-    if (allowForce) {
-      knownFailingTests.push({
-        suite: 'tests/*',
-        name: nf.name,
-        reason: nf.errorSnippet.slice(0, 100),
-      });
-    }
-  }
 
   const newBaseline: Baseline = {
     version: '1.0.0',
@@ -102,11 +81,11 @@ async function updateBaseline() {
 
   saveBaseline(newBaseline);
 
-  console.log('\n✅ Línea base actualizada exitosamente en docs/quality/baseline.json');
-  console.log(`   - Errores de tipo: ${newBaseline.metrics.typeErrors}`);
-  console.log(`   - Errores de linter: ${newBaseline.metrics.lintErrors} (antes: ${oldBaseline.metrics.lintErrors})`);
-  console.log(`   - Tests pasando: ${newBaseline.metrics.passingTests} / ${newBaseline.metrics.totalTests}`);
-  console.log(`   - Tests fallando: ${newBaseline.metrics.failingTests} (antes: ${oldBaseline.metrics.failingTests})`);
+  console.log('\nLínea base actualizada en docs/quality/baseline.json:');
+  console.log(`  - Errores de tipo: ${newBaseline.metrics.typeErrors} (antes: ${oldBaseline.metrics.typeErrors})`);
+  console.log(`  - Errores de linter: ${newBaseline.metrics.lintErrors} (antes: ${oldBaseline.metrics.lintErrors})`);
+  console.log(`  - Pruebas pasando: ${newBaseline.metrics.passingTests}/${newBaseline.metrics.totalTests}`);
+  console.log(`  - Pruebas fallando: ${newBaseline.metrics.failingTests} (antes: ${oldBaseline.metrics.failingTests})`);
   console.log('\n======================================================\n');
 }
 

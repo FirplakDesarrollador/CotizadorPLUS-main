@@ -1642,3 +1642,11 @@ Ancho resultante de la tabla, calculado en toda la escala:
 La separacion vertical entre columnas (`border-left`) se movio al media query: apilado no tenia sentido.
 
 Verificado contra el CSS que sirve el servidor de desarrollo, no solo en el fuente: `.cotizaciones-main-grid`, el `@media (min-width: 1300px)` y `.max-w-[1600px] { max-width: 1600px }` estan en la hoja compilada. Build y compuerta de calidad limpios.
+
+
+## [2026-11-23] update | Sistema modular de calidad v2 y protocolo universal `/desplegar`
+Se actualizó el sistema modular de calidad a v2 con invocación universal `/desplegar` agnóstica de IDE/modelo: fuente canónica en `.agents/skills/desplegar/SKILL.md` y `AGENTS.md`, sincronización determinista sin symlinks (`skills:sync`, `skills:check`, `skills:validate`) hacia `.claude/skills/desplegar/SKILL.md`, `.agents/workflows/desplegar.md`, `.cursor/rules/desplegar.mdc`, `.agents/AGENTS.md`, `.cursor/rules/agents.mdc`, `CLAUDE.md` y `GEMINI.md`. Se amplió `quality/manifest.json` (v2.0.0 + `manifest.schema.json`) a 8 capacidades cubriendo todo `src/`, `db/migrations/**` y el harness; se añadieron `test:focused`, `quality:policy`, modo `quick`, estados verificables por etapa (`VERIFIED`/`FAILED`/`SKIPPED`/`NOT_CONFIGURED`), recibo `.tmp/quality/run-receipt.json`, reporte consultivo `.tmp/quality/learning-report.md`, flujo local `/desplegar release` (pre-sync `origin/DEV` → calidad completa → rama → `DEV` → `main` → Vercel, sin GitHub Actions) y nuevas suites en `tests/templates-propuesta.test.ts`, `tests/auth-middleware.test.ts` y `tests/quality-system.test.ts`. Ver [sistema_calidad_ratchet.md](wiki/sistema_calidad_ratchet.md).
+
+
+## [2026-11-23] fix | Correcciones de auditoría en el motor de calidad v2
+Se resolvieron los hallazgos detectados tras auditar el motor `/desplegar`: normalización de recibos v1 legados en `loadRunReceipt()` (`common.ts`), comparación de `quality:policy` frente a `HEAD` y `merge-base` (`policy.ts`), conteo real de líneas para archivos nuevos sin `git add` y uso de `matchPattern` en `learn.ts`, y unificación de `.agents/workflows/calidad.md` y `.agents/workflows/quality.md` como alias del protocolo canónico `/desplegar`.

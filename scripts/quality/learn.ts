@@ -1,21 +1,25 @@
-import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
   ensureTmpDir,
+  getCurrentBranch,
+  getCurrentHead,
   LEARN_REPORT_PATH,
-  loadLastRun,
+  LEARNING_REPORT_MD_PATH,
   loadManifest,
+  loadRunReceipt,
+  matchPattern,
   ROOT_DIR,
-  type LastRunReceipt,
+  runGitSafe,
   type Manifest,
+  type RunReceipt,
 } from './common';
 import { computeImpactPlan } from './plan';
 
 export type Severity = 'HIGH' | 'MEDIUM' | 'LOW';
 
 export interface Finding {
-  category: 'COBERTURA' | 'MAPEO' | 'ARQUITECTURA' | 'RENDIMIENTO_FLAKINESS';
+  category: 'COBERTURA' | 'MAPEO' | 'ARQUITECTURA' | 'RENDIMIENTO_FLAKINESS' | 'SINCRONIZACION_DEV';
   severity: Severity;
   target: string;
   message: string;
@@ -24,6 +28,7 @@ export interface Finding {
 
 export interface LearnReport {
   generatedAt: string;
+  gitBranch: string;
   gitHead: string;
   summary: {
     totalFindings: number;
@@ -34,6 +39,9 @@ export interface LearnReport {
   findings: Finding[];
   lastRunTelemetry: {
     available: boolean;
+    requestedMode?: string;
+    effectiveMode?: string;
+    exitCode?: number;
     timestamp?: string;
     totalTests?: number;
     passed?: number;
@@ -42,125 +50,192 @@ export interface LearnReport {
   };
 }
 
+const CORE_MODULES = [
+  'src/lib/engine.ts',
+  'src/lib/cotizaciones.ts',
+  'src/lib/group-engine.ts',
+  'src/lib/cotizar.ts',
+  'src/lib/supabase/server.ts',
+  'src/proxy.ts',
+];
+
+export function getLineChangeCount(file: string): number {
+  const out = runGitSafe(`git diff --numstat HEAD -- "${file}"`);
+  if (out) {
+    const parts = out.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      const count = (parseInt(parts[0], 10) || 0) + (parseInt(parts[1], 10) || 0);
+      if (count > 0) return count;
+    }
+  }
+
+  // Si el archivo es nuevo (untracked o aún no presente en HEAD), contar sus líneas en disco
+  const absPath = path.join(ROOT_DIR, file);
+  const inHead = Boolean(runGitSafe(`git ls-tree --name-only HEAD -- "${file}"`));
+  if (!inHead && fs.existsSync(absPath) && fs.statSync(absPath).isFile()) {
+    const content = fs.readFileSync(absPath, 'utf-8');
+    return content ? content.split(/\r?\n/).length : 0;
+  }
+
+  return 0;
+}
+
+export function renderMarkdownReport(report: LearnReport, receipt: RunReceipt | null): string {
+  const lines: string[] = [];
+  lines.push('# Reporte Consultivo de Calidad (`quality:learn`)');
+  lines.push('');
+  lines.push('> Análisis estrictamente consultivo. No modifica código, pruebas ni baselines.');
+  lines.push('');
+  lines.push(`- **Fecha**: ${report.generatedAt}`);
+  lines.push(`- **Rama**: \`${report.gitBranch}\``);
+  lines.push(`- **Commit HEAD**: \`${report.gitHead}\``);
+  if (report.lastRunTelemetry.available) {
+    lines.push(
+      `- **Última corrida**: \`${report.lastRunTelemetry.requestedMode}\` → \`${report.lastRunTelemetry.effectiveMode}\` (exit \`${report.lastRunTelemetry.exitCode}\`, ${report.lastRunTelemetry.passed}/${report.lastRunTelemetry.totalTests} pruebas en ${report.lastRunTelemetry.durationMs}ms)`
+    );
+  } else {
+    lines.push('- **Última corrida**: No disponible (`.tmp/quality/run-receipt.json` ausente)');
+  }
+  lines.push('');
+  lines.push('## Resumen de hallazgos');
+  lines.push('');
+  lines.push('| Severidad | Cantidad | Acción requerida |');
+  lines.push('| :--- | ---: | :--- |');
+  lines.push(`| HIGH | ${report.summary.high} | Bloquea cierre hasta resolverse o justificarse técnicamente |`);
+  lines.push(`| MEDIUM | ${report.summary.medium} | Recomendado atender en la iteración |`);
+  lines.push(`| LOW | ${report.summary.low} | Informativo / monitoreo |`);
+  lines.push('');
+
+  if (report.findings.length === 0) {
+    lines.push('No se detectaron brechas de cobertura, mapeo, arquitectura ni rendimiento.');
+  } else {
+    lines.push('## Detalle de hallazgos');
+    lines.push('');
+    report.findings.forEach((f, idx) => {
+      lines.push(`### ${idx + 1}. [${f.severity}] ${f.category} — \`${f.target}\``);
+      lines.push(`- **Hallazgo**: ${f.message}`);
+      lines.push(`- **Recomendación**: ${f.recommendation}`);
+      lines.push('');
+    });
+  }
+
+  if (receipt?.stages && receipt.stages.length > 0) {
+    lines.push('## Telemetría de etapas (`run-receipt.json`)');
+    lines.push('');
+    lines.push('| Etapa | Requerida | Estado | Exit | Duración | Detalle |');
+    lines.push('| :--- | :---: | :--- | ---: | ---: | :--- |');
+    for (const s of receipt.stages) {
+      lines.push(
+        `| \`${s.name}\` | ${s.required ? 'Sí' : 'No'} | **${s.status}** | ${s.exitCode ?? '-'} | ${s.durationMs}ms | ${s.details.replace(/\|/g, '/')} |`
+      );
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
 export function analyzeQualityLearn(baseBranch?: string): LearnReport {
   const manifest: Manifest = loadManifest();
-  const lastRun: LastRunReceipt | null = loadLastRun();
+  const receipt: RunReceipt | null = loadRunReceipt();
   const plan = computeImpactPlan(baseBranch);
   const changedFiles = plan.changedFiles;
-
-  let gitHead = 'UNKNOWN';
-  try {
-    gitHead = execSync('git rev-parse HEAD', { cwd: ROOT_DIR, encoding: 'utf-8' }).trim();
-  } catch {
-    gitHead = 'UNKNOWN';
-  }
-
+  const gitHead = getCurrentHead();
+  const gitBranch = getCurrentBranch();
   const findings: Finding[] = [];
 
-  // Helper para diff de líneas añadidas/modificadas por archivo
-  const getLineChangeCount = (file: string): number => {
-    try {
-      const out = execSync(`git diff --numstat HEAD -- "${file}"`, {
-        cwd: ROOT_DIR,
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'ignore'],
-      });
-      const parts = out.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        return (parseInt(parts[0], 10) || 0) + (parseInt(parts[1], 10) || 0);
-      }
-    } catch {
-      // Ignorar si el archivo no existe en el índice
-    }
-    return 0;
-  };
-
-  // 1. Análisis de Brechas de Mapeo (Orphan files)
+  // 1. Brechas de mapeo (archivos productivos huérfanos)
   for (const orphan of plan.orphanFiles) {
-    if (orphan.startsWith('src/')) {
-      findings.push({
-        category: 'MAPEO',
-        severity: 'MEDIUM',
-        target: orphan,
-        message: `El archivo modificado '${orphan}' no está mapeado a ninguna capacidad o lane en quality/manifest.json.`,
-        recommendation: `Añade un patrón en 'quality/manifest.json' dentro del lane correspondiente para garantizar que sus cambios activen pruebas automáticas.`,
-      });
-    }
+    const isProductiveCore = orphan.startsWith('src/') || orphan.startsWith('db/migrations/');
+    findings.push({
+      category: 'MAPEO',
+      severity: isProductiveCore ? 'HIGH' : 'MEDIUM',
+      target: orphan,
+      message: `El archivo productivo '${orphan}' no está clasificado en ninguna capacidad de quality/manifest.json.`,
+      recommendation: `Asigna '${orphan}' al lane adecuado en quality/manifest.json y asocia su suite de pruebas.`,
+    });
   }
 
-  // 2. Análisis de Riesgo Arquitectónico y Brechas de Cobertura
-  const CORE_MODULES = [
-    'src/lib/engine.ts',
-    'src/lib/cotizaciones.ts',
-    'src/lib/group-engine.ts',
-    'src/lib/cotizar.ts',
-  ];
-
+  // 2. Riesgo arquitectónico y brechas de cobertura
   for (const file of changedFiles) {
     const isCore = CORE_MODULES.includes(file);
     const lineChanges = getLineChangeCount(file);
 
-    // Riesgo arquitectónico en módulos core
     if (isCore) {
-      const hasTestsRun = lastRun && lastRun.testsRun.length > 0;
-      if (!hasTestsRun || !lastRun.testsRun.some((t) => t.includes('group') || t.includes('engine') || t.includes('margen'))) {
+      const ranOk = Boolean(receipt && receipt.exitCode === 0 && receipt.testsRun.length > 0);
+      if (!ranOk) {
         findings.push({
           category: 'ARQUITECTURA',
           severity: 'HIGH',
           target: file,
-          message: `Módulo central de negocio '${file}' modificado (${lineChanges} líneas) sin ejecución reciente de suites de integración asociadas.`,
-          recommendation: `Ejecuta 'npm run quality:gate' o 'npm run quality:gate:full' para validar que los invariantes del motor no se hayan degradado.`,
+          message: `Módulo crítico '${file}' modificado (${lineChanges} líneas) sin recibo verde reciente en .tmp/quality/run-receipt.json.`,
+          recommendation: `Ejecuta '/desplegar gate' o '/desplegar full' antes de cerrar la entrega.`,
         });
       }
     }
 
-    // Brechas de cobertura en archivos de lógica src/lib/ o src/app/
     if (file.startsWith('src/lib/') && !file.endsWith('.d.ts') && !file.includes('-isazaale')) {
+      const matchedLanes = manifest.lanes.filter(
+        (l) => !l.escalatesToFull && l.patterns.some((p) => matchPattern(file, p))
+      );
+      const hasLaneTests = matchedLanes.some((l) => l.tests.length > 0);
       const baseName = path.basename(file, path.extname(file));
-      const testsDir = path.join(ROOT_DIR, 'tests');
-      const directTestFile = path.join(testsDir, `${baseName}.test.ts`);
-      const directTestExists = fs.existsSync(directTestFile);
+      const directTestExists = fs.existsSync(path.join(ROOT_DIR, 'tests', `${baseName}.test.ts`));
 
-      // Si no existe test directo y el cambio es sustancial (> 20 líneas o archivo nuevo)
-      if (!directTestExists && lineChanges > 20) {
+      if (!directTestExists && !hasLaneTests && lineChanges > 20) {
         findings.push({
           category: 'COBERTURA',
           severity: 'HIGH',
           target: file,
-          message: `Lógica sustancialmente modificada o agregada en '${file}' (${lineChanges} líneas cambiadas) sin archivo de prueba directa 'tests/${baseName}.test.ts'.`,
-          recommendation: `Diseña e implementa una suite de prueba en 'tests/${baseName}.test.ts' que asegure los casos de borde de este componente.`,
+          message: `Lógica sustancial modificada en '${file}' (${lineChanges} líneas) sin prueba directa ni cobertura de lane.`,
+          recommendation: `Agrega pruebas unitarias en 'tests/${baseName}.test.ts' y regístralas en quality/manifest.json.`,
         });
-      } else if (!directTestExists && lineChanges > 0) {
+      } else if (!directTestExists && lineChanges > 20) {
         findings.push({
           category: 'COBERTURA',
           severity: 'MEDIUM',
           target: file,
-          message: `Cambio en '${file}' sin archivo de prueba dedicado 'tests/${baseName}.test.ts'.`,
-          recommendation: `Considera incorporar casos de prueba unitaria para '${baseName}'.`,
+          message: `Cambio amplio en '${file}' (${lineChanges} líneas) cubierto solo indirectamente por el lane.`,
+          recommendation: `Considera añadir pruebas enfocadas en 'tests/${baseName}.test.ts' para aislar regresiones.`,
         });
       }
     }
   }
 
-  // 3. Análisis de Rendimiento y Flakiness desde la última corrida
-  if (lastRun && lastRun.testMetrics?.durationsByTest) {
-    const manifestThresholds = manifest.thresholds || { testDurationWarningMs: 500, testDurationCriticalMs: 1500 };
-    for (const [testName, duration] of Object.entries(lastRun.testMetrics.durationsByTest)) {
-      if (duration >= manifestThresholds.testDurationCriticalMs) {
+  // 3. Rendimiento de pruebas y etapas
+  if (receipt) {
+    const warnTestMs = manifest.thresholds?.testDurationWarningMs ?? 500;
+    const critTestMs = manifest.thresholds?.testDurationCriticalMs ?? 1500;
+    const warnStageMs = manifest.thresholds?.stageDurationWarningMs ?? 15000;
+
+    for (const [testName, duration] of Object.entries(receipt.testMetrics?.durationsByTest ?? {})) {
+      if (duration >= critTestMs) {
         findings.push({
           category: 'RENDIMIENTO_FLAKINESS',
           severity: 'MEDIUM',
           target: testName,
-          message: `Prueba con latencia crítica: '${testName}' tardó ${Math.round(duration)}ms en completarse (umbral crítico: ${manifestThresholds.testDurationCriticalMs}ms).`,
-          recommendation: `Optimiza la lógica del test o desacopla consultas pesadas para prevenir ralentizaciones en el pipeline de CI.`,
+          message: `Prueba con latencia crítica: '${testName}' tardó ${Math.round(duration)}ms (umbral: ${critTestMs}ms).`,
+          recommendation: 'Optimiza fixtures o divide el caso para mantener el ciclo local rápido.',
         });
-      } else if (duration >= manifestThresholds.testDurationWarningMs) {
+      } else if (duration >= warnTestMs) {
         findings.push({
           category: 'RENDIMIENTO_FLAKINESS',
           severity: 'LOW',
           target: testName,
-          message: `Prueba lenta detectada: '${testName}' tardó ${Math.round(duration)}ms (umbral de advertencia: ${manifestThresholds.testDurationWarningMs}ms).`,
-          recommendation: `Monitorea este test para evitar que se convierta en cuello de botella.`,
+          message: `Prueba lenta detectada: '${testName}' tardó ${Math.round(duration)}ms (umbral: ${warnTestMs}ms).`,
+          recommendation: 'Monitorea su tendencia para evitar degradación del tiempo de validación.',
+        });
+      }
+    }
+
+    for (const stage of receipt.stages ?? []) {
+      if (stage.durationMs >= warnStageMs && stage.name !== 'build:next') {
+        findings.push({
+          category: 'RENDIMIENTO_FLAKINESS',
+          severity: 'LOW',
+          target: `stage:${stage.name}`,
+          message: `La etapa '${stage.name}' tardó ${stage.durationMs}ms (umbral: ${warnStageMs}ms).`,
+          recommendation: 'Evalúa usar /desplegar quick o test:focused durante iteración local.',
         });
       }
     }
@@ -168,9 +243,20 @@ export function analyzeQualityLearn(baseBranch?: string): LearnReport {
     findings.push({
       category: 'RENDIMIENTO_FLAKINESS',
       severity: 'LOW',
-      target: 'telemetry',
-      message: `No se encontraron recibos de la última corrida en '.tmp/quality/last-run.json'.`,
-      recommendation: `Ejecuta 'npm run quality:gate' o 'npm run quality:impact' antes de correr 'quality:learn' para habilitar telemetría de tiempos reales.`,
+      target: 'run-receipt.json',
+      message: 'No existe recibo previo en .tmp/quality/run-receipt.json.',
+      recommendation: 'Ejecuta /desplegar impact, gate o full para generar telemetría real.',
+    });
+  }
+
+  // 4. Sincronización pendiente con DEV
+  if (plan.devSync.available && plan.devSync.behindCount > 0) {
+    findings.push({
+      category: 'SINCRONIZACION_DEV',
+      severity: 'MEDIUM',
+      target: plan.devSync.devRef ?? 'origin/DEV',
+      message: `La rama actual '${gitBranch}' está ${plan.devSync.behindCount} commit(s) detrás de ${plan.devSync.devRef}.`,
+      recommendation: `Antes de publicar a DEV/main, trae y evalúa los cambios pendientes de ${plan.devSync.devRef} en tu rama de trabajo.`,
     });
   }
 
@@ -180,6 +266,7 @@ export function analyzeQualityLearn(baseBranch?: string): LearnReport {
 
   const report: LearnReport = {
     generatedAt: new Date().toISOString(),
+    gitBranch,
     gitHead,
     summary: {
       totalFindings: findings.length,
@@ -189,55 +276,53 @@ export function analyzeQualityLearn(baseBranch?: string): LearnReport {
     },
     findings,
     lastRunTelemetry: {
-      available: !!lastRun,
-      timestamp: lastRun?.timestamp,
-      totalTests: lastRun?.testMetrics?.total,
-      passed: lastRun?.testMetrics?.passed,
-      failed: lastRun?.testMetrics?.failed,
-      durationMs: lastRun?.durationMs,
+      available: Boolean(receipt),
+      requestedMode: receipt?.requestedMode,
+      effectiveMode: receipt?.effectiveMode,
+      exitCode: receipt?.exitCode,
+      timestamp: receipt?.timestamp,
+      totalTests: receipt?.testMetrics?.total,
+      passed: receipt?.testMetrics?.passed,
+      failed: receipt?.testMetrics?.failed,
+      durationMs: receipt?.durationMs,
     },
   };
 
   ensureTmpDir();
   fs.writeFileSync(LEARN_REPORT_PATH, JSON.stringify(report, null, 2) + '\n', 'utf-8');
+  fs.writeFileSync(LEARNING_REPORT_MD_PATH, renderMarkdownReport(report, receipt) + '\n', 'utf-8');
   return report;
 }
 
 export function printLearnReport(report: LearnReport): void {
   console.log('\n======================================================');
-  console.log('       🧠 AUDITORÍA Y APRENDIZAJE: QUALITY:LEARN      ');
-  console.log('       (Diagnóstico Consultivo y Brechas de Calidad)   ');
+  console.log('      AUDITORÍA CONSULTIVA: QUALITY:LEARN             ');
   console.log('======================================================\n');
-
-  console.log(`📊 Resumen de Hallazgos: ${report.summary.totalFindings}`);
-  console.log(`   🔴 ALTA SEVERIDAD (HIGH):   ${report.summary.high}`);
-  console.log(`   🟡 MEDIA SEVERIDAD (MED):   ${report.summary.medium}`);
-  console.log(`   🔵 BAJA SEVERIDAD (LOW):    ${report.summary.low}\n`);
+  console.log(`Hallazgos totales: ${report.summary.totalFindings} (HIGH=${report.summary.high}, MEDIUM=${report.summary.medium}, LOW=${report.summary.low})\n`);
 
   if (report.findings.length === 0) {
-    console.log('✨ ¡Excelente! No se detectaron brechas de cobertura, mapeo ni riesgos de latencia.');
+    console.log('Sin hallazgos de cobertura, mapeo, arquitectura ni rendimiento.');
   } else {
     report.findings.forEach((f, idx) => {
-      const icon = f.severity === 'HIGH' ? '🔴 [HIGH]' : f.severity === 'MEDIUM' ? '🟡 [MED]' : '🔵 [LOW]';
-      console.log(`--- [Hallazgo #${idx + 1}] ${icon} [${f.category}] ---`);
-      console.log(`🎯 Objetivo: ${f.target}`);
-      console.log(`💬 Detalle:  ${f.message}`);
-      console.log(`💡 Acción:   ${f.recommendation}\n`);
+      console.log(`#${idx + 1} [${f.severity}] [${f.category}] ${f.target}`);
+      console.log(`   Detalle: ${f.message}`);
+      console.log(`   Acción:  ${f.recommendation}\n`);
     });
   }
 
-  console.log(`📁 Reporte estructurado guardado en .tmp/quality/learn-report.json`);
-  console.log('📌 Nota: Este análisis es estrictamente consultivo y no muta código.');
+  console.log('Reportes escritos en:');
+  console.log('  - .tmp/quality/learning-report.md');
+  console.log('  - .tmp/quality/learn-report.json');
+  console.log('Nota: análisis estrictamente consultivo (no modifica código ni baselines).');
   console.log('======================================================\n');
 }
 
-// Ejecución como script directo
 if (require.main === module || process.argv[1]?.endsWith('learn.ts') || process.argv[1]?.endsWith('learn.js')) {
   const report = analyzeQualityLearn();
   printLearnReport(report);
 
   if (process.argv.includes('--strict') && report.summary.high > 0) {
-    console.error(`❌ Proceso rechazado en modo --strict: Existen ${report.summary.high} hallazgo(s) de severidad HIGH sin resolver.`);
+    console.error(`Bloqueo en modo --strict: existen ${report.summary.high} hallazgo(s) HIGH sin resolver.`);
     process.exit(1);
   }
 }

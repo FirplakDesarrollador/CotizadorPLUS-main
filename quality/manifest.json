@@ -1,62 +1,62 @@
 {
   "$schema": "./manifest.schema.json",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "ignoredNonProductivePatterns": [
+    "WikiLLM/**",
+    "docs/MANUAL*.md",
+    "README*.md",
+    "artifacts/**",
+    ".tmp/**",
+    "output/**",
+    "outputs/**",
+    "tmp/**",
+    "public/**",
+    "*.md",
+    "*.pdf",
+    "*.png",
+    "*.jpg",
+    "*.jpeg",
+    "*.webp",
+    "*.svg",
+    "*.csv",
+    "*.xlsx",
+    "*.iges"
+  ],
   "lanes": [
-    {
-      "id": "lane:grouping",
-      "name": "Estructura Agrupada y Márgenes",
-      "description": "Lógica física de módulos agrupados, continuidad de caja/golas y márgenes globales",
-      "patterns": [
-        "src/lib/group-engine.ts",
-        "src/lib/group-result.ts",
-        "src/lib/module-groups.ts"
-      ],
-      "tests": [
-        "tests/module-groups.test.ts",
-        "tests/group-engine.test.ts",
-        "tests/group-result.test.ts",
-        "tests/margen-global.test.ts"
-      ]
-    },
-    {
-      "id": "lane:visualization",
-      "name": "Motor de Visualización y Ensambles",
-      "description": "Cálculo de posiciones 3D, IGES y despiece visual de piezas",
-      "patterns": [
-        "src/lib/visualizacion.ts",
-        "src/lib/visualizacion-config.ts"
-      ],
-      "tests": [
-        "tests/visualizacion.test.ts",
-        "tests/visualizacion-b-fe.test.ts"
-      ]
-    },
-    {
-      "id": "lane:pricing-db",
-      "name": "Servicios de Cotización y Persistencia",
-      "description": "Preparación de cotizaciones, tarifas, overrides, consultas a Supabase y catálogo precompilado",
-      "patterns": [
-        "src/lib/cotizar.ts",
-        "src/lib/cotizaciones.ts",
-        "src/lib/diseno.ts",
-        "src/lib/admin.ts",
-        "src/lib/supabase/**"
-      ],
-      "tests": [
-        "tests/margen-global.test.ts",
-        "tests/group-result.test.ts",
-        "tests/precio-herrajes.test.ts",
-        "tests/consumo-materiales.test.ts",
-        "tests/module-groups.test.ts"
-      ]
-    },
     {
       "id": "lane:engine",
       "name": "Motor Paramétrico de Despiece",
-      "description": "Fórmulas de corte, cantos, herrajes, reglas de tipologías y piezas individuales",
+      "description": "Fórmulas de corte, cantos, herrajes, consumibles, reglas de tipologías y catálogo de muebles",
+      "critical": true,
       "patterns": [
         "src/lib/engine.ts",
-        "src/lib/muebles.ts"
+        "src/lib/muebles.ts",
+        "tests/b12-hoja-real.test.ts",
+        "tests/barras-estabilizadoras.test.ts",
+        "tests/bbl.test.ts",
+        "tests/bblfd-sm.test.ts",
+        "tests/bov24-hoja-real.test.ts",
+        "tests/carton-abierto.test.ts",
+        "tests/consumo-materiales.test.ts",
+        "tests/db-backing.test.ts",
+        "tests/db-gavetas-mixtas.test.ts",
+        "tests/db-sin-herrajes.test.ts",
+        "tests/db18-hoja-real.test.ts",
+        "tests/db2-1op.test.ts",
+        "tests/desperdicio-tablero.test.ts",
+        "tests/despiece-presentacion.test.ts",
+        "tests/dimension-negativa.test.ts",
+        "tests/ow3018-hoja-real.test.ts",
+        "tests/pcfd-op.test.ts",
+        "tests/precio-herrajes.test.ts",
+        "tests/reveal-puertas.test.ts",
+        "tests/sbfd-sm.test.ts",
+        "tests/svfd36-hoja-real.test.ts",
+        "tests/tarugos-base-tapa.test.ts",
+        "tests/udv1228-2s-hoja-real.test.ts",
+        "tests/w-sm.test.ts",
+        "tests/wld-frentes.test.ts",
+        "tests/wsm.test.ts"
       ],
       "tests": [
         "tests/b12-hoja-real.test.ts",
@@ -82,39 +82,154 @@
         "tests/svfd36-hoja-real.test.ts",
         "tests/tarugos-base-tapa.test.ts",
         "tests/udv1228-2s-hoja-real.test.ts",
-        "tests/versiones.test.ts",
         "tests/w-sm.test.ts",
         "tests/wld-frentes.test.ts",
         "tests/wsm.test.ts"
       ]
     },
     {
-      "id": "lane:frontend",
-      "name": "Frontend y Vistas App Router",
-      "description": "Componentes de interfaz de usuario, formularios de cotizador y páginas Next.js",
+      "id": "lane:grouping",
+      "name": "Estructura Agrupada y Márgenes",
+      "description": "Lógica física de módulos agrupados, continuidad de caja/golas, códigos comerciales y márgenes globales",
+      "critical": true,
       "patterns": [
-        "src/app/**",
-        "src/components/**"
+        "src/lib/group-engine.ts",
+        "src/lib/group-result.ts",
+        "src/lib/module-groups.ts",
+        "tests/module-groups.test.ts",
+        "tests/group-engine.test.ts",
+        "tests/group-result.test.ts",
+        "tests/margen-global.test.ts"
+      ],
+      "tests": [
+        "tests/module-groups.test.ts",
+        "tests/group-engine.test.ts",
+        "tests/group-result.test.ts",
+        "tests/margen-global.test.ts"
+      ]
+    },
+    {
+      "id": "lane:pricing-db",
+      "name": "Cotización, Catálogo y Migraciones DB",
+      "description": "Servicios de cotización, persistencia, versiones inmutables, catálogo precompilado, admin/diseño y migraciones SQL",
+      "critical": true,
+      "patterns": [
+        "src/lib/cotizar.ts",
+        "src/lib/cotizaciones.ts",
+        "src/lib/diseno.ts",
+        "src/lib/admin.ts",
+        "db/migrations/**",
+        "tests/versiones.test.ts"
       ],
       "tests": [
         "tests/margen-global.test.ts",
-        "tests/module-groups.test.ts"
+        "tests/group-result.test.ts",
+        "tests/precio-herrajes.test.ts",
+        "tests/consumo-materiales.test.ts",
+        "tests/module-groups.test.ts",
+        "tests/versiones.test.ts"
+      ]
+    },
+    {
+      "id": "lane:auth-rls",
+      "name": "Autenticación, Proxy y Frontera RLS",
+      "description": "Clientes de Supabase (sesión vs. elevado), middleware de sesión, proxy Next.js, roles y rutas de autenticación",
+      "critical": true,
+      "patterns": [
+        "src/proxy.ts",
+        "src/lib/auth.ts",
+        "src/lib/supabase/**",
+        "src/app/login/**",
+        "src/app/auth/**",
+        "src/app/recuperar-contrasena/**",
+        "src/app/actualizar-contrasena/**",
+        "tests/supabase-server-client.test.ts",
+        "tests/auth-middleware.test.ts"
+      ],
+      "tests": [
+        "tests/supabase-server-client.test.ts",
+        "tests/auth-middleware.test.ts"
+      ]
+    },
+    {
+      "id": "lane:visualization",
+      "name": "Motor de Visualización 3D y Ensambles",
+      "description": "Cálculo de posiciones 3D, IGES, voladizos gola y renderizador interactivo de piezas",
+      "patterns": [
+        "src/lib/visualizacion.ts",
+        "src/lib/visualizacion-config.ts",
+        "src/components/MuebleVisualizer.tsx",
+        "tests/visualizacion.test.ts",
+        "tests/visualizacion-b-fe.test.ts",
+        "tests/fixtures/catalogo-visualizacion.json"
+      ],
+      "tests": [
+        "tests/visualizacion.test.ts",
+        "tests/visualizacion-b-fe.test.ts"
+      ]
+    },
+    {
+      "id": "lane:proposals-export",
+      "name": "Propuestas CEMA/FIRPLAK, Exportación y HDR",
+      "description": "Plantillas comerciales editables, vistas imprimibles, exportación Excel y hojas de ruta PDF",
+      "patterns": [
+        "src/lib/cema-template.ts",
+        "src/lib/firplak-template.ts",
+        "src/app/cotizaciones/[id]/imprimir/**",
+        "src/app/cotizaciones/[id]/export/**",
+        "src/app/hdr/**",
+        "tests/templates-propuesta.test.ts"
+      ],
+      "tests": [
+        "tests/templates-propuesta.test.ts",
+        "tests/despiece-presentacion.test.ts",
+        "tests/margen-global.test.ts"
+      ]
+    },
+    {
+      "id": "lane:frontend",
+      "name": "Frontend, Store y Vistas App Router",
+      "description": "Componentes UI, simulador Zustand, gestión de cotizaciones, administración y ayudas interactivas",
+      "patterns": [
+        "src/app/**",
+        "src/components/**",
+        "src/store/**",
+        "src/lib/tooltips.ts",
+        "src/lib/useTooltips.ts"
+      ],
+      "tests": [
+        "tests/margen-global.test.ts",
+        "tests/module-groups.test.ts",
+        "tests/templates-propuesta.test.ts"
       ]
     },
     {
       "id": "lane:core-transversal",
-      "name": "Configuraciones Core y Dependencias",
-      "description": "Configuraciones globales del repositorio, tsconfig, package.json y sistema de calidad",
+      "name": "Configuración Core, Harness y Skills",
+      "description": "Configuraciones globales del repositorio, dependencias, motor de calidad, baselines y protocolos de agentes",
+      "critical": true,
+      "escalatesToFull": true,
       "patterns": [
         ".gitignore",
         "package.json",
+        "package-lock.json",
         "tsconfig.json",
         "eslint.config.mjs",
         "next.config.ts",
+        "postcss.config.mjs",
         "quality/**",
-        "scripts/quality/**"
+        "docs/quality/**",
+        "scripts/quality/**",
+        "tests/quality-system.test.ts",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "GEMINI.md",
+        ".agents/AGENTS.md",
+        ".agents/skills/desplegar/**",
+        ".agents/workflows/desplegar.md",
+        ".claude/skills/desplegar/**",
+        ".cursor/rules/**"
       ],
-      "escalatesToFull": true,
       "tests": [
         "tests/*.test.ts"
       ]
@@ -123,6 +238,7 @@
   "thresholds": {
     "testDurationWarningMs": 500,
     "testDurationCriticalMs": 1500,
+    "stageDurationWarningMs": 15000,
     "maxNewErrorsAllowed": 0
   }
 }
