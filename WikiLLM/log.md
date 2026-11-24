@@ -3342,3 +3342,19 @@ Cálculo por tramo con merma y márgenes editables, catálogo Colombia y USA, pe
 ## [2026-11-23] update | Largo automático y configuración de mesones por área
 
 El cálculo toma los muebles inferiores del área y añade opciones para dishwasher, Range, Cooktop, isla, muros laterales, cantos pulidos y cascadas.
+
+## [2026-11-24] update | Supervisión y entrega en Miami y edición de mesones por tipo
+
+Se vincularon costo y margen de instalación, se calcularon las cantidades de supervisión y entrega desde la cotización y se añadió la edición de mesones con parámetros por tipo, refuerzo y lugar de perforación. Se verificó con datos de prueba locales.
+
+## [2026-11-24] update | Edición de supervisión y entrega por cotización
+
+La tabla de Miami sugiere únicamente cantidades. Los importes y márgenes se editan y se guardan desde Entrega.
+
+## [2026-11-24] update | Precio automático en supervisión y entrega
+
+El costo y el margen determinan el precio unitario y el precio total de las dos filas en Miami.
+
+## [2026-11-24] update | Prorrateo de tráiler según PB Shore
+
+Se verificaron las celdas Summary!F87:K89 y se aplicó el costo unitario por capacidad editable y el costo total por unidades de supervisión.

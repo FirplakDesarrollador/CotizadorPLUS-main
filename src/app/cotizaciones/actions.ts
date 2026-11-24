@@ -137,11 +137,11 @@ export async function catalogoMesonesAction(cocinaId: string) {
   }
 }
 
-export async function agregarMesonAction(cocinaId: string, materialId: string, opciones: ConfiguracionMeson) {
+export async function agregarMesonAction(cocinaId: string, materialId: string, opciones: ConfiguracionMeson, lineaId?: string) {
   try {
     const { user } = await getUserAndRole();
     if (!user) throw new Error('No autenticado.');
-    const id = await agregarLineaMeson(cocinaId, materialId, opciones);
+    const id = await agregarLineaMeson(cocinaId, materialId, opciones, lineaId);
     revalidatePath('/cotizaciones');
     revalidatePath(`/cotizaciones/${id}`);
     revalidatePath(`/cotizaciones/${id}/imprimir`);

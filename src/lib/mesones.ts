@@ -27,7 +27,23 @@ export const parametrosMesones = {
   margenAcabados: 35.9,
 };
 
-export type CatalogoMesones = { materiales: MaterialMeson[]; parametros: typeof parametrosMesones };
+export const TIPOS_MESON = { cocina: 'Cocina', isla: 'Isla/Península', bano: 'Baño' } as const;
+export type TipoMeson = keyof typeof TIPOS_MESON;
+export type ParametrosMeson = typeof parametrosMesones;
+export type CatalogoMesones = {
+  materiales: MaterialMeson[];
+  parametros: ParametrosMeson;
+  parametrosPorTipo?: Record<TipoMeson, ParametrosMeson>;
+};
+
+export function parametrosParaMeson(catalogo: CatalogoMesones, tipo: TipoMeson) {
+  return catalogo.parametrosPorTipo?.[tipo] ?? catalogo.parametros;
+}
+
+export function mueblesDelTipo(muebles: readonly MuebleParaMeson[], tipo?: TipoMeson) {
+  if (tipo === 'isla') return [];
+  return muebles.filter(m => !tipo || !m.categoria || m.categoria === (tipo === 'bano' ? 'vanity' : 'inferior'));
+}
 
 const colombia: [string, string, number | null][] = [
   ['marmol', 'Mármol Crema Marfil', null],
@@ -65,6 +81,10 @@ export type IslaMeson = {
 };
 
 export type ConfiguracionMeson = {
+  tipo?: TipoMeson;
+  perforacionesEn?: 'fabricacion' | 'instalacion';
+  refuerzo?: boolean;
+  mueblesExcluidos?: string[];
   profundidad: number;
   backsplash: number;
   espesor: number;
@@ -79,7 +99,7 @@ export type ConfiguracionMeson = {
   pulirHuecos: boolean;
 };
 
-export type MuebleParaMeson = { id: string; etiqueta: string; largo: number };
+export type MuebleParaMeson = { id: string; etiqueta: string; largo: number; categoria?: string };
 
 export function mueblesParaMeson(lineas: readonly {
   id: string; largo: number; cantidad: number; unidad_dim: UnidadDim;
@@ -89,11 +109,18 @@ export function mueblesParaMeson(lineas: readonly {
   return lineas.flatMap(l => {
     if (!l.tipo || !['inferior', 'vanity'].includes(l.tipo.categoria ?? '') || /^(PC|PN|F|TK)/i.test(l.tipo.pref)) return [];
     const largo = toInches(Number(l.largo), l.unidad_dim) * Number(l.cantidad);
-    return Number.isFinite(largo) && largo > 0 ? [{ id: l.id, etiqueta: l.codigo_modulo || l.tipo.pref, largo }] : [];
+    return Number.isFinite(largo) && largo > 0 ? [{ id: l.id, etiqueta: l.codigo_modulo || l.tipo.pref, largo, categoria: l.tipo.categoria ?? undefined }] : [];
   });
 }
 
-export function medidasMesonDesdeMuebles(muebles: readonly MuebleParaMeson[], opciones: ConfiguracionMeson): MedidasMeson {
+export function medidasMesonDesdeMuebles(mueblesArea: readonly MuebleParaMeson[], opciones: ConfiguracionMeson): MedidasMeson {
+  if (opciones.tipo !== undefined && !Object.hasOwn(TIPOS_MESON, opciones.tipo)) throw new Error('Selecciona un tipo de mesón.');
+  if (opciones.tipo === 'isla' && !opciones.isla) throw new Error('Completa las medidas de la isla o península.');
+  if (opciones.perforacionesEn !== undefined && !['fabricacion', 'instalacion'].includes(opciones.perforacionesEn)) {
+    throw new Error('Selecciona dónde se harán las perforaciones.');
+  }
+  if (opciones.refuerzo !== undefined && typeof opciones.refuerzo !== 'boolean') throw new Error('Revisa la selección de refuerzo.');
+  const muebles = mueblesDelTipo(mueblesArea, opciones.tipo);
   const { dishwasher, equipo, anchoRange, murosLaterales, cantosPulidos, waterfalls, isla, profundidad, backsplash } = opciones;
   const entero = (n: number, max = Infinity) => Number.isInteger(n) && n >= 0 && n <= max;
   if (!['ninguno', 'range', 'cooktop'].includes(equipo) || (equipo === 'range' && !(anchoRange > 0 && Number.isFinite(anchoRange))) ||
@@ -106,21 +133,31 @@ export function medidasMesonDesdeMuebles(muebles: readonly MuebleParaMeson[], op
     !entero(isla.cantosPulidos) || !entero(isla.waterfalls, 2) || [...mueblesIsla].some(id => !muebles.some(m => m.id === id)))) {
     throw new Error('Revisa las medidas y los muebles asignados a la isla.');
   }
-  const largoMuebles = muebles.reduce((total, m) => total + (mueblesIsla.has(m.id) ? 0 : m.largo), 0);
+  const excluidos = new Set(opciones.mueblesExcluidos);
+  const largoMuebles = muebles.reduce((total, m) =>
+    total + (mueblesIsla.has(m.id) || excluidos.has(m.id) ? 0 : m.largo), 0);
   if (!largoMuebles && !isla) throw new Error('Agrega muebles inferiores al área para calcular el largo.');
   if (!largoMuebles && (dishwasher !== null || equipo === 'range' || murosLaterales || cantosPulidos || waterfalls)) {
     throw new Error('El lavavajillas, el Range, los muros y los acabados del tramo principal requieren muebles inferiores fuera de la isla.');
   }
   const largo = largoMuebles + (dishwasher ?? 0);
-  const cantonera = backsplash > 0 ? profundidad + backsplash : profundidad;
+  const cantonera = profundidad + backsplash;
+  const largoDelTramo = opciones.tipo === 'isla' && isla ? isla.largo + isla.voladizoLateral : largo;
+  const largoBacksplash = largoDelTramo + (equipo === 'range' ? anchoRange : 0);
   return {
-    largo, profundidad, largoBacksplash: largo + (equipo === 'range' ? anchoRange : 0), backsplash,
+    largo, profundidad, largoBacksplash, backsplash,
     espesor: opciones.espesor, voladizo: 0, extensionLateral: 0, waterfalls,
     cantoExpuesto: cantosPulidos * cantonera + (isla ? isla.cantosPulidos * (profundidad + isla.voladizoFrontal) : 0),
     huecos: opciones.huecos + Number(equipo === 'cooktop'), pulirHuecos: opciones.pulirHuecos,
     opciones,
   };
 }
+
+export type MesonGuardado = {
+  material: MaterialMeson;
+  medidas: MedidasMeson;
+  parametros?: ParametrosMeson;
+};
 
 export type MedidasMeson = {
   largo: number;
@@ -138,10 +175,13 @@ export type MedidasMeson = {
 };
 
 export function validarCatalogoMesones(catalogo: CatalogoMesones) {
-  for (const key of Object.keys(parametrosMesones) as (keyof typeof parametrosMesones)[]) {
-    const valor = catalogo.parametros[key];
-    if (!Number.isFinite(valor) || valor < 0 || (key.startsWith('margen') && valor >= 100)) {
-      throw new Error('Revisa los parámetros. Los márgenes deben ser menores que 100 %.');
+  for (const tipo of Object.keys(TIPOS_MESON) as TipoMeson[]) {
+    const parametros = parametrosParaMeson(catalogo, tipo);
+    for (const key of Object.keys(parametrosMesones) as (keyof typeof parametrosMesones)[]) {
+      const valor = parametros[key];
+      if (!Number.isFinite(valor) || valor < 0 || (key.startsWith('margen') && valor >= 100)) {
+        throw new Error('Revisa los parámetros. Los márgenes deben ser menores que 100 %.');
+      }
     }
   }
   if (new Set(catalogo.materiales.map(m => m.id)).size !== catalogo.materiales.length) throw new Error('Hay materiales repetidos.');
@@ -172,7 +212,9 @@ export function calcularMeson(d: MedidasMeson, m: MaterialMeson, p: CatalogoMeso
   const muros = (d.opciones?.murosLaterales ?? 0) * d.profundidad * (3 + d.backsplash);
   const superficie = largo * fondo + d.largoBacksplash * d.backsplash + d.waterfalls * fondo * p.alturaWaterfall
     + superficieIsla + muros;
-  const refuerzo = d.espesor === p.espesorReforzado ? d.cantoExpuesto * p.suplementoCanto : 0;
+  const reforzado = d.opciones?.refuerzo ?? d.espesor === p.espesorReforzado;
+  const refuerzo = reforzado ? d.cantoExpuesto * p.suplementoCanto : 0;
+  const huecosFabricacion = d.opciones?.perforacionesEn === 'instalacion' ? 0 : d.huecos;
   const areaSqft = (superficie + refuerzo) / 144 * (1 + p.merma / 100);
   const piesPulidos = d.cantoExpuesto / 12;
   const col = m.origen === 'COL';
@@ -184,7 +226,7 @@ export function calcularMeson(d: MedidasMeson, m: MaterialMeson, p: CatalogoMeso
     { costo: materialUsd * areaSqft, interno: col ? p.margenFpk : 0, comercial: p.margenMaterial },
     { costo: produccionUsd * areaSqft, interno: 0, comercial: p.margenProduccion },
     { costo: pulidoUsd * piesPulidos, interno: col ? p.margenMaquila : 0, comercial: p.margenAcabados },
-    { costo: huecoUsd * d.huecos, interno: col ? p.margenMaquila : 0, comercial: p.margenAcabados },
+    { costo: huecoUsd * huecosFabricacion, interno: col ? p.margenMaquila : 0, comercial: p.margenAcabados },
   ];
   const costoUsd = conceptos.reduce((total, c) => total + c.costo, 0);
   const precioUsd = conceptos.reduce((total, c) => total + c.costo / (1 - c.interno / 100) / (1 - c.comercial / 100), 0) * (1 - descuento);

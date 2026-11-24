@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { type CatalogoMesones, type MaterialMeson } from '@/lib/mesones';
+import { parametrosParaMeson, TIPOS_MESON, type TipoMeson, type CatalogoMesones, type MaterialMeson } from '@/lib/mesones';
 import { guardarMesonesAction } from './actions';
 
 const campos: Record<keyof CatalogoMesones['parametros'], string> = {
   profundidad: 'Profundidad sugerida (in)', backsplash: 'Altura sugerida de backsplash (in)',
-  espesor: 'Espesor sugerido (in)', espesorReforzado: 'Espesor que activa el refuerzo (in)',
+  espesor: 'Espesor sugerido (in)', espesorReforzado: 'Espesor con refuerzo (in)',
   suplementoCanto: 'Ancho de la franja de refuerzo (in)', alturaWaterfall: 'Altura del waterfall (in)',
   merma: 'Merma (%)', margenFpk: 'Margen interno FPK Colombia (%)',
   margenMaquila: 'Margen interno maquila Colombia (%)', margenMaterial: 'Margen comercial de suministro (%)',
@@ -16,6 +16,8 @@ const input = 'mt-1 w-full rounded border border-slate-300 px-2 py-1.5';
 
 export default function MesonesParametros({ inicial }: { inicial: CatalogoMesones }) {
   const [draft, setDraft] = useState(inicial);
+  const [tipo, setTipo] = useState<TipoMeson>('cocina');
+  const parametros = parametrosParaMeson(draft, tipo);
   const [mensaje, setMensaje] = useState('');
   const [pendiente, iniciar] = useTransition();
   const cambiar = (id: string, patch: Partial<MaterialMeson>) => setDraft(d => ({
@@ -62,10 +64,25 @@ export default function MesonesParametros({ inicial }: { inicial: CatalogoMesone
       <section>
         <h2 className="mb-2 font-semibold">Parámetros de cálculo</h2>
         <p className="mb-3 text-sm text-slate-600">Se usa la TRM de cada cotización. Los cambios se aplican a los mesones que se calculen a partir del guardado.</p>
+        <label className="mb-3 block max-w-xs text-sm">Tipo de mesón
+          <select className={input} value={tipo} onChange={e => setTipo(e.target.value as TipoMeson)}>
+            {Object.entries(TIPOS_MESON).map(([id, etiqueta]) => <option key={id} value={id}>{etiqueta}</option>)}
+          </select>
+        </label>
         <div className="grid gap-2 sm:grid-cols-3">
           {(Object.keys(campos) as (keyof typeof campos)[]).map(key => <label key={key} className="text-xs">{campos[key]}
             <input type="number" min="0" max={key.startsWith('margen') ? '99.999' : undefined} step="any" required className={input}
-              value={draft.parametros[key]} onChange={e => setDraft(d => ({ ...d, parametros: { ...d.parametros, [key]: Number(e.target.value) } }))} />
+              value={parametros[key]} onChange={e => {
+                const valor = Number(e.target.value);
+                setDraft(d => ({
+                  ...d, parametrosPorTipo: {
+                    cocina: parametrosParaMeson(d, 'cocina'),
+                    isla: parametrosParaMeson(d, 'isla'),
+                    bano: parametrosParaMeson(d, 'bano'),
+                    [tipo]: { ...parametrosParaMeson(d, tipo), [key]: valor },
+                  },
+                }));
+              }} />
           </label>)}
         </div>
       </section>

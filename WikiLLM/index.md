@@ -31,9 +31,9 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Descripción de una línea contra el despiece](wiki/descripcion_linea_vs_despiece.md) - Por qué `n_entrepanos` no describe el mueble: 47 de 81 tipos no coincidían, y la deuda equivalente en puertas y gavetas.
 - [Líneas de material suelto](wiki/lineas_material_suelto.md) - Tablero, canto o herraje cobrados sin módulo: unidades, margen por tipo, clasificación en Herrajes / otros del PDF y exclusión en HDR y Optimizador.
 - [Protocolo de cotizaciones y PDF](wiki/protocolo_pdf_cotizaciones.md) - Clasificación y agrupación de adicionales sin precios en el detalle, materiales por área closet, reparación histórica y doble verificación de impresión.
-- [Mesones de cocina y baño](wiki/mesones_pb_shore.md) - Cálculo por tramo, catálogo Colombia y USA, y sección de mesones en el PDF.
+- [Mesones de cocina, isla y baño](wiki/mesones_pb_shore.md) - Parámetros por tipo, edición, refuerzo, perforaciones y PDF.
 - [Bisagras por alto de puerta](wiki/bisagras_por_altura.md) - Tramos por hoja, equivalencias de unidades y actualización de cotizaciones y simulador.
-- [Entrega, Incoterm e instalación](wiki/entrega_cotizaciones.md) - Reparto de módulos por cantidad, contenedores por entrega y tarifas de instalación por zona.
+- [Entrega, Incoterm e instalación](wiki/entrega_cotizaciones.md) - Reparto de módulos por cantidad, contenedores, tarifas por zona y supervisión y prorrateo de tráiler según PB Shore.
 - [Motor de Cálculo](wiki/motor_calculo.md) - Algoritmo core, reglas matemáticas, consumibles, soportes por entrepaño, cálculo grupal y recálculo masivo por lotes con precarga de catálogo (`engine.ts` y `cotizar.ts`).
 - [Optimizador de corte](wiki/optimizador_corte.md) - Consumos, parámetros de planta, refilado incluido en medidas nominales y reparto de unidades por jornada.
 - [Arquitectura Frontend](wiki/arquitectura_frontend.md) - Rutas Next.js, encabezado, acceso a HDR y Optimizador desde Diseño, Zustand y flujos de cotización.

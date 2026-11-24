@@ -7,6 +7,7 @@ import AddLineForm, { type LineaInicial, type ProjectDefaults } from './AddLineF
 import { actualizarCocinaAction, eliminarCocinaAction, duplicarCocinaAction, eliminarLineaAction, duplicarLineaAction, cambiarGrupoLineaAction, desagruparGrupoAction, reordenarGruposCocinaAction } from '../actions';
 import { colorGrupo, indiceALetras } from '@/lib/module-groups';
 import { descripcionConNotas } from '@/lib/nombres-modulos';
+import type { MesonGuardado } from '@/lib/mesones';
 import type { FamiliaMaterial } from '@/lib/muebles';
 import type { ColumnasPrecio } from './CotizacionDetalleClient';
 
@@ -16,6 +17,7 @@ const fmtUSD = (n: number) => Number(n).toLocaleString('en-US', { style: 'curren
 
 type LineaConfig = {
   clasificacionPdf?: string;
+  meson?: MesonGuardado;
   preset?: Record<string, string>;
   conHerrajes?: boolean;
   recargoPct?: number;
@@ -104,7 +106,7 @@ export default function CocinaCard({
 }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
-  const [showMeson, setShowMeson] = useState(false);
+  const [mesonAbierto, setMesonAbierto] = useState<'nuevo' | { id: string; meson: MesonGuardado } | null>(null);
   const [showAddMaterial, setShowAddMaterial] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState(false);
@@ -554,6 +556,13 @@ export default function CocinaCard({
                       {columnasPrecio.sinHerrajes && <>{columnasPrecio.usd && <><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.sinUnitUsd)}</td><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.sinUnitUsd * precio.cantidad)}</td></>}{columnasPrecio.cop && <><td className="px-2 text-right whitespace-nowrap">{fmtCOP(precio.sinUnitCop)}</td><td className="px-3 text-right whitespace-nowrap">{fmtCOP(precio.sinUnitCop * precio.cantidad)}</td></>}</>}
                       {columnasPrecio.conHerrajes && <>{columnasPrecio.usd && <><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.conUnitUsd)}</td><td className="px-2 text-right whitespace-nowrap">{fmtUSD(precio.conUnitUsd * precio.cantidad)}</td></>}{columnasPrecio.cop && <><td className="px-2 text-right whitespace-nowrap">{fmtCOP(precio.conUnitCop)}</td><td className="px-3 text-right whitespace-nowrap">{fmtCOP(precio.conUnitCop * precio.cantidad)}</td></>}</>}
                       <td className="px-3 whitespace-nowrap text-right">
+                        {esMeson && l.config?.meson && <button type="button" onClick={() => {
+                          if (!l.config?.meson) return;
+                          setEditId(null);
+                          setShowAdd(false);
+                          setShowAddMaterial(false);
+                          setMesonAbierto({ id: l.id, meson: l.config.meson });
+                        }} className="mr-2 text-slate-500 hover:text-slate-900">Editar</button>}
                         {!esMeson && <button onClick={(e) => { e.stopPropagation(); setEditId(l.id); setSelectedLineId(null); setShowAdd(false); }} className="text-slate-500 hover:text-slate-900 mr-2" title="Editar módulo">Editar</button>}
                         <button onClick={(e) => { e.stopPropagation(); delLinea(l.id); }} className="text-slate-400 hover:text-red-600" title="Eliminar módulo">✕</button>
                       </td>
@@ -681,11 +690,12 @@ export default function CocinaCard({
           <div className="flex gap-2">
             <button onClick={() => { setEditId(null); setShowAdd(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar módulo</button>
             <button onClick={() => { setEditId(null); setShowAddMaterial(true); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar herrajes/otros</button>
-            <button type="button" onClick={() => { setEditId(null); setShowAddMaterial(false); setShowMeson(v => !v); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar mesón</button>
+            <button type="button" onClick={() => { setEditId(null); setShowAddMaterial(false); setMesonAbierto(v => v === 'nuevo' ? null : 'nuevo'); }} className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">+ Agregar mesón</button>
           </div>
         )}
-        {showMeson && <AgregarMesonForm cocinaId={cocina.id} veces={cocina.cantidad ?? 1} trm={trm} onDone={() => {
-          setShowMeson(false);
+        {mesonAbierto && <AgregarMesonForm key={mesonAbierto === 'nuevo' ? 'nuevo' : mesonAbierto.id}
+          editar={mesonAbierto === 'nuevo' ? undefined : mesonAbierto} cocinaId={cocina.id} veces={cocina.cantidad ?? 1} trm={trm} onDone={() => {
+          setMesonAbierto(null);
           router.refresh();
         }} />}
         {showAddMaterial && <div className="mt-3"><AgregarMaterialForm cocinaId={cocina.id} onDone={() => setShowAddMaterial(false)} /></div>}

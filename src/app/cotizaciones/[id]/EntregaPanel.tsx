@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { unidadesSupervisionEntrega } from '@/lib/instalacion-cotizacion';
 import DetalleFlotante from '@/components/DetalleFlotante';
 import InstalacionEntrega, { type DatosInstalacion } from './InstalacionEntrega';
 import type { AreaEntrega, ConfigEntrega, EntregaParcial, ImporteEntrega, TamanoContenedor } from '@/lib/entrega-cotizacion';
@@ -71,6 +72,7 @@ export default function EntregaPanel({ config, areas, resultados, instalacion, o
     totalesAsignados.set(id, (totalesAsignados.get(id) ?? 0) + total);
   }
   const unidadesProyecto = areas.reduce((total, area) => total + modulosDeEntrega(area).reduce((n, linea) => n + cantidadProyecto(area, linea), 0), 0);
+  const unidadesSupervision = unidadesSupervisionEntrega(areas);
   const maxParciales = Math.min(100, Math.max(1, Math.ceil(unidadesProyecto), config.parciales.length));
 
   function cambiarParcial(i: number, parcial: EntregaParcial) {
@@ -100,7 +102,7 @@ export default function EntregaPanel({ config, areas, resultados, instalacion, o
   return <section className="mt-4 rounded-md border border-slate-200 p-4">
     <h3 className="font-semibold text-slate-900">Entrega</h3>
     <fieldset disabled={guardando} className="mt-3 space-y-3">
-      {instalacion && <InstalacionEntrega config={config.instalacion} datos={instalacion} onChange={instalacion => onChange({ ...config, instalacion })} />}
+      {instalacion && <InstalacionEntrega unidadesProyecto={unidadesSupervision} config={config.instalacion} datos={instalacion} onChange={instalacion => onChange({ ...config, instalacion })} />}
       <fieldset className="flex gap-4 text-sm">
         <legend className="mb-1 font-medium">Incoterm</legend>
         {(['FOB', 'CIF', 'DDP'] as const).map(incoterm => <label key={incoterm} className="flex items-center gap-1">

@@ -53,6 +53,13 @@ export async function guardarTarifasInstalacionAction(tarifas: TarifasInstalacio
   try {
     await assertAdmin();
     const sb = await createClient();
+    for (const tabla of Object.values(tarifas)) {
+      for (const tarifa of Object.values(tabla)) {
+        if (!Number.isFinite(tarifa.costo) || tarifa.costo < 0 || !Number.isFinite(tarifa.margen) || tarifa.margen >= 100) {
+          throw new Error('Revisa el costo y el margen. El margen debe ser menor que 100 %.');
+        }
+      }
+    }
     const { error } = await sb.from('cot_parametros').upsert({
       key: 'instalacion',
       value: normalizarTarifasInstalacion(tarifas),

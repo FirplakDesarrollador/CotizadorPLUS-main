@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import DetalleFlotante from '@/components/DetalleFlotante';
-import { conceptosInstalacion, GRUPOS_INSTALACION, normalizarTarifasInstalacion, ZONAS_INSTALACION, type GrupoInstalacion, type TarifaInstalacion, type ZonaInstalacion } from '@/lib/instalacion-cotizacion';
+import { conceptosInstalacion, GRUPOS_INSTALACION, precioInstalacion, normalizarTarifasInstalacion, ZONAS_INSTALACION, type TarifaInstalacion, type ZonaInstalacion } from '@/lib/instalacion-cotizacion';
 import { guardarTarifasInstalacionAction } from './actions';
 
 const COLUMNAS = [['costo', 'Costo/Unidad (USD)'], ['precio', 'Precio/Unidad (USD)'], ['margen', 'Margen (%)']] as const;
@@ -31,21 +31,31 @@ export default function InstalacionParametros({ inicial }: { inicial: unknown })
         <fieldset disabled={guardando} className="space-y-6">
           {(Object.keys(ZONAS_INSTALACION) as ZonaInstalacion[]).map(zona => <section key={zona} className="space-y-3">
             <h4 className="font-semibold">{ZONAS_INSTALACION[zona]}</h4>
-            {(Object.keys(GRUPOS_INSTALACION) as GrupoInstalacion[]).map(grupo => <div key={grupo} className="overflow-x-auto">
+            {([
+              [GRUPOS_INSTALACION.muebles, conceptosInstalacion(zona, 'muebles')],
+              [GRUPOS_INSTALACION.mesones, conceptosInstalacion(zona, 'mesones')],
+            ] as const).map(([titulo, conceptos]) => <div key={titulo} className="overflow-x-auto">
               <table className="w-full text-sm">
-                <caption className="pb-1 text-left font-medium">{GRUPOS_INSTALACION[grupo]}</caption>
+                <caption className="pb-1 text-left font-medium">{titulo}</caption>
                 <thead className="bg-slate-100"><tr><th scope="col" className="p-2 text-left">Concepto</th>{COLUMNAS.map(([campo, nombre]) => <th scope="col" key={campo} className="p-2 text-left">{nombre}</th>)}</tr></thead>
-                <tbody>{conceptosInstalacion(zona, grupo).map(([clave, etiqueta]) => <tr key={clave} className="border-b border-slate-100">
+                <tbody>{conceptos.map(([clave, etiqueta]) => <tr key={clave} className="border-b border-slate-100">
                   <th scope="row" className="p-2 text-left font-normal">{etiqueta}</th>
                   {COLUMNAS.map(([campo, nombre]) => <td key={campo} className="p-2">
-                    <input type="number" step="any" min={campo === 'margen' ? undefined : 0}
+                    {campo === 'precio' ? <output className="tabular-nums">
+                      {tarifas[zona][clave]?.precio.toLocaleString('es-CO', { maximumFractionDigits: 2 }) ?? '—'}
+                    </output> : <input type="number" step="any" min={campo === 'margen' ? undefined : 0}
+                      max={campo === 'margen' ? 99.999999 : undefined}
                       aria-label={`${ZONAS_INSTALACION[zona]} · ${etiqueta} · ${nombre}`}
                       value={tarifas[zona][clave]?.[campo] ?? ''} placeholder="—" className="w-24 rounded border border-slate-300 px-2 py-1"
                       onChange={e => {
                         const valor = Number(e.target.value);
                         if (!Number.isFinite(valor)) return;
-                        setTarifas(actual => ({ ...actual, [zona]: { ...actual[zona], [clave]: { ...(actual[zona][clave] ?? SIN_TARIFA), [campo]: valor } } }));
-                      }} />
+                        setTarifas(actual => {
+                          const tarifa = { ...(actual[zona][clave] ?? SIN_TARIFA), [campo]: valor };
+                          tarifa.precio = tarifa.margen < 100 ? precioInstalacion(tarifa.costo, tarifa.margen) : 0;
+                          return { ...actual, [zona]: { ...actual[zona], [clave]: tarifa } };
+                        });
+                      }} />}
                   </td>)}
                 </tr>)}</tbody>
               </table>

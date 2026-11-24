@@ -35,6 +35,13 @@ export const FIRPLAK_TEMPLATE_DEFAULTS: FirplakTemplate = {
   additionalTermsEn: '',
 };
 
+export function exclusionesFirplak(template: FirplakTemplate, ingles: boolean, incluyeMesones: boolean) {
+  const campo = ingles ? 'exclusionsEn' : 'exclusions';
+  const texto = template[campo];
+  if (!incluyeMesones || texto !== FIRPLAK_TEMPLATE_DEFAULTS[campo]) return texto;
+  return texto.replace(ingles ? 'countertops, ' : 'mesones, ', '');
+}
+
 /**
  * Completa lo que falte con el valor por defecto y **descarta lo que ya no existe**.
  *

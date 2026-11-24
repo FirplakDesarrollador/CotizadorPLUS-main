@@ -3,7 +3,7 @@ import test from 'node:test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { separarPropuesta, esHerrajeOtroAdicional, type LineaPropuesta } from '../src/lib/propuesta-cotizacion';
-import { catalogoInicialMesones, calcularMeson, medidasMesonDesdeMuebles, mueblesParaMeson, type MedidasMeson } from '../src/lib/mesones';
+import { catalogoInicialMesones, calcularMeson, medidasMesonDesdeMuebles, mueblesParaMeson, parametrosParaMeson, type MedidasMeson } from '../src/lib/mesones';
 import { esModuloLinea } from '../src/lib/materiales-linea';
 import { MesonesPdf, HerrajesOtrosPdf, MaterialesProyectoPdf } from '../src/app/cotizaciones/[id]/imprimir/DetallesProyecto';
 import { especificacionesProyecto } from '../src/lib/materiales-proyecto';
@@ -152,6 +152,10 @@ test('mesón calcula la isla una vez, agrega muros y cascadas y cobra la perfora
     isla: { largo: 48, voladizoFrontal: 3, voladizoLateral: 2, cantosPulidos: 1, waterfalls: 2, mueblesIds: ['isla'] },
   };
   const d = medidasMesonDesdeMuebles(muebles, opciones);
+  const cocina = medidasMesonDesdeMuebles(muebles, {
+    ...opciones, tipo: 'cocina', isla: null, mueblesExcluidos: ['isla'],
+  });
+  assert.equal(cocina.largo, 66);
   assert.equal(d.largo, 66);
   assert.equal(d.largoBacksplash, 66);
   assert.equal(d.huecos, 2);
@@ -167,4 +171,31 @@ test('mesón calcula la isla una vez, agrega muros y cascadas y cobra la perfora
   assert.equal(aislada.huecos, 2);
   cerca(calcularMeson(aislada, material, pMeson, 4000).areaSqft, (50 * 27 + 2 * 27 * 36) / 144 * 1.05);
   assert.throws(() => medidasMesonDesdeMuebles([], { ...opciones, isla: null }), /muebles inferiores/);
+});
+
+test('isla y baño usan parámetros separados y el refuerzo agrega superficie sin cobrar perforaciones en obra', () => {
+  const base = catalogoInicialMesones.parametros;
+  const catalogo = { ...catalogoInicialMesones, parametrosPorTipo: {
+    cocina: base, isla: { ...base, merma: 0 }, bano: { ...base, profundidad: 22.5 },
+  } };
+  assert.equal(parametrosParaMeson(catalogo, 'bano').profundidad, 22.5);
+  assert.equal(parametrosParaMeson(catalogo, 'cocina').profundidad, 25.5);
+  const p = parametrosParaMeson(catalogo, 'isla');
+  const opciones = {
+    tipo: 'isla' as const, profundidad: 30, backsplash: 4, espesor: p.espesorReforzado,
+    dishwasher: null, equipo: 'cooktop' as const, anchoRange: 30, murosLaterales: 0,
+    cantosPulidos: 0, waterfalls: 0, huecos: 2, pulirHuecos: false,
+    isla: { largo: 48, voladizoFrontal: 3, voladizoLateral: 2, cantosPulidos: 1, waterfalls: 0, mueblesIds: [] },
+  };
+  const material = catalogo.materiales.find(m => m.id === 'quarztone-us')!;
+  const medidas = (refuerzo: boolean, perforacionesEn: 'fabricacion' | 'instalacion') =>
+    medidasMesonDesdeMuebles([{ id: 'b', etiqueta: 'B', categoria: 'inferior', largo: 100 }],
+      { ...opciones, refuerzo, perforacionesEn });
+  const sinRefuerzo = calcularMeson(medidas(false, 'instalacion'), material, p, 4000);
+  const enObra = calcularMeson(medidas(true, 'instalacion'), material, p, 4000);
+  const enFabrica = calcularMeson(medidas(true, 'fabricacion'), material, p, 4000);
+  cerca(sinRefuerzo.areaSqft, (50 * 33 + 50 * 4) / 144);
+  cerca(enObra.areaSqft - sinRefuerzo.areaSqft, 33 * 4 / 144);
+  cerca(enFabrica.costoUsd - enObra.costoUsd, 3 * material.hueco);
+  cerca(enFabrica.precioUsd - enObra.precioUsd, 3 * material.hueco / (1 - p.margenAcabados / 100));
 });

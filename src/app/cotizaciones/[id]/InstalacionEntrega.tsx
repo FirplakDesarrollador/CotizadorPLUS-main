@@ -1,6 +1,6 @@
 import DetalleFlotante from '@/components/DetalleFlotante';
 import {
-  calcularInstalacion, conceptosManualesInstalacion, GRUPOS_INSTALACION, ZONAS_INSTALACION,
+  calcularInstalacion, calcularSupervisionEntrega, CAMPOS_SUPERVISION, conceptosManualesInstalacion, GRUPOS_INSTALACION, ZONAS_INSTALACION,
   type cantidadesInstalacion, type ConfigInstalacion, type GrupoInstalacion, type TarifasInstalacion, type ZonaInstalacion,
 } from '@/lib/instalacion-cotizacion';
 
@@ -11,12 +11,17 @@ export type DatosInstalacion = {
   trm: number;
 };
 
-export default function InstalacionEntrega({ config, datos, onChange }: {
+export default function InstalacionEntrega({ config, datos, onChange, unidadesProyecto }: {
   config: ConfigInstalacion;
+  unidadesProyecto: number;
   datos: DatosInstalacion;
   onChange: (config: ConfigInstalacion) => void;
 }) {
   const { zona } = config;
+  const supervision = config.supervisionEntrega ?? { moneda: datos.moneda };
+  const formatoSupervision = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 });
+  const valorManual = (input: HTMLInputElement) => input.value === '' ? undefined : input.valueAsNumber;
+
   const moneda = new Intl.NumberFormat('es-CO', { style: 'currency', currency: datos.moneda, currencyDisplay: 'code' });
   const decimal = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 });
   const importe = (valor: number | null) => valor == null ? '—' : moneda.format(valor);
@@ -76,5 +81,63 @@ export default function InstalacionEntrega({ config, datos, onChange }: {
         {ZONAS_INSTALACION[opcion]}
       </label>)}
     </div>
+    {config.activa && zona === 'miami' && <div className="overflow-x-auto rounded border border-slate-200">
+      <table className="w-full text-sm">
+        <caption className="px-2 py-1 text-left text-xs text-slate-600">Borra un valor manual para volver a la sugerencia o al cálculo.</caption>
+        <thead className="bg-slate-800 text-white"><tr>
+          <th scope="col" className="p-2 text-left">Supervisión y entrega ({supervision.moneda})</th>
+          {CAMPOS_SUPERVISION.map(([, etiqueta]) =>
+            <th scope="col" key={etiqueta} className="whitespace-nowrap p-2 text-right">{etiqueta}</th>)}
+        </tr></thead>
+        <tbody>
+          {calcularSupervisionEntrega(unidadesProyecto, supervision).map(fila => <tr key={fila.clave} className="border-b">
+            <th scope="row" className="bg-slate-100 p-2 text-left font-medium">{fila.etiqueta}</th>
+            {CAMPOS_SUPERVISION.map(([campo, etiqueta]) => {
+              const capacidad = fila.clave === 'trailer' && campo === 'unidades';
+              const calculado = fila.valores[campo];
+              const automatico = (fila.precioAutomatico && (campo === 'precioUnit' || campo === 'precio'))
+                || (fila.costoDesdeTrailer && (campo === 'costoUnit' || campo === 'costo'));
+              const nombre = capacidad ? 'Unidades por tráiler' : `${fila.etiqueta} · ${etiqueta}`;
+              return <td key={campo} className="p-2 text-right">
+                {automatico ? (
+                  <output aria-label={nombre} className="inline-block w-28 px-2 py-1 tabular-nums">
+                    {calculado == null ? '—' : formatoSupervision.format(calculado)}
+                  </output>
+                ) : <input type="number" step={capacidad ? 1 : "any"} min={capacidad ? 1 : campo === 'margen' ? undefined : 0}
+                  aria-label={nombre}
+                  className="w-28 rounded border border-slate-300 px-2 py-1 text-right tabular-nums placeholder:text-slate-600"
+                  value={(capacidad ? supervision.capacidadTrailer : fila.manual[campo]) ?? ''}
+                  placeholder={calculado == null ? '—' : formatoSupervision.format(calculado)}
+                  onChange={e => {
+                    const valor = valorManual(e.currentTarget);
+                    if (capacidad) {
+                      if (valor != null && (!Number.isInteger(valor) || valor <= 0)) return;
+                      onChange({ ...config, supervisionEntrega: { ...supervision, capacidadTrailer: valor } });
+                      return;
+                    }
+                    if (valor != null && (!Number.isFinite(valor) || (campo === 'margen' ? valor >= 100 : valor < 0))) return;
+                    onChange({ ...config, supervisionEntrega: {
+                      ...supervision, [fila.clave]: { ...fila.manual, [campo]: valor },
+                    } });
+                  }} />}
+                {capacidad && <span className="block text-xs text-slate-600">Unidades por tráiler</span>}
+              </td>;
+            })}
+          </tr>)}
+          <tr>
+            <th scope="row" className="bg-slate-100 p-2 text-left font-medium">Costo por tráiler</th>
+            <td colSpan={6} className="p-2">
+              <input type="number" step="any" min={0} aria-label="Costo por tráiler"
+                className="w-28 rounded border border-slate-300 px-2 py-1 text-right tabular-nums"
+                value={supervision.costoTrailer ?? ''} placeholder="—" onChange={e => {
+                  const valor = valorManual(e.currentTarget);
+                  if (valor != null && (!Number.isFinite(valor) || valor < 0)) return;
+                  onChange({ ...config, supervisionEntrega: { ...supervision, costoTrailer: valor } });
+                }} />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>}
   </section>;
 }

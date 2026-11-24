@@ -9,7 +9,7 @@ import {
   type SistemaMedida,
 } from '@/lib/module-groups';
 import { contarEntrepanos, puertasDescripcion, esElementoPlano, etiquetaDescripcion, aplicarConfiguracionDbFe } from '@/lib/muebles';
-import { calcularMeson, catalogoInicialMesones, medidasMesonDesdeMuebles, mueblesParaMeson, type CatalogoMesones, type ConfiguracionMeson } from '@/lib/mesones';
+import { calcularMeson, catalogoInicialMesones, medidasMesonDesdeMuebles, mueblesParaMeson, parametrosParaMeson, type CatalogoMesones, type ConfiguracionMeson } from '@/lib/mesones';
 import { calcularPrecioMaterial, descripcionMaterial, grupoSeSaltaElMotor, type TipoMaterial } from '@/lib/materiales-linea';
 import { normalizarPreciosTableros } from '@/lib/precios-tableros';
 import { siguienteOrdenGrupo as siguienteOrden } from '@/lib/grupos-orden';
@@ -1183,7 +1183,7 @@ export async function obtenerMueblesParaMeson(cocinaId: string) {
   return mueblesParaMeson(lineas);
 }
 
-export async function agregarLineaMeson(cocinaId: string, materialId: string, opciones: ConfiguracionMeson) {
+export async function agregarLineaMeson(cocinaId: string, materialId: string, opciones: ConfiguracionMeson, lineaId?: string) {
   const sb = await createClient();
   const [area, catalogo, muebles] = await Promise.all([
     sb.from('cot_cocinas').select('cotizacion_id').eq('id', cocinaId).single(),
@@ -1197,12 +1197,30 @@ export async function agregarLineaMeson(cocinaId: string, materialId: string, op
   const material = catalogo.materiales.find(m => m.id === materialId);
   if (!material) throw new Error('Material de mesón no encontrado.');
   const medidas = medidasMesonDesdeMuebles(muebles, opciones);
-  const resultado = calcularMeson(medidas, material, catalogo.parametros, Number(cab.trm), Number(cab.config_default?.descuento ?? 0));
-  return insertarAdicional(cocinaId, id, 'MESON',
-    { clasificacionPdf: 'mesones', meson: { medidas, material, parametros: catalogo.parametros, resultado } },
-    `${material.nombre} · ${material.origen} · ${resultado.areaSqft.toFixed(2)} ft²`,
-    { costoSinHerrajes: resultado.costoCop, costoHerrajes: 0, costoConHerrajes: resultado.costoCop,
-      precioConHerrajesCop: resultado.precioCop, precioConHerrajesUsd: resultado.precioUsd });
+  const parametros = parametrosParaMeson(catalogo, opciones.tipo ?? 'cocina');
+  const resultado = calcularMeson(medidas, material, parametros, Number(cab.trm), Number(cab.config_default?.descuento ?? 0));
+  const config = { clasificacionPdf: 'mesones', meson: { medidas, material, parametros, resultado } };
+  const descripcion = `${material.nombre} · ${material.origen} · ${resultado.areaSqft.toFixed(2)} ft²`;
+  const precios = { costoSinHerrajes: resultado.costoCop, costoHerrajes: 0, costoConHerrajes: resultado.costoCop,
+    precioConHerrajesCop: resultado.precioCop, precioConHerrajesUsd: resultado.precioUsd };
+  if (!lineaId) return insertarAdicional(cocinaId, id, 'MESON', config, descripcion, precios);
+
+  const { data: linea, error: errorLinea } = await sb.from('cot_cotizacion_lineas')
+    .select('config,cantidad').eq('id', lineaId).eq('cocina_id', cocinaId)
+    .eq('codigo_modulo', 'MESON').single();
+  if (errorLinea || linea?.config?.clasificacionPdf !== 'mesones') throw new Error('Mesón no encontrado.');
+  const cantidad = Number(linea.cantidad);
+  const { data: actualizada, error: errorGuardado } = await sb.from('cot_cotizacion_lineas').update({
+    config: { ...linea.config, ...config }, descripcion_es: descripcion, breakdown: precios,
+    costo_sin_herrajes_cop: resultado.costoCop * cantidad, costo_herrajes_cop: 0,
+    costo_total_cop: resultado.costoCop * cantidad,
+    precio_unit_cop: resultado.precioCop, precio_unit_usd: resultado.precioUsd,
+    precio_total_cop: resultado.precioCop * cantidad, precio_total_usd: resultado.precioUsd * cantidad,
+  }).eq('id', lineaId).eq('cocina_id', cocinaId).eq('codigo_modulo', 'MESON').select('id').single();
+  if (errorGuardado || !actualizada) throw new Error(errorGuardado?.message ?? 'No se pudo guardar el mesón.');
+  await normalizarGrupos(cocinaId);
+  await recomputarTotales(id);
+  return id;
 }
 
 async function insertarAdicional<T extends Pick<ReturnType<typeof calcularPrecioMaterial>,

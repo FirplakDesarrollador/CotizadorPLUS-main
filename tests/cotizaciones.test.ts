@@ -366,3 +366,29 @@ test('agregar un mesón deriva el largo en el servidor y guarda el valor por uni
   assert.equal(tablas.cot_cocinas[0].total_cop, (120000 + Number(linea.precio_total_cop)) * 80);
   assert.equal(tablas.cot_cotizaciones[0].total_usd, (30 + Number(linea.precio_total_usd)) * 80);
 });
+
+test('editar un mesón conserva la línea y reduce el precio al mover las perforaciones a instalación', async () => {
+  tablas.cot_cotizaciones = [{ id: 'q', trm: 4000, config_default: {} }];
+  tablas.cot_cocinas = [{ id: 'a', cotizacion_id: 'q', cantidad: 2 }];
+  tablas.cot_grupos_modulos = [];
+  tablas.cot_parametros = [];
+  tablas.cot_cotizacion_lineas = [{
+    id: 'bajo', cocina_id: 'a', cotizacion_id: 'q', tipo: { categoria: 'vanity', pref: 'B' },
+    largo: 30, cantidad: 1, unidad_dim: 'in', precio_total_cop: 0, precio_total_usd: 0,
+  }];
+  const opciones = { tipo: 'bano' as const, profundidad: 22, backsplash: 4, espesor: 0.75,
+    dishwasher: null, equipo: 'ninguno' as const, anchoRange: 30, murosLaterales: 0, cantosPulidos: 1,
+    waterfalls: 0, isla: null, huecos: 2, pulirHuecos: false };
+  await api.agregarLineaMeson('a', 'quarztone-us', opciones);
+  const original = tablas.cot_cotizacion_lineas.find(l => l.codigo_modulo === 'MESON')!;
+  const precioAnterior = Number(original.precio_total_usd);
+  const id = String(original.id);
+  await api.agregarLineaMeson('a', 'quarztone-us', { ...opciones, perforacionesEn: 'instalacion' }, id);
+  const mesones = tablas.cot_cotizacion_lineas.filter(l => l.codigo_modulo === 'MESON');
+  assert.equal(mesones.length, 1);
+  assert.equal(mesones[0].id, id);
+  assert.equal(mesones[0].grupo_id, original.grupo_id);
+  assert.ok(Number(mesones[0].precio_total_usd) < precioAnterior);
+  assert.equal(tablas.cot_cotizaciones[0].total_usd, Number(mesones[0].precio_total_usd) * 2);
+  await assert.rejects(api.agregarLineaMeson('a', 'quarztone-us', opciones, 'bajo'), /Mesón no encontrado/);
+});

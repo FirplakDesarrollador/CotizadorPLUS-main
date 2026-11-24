@@ -1,4 +1,4 @@
-# Mesones de cocina y baño: lógica de PB Shore y propuesta para Cotizador PLUS
+# Mesones de cocina, isla y baño: lógica de PB Shore y propuesta para Cotizador PLUS
 
 > **Estado:** cálculo de mesones implementado en Cotizador PLUS. Las secciones 1 a 7 documentan el Excel original.
 > **Fuente:** `CONTENEDORES/pb shore.xlsx` — hojas `Summary`, `Mesones` y `Cabinets`.
@@ -233,15 +233,15 @@ Luego el `Summary` aplica **otro margen por concepto** (≈35-36 %) para llegar 
 
 ## 8. Implementación en Cotizador PLUS
 
-- En cada área, **+ Agregar mesón** toma el largo de los muebles inferiores y vanities: ancho en pulgadas por cantidad de línea. Excluye superiores, torres PC, paneles, fillers, zócalos y adicionales. El servidor vuelve a leer las líneas al guardar. La medida es una suma lineal por unidad del área.
-- El dishwasher agrega su ancho al mesón y al backsplash, con 24 pulgadas editables. El Range agrega su ancho al backsplash, con 30 pulgadas editables. El Cooktop agrega una perforación de fábrica sin reducir el área de material. Las otras perforaciones se ingresan por separado.
-- La isla o península agrega su propia superficie, con largo y voladizos frontal y lateral. Si sus muebles están en la misma área, se pueden seleccionar para excluir sus anchos del tramo principal. Las cascadas de isla y de cocina/baño se cuentan por separado y usan la profundidad de su tramo y la altura configurable.
-- Cada muro lateral agrega una franja de 3 pulgadas y el retorno del backsplash. Cada canto lateral pulido del tramo principal usa la profundidad más la altura del backsplash; cada canto de la isla usa la profundidad más el voladizo frontal. En el espesor reforzado se agrega la franja de refuerzo. Se convierte a ft² y se aplica merma.
+- En cada área, **+ Agregar mesón** pide el tipo antes de mostrar los campos. Cocina toma el ancho de los muebles inferiores y Baño el de los vanities, multiplicado por la cantidad de cada línea. Isla/Península usa el largo y los voladizos ingresados. Cocina permite excluir los muebles de una isla que se cotiza en su propia línea. El servidor vuelve a leer las líneas al guardar.
+- El dishwasher agrega su ancho al mesón y al backsplash, con 24 pulgadas editables. El Range agrega su ancho al backsplash, con 30 pulgadas editables. El Cooktop agrega una perforación sin reducir el área de material. El selector Fabricación/Instalación aplica a esa perforación y a las ingresadas en el formulario. La opción Instalación excluye su costo y precio de la línea del mesón.
+- La isla o península se guarda como línea independiente y admite backsplash. Los mesones históricos que combinan un tramo principal con una isla conservan la asignación de muebles al editar. Las cascadas de isla y de cocina/baño se cuentan por separado y usan la profundidad de su tramo y la altura configurable.
+- Cada muro lateral agrega una franja de 3 pulgadas y el retorno del backsplash. Cada canto lateral pulido del tramo principal usa la profundidad más la altura del backsplash; cada canto de la isla usa la profundidad más el voladizo frontal. El interruptor Refuerzo carga el espesor reforzado del tipo (1,5 pulgadas de origen) y agrega la franja de refuerzo en los cantos expuestos. Se convierte a ft² y se aplica merma.
 - El libro original confirma los 4.572,96875 ft² de cocina y 183,75 ft² de baño para 80 unidades. La cocina incluye 551,04167 ft² del bloque AD, que mezcla una aproximación de esquinas con voladizos. En el baño, AJ queda en cero. El valor de PB Shore es una referencia comercial histórica. El formulario nuevo usa el ancho de los muebles registrados y las medidas indicadas para la isla.
-- **Materiales-Parámetros → Mesones** separa Colombia y USA. La carga inicial de `src/lib/mesones.ts` sale de `Mesones!A4:O13` y `A19:D20`; el mármol y los seis sinterizados tienen costo de material pendiente. Al guardar, el catálogo y los parámetros se persisten juntos en `cot_parametros.mesones`. La cotización usa la TRM del proyecto, con las conversiones 10,76 ft²/m² y 3,28 ft/m del libro.
+- **Materiales-Parámetros → Mesones** separa Colombia y USA. La carga inicial de `src/lib/mesones.ts` sale de `Mesones!A4:O13` y `A19:D20`; el mármol y los seis sinterizados tienen costo de material pendiente. Al guardar, el catálogo compartido y los parámetros independientes de Cocina, Isla/Península y Baño se persisten en `cot_parametros.mesones`. Los tres tipos parten de los parámetros existentes hasta que se configuran por separado. La cotización usa la TRM del proyecto, con las conversiones 10,76 ft²/m² y 3,28 ft/m del libro.
 - En Colombia, el costo real de suministro incluye material y empaque. El margen interno FPK se aplica al suministro y el de maquila al pulido y las perforaciones, antes de los márgenes comerciales. USA aplica los márgenes comerciales. Las tarifas iniciales comerciales son las de cocina de `Summary`. El descuento de la cotización se aplica al resultado comercial.
 - Cada cálculo se persiste como una línea sin tipología, con `config.clasificacionPdf = 'mesones'`. Guarda las medidas, la tarifa, los parámetros y el resultado usado. El total persistido es por unidad del área y las repeticiones se aplican una sola vez en la cabecera y en el PDF. Las líneas se conservan al versionar y quedan fuera del motor, HDR y optimizador. FIRPLAK, CEMA y la vista general imprimen material, origen, medidas, cantidad, superficie y valor en un bloque propio. En CEMA el subtotal calculado tiene prioridad cuando hay líneas guardadas.
-- Instalación, logística y arancel quedan en el flujo de Entrega de la cotización. El campo de perforaciones del formulario corresponde a las cobradas en fabricación. El catálogo se actualiza para cálculos nuevos; las líneas guardadas conservan el precio aprobado en su cotización.
+- Instalación, logística y arancel quedan en el flujo de Entrega de la cotización. El botón **Editar** recupera las opciones de la línea y recalcula con el catálogo vigente al guardar. Conserva la línea y el grupo, y actualiza los totales. FIRPLAK ajusta las exclusiones predeterminadas cuando la cotización incluye mesones.
 
 ## 9. Verificación
 
@@ -250,6 +250,8 @@ Luego el `Summary` aplica **otro margen por concepto** (≈35-36 %) para llegar 
 - La auditoría de solo lectura antes y después de los cambios arrojó cero diferencias de totales y los mismos nueve hallazgos previos (ocho referencias sin catálogo y un grupo inválido). Las pruebas de mesones no escribieron en la base compartida.
 
 En la actualización del largo automático se comprobó el formulario en Chrome con acciones simuladas, la derivación y el guardado con datos de prueba, y dos PDF de cada plantilla con dishwasher, Range, isla y cascadas. La auditoría de solo lectura siguió registrando los mismos nueve hallazgos previos y cero diferencias de totales.
+
+En la actualización del 24 de noviembre se verificaron la selección de tipo, el precio con perforaciones en obra y la edición en Chrome de escritorio (1440 px) y móvil (390 px), con datos simulados. Se compararon texto y páginas renderizadas de dos pasadas para FIRPLAK, CEMA y general. Las pruebas locales no consultaron la base compartida.
 
 ## 10. Enlaces relacionados
 
