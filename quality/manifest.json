@@ -213,6 +213,7 @@
         "src/lib/materiales-linea.ts",
         "src/lib/materiales-proyecto.ts",
         "src/lib/pipeline-campos.ts",
+        "src/lib/pipeline-datos.ts",
         "src/lib/pipeline*.ts",
         "src/lib/pipeline*.mjs",
         "src/lib/precios-tableros.ts",

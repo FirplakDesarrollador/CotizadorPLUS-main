@@ -14,7 +14,7 @@ const api=createRequire(import.meta.url)('../src/lib/pipeline-datos.ts') as type
 test('filtros, monitor y página comparten argumentos seguros; orden y rango son estables',async()=>{
  const f=filtrosPipeline({pq:' Cliente 100% ',ppais:'Colombia',pestado:'en_pausa',pasesor:'Asesor',pestimador:'Estimador',ppagina:'2'});llamadas.length=0;
  const r=await api.cargarPipeline(f);assert.equal(r.total,437);
- const tabla=llamadas.find(c=>c.nombre==='cot_pipeline_filtradas')!;assert.deepEqual(tabla.rango,[25,49]);assert.deepEqual(tabla.orden,['fecha_ingreso','id']);assert.deepEqual(tabla.args,{p_q:'Cliente 100%',p_estado:'en_pausa',p_pais:'Colombia',p_asesor:'Asesor',p_estimador:'Estimador'});
+ const tabla=llamadas.find(c=>c.nombre==='cot_pipeline_filtradas')!;assert.deepEqual(tabla.rango,[25,49]);assert.deepEqual(tabla.orden,['fecha_ingreso','created_at','id']);assert.deepEqual(tabla.args,{p_q:'Cliente 100%',p_estado:'en_pausa',p_pais:'Colombia',p_asesor:'Asesor',p_estimador:'Estimador'});
  const resumen=llamadas.find(c=>c.nombre==='cot_pipeline_resumen')!.args as Record<string,unknown>;const {p_hoy,...otros}=resumen;assert.match(String(p_hoy),/^\d{4}-\d{2}-\d{2}$/);assert.deepEqual(otros,tabla.args);
  const url=new URL(enlacePipeline(f,3),'https://test.local');assert.equal(url.searchParams.get('vista'),'pipeline');assert.equal(filtrosPipeline(Object.fromEntries(url.searchParams)).pagina,3);
 });

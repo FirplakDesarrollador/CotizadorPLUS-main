@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { obtenerCatalogoMesones } from '@/lib/cotizaciones';
 import { CAMPO_MATERIAL_MESON, PRODUCTO_MESONES, CAMPOS_PIPELINE, DESCONOCIDO_PIPELINE, validarRegistroPipeline, validarUrlPipeline, validarFechaPipeline } from '@/lib/pipeline-campos';
 import { CAMPOS_EXTRA_PIPELINE, NUMEROS_PIPELINE } from '@/lib/pipeline';
+import { fechaBogota } from '@/lib/dashboard-cotizaciones';
 import { ESTADOS_COTIZACION } from '@/lib/pipeline-estados';
 import { notificarAdminsEnDesarrollo } from '@/lib/notificar-en-desarrollo';
 export async function registrarPipelineAction(_prev: unknown, form: FormData): Promise<{ ok: boolean; error?: string; id?: string }> {
@@ -16,8 +17,11 @@ export async function registrarPipelineAction(_prev: unknown, form: FormData): P
     const materialesMeson = requiereMaterial ? (await obtenerCatalogoMesones()).materiales : [];
     const datos = validarRegistroPipeline(form, materialesMeson);
     const sb = await createClient();
-    const { data, error } = await sb.from('cot_pipeline').insert({ ...datos, creado_por: user.id }).select('id').single();
-    if (error) throw new Error('No se pudo guardar el registro.');
+    const { data, error } = await sb.from('cot_pipeline').insert({ ...datos, creado_por: user.id, fecha_ingreso: fechaBogota() }).select('id').single();
+    if (error || !data?.id) {
+      if (error) console.error('Error al guardar Registro CEFI', { codigo: error.code });
+      throw new Error('No se pudo guardar el registro.');
+    }
     revalidatePath('/cotizaciones');
     return { ok: true, id: data.id };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'No se pudo guardar.' }; }

@@ -12,11 +12,10 @@ encima de la tarjeta del listado y separada de Guía/Tips. Cada botón aumenta
 su tamaño visual un 0,5 % mediante `scale(1.005)`. En las vistas de ancho
 completo la barra acompaña a Volver en su propia fila.
 
-Registro reúne los campos de Form CEFI más Asesor y Estimador. Al marcar Mesones, Material por producto muestra el catálogo de Materiales y Parámetros → Mesones. El servidor valida el ID y guarda el nombre y origen dentro del registro. Los productos de gabinete conservan sus tipos de tablero. Ubicación se
+Registro exige cliente, país y moneda para crear el borrador en Pipeline. Aplica la fecha de Bogotá al guardarlo y ordena los registros del mismo día por hora de creación. El enlace de confirmación abre el detalle del registro guardado. Registro reúne los campos de Form CEFI más Asesor y Estimador. Al marcar Mesones, Material por producto muestra el catálogo de Materiales y Parámetros → Mesones. El servidor valida el ID y guarda el nombre y origen dentro del registro. Los productos de gabinete conservan sus tipos de tablero. Ubicación se
 divide en país y ciudad. Productos admite selección múltiple y el punto 7
-captura el tipo de tablero por cada producto elegido, guardado como objeto JSON
-en `tipo_tablero`. Todos los campos son opcionales; antes de guardar, el
-formulario pide confirmar cuando detecta datos vacíos. La tarifa (punto 15)
+captura el material por cada producto elegido y lo guarda como objeto JSON
+en `tipo_tablero`. El formulario pide confirmar antes de guardar y permite omitir los campos opcionales. La tarifa (punto 15)
 solo se habilita para USA/Estados Unidos y no es obligatoria. El punto 14 solo
 ofrece zócalo de madera y PVC; el punto 15 (margen adicional) ya no se captura.
 El adjunto es solo una URL: no hay subida de archivos. La acción valida las

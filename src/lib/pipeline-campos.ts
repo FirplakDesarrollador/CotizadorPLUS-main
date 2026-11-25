@@ -36,7 +36,8 @@ const DEFINICION_CAMPOS: CampoPipeline[] = [
   { key: 'adjunto_url', label: '23. Adjunto (URL)', tipo: 'url' },
   { key: 'asesor', label: '24. Asesor' }, { key: 'estimador', label: '25. Estimador' },
 ];
-export const CAMPOS_PIPELINE: CampoPipeline[]=DEFINICION_CAMPOS.map(c=>({...c,obligatorio:false,permiteDesconocido:!['nombre_proyecto','cliente','pais','moneda'].includes(c.key)}));
+const REQUERIDOS_REGISTRO = new Set(['cliente', 'pais', 'moneda']);
+export const CAMPOS_PIPELINE: CampoPipeline[]=DEFINICION_CAMPOS.map(c=>({...c,obligatorio:REQUERIDOS_REGISTRO.has(c.key),permiteDesconocido:!['nombre_proyecto','cliente','pais','moneda'].includes(c.key)}));
 export function validarUrlPipeline(value: string) {
   if (!value) return null;
   try { const url = new URL(value); if (['http:', 'https:'].includes(url.protocol)) return value; } catch { /* error de validación */ }

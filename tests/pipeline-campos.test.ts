@@ -20,11 +20,21 @@ test('el registro admite campos vacíos y guarda tablero separado por producto',
   assert.equal(result.estado, 'borrador');
   assert.equal(result.productos, `${PRODUCTOS_PIPELINE[0]} | ${PRODUCTOS_PIPELINE[1]}`);
   assert.equal(result.tipo_tablero, JSON.stringify({ [PRODUCTOS_PIPELINE[0]]: 'CARB2', [PRODUCTOS_PIPELINE[1]]: 'RH' }));
-  const empty = validarRegistroPipeline(new FormData());
-  assert.equal(empty.cliente, null);
+  const minimo = new FormData();
+  minimo.set('cliente', 'Cliente QA');
+  minimo.set('pais', 'Colombia');
+  minimo.set('moneda', 'USD');
+  const empty = validarRegistroPipeline(minimo);
+  assert.equal(empty.cliente, 'Cliente QA');
   assert.equal(empty.productos, null);
   assert.equal(empty.tarifa, null);
-  assert.ok(!CAMPOS_PIPELINE.some(c => c.obligatorio));
+  assert.deepEqual(CAMPOS_PIPELINE.filter(c => c.obligatorio).map(c => c.key), ['cliente', 'pais', 'moneda']);
+  for (const campo of CAMPOS_PIPELINE.filter(c => c.obligatorio)) {
+    const valor = minimo.get(campo.key)!;
+    minimo.set(campo.key, ' ');
+    assert.throws(() => validarRegistroPipeline(minimo), /Completa/);
+    minimo.set(campo.key, valor);
+  }
 });
 
 test('mantiene validación de URL, fecha, opciones, productos y tarifa opcional', () => {

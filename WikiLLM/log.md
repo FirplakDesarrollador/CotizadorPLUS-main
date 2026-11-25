@@ -3362,3 +3362,8 @@ Se verificaron las celdas Summary!F87:K89 y se aplicó el costo unitario por cap
 ## [2026-11-25] update | Catálogo de mesones en Registro CEFI
 
 El selector de Mesones usa el mismo catálogo que la cotización y valida el material al guardar el registro.
+
+## [2026-11-25] update | Guardado de Registro en Pipeline
+
+Se alinearon los campos obligatorios con la base de datos y se ajustó la fecha y el orden de los borradores nuevos.
+La prueba en Chrome con una cuenta temporal de vendedor verificó el guardado real, el material, el enlace de confirmación y la aparición del borrador en Pipeline. Se eliminaron los datos de prueba.
