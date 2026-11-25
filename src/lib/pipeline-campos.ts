@@ -1,4 +1,13 @@
-export const PRODUCTOS_PIPELINE = ['Gabinetes de cocina', 'Gabinetes de Baño', 'Mesones', 'Closets'];
+import type { MaterialMeson } from './mesones';
+
+export type MaterialMesonRegistro = Pick<MaterialMeson, 'id' | 'nombre' | 'origen'>;
+export function etiquetaMaterialMesonRegistro(material: MaterialMesonRegistro) {
+  return `${material.nombre} · ${material.origen === 'COL' ? 'Colombia' : 'USA'}`;
+}
+
+export const PRODUCTO_MESONES = 'Mesones';
+export const PRODUCTOS_PIPELINE = ['Gabinetes de cocina', 'Gabinetes de Baño', PRODUCTO_MESONES, 'Closets'];
+export const CAMPO_MATERIAL_MESON = `tipo_tablero_${PRODUCTOS_PIPELINE.indexOf(PRODUCTO_MESONES)}`;
 export const DESCONOCIDO_PIPELINE = '__desconocido__';
 export type CampoPipeline = { key: string; label: string; tipo?: 'text' | 'date' | 'number' | 'url' | 'textarea'; opciones?: readonly string[]; obligatorio?: boolean; permiteDesconocido?: boolean };
 const DEFINICION_CAMPOS: CampoPipeline[] = [
@@ -38,7 +47,7 @@ export function validarFechaPipeline(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(`${value}T00:00:00Z`)) || new Date(`${value}T00:00:00Z`).toISOString().slice(0,10) !== value) throw new Error('Fecha inválida.');
   return value;
 }
-export function validarRegistroPipeline(form: FormData): Record<string, string | number | boolean | string[] | null> & { tarifa: number|null; instalado: boolean|null; estado: 'borrador';campos_desconocidos:string[] } {
+export function validarRegistroPipeline(form: FormData, materialesMeson: readonly MaterialMesonRegistro[] = []): Record<string, string | number | boolean | string[] | null> & { tarifa: number|null; instalado: boolean|null; estado: 'borrador';campos_desconocidos:string[] } {
   const datos: Record<string, string | number | boolean | string[] | null> = {};
   const desconocidos:string[]=[];
   for (const campo of CAMPOS_PIPELINE) {
@@ -54,6 +63,13 @@ export function validarRegistroPipeline(form: FormData): Record<string, string |
       const boardByProduct:Record<string,string>={};
       for(const product of products){
         const board=String(form.get(`tipo_tablero_${PRODUCTOS_PIPELINE.indexOf(product)}`)??'').trim();
+        if(product === PRODUCTO_MESONES){
+          if(!board)continue;
+          const material = materialesMeson.find(m => m.id === board);
+          if(!material)throw new Error('Selecciona un material de mesón del catálogo.');
+          boardByProduct[product] = etiquetaMaterialMesonRegistro(material);
+          continue;
+        }
         if(board&&!campo.opciones?.includes(board))throw new Error(`Selección inválida: tipo de tablero para ${product}.`);
         if(board)boardByProduct[product]=board;
       }

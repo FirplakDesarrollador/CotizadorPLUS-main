@@ -2,7 +2,8 @@
 import { revalidatePath } from 'next/cache';
 import { getUserAndRole } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import { CAMPOS_PIPELINE, DESCONOCIDO_PIPELINE, validarRegistroPipeline, validarUrlPipeline, validarFechaPipeline } from '@/lib/pipeline-campos';
+import { obtenerCatalogoMesones } from '@/lib/cotizaciones';
+import { CAMPO_MATERIAL_MESON, PRODUCTO_MESONES, CAMPOS_PIPELINE, DESCONOCIDO_PIPELINE, validarRegistroPipeline, validarUrlPipeline, validarFechaPipeline } from '@/lib/pipeline-campos';
 import { CAMPOS_EXTRA_PIPELINE, NUMEROS_PIPELINE } from '@/lib/pipeline';
 import { ESTADOS_COTIZACION } from '@/lib/pipeline-estados';
 import { notificarAdminsEnDesarrollo } from '@/lib/notificar-en-desarrollo';
@@ -10,7 +11,10 @@ export async function registrarPipelineAction(_prev: unknown, form: FormData): P
   try {
     const { user } = await getUserAndRole();
     if (!user) throw new Error('No autenticado.');
-    const datos = validarRegistroPipeline(form);
+    const requiereMaterial = form.getAll('productos').some(p => String(p).trim() === PRODUCTO_MESONES)
+      && Boolean(String(form.get(CAMPO_MATERIAL_MESON) ?? '').trim());
+    const materialesMeson = requiereMaterial ? (await obtenerCatalogoMesones()).materiales : [];
+    const datos = validarRegistroPipeline(form, materialesMeson);
     const sb = await createClient();
     const { data, error } = await sb.from('cot_pipeline').insert({ ...datos, creado_por: user.id }).select('id').single();
     if (error) throw new Error('No se pudo guardar el registro.');

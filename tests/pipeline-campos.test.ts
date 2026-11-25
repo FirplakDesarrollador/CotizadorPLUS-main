@@ -65,3 +65,15 @@ test('solo persiste campos permitidos y limita longitud de ubicación', () => {
   const bad = formulario(); bad.set('pais', 'x'.repeat(101));
   assert.throws(() => validarRegistroPipeline(bad), /Ubicación/);
 });
+
+test('Registro valida el material de Mesones en el catálogo y conserva los tableros por gabinete', () => {
+  const f = formulario();
+  f.append('productos', 'Mesones');
+  const materiales = [{ id: 'cuarzo', nombre: 'Cuarzo Blanco', origen: 'COL' as const }];
+  f.set('tipo_tablero_2', 'CARB2');
+  assert.throws(() => validarRegistroPipeline(f, materiales), /material de mesón/);
+  f.set('tipo_tablero_2', 'cuarzo');
+  assert.deepEqual(JSON.parse(String(validarRegistroPipeline(f, materiales).tipo_tablero)), {
+    'Gabinetes de cocina': 'CARB2', 'Gabinetes de Baño': 'RH', Mesones: 'Cuarzo Blanco · Colombia',
+  });
+});

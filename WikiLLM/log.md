@@ -3358,3 +3358,7 @@ El costo y el margen determinan el precio unitario y el precio total de las dos 
 ## [2026-11-24] update | Prorrateo de tráiler según PB Shore
 
 Se verificaron las celdas Summary!F87:K89 y se aplicó el costo unitario por capacidad editable y el costo total por unidades de supervisión.
+
+## [2026-11-25] update | Catálogo de mesones en Registro CEFI
+
+El selector de Mesones usa el mismo catálogo que la cotización y valida el material al guardar el registro.

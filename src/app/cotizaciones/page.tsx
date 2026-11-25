@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getUserAndRole } from '@/lib/auth';
-import { listarCotizaciones } from '@/lib/cotizaciones';
+import { listarCotizaciones, obtenerCatalogoMesones } from '@/lib/cotizaciones';
 import { getCotizadorData } from '@/lib/cotizar';
 import { COLORES_ESTADO, ETIQUETAS_ESTADO, type EstadoCotizacion } from '@/lib/pipeline-estados';
 import AppHeader from '@/components/AppHeader';
@@ -27,7 +27,11 @@ export default async function CotizacionesPage({ searchParams }: { searchParams:
       </main>
     </div>;
   }
-  if(vista==='registro')return marco(<RegistroForm/>);
+  if(vista==='registro'){
+    const catalogo = await obtenerCatalogoMesones();
+    const materialesMeson = catalogo.materiales.map(({ id, nombre, origen }) => ({ id, nombre, origen }));
+    return marco(<RegistroForm materialesMeson={materialesMeson}/>);
+  }
   if(vista==='pipeline')return marco(<PipelineVista params={params}/>);
   if(vista==='dashboard')return marco(<DashboardVista searchParams={Promise.resolve(params)}/>);
   const [cotizaciones,data]=await Promise.all([listarCotizaciones(),getCotizadorData()]);
