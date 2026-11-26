@@ -1,8 +1,8 @@
 import ExcelJS from 'exceljs';
-import { GRUPOS_SEGUIMIENTO, type EntradaSeguimiento } from './seguimiento';
+import { ACTIVIDADES_SEGUIMIENTO, BLOQUES_SEGUIMIENTO, GRUPOS_SEGUIMIENTO, type EntradaSeguimiento } from './seguimiento';
 import { fechaConsumos } from './consumosExcel';
 
-export const ACTIVIDADES_SEGUIMIENTO = ['HDR Existente', 'Modelo 3D', 'Perforado', 'Creación Hoja de Ruta', 'Revisión HDR', 'Corrección HDR', 'Crear CAM SCM', 'Crear CAM HOLZHER', 'Crear CAM HUAHUA', 'prg Tarugadora', 'Tetris', 'Planimetría', 'Crear empaque', 'Revisión de empaque', 'prg tangenciadora', 'prg láser', 'Diseño de etiqueta', 'Entrega de ruta y programas a producción'];
+export { ACTIVIDADES_SEGUIMIENTO } from './seguimiento';
 export const ENCABEZADOS_CODIGOS = ['REF', 'Muebles', 'Código', 'Descripción español', 'Descripción inglés', 'LdM', '% DESPERDICIO', 'Herrajes', 'Consecutivo'];
 const durazno = 'FFF8CBAD';
 const relleno = (color: string): ExcelJS.Fill => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: color } });
@@ -16,11 +16,10 @@ export function crearWorkbookSeguimiento(entradas: readonly EntradaSeguimiento[]
   ws.mergeCells('L1:R1'); ws.getCell('L1').value = 'EMPAQUE';
   ws.getCell('S1').value = 'ENTREGA';
   ws.addRow(['Responsable']);
-  for (const rango of ['B2:G2', 'H2:K2', 'L2:R2']) ws.mergeCells(rango);
-  ws.getCell('B2').value = 'Angie/Lizeth';
-  ws.getCell('H2').value = 'Elias';
-  ws.getCell('L2').value = 'Mariana/Liz/Angie/Elias';
-  ws.getCell('S2').value = 'Angie/Liz';
+  for (const bloque of BLOQUES_SEGUIMIENTO) {
+    if (bloque.fin - bloque.inicio > 1) ws.mergeCells(2, bloque.inicio + 2, 2, bloque.fin + 1);
+    ws.getCell(2, bloque.inicio + 2).value = bloque.responsable;
+  }
   ws.addRow(['Actividad', ...ACTIVIDADES_SEGUIMIENTO]);
   for (const r of [1, 2]) for (let i = 1; i <= 19; i++) { const c = ws.getCell(r, i); c.fill = relleno(durazno); c.font = { bold: true }; c.alignment = { horizontal: 'center', vertical: 'middle' }; }
   ws.getRow(3).eachCell(c => { c.font = { bold: true }; c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; });

@@ -80,6 +80,16 @@ test('el PDF describe la excepción únicamente en las familias donde hay abiert
 });
 
 
+test('el PDF omite el tablero de gaveta histórico de W y TW y conserva el de inferiores', () => {
+  const config = {
+    materialesSuperiores: { preset: { caja: 'S15', gaveta: 'G15' } },
+    materialesInferiores: { preset: { caja: 'I15', gaveta: 'G15' } },
+  };
+  const bloques = especificacionesProyecto(config, [], [{ nombre: 'Cocina', lineas: [{ pref: 'W' }, { pref: 'TW' }, { pref: 'DB' }] }]);
+  assert.equal(bloques.find(b => b.familia === 'superior')!.filas.some(([rol]) => rol.startsWith('Tablero Gaveta')), false);
+  assert.equal(bloques.find(b => b.familia === 'inferior')!.filas.some(([rol]) => rol === 'Tablero Gaveta (15 mm)'), true);
+});
+
 test('OW-MO usa frente en caja y refuerzos y el mismo color en fondo de 6 mm', () => {
   const preset = { caja: 'OTRO', refuerzo: 'OTRO', frente: 'PRIRH15CONSTRUCTOR', fondo: 'BLANCO' };
   for (const pref of ['OW', 'OW-SF', 'OW-MO', 'OW-MO-SF', 'OBFD', 'OBFD-SM', 'OSBFD-SM']) {

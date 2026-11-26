@@ -7,7 +7,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
 
 ## Arquitectura Técnica
-- [HDR: Buscar/Crear y Seguimiento](wiki/hdr_buscar_seguimiento.md) - Búsqueda por nombre en cotizaciones, secciones reorganizadas y plantilla Excel manual de Seguimiento/Códigos sin cantidades.
+- [HDR: Buscar/Crear y Seguimiento](wiki/hdr_buscar_seguimiento.md) - Búsqueda por nombre, seguimiento por cotización con responsables y avance, persistencia en Supabase y plantilla Excel de Seguimiento/Códigos.
 - [Apertura L/R de superiores de una puerta](wiki/apertura_superiores_una_puerta.md) - Selección obligatoria en W-SM/WLD/WSM, sufijo comercial y alerta para 26 muebles existentes sin apertura.
 - [Instrucciones R…L en HDR](wiki/hdr_instrucciones_ranura.md) - Indicaciones de carcasa con fondo por familia/espesor y cuatro nombres de gavetas FE, sin cambios geométricos.
 - [BOV interno y BOV-SMG](wiki/bov_frente_interno_smg.md) - Frente interno sin holguras, base hasta el refuerzo, 73 mm superiores en SMG y conversión verificada de Condominio V.
@@ -30,7 +30,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 - [Mejora de UX en tabla de catálogos](wiki/ux_catalogo_materiales_parametros.md) - Desplazamiento, edición en línea, acciones accesibles y parámetros visibles.
 - [Descripción de una línea contra el despiece](wiki/descripcion_linea_vs_despiece.md) - Por qué `n_entrepanos` no describe el mueble: 47 de 81 tipos no coincidían, y la deuda equivalente en puertas y gavetas.
 - [Líneas de material suelto](wiki/lineas_material_suelto.md) - Tablero, canto o herraje cobrados sin módulo: unidades, margen por tipo, clasificación en Herrajes / otros del PDF y exclusión en HDR y Optimizador.
-- [Protocolo de cotizaciones y PDF](wiki/protocolo_pdf_cotizaciones.md) - Clasificación y agrupación de adicionales sin precios en el detalle, materiales por área closet, reparación histórica y doble verificación de impresión.
+- [Protocolo de cotizaciones y PDF](wiki/protocolo_pdf_cotizaciones.md) - Agrupación de adicionales, materiales por área closet, superiores W y TW sin tablero de gaveta, reparación histórica y doble verificación de impresión.
 - [Mesones de cocina, isla y baño](wiki/mesones_pb_shore.md) - Parámetros por tipo, edición, refuerzo, perforaciones y PDF.
 - [Bisagras por alto de puerta](wiki/bisagras_por_altura.md) - Tramos por hoja, equivalencias de unidades y actualización de cotizaciones y simulador.
 - [Entrega, Incoterm e instalación](wiki/entrega_cotizaciones.md) - Reparto de módulos por cantidad, contenedores, tarifas por zona y supervisión y prorrateo de tráiler según PB Shore.

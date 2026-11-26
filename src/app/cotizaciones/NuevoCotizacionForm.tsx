@@ -51,7 +51,11 @@ function FormularioCotizacion({
   const [moneda, setMoneda] = useState<'USD' | 'COP'>('USD');
   const [conFondo, setConFondo] = useState(true);
   const [preset, setPreset] = useState<Record<string, string>>({ ...presetDefault });
-  const [presetSuperior, setPresetSuperior] = useState<Record<string, string>>({ ...presetDefault });
+  const [presetSuperior, setPresetSuperior] = useState<Record<string, string>>(() => {
+    const preset = { ...presetDefault };
+    delete preset.gaveta;
+    return preset;
+  });
 
   const [cantoFrentes, setCantoFrentes] = useState(() => {
     const b = tableros.find((t) => t.codigo === presetDefault['frente']);
@@ -360,8 +364,7 @@ function FormularioCotizacion({
             <Combobox value={presetSuperior['frente'] ?? ''} options={tableroOptions}
               onChange={(v) => handleTableroSuperior('frente', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
           </F>
-          <F label="Tablero Gaveta (15 mm)"><Combobox value={presetSuperior.gaveta ?? ''} options={tableroOptions.filter(o => Number(tableros.find(t => t.codigo === o.value)?.espesor_mm) === 15)} onChange={(v) => handleTableroSuperior('gaveta', v)} placeholder="Seleccionar tablero de 15 mm" allowEmpty /></F>
-        <F label="Tablero fondo">
+          <F label="Tablero fondo">
             <Combobox value={presetSuperior['fondo'] ?? ''} options={tableroOptions}
               onChange={(v) => handleTableroSuperior('fondo', v)} placeholder="Buscar tablero…" allowEmpty emptyLabel="— seleccionar —" />
           </F>

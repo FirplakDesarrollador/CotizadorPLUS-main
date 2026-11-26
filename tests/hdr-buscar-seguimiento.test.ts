@@ -6,7 +6,7 @@ import Module, { createRequire } from 'node:module';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { calcularMueble } from '../src/lib/engine';
-import { entradasSeguimiento, coincideNombreHdr, GRUPOS_SEGUIMIENTO } from '../src/app/hdr/seguimiento';
+import { entradasSeguimiento, coincideNombreHdr, crearDetalleSeguimiento, porcentajeSeguimiento, validarAvanceSeguimiento, GRUPOS_SEGUIMIENTO, type DetalleSeguimiento } from '../src/app/hdr/seguimiento';
 import { crearWorkbookSeguimiento, generarArchivoSeguimiento, descargarSeguimiento, ACTIVIDADES_SEGUIMIENTO, ENCABEZADOS_CODIGOS } from '../src/app/hdr/seguimientoExcel';
 import { prefijarHrj, tituloModuloHdr } from '../src/app/hdr/datosHdr';
 import type { ModuloHDR } from '../src/app/hdr/actions';
@@ -15,6 +15,25 @@ const calc = { dims: { L: 20, A: 30, P: 24 }, piezas: [{ nombre: 'base', rol_tab
 const resultado = { ...calcularMueble(calc), trm: 4000, margen: 0 };
 const modulo = (codigo: string, pref: string, extra: Partial<ModuloHDR> = {}): ModuloHDR => ({ lineaId: codigo, codigoModulo: codigo, nombreDescriptivo: 'Descripción exacta', pref, cantidad: 99, cocinaNombre: 'Cocina', grupoId: null, ok: true, result: resultado, ...extra } as ModuloHDR);
 const tipos = [{ pref: 'SVFDH-SMG-SF', categoria: 'vanity' }];
+
+test('el avance cuenta cada casilla, admite desmarcar y reserva el 100 % para el último check', () => {
+  const detalle = crearDetalleSeguimiento({ id: 'q', codigo: 'C-1', nombre: 'Proyecto' }, [
+    { nombre: 'B20', grupo: 'Inferiores' }, { nombre: 'W20', grupo: 'Superiores' },
+  ]);
+  assert.equal(detalle.total, 36);
+  assert.deepEqual(detalle.responsables, ['Angie/Lizeth', 'Elias', 'Mariana/Liz/Angie/Elias', 'Angie/Liz']);
+  assert.deepEqual(detalle.marcas, [[], []]);
+  const avance = validarAvanceSeguimiento([' Ana ', 'Luis', '', 'Pilar'], [[0, 1], [0]], 2);
+  assert.deepEqual(avance, { responsables: ['Ana', 'Luis', '', 'Pilar'], marcas: [[0, 1], [0]], completadas: 3 });
+  assert.equal(porcentajeSeguimiento(3, 36), 8.33);
+  assert.equal(porcentajeSeguimiento(validarAvanceSeguimiento(detalle.responsables, [[0], [0]], 2)!.completadas, 36), 5.55);
+  assert.equal(porcentajeSeguimiento(999, 1000), 99.9);
+  assert.equal(porcentajeSeguimiento(1000, 1000), 100);
+  assert.equal(porcentajeSeguimiento(0, 0), 0);
+  for (const marcas of [[[0, 0], []], [[18], []], [['0'], []], [[]]]) {
+    assert.equal(validarAvanceSeguimiento(detalle.responsables, marcas, 2), null);
+  }
+});
 
 test('seguimiento ordena por seis familias y conserva cualquier diferencia del nombre exacto', () => {
   const modulos = [modulo('PN20', 'PN'), modulo('F20', 'F'), modulo('W30', 'W'), modulo('B20', 'B'), modulo('B10', 'B'), modulo('BAÑO', 'SVFDH-SMG-SF'), modulo('CC20', 'CC'), modulo('B20', 'B', { lineaId: 'otra-area', cocinaNombre: 'Otra cocina', cantidad: 1 }), modulo('b20', 'B'), modulo('W18-L', 'W-SM'), modulo('W18-R', 'W-SM')];
@@ -128,17 +147,45 @@ test('el archivo descargado deja actividades vacías para marcar manualmente sin
 });
 
 let rol = 'admin', catalogos = 0, lecturas = 0;
+let detalleGuardado: DetalleSeguimiento | null = null;
+function tablaSeguimientos() {
+  const filtros = new Map<string, unknown>();
+  let cambios: Partial<DetalleSeguimiento> | undefined;
+  const query = {
+    select: () => query,
+    order: () => query,
+    range: async () => ({ data: detalleGuardado ? [detalleGuardado] : [], error: null }),
+    eq: (campo: string, valor: unknown) => { filtros.set(campo, valor); return query; },
+    insert: (detalle: DetalleSeguimiento) => {
+      if (detalleGuardado) return { select: () => ({ single: async () => ({ data: null, error: { code: '23505' } }) }) };
+      detalleGuardado = detalle;
+      return { select: () => ({ single: async () => ({ data: detalleGuardado, error: null }) }) };
+    },
+    update: (avance: Partial<DetalleSeguimiento>) => { cambios = avance; return query; },
+    maybeSingle: async () => {
+      const registro = detalleGuardado;
+      if (!registro || registro.cotizacion_id !== filtros.get('cotizacion_id') ||
+        (cambios && registro.revision !== filtros.get('revision'))) return { data: null, error: null };
+      if (cambios) detalleGuardado = { ...registro, ...cambios };
+      return { data: detalleGuardado, error: null };
+    },
+  };
+  return query;
+}
 const linea = (id: string, grupo_id: string | null) => ({ id, grupo_id, tipo_mueble_id: 'b', pref: 'B', codigo_modulo: 'B20', config: {}, cantidad: 1 });
 const loader = Module as unknown as { _load: (name: string, ...args: unknown[]) => unknown }, old = loader._load;
 loader._load = function(name, ...args) {
   if (name === 'server-only') return {};
-  if (name.includes('/lib/auth')) return { getUserAndRole: async () => ({ rol }) };
+  if (name.includes('/lib/auth')) return { getUserAndRole: async () => ({ rol, user: { id: 'admin' } }) };
+  if (name.includes('/lib/diseno')) return { getTiposBasic: async () => [] };
+  if (name.includes('/lib/supabase/server')) return { createClient: async () => ({ from: tablaSeguimientos }) };
   if (name.includes('admin/diseno/actions')) return { previewAction: async () => ({ ok: true, result: resultado }) };
-  if (name.includes('/lib/cotizaciones')) return { listarCotizaciones: async () => [{ id: 'q1', nombre: 'Proyecto 1' }, { id: 'q2', nombre: 'Proyecto 2' }, { id: 'fallo', nombre: 'Proyecto con error' }], inputDesdeLinea: () => ({ tipoId: 'b' }), getCotizacion: async (id: string) => { lecturas++; if (id === 'fallo') throw Error('Sin acceso'); return { cocinas: [{ nombre: 'Cocina', lineas: id === 'q1' ? [linea('a', 'g'), linea('b', 'g')] : [linea('c', null)] }], lineasSinCocina: [] }; } };
+  if (name.includes('/lib/cotizaciones')) return { listarCotizaciones: async () => [{ id: 'q1', nombre: 'Proyecto 1' }, { id: 'q2', nombre: 'Proyecto 2' }, { id: 'fallo', nombre: 'Proyecto con error' }], inputDesdeLinea: () => ({ tipoId: 'b' }), getCotizacion: async (id: string) => { lecturas++; if (id === 'fallo') throw Error('Sin acceso'); return { cabecera: { id, codigo: 'C-1', nombre: 'Proyecto 1' }, cocinas: [{ nombre: 'Cocina', lineas: id === 'q1' ? [linea('a', 'g'), linea('b', 'g')] : [linea('c', null)] }], lineasSinCocina: [] }; } };
   if (name.includes('/lib/cotizar')) return { cargarCatalogoPrecompilado: async () => { catalogos++; return {}; }, prepararCotizacion: async () => ({ calc, trm: 4000, margen: 0 }), cotizarGrupo: async () => ({ lineas: [0, 1].map(() => ({ ...resultado, piezas: resultado.piezas.map(p => ({ ...p, cant: 0.5, compartida: true, claveFusion: 'base' })) })), preparados: [{ calc, margen: 0 }, { calc, margen: 0 }], largoTotalIn: 40, laterales: 3, uniones: 1, piezasContinuas: ['base'] }) };
   return old.call(this, name, ...args);
 };
 const actions = createRequire(import.meta.url)('../src/app/hdr/actions.ts') as typeof import('../src/app/hdr/actions');
+const accionesSeguimiento = createRequire(import.meta.url)('../src/app/hdr/seguimientoActions.ts') as typeof import('../src/app/hdr/seguimientoActions');
 const HdrBuscador = (createRequire(import.meta.url)('../src/app/hdr/HdrBuscador.tsx') as typeof import('../src/app/hdr/HdrBuscador')).default;
 loader._load = old;
 
@@ -162,4 +209,35 @@ test('buscar en cotizaciones reutiliza catálogo, conserva el grupo físico y ex
   assert.equal(catalogos, 1);
   rol = 'vendedor';
   try { await assert.rejects(actions.buscarMueblesHdrAction('B20'), /Solo administradores/); } finally { rol = 'admin'; }
+});
+
+test('guardar y reabrir preserva responsables y checks y rechaza una edición desactualizada', async () => {
+  const { abrirSeguimientoAction, guardarSeguimientoAction, listarSeguimientosAction } = accionesSeguimiento;
+  const nuevo = await abrirSeguimientoAction('q1');
+  assert.ok(nuevo.ok, !nuevo.ok ? nuevo.error : '');
+  assert.equal(nuevo.valor.revision, 0);
+  assert.equal(nuevo.valor.entradas.length, 1);
+  const draft = { ...nuevo.valor, marcas: [[0, 17]], responsables: ['Ana', 'Luis', '', 'Pilar'] };
+  const alterado = { ...draft, entradas: [{ ...draft.entradas[0], nombre: 'Otro mueble' }] };
+  assert.equal((await guardarSeguimientoAction(alterado)).ok, false);
+  const guardado = await guardarSeguimientoAction(draft);
+  assert.ok(guardado.ok, !guardado.ok ? guardado.error : '');
+  assert.equal(guardado.valor.revision, 1);
+  assert.equal(guardado.valor.completadas, 2);
+  assert.deepEqual(await abrirSeguimientoAction('q1'), guardado);
+  assert.equal((await guardarSeguimientoAction(draft)).ok, false);
+  const actualizado = await guardarSeguimientoAction({ ...guardado.valor, marcas: [[17]] });
+  assert.ok(actualizado.ok);
+  assert.equal(actualizado.valor.completadas, 1);
+  assert.equal(actualizado.valor.revision, 2);
+  assert.equal((await guardarSeguimientoAction(guardado.valor)).ok, false);
+  const lista = await listarSeguimientosAction();
+  assert.ok(lista.ok);
+  assert.deepEqual(lista.valor.map(s => s.completadas), [1]);
+  rol = 'vendedor';
+  try {
+    assert.equal((await listarSeguimientosAction()).ok, false);
+    assert.equal((await abrirSeguimientoAction('q1')).ok, false);
+    assert.equal((await guardarSeguimientoAction(actualizado.valor)).ok, false);
+  } finally { rol = 'admin'; detalleGuardado = null; }
 });

@@ -146,6 +146,7 @@ export default function ProjectConfigPanel({ tableros, cantos, defaults, onChang
                 <>
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {ROLE_FIELDS.map(([rol, label]) => {
+                      if (familia === 'superior' && rol === 'gaveta') return null;
                       const codigo = materiales.preset[rol] ?? '';
                       const precio = precioTableroCotizacion(codigo, tableros, defaults.preciosTableros);
                       return (

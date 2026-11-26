@@ -8,6 +8,7 @@
 4. Si el nombre del área contiene **closet**, sin distinguir mayúsculas ni tildes, todos sus módulos, paneles, fillers y zócalos usan `materialesCloset`. Esta prioridad precede al prefijo del módulo (incluidos W y B). Las demás áreas siguen la familia de su tipología.
 5. La fuente de materiales y cantos es **Características del proyecto** (`config_default`). Las especificaciones del PDF muestran referencia, sustrato, espesor, color, proveedor y cantos del catálogo seleccionado; no anuncian espesores, colores ni materiales de textos predeterminados de la plantilla. El fondo seleccionado se identifica como aplicable solo donde el módulo lleva espaldar.
 6. Las referencias históricas solo se resuelven cuando hay un único código equivalente: espacios de borde, `COLOR CONSTRUCTOR` → `CONSTRUCTOR` y el alias descriptivo `(POLAR)` de CANDELARIA. No se cambia proveedor, sustrato, color o espesor por aproximación. Una referencia desconocida debe señalarse y resolverse antes de reparar datos.
+7. Los muebles superiores W y TW carecen de gavetas. Su ficha de materiales omite el selector y el precio del tablero de gaveta. Las especificaciones impresas de superiores omiten esa fila incluso con un valor histórico en el preset.
 
 ## Implementación y persistencia
 

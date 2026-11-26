@@ -11,7 +11,8 @@ import { descripcionPiezaPlanaHdr, descripcionModulo, resultadoFisicoHdr, type R
 import { esModuloLinea, type MaterialLinea } from '@/lib/materiales-linea';
 import { unidadesFisicas } from '@/lib/corte/clasificacion';
 import { calcularMueble } from '@/lib/engine';
-import { coincideNombreHdr } from './seguimiento';
+import { coincideNombreHdr, crearDetalleSeguimiento, entradasSeguimiento } from './seguimiento';
+import { getTiposBasic } from '@/lib/diseno';
 import type { CatalogoPrecompilado } from '@/lib/cotizar';
 
 async function assertAdmin() {
@@ -50,6 +51,14 @@ export type ModuloHDR = {
 export async function modulosDeCotizacionAction(cotizacionId: string): Promise<ModuloHDR[]> {
   await assertAdmin();
   return calcularModulosDeCotizacion(cotizacionId);
+}
+
+export async function prepararSeguimientoAction(cotizacionId: string) {
+  await assertAdmin();
+  const [cotizacion, tipos] = await Promise.all([getCotizacion(cotizacionId), getTiposBasic()]);
+  if (!cotizacion.cabecera) throw new Error('No se encontró la cotización.');
+  const modulos = await calcularModulosDeCotizacion(cotizacionId, undefined, cotizacion);
+  return crearDetalleSeguimiento(cotizacion.cabecera, entradasSeguimiento(modulos, tipos));
 }
 
 export async function modulosYMaterialesDeCotizacionAction(cotizacionId: string) {

@@ -114,7 +114,7 @@ export function especificacionesProyecto(config: ConfigMaterialesProyecto, catal
     return [{ familia, titulo, filas: [
       ['Caja / refuerzos', descripcionTableroProyecto(materiales.preset.caja, catalogo)],
       ['Refuerzo', descripcionTableroProyecto(materiales.preset.refuerzo ?? materiales.preset.caja, catalogo)],
-      ...(materiales.preset.gaveta ? [[tieneDbFe ? 'Tablero Gaveta (15 mm; paredes DB-FE usan caja)' : 'Tablero Gaveta (15 mm)', descripcionTableroProyecto(materiales.preset.gaveta, catalogo)]] : []),
+      ...(familia !== 'superior' && materiales.preset.gaveta ? [[tieneDbFe ? 'Tablero Gaveta (15 mm; paredes DB-FE usan caja)' : 'Tablero Gaveta (15 mm)', descripcionTableroProyecto(materiales.preset.gaveta, catalogo)]] : []),
       ['Frentes / paneles / rellenos', descripcionTableroProyecto(materiales.preset.frente, catalogo)],
       ...(tieneAbiertos ? [['Caja / refuerzos de OBFD, OBFD-SM, OSBFD-SM, OW y OW-MO (incluidas variantes sin fondo)', descripcionTableroProyecto(materiales.preset.frente, catalogo)]] : []),
       ...(tieneAbiertos ? [['Fondo de abiertos OBFD, OBFD-SM, OSBFD-SM, OW y OW-MO (6 mm, color del frente; solo con fondo)', descripcionTableroProyecto(presetMaterialesTipologia(materiales.preset, 'OW').fondo, catalogo)]] : []),

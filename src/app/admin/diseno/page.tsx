@@ -10,6 +10,7 @@ import { normalizarConfig } from '@/lib/corte/config';
 import HdrBuscador from '../../hdr/HdrBuscador';
 import HdrConsumos from '../../hdr/HdrConsumos';
 import HdrSeguimiento from '../../hdr/HdrSeguimiento';
+import { listarSeguimientosAction } from '../../hdr/seguimientoActions';
 import OptimizadorView from '../../optimizador/OptimizadorView';
 
 const SECCIONES = [
@@ -20,8 +21,8 @@ const SECCIONES = [
 async function Contenido({ seccion }: { seccion: typeof SECCIONES[number][0] }) {
   if (seccion === 'consumos') return <HdrConsumos cotizaciones={await listarCotizaciones()} />;
   if (seccion === 'seguimiento') {
-    const [cotizaciones, tipos] = await Promise.all([listarCotizaciones(), getTiposBasic()]);
-    return <HdrSeguimiento cotizaciones={cotizaciones} tipos={tipos} />;
+    const [cotizaciones, guardados] = await Promise.all([listarCotizaciones(), listarSeguimientosAction()]);
+    return <HdrSeguimiento cotizaciones={cotizaciones.map(({ id, codigo, nombre }) => ({ id, codigo, nombre }))} inicial={guardados} />;
   }
   const sb = await createClient();
   if (seccion === 'optimizador') {

@@ -3367,3 +3367,18 @@ El selector de Mesones usa el mismo catálogo que la cotización y valida el mat
 
 Se alinearon los campos obligatorios con la base de datos y se ajustó la fecha y el orden de los borradores nuevos.
 La prueba en Chrome con una cuenta temporal de vendedor verificó el guardado real, el material, el enlace de confirmación y la aparición del borrador en Pipeline. Se eliminaron los datos de prueba.
+
+## [2026-11-26] update | Materiales de muebles superiores W y TW
+
+La cotización omite el material y el precio de tablero de gaveta para superiores. Las especificaciones impresas también lo omiten cuando el preset histórico contiene ese tablero.
+Se verificó TypeScript, 21 pruebas enfocadas y dos PDF independientes de las especificaciones con datos de prueba W, TW y DB. El texto extraído coincidió y la revisión de las páginas confirmó que la fila de gaveta aparece únicamente en inferiores. Quedaron pendientes la auditoría de la base y la impresión desde cotizaciones reales.
+
+## [2026-11-26] update | Seguimientos guardados en Diseño
+
+La pestaña lista los seguimientos guardados y abre el detalle con los cuatro bloques de responsables y las 18 actividades por mueble. Calcula el avance por mueble y el general a partir de las casillas marcadas. La migración 0269 guarda un seguimiento por cotización con acceso administrativo y control de revisión.
+
+Pasaron TypeScript, ESLint de los archivos tocados y 13 pruebas enfocadas. Chromium verificó el flujo en escritorio y móvil con acciones simuladas. Quedan pendientes aplicar la migración y verificar el guardado contra Supabase.
+
+## [2026-11-26] update | Migración de Seguimiento aplicada en Supabase
+
+Supabase registró `0269_hdr_seguimientos` con la versión `20261126215506`. Se comprobó la tabla, el índice, la ausencia de lectura anónima y las políticas RLS de administrador para consultar, crear y actualizar seguimientos.
