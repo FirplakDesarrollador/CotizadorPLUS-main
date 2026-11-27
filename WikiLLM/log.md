@@ -3382,3 +3382,7 @@ Pasaron TypeScript, ESLint de los archivos tocados y 13 pruebas enfocadas. Chrom
 ## [2026-11-26] update | Migración de Seguimiento aplicada en Supabase
 
 Supabase registró `0269_hdr_seguimientos` con la versión `20261126215506`. Se comprobó la tabla, el índice, la ausencia de lectura anónima y las políticas RLS de administrador para consultar, crear y actualizar seguimientos.
+
+## [2026-11-27] update | Clasificación de la tapa W-SM-LOC en grupos físicos
+
+Se restaura la clasificación continua de la tapa para permitir la agrupación con UW.

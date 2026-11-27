@@ -4,7 +4,7 @@ Este es el catálogo de todo el conocimiento almacenado en la wiki.
 
 ## Entidades y Conceptos
 - [Cotizador PLUS Overview](wiki/cotizador_plus_overview.md) - Descripción general de la aplicación Cotizador PLUS.
-- [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular, simular, identificar y cotizar módulos unidos por grupos.
+- [Agrupación de módulos](wiki/plan_agrupacion_modulos.md) - Reglas para fabricar, calcular y cotizar módulos unidos por grupos, incluida la combinación W-SM-LOC con UW.
 
 ## Arquitectura Técnica
 - [HDR: Buscar/Crear y Seguimiento](wiki/hdr_buscar_seguimiento.md) - Búsqueda por nombre, seguimiento por cotización con responsables y avance, persistencia en Supabase y plantilla Excel de Seguimiento/Códigos.

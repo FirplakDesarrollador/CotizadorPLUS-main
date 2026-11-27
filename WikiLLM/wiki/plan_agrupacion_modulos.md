@@ -421,3 +421,11 @@ fue eliminada. Auditoría de cotizaciones existentes: cero errores y diferencias
 `quality:learn -- --strict`: exit 0, cero HIGH. La advertencia MED por falta de
 `cotizar.test.ts` se cubre específicamente con el helper unitario paginado y la
 auditoría reproducible que carga el catálogo real y llama a `cotizarGrupo`.
+
+### Tapa W-SM-LOC al agrupar con UW
+
+La migración `0270_w_sm_loc_tapa_continua.sql` restablece la tapa de W-SM-LOC
+como pieza continua. El catálogo la tenía marcada como lateral compartido,
+pero su cantidad es uno. El motor exige dos unidades en la fila de laterales
+compartidos. Al combinar con UW, cuya tapa es local, ambas tapas se conservan
+por compartimento. La migración conserva las fórmulas y cantidades individuales.
